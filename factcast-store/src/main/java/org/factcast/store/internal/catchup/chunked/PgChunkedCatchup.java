@@ -34,6 +34,7 @@ import org.factcast.store.internal.pipeline.Signal;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.query.PgQueryBuilder;
 import org.factcast.store.internal.rowmapper.PgFactExtractor;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
@@ -87,48 +88,11 @@ public class PgChunkedCatchup implements PgCatchup {
       try {
         jdbc.setFetchSize(props.getPageSize());
         jdbc.setQueryTimeout(0); // disable query timeout
-
-        createTempTable(jdbc, tempTableName);
-
-        final var b = new PgQueryBuilder(req.specs(), statementHolder);
-        b.moveSerialsToTempTable(tempTableName);
-
-        final var fromSerial = serial.get() < fastForward ? new AtomicLong(fastForward) : serial;
-        final var catchupSQL = b.createSQL(fromSerial.get());
-        log.trace("{} catchup {} - facts starting with SER={}", req, phase, fromSerial.get());
-        log.trace("{} catchup {} - preparing temp table", req, phase);
-
-        final var isFromScratch = (fromSerial.get() <= 0);
-        final var timer = metrics.timer(StoreMetrics.OP.RESULT_STREAM_START, isFromScratch);
-        Timer.Sample sample = metrics.startSample();
-
-        int matches = jdbc.update(catchupSQL, b.createStatementSetter());
-        log.trace("{} catchup {} - Temp table has {} matching serials", req, phase, matches);
-        logIfAboveThreshold(Duration.ofNanos(sample.stop(timer)));
-
-        if (matches > 0) {
+        if (prepareTemporaryTable(jdbc, tempTableName) > 0) {
 
           final var extractor = new PgFactExtractor(serial);
 
-          String chunkQuery =
-              """
-with chunk as (
-    with serialsFromTemp as (
-        select ser from $TMP order by ser ASC limit $SIZE
-    )
-    delete from $TMP
-        where ser in (select ser from serialsFromTemp)
-    returning ser
-)
-select $PROJECTION from fact
-where ser in (select ser from chunk)
-order by ser ASC
-
-"""
-                  // don't want to mess with google formatting
-                  .replace("$PROJECTION", PgConstants.PROJECTION_FACT)
-                  .replace("$TMP", tempTableName)
-                  .replace("$SIZE", Integer.toString(props.getPageSize()));
+          String chunkQuery = prepareChunkQuery(tempTableName);
 
           int chunkCount = 0;
           int rowsToProcess = -1;
@@ -168,14 +132,57 @@ order by ser ASC
     }
   }
 
+  @NotNull
+  String prepareChunkQuery(String tempTableName) {
+    return """
+                with chunk as (
+                    with serialsFromTemp as (
+                        select ser from $TMP order by ser ASC limit $SIZE
+                    )
+                    delete from $TMP
+                        where ser in (select ser from serialsFromTemp)
+                    returning ser
+                )
+                select $PROJECTION from fact
+                where ser in (select ser from chunk)
+                order by ser ASC
+
+                """
+        // don't want to mess with google formatting
+        .replace("$PROJECTION", PgConstants.PROJECTION_FACT)
+        .replace("$TMP", tempTableName)
+        .replace("$SIZE", Integer.toString(props.getPageSize()));
+  }
+
+  int prepareTemporaryTable(JdbcTemplate jdbc, String tempTableName) {
+    createTempTable(jdbc, tempTableName);
+
+    final var b = new PgQueryBuilder(req.specs(), statementHolder);
+    b.moveSerialsToTempTable(tempTableName);
+
+    final var fromSerial = serial.get() < fastForward ? new AtomicLong(fastForward) : serial;
+    final var catchupSQL = b.createSQL(fromSerial.get());
+    log.trace("{} catchup {} - facts starting with SER={}", req, phase, fromSerial.get());
+    log.trace("{} catchup {} - preparing temp table", req, phase);
+
+    final var isFromScratch = (fromSerial.get() <= 0);
+    final var timer = metrics.timer(StoreMetrics.OP.RESULT_STREAM_START, isFromScratch);
+    Timer.Sample sample = metrics.startSample();
+
+    int matches = jdbc.update(catchupSQL, b.createStatementSetter());
+    log.trace("{} catchup {} - Temp table has {} matching serials", req, phase, matches);
+    logIfAboveThreshold(Duration.ofNanos(sample.stop(timer)));
+    return matches;
+  }
+
   @SuppressWarnings("java:S2077")
-  private void createTempTable(JdbcTemplate jdbc, String tempTableName) {
+  void createTempTable(JdbcTemplate jdbc, String tempTableName) {
     // the primary key is important here to get a btree for sorting
     jdbc.execute("create temp table " + tempTableName + " (ser bigint primary key)");
   }
 
   @SneakyThrows
-  private SingleConnectionDataSource createSingleDS(@NonNull DataSource ds) {
+  SingleConnectionDataSource createSingleDS(@NonNull DataSource ds) {
     Connection conn = ds.getConnection();
     return new SingleConnectionDataSource(conn, true) {
       @Override
@@ -190,7 +197,7 @@ order by ser ASC
     };
   }
 
-  private void logIfAboveThreshold(Duration elapsed) {
+  void logIfAboveThreshold(Duration elapsed) {
     if (elapsed.compareTo(FIRST_ROW_FETCHING_THRESHOLD) > 0) {
       log.info(
           "{} catchup - took {}s to find all the serials matching and store them in temp table",
