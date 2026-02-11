@@ -36,9 +36,13 @@ import org.springframework.jdbc.core.PreparedStatementSetter;
 @Slf4j
 public class PgQueryBuilder {
 
+  private static final String ORDER_BY = " ORDER BY ";
+  private static final String WHERE = " WHERE ";
+  private static final String FROM = " FROM ";
   private static final String AND = " AND ";
   private static final String OR = " OR ";
   public static final String CONTAINS_JSONB = " @> ?::jsonb ";
+
   private final @NonNull List<FactSpec> factSpecs;
   private final CurrentStatementHolder statementHolder;
   private String tempTableName = null;
@@ -231,9 +235,9 @@ public class PgQueryBuilder {
           + PgConstants.COLUMN_SER
           + ") SELECT "
           + PgConstants.COLUMN_SER
-          + " FROM "
+          + FROM
           + PgConstants.TABLE_FACT
-          + " WHERE "
+          + WHERE
           + createWhereClause()
           + AND
           + createSerialCriterionFor(serial);
@@ -242,28 +246,29 @@ public class PgQueryBuilder {
     } else
       return "SELECT "
           + PgConstants.PROJECTION_FACT
-          + " FROM "
+          + FROM
           + PgConstants.TABLE_FACT
-          + " WHERE "
+          + WHERE
           + createWhereClause()
           + AND
           + createSerialCriterionFor(serial)
-          + " ORDER BY "
+          + ORDER_BY
           + PgConstants.COLUMN_SER
           + " ASC";
   }
 
   public String createStateSQL(long serial) {
+
     String sql =
         "SELECT "
             + PgConstants.COLUMN_SER
-            + " FROM "
+            + FROM
             + PgConstants.TABLE_FACT
-            + " WHERE "
+            + WHERE
             + createWhereClause()
             + AND
             + createSerialCriterionFor(serial)
-            + " ORDER BY "
+            + ORDER_BY
             + PgConstants.COLUMN_SER
             + " DESC LIMIT 1";
     log.trace("creating state SQL for {} - SQL={}", factSpecs, sql);

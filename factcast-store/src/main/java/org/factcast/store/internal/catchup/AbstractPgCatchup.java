@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.internal.catchup.chunked;
+package org.factcast.store.internal.catchup;
 
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicLong;
@@ -22,11 +22,11 @@ import lombok.*;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgMetrics;
-import org.factcast.store.internal.catchup.*;
 import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 
 @RequiredArgsConstructor
+@SuppressWarnings("java:S107")
 public abstract class AbstractPgCatchup implements PgCatchup {
 
   public static final Duration FIRST_ROW_FETCHING_THRESHOLD = Duration.ofSeconds(1);
