@@ -39,7 +39,7 @@ import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
 @Slf4j
 public class PgChunkedCatchup extends AbstractPgCatchup {
-
+  @SuppressWarnings("java:S107")
   public PgChunkedCatchup(
       @NonNull StoreConfigurationProperties props,
       @NonNull PgMetrics metrics,

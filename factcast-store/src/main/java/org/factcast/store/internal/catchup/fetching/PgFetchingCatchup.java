@@ -40,7 +40,7 @@ import org.springframework.jdbc.core.RowCallbackHandler;
 
 @Slf4j
 public class PgFetchingCatchup extends AbstractPgCatchup {
-
+  @SuppressWarnings("java:S107")
   public PgFetchingCatchup(
       @NonNull StoreConfigurationProperties props,
       @NonNull PgMetrics metrics,
