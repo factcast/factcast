@@ -19,7 +19,6 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
@@ -52,7 +51,7 @@ public class PgQueryBuilder {
     this.statementHolder = holder;
   }
 
-  public PreparedStatementSetter createStatementSetter(@NonNull AtomicLong serial) {
+  public PreparedStatementSetter createStatementSetter() {
     return p -> {
       int count = 0;
       for (FactSpec spec : factSpecs) {
@@ -64,7 +63,6 @@ public class PgQueryBuilder {
         count = setMeta(p, count, spec);
         count = setMetaKeyExists(p, count, spec);
       }
-      p.setLong(++count, serial.get());
 
       if (statementHolder != null) {
         statementHolder.statement(p);
@@ -215,22 +213,33 @@ public class PgQueryBuilder {
           predicates.add(sb.toString());
         });
     String predicatesAsString = String.join(OR, predicates);
-    return "( " + predicatesAsString + " ) " + AND + PgConstants.COLUMN_SER + ">?";
+
+    // issue4328
+    // we don't want to parametrize the serial, so that PG is forced to recalculate the plan
+
+    return "( " + predicatesAsString + " ) ";
   }
 
-  public String createSQL() {
+  public String createSQL(long serial) {
     return "SELECT "
         + PgConstants.PROJECTION_FACT
         + " FROM "
         + PgConstants.TABLE_FACT
         + " WHERE "
         + createWhereClause()
+        // issue4328
+        //
+        + " AND "
+        + PgConstants.COLUMN_SER
+        + " > "
+        + serial
+        //
         + " ORDER BY "
         + PgConstants.COLUMN_SER
         + " ASC";
   }
 
-  public String createStateSQL() {
+  public String createStateSQL(long serial) {
     String sql =
         "SELECT "
             + PgConstants.COLUMN_SER
@@ -238,6 +247,13 @@ public class PgQueryBuilder {
             + PgConstants.TABLE_FACT
             + " WHERE "
             + createWhereClause()
+            // issue4328
+            //
+            + " AND "
+            + PgConstants.COLUMN_SER
+            + " > "
+            + serial
+            //
             + " ORDER BY "
             + PgConstants.COLUMN_SER
             + " DESC LIMIT 1";
