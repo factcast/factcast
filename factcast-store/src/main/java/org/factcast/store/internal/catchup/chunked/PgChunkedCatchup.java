@@ -27,7 +27,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.*;
-import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.pipeline.Signal;
@@ -39,28 +38,19 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
 @Slf4j
-@RequiredArgsConstructor
-public class PgChunkedCatchup implements PgCatchup {
+public class PgChunkedCatchup extends AbstractPgCatchup {
 
-  static final Duration FIRST_ROW_FETCHING_THRESHOLD = Duration.ofSeconds(1);
-
-  @NonNull final StoreConfigurationProperties props;
-
-  @NonNull final PgMetrics metrics;
-
-  @NonNull final SubscriptionRequestTO req;
-
-  @NonNull final ServerPipeline pipeline;
-
-  @NonNull final AtomicLong serial;
-
-  @NonNull final CurrentStatementHolder statementHolder;
-
-  @NonNull final DataSource ds;
-
-  @NonNull final PgCatchupFactory.Phase phase;
-
-  long fastForward = 0;
+  public PgChunkedCatchup(
+      @NonNull StoreConfigurationProperties props,
+      @NonNull PgMetrics metrics,
+      @NonNull SubscriptionRequestTO req,
+      @NonNull ServerPipeline pipeline,
+      @NonNull AtomicLong serial,
+      @NonNull CurrentStatementHolder statementHolder,
+      @NonNull DataSource ds,
+      PgCatchupFactory.@NonNull Phase phase) {
+    super(props, metrics, req, pipeline, serial, statementHolder, ds, phase);
+  }
 
   @SneakyThrows
   @Override
@@ -204,10 +194,5 @@ public class PgChunkedCatchup implements PgCatchup {
           req,
           elapsed.toSeconds());
     }
-  }
-
-  @Override
-  public void fastForward(long serialToStartFrom) {
-    this.fastForward = serialToStartFrom;
   }
 }
