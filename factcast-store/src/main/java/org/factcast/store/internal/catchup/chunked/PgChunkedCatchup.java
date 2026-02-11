@@ -91,9 +91,9 @@ public class PgChunkedCatchup implements PgCatchup {
 
         final var b = new PgQueryBuilder(req.specs(), statementHolder);
         b.moveSerialsToTempTable(tempTableName);
-        final var catchupSQL = b.createSQL();
 
         final var fromSerial = serial.get() < fastForward ? new AtomicLong(fastForward) : serial;
+        final var catchupSQL = b.createSQL(fromSerial.get());
         log.trace("{} catchup {} - facts starting with SER={}", req, phase, fromSerial.get());
         log.trace("{} catchup {} - preparing temp table", req, phase);
 
@@ -101,7 +101,7 @@ public class PgChunkedCatchup implements PgCatchup {
         final var timer = metrics.timer(StoreMetrics.OP.RESULT_STREAM_START, isFromScratch);
         Timer.Sample sample = metrics.startSample();
 
-        int matches = jdbc.update(catchupSQL, b.createStatementSetter(fromSerial));
+        int matches = jdbc.update(catchupSQL, b.createStatementSetter());
         log.trace("{} catchup {} - Temp table has {} matching serials", req, phase, matches);
 
         if (matches > 0) {
