@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.grpc.lz4;
+package org.factcast.grpc.snappy;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -21,14 +21,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.io.IOException;
 import org.junit.jupiter.api.Test;
 
-@SuppressWarnings("deprecation")
-class Lz4GrpcClientCodecTest {
+class SnappycGrpcCodecTest {
 
-  final Lz4GrpcClientCodec uut = new Lz4GrpcClientCodec();
+  final SnappycGrpcCodec uut = new SnappycGrpcCodec();
 
   @Test
   void getMessageEncoding() {
-    assertEquals("lz4", uut.getMessageEncoding());
+    assertEquals("snappyc", uut.getMessageEncoding());
   }
 
   @Test

@@ -100,7 +100,7 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
                   new GenericContainer<>("factcast/factcast:" + config.factcastVersion())
                       .withExposedPorts(FC_PORT)
                       .withFileSystemBind(config.configDir(), "/config/")
-                      .withEnv("grpc_server_port", String.valueOf(FC_PORT))
+                      .withEnv("spring_grpc_server_port", String.valueOf(FC_PORT))
                       .withEnv(
                           "factcast_security_enabled", String.valueOf(config.securityEnabled()))
                       .withEnv("factcast_grpc_bandwidth_disabled", "true")
@@ -129,7 +129,7 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
 
     ToxiproxyContainer.ContainerProxy fcProxy = containers.fcProxy().get();
     String address = "static://" + fcProxy.getContainerIpAddress() + ":" + fcProxy.getProxyPort();
-    System.setProperty("grpc.client.factstore.address", address);
+    System.setProperty("spring.grpc.client.channels.factstore.address", address);
 
     System.setProperty("spring.datasource.url", containers.db().getJdbcUrl());
     System.setProperty("spring.datasource.username", containers.db().getUsername());
