@@ -28,7 +28,7 @@ import org.factcast.core.subscription.observer.HighWaterMarkFetcher;
 import org.factcast.store.internal.listen.*;
 import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.pipeline.Signal;
-import org.factcast.store.internal.query.CurrentStatementHolder;
+import org.factcast.store.internal.query.*;
 import org.postgresql.util.PSQLException;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.*;
@@ -51,7 +51,7 @@ import org.springframework.jdbc.datasource.*;
 @Slf4j
 class PgSynchronizedQuery {
 
-  @NonNull final String sql;
+  final @NonNull PgQueryBuilder pgQueryBuilder;
 
   @NonNull final PreparedStatementSetter setter;
 
@@ -70,7 +70,7 @@ class PgSynchronizedQuery {
       @NonNull String debugInfo,
       @NonNull ServerPipeline pipe,
       @NonNull PgConnectionSupplier connectionSupplier,
-      @NonNull String sql,
+      @NonNull PgQueryBuilder pgQueryBuilder,
       @NonNull PreparedStatementSetter setter,
       @NonNull Supplier<Boolean> isConnected,
       @NonNull AtomicLong serialToContinueFrom,
@@ -81,7 +81,7 @@ class PgSynchronizedQuery {
     this.serialToContinueFrom = serialToContinueFrom;
     this.hwmFetcher = hwmFetcher;
     this.connectionSupplier = connectionSupplier;
-    this.sql = sql;
+    this.pgQueryBuilder = pgQueryBuilder;
     this.setter = setter;
     this.statementHolder = statementHolder;
 
@@ -98,6 +98,8 @@ class PgSynchronizedQuery {
     if (!useIndex) filters.add(ConnectionModifier.withBitmapScanDisabled());
     try (SingleConnectionDataSource ds = connectionSupplier.getPooledAsSingleDataSource(filters)) {
       long latest = hwmFetcher.highWaterMark(ds).targetSer();
+      // Recreate every time for now. Might be a bit to expensive.
+      String sql = pgQueryBuilder.createSQL(serialToContinueFrom.get());
       new JdbcTemplate(ds)
           .query(
               sql,
