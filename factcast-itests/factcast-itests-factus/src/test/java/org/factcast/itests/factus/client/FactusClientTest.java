@@ -74,7 +74,6 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
 
   @Autowired UserCount userCount;
   @Autowired RedissonClient redissonClient;
-  @Autowired private EventSerializer eventSerializer;
 
   @Test
   void differentNamespaces() {
@@ -1111,7 +1110,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
           Fact.builder().ns("test").type("UserCreated").id(new UUID(0, i)).buildWithoutPayload();
       factus.publish(f);
       // we'd like to be sure, we at least have two flushes, so we add some minor pauses.
-      if (i % 10 == 0) Thread.currentThread().sleep(10);
+      if (i % 10 == 0) Thread.sleep(10);
     }
 
     factus.waitFor(subscribedProjection, new UUID(0, 99), Duration.ofSeconds(5));
