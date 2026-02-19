@@ -13,7 +13,7 @@
   <name>${project.groupId}:${project.artifactId}</name>
   <properties>
     <!-- Pin your own Spring Boot version. -->
-    <spring-boot.version>3.5.11</spring-boot.version>
+    <spring-boot.version>4.0.3</spring-boot.version>
     <docker.image.prefix>factcast</docker.image.prefix>
   </properties>
   <dependencyManagement>
