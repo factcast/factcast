@@ -17,7 +17,6 @@ package org.factcast.store.internal.catchup.fetching;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.factcast.store.internal.catchup.fetching.PgFetchingCatchup.FIRST_ROW_FETCHING_THRESHOLD;
 import static org.mockito.Mockito.*;
 
 import io.micrometer.core.instrument.Counter;
@@ -32,6 +31,7 @@ import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.*;
 import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.StoreMetrics;
+import org.factcast.store.internal.catchup.AbstractPgCatchup;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.listen.*;
 import org.factcast.store.internal.pipeline.ServerPipeline;
@@ -288,7 +288,7 @@ class PgFetchingCatchupTest {
     void logsIfAboveThreshold() {
       try (LogCaptor logCaptor = LogCaptor.forClass(PgFetchingCatchup.class)) {
         final var tcbh = underTest.createTimedRowCallbackHandler(extractor, timer);
-        final var elapsed = FIRST_ROW_FETCHING_THRESHOLD.plusSeconds(5);
+        final var elapsed = AbstractPgCatchup.FIRST_ROW_FETCHING_THRESHOLD.plusSeconds(5);
         ResultSet rs = mock(ResultSet.class);
         when(timerSample.stop(timer)).thenReturn(elapsed.toNanos());
 

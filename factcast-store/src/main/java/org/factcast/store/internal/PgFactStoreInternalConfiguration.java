@@ -32,8 +32,8 @@ import net.javacrumbs.shedlock.support.KeepAliveLockProvider;
 import org.factcast.core.store.*;
 import org.factcast.core.subscription.observer.HighWaterMarkFetcher;
 import org.factcast.store.*;
+import org.factcast.store.internal.catchup.PgCatchUpFactoryImpl;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
-import org.factcast.store.internal.catchup.fetching.PgFetchingCatchUpFactory;
 import org.factcast.store.internal.check.IndexCheck;
 import org.factcast.store.internal.filter.blacklist.*;
 import org.factcast.store.internal.listen.*;
@@ -99,7 +99,7 @@ public class PgFactStoreInternalConfiguration {
 
   @Bean
   public PgCatchupFactory pgCatchupFactory(StoreConfigurationProperties props, PgMetrics metrics) {
-    return new PgFetchingCatchUpFactory(props, metrics);
+    return new PgCatchUpFactoryImpl(props, metrics);
   }
 
   @Bean
