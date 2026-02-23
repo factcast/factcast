@@ -228,7 +228,7 @@ public class PgQueryBuilder {
 
   public String createSQL(long serial) {
 
-    if (tempTableName != null) {
+    if (useTemporaryTable()) {
       return "INSERT INTO "
           + tempTableName
           + "("
@@ -241,7 +241,8 @@ public class PgQueryBuilder {
           + createWhereClause()
           + AND
           + createSerialCriterionFor(serial);
-      // we don't need the order by here, because it will be ordered when reading
+      // we don't need the order by here, because it will be ordered when reading from the temp
+      // table
 
     } else
       return "SELECT "
@@ -255,6 +256,10 @@ public class PgQueryBuilder {
           + ORDER_BY
           + PgConstants.COLUMN_SER
           + " ASC";
+  }
+
+  private boolean useTemporaryTable() {
+    return tempTableName != null;
   }
 
   public String createStateSQL(long serial) {
