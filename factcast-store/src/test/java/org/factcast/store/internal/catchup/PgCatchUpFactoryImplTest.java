@@ -38,7 +38,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class PgCatchUpFactoryImplTest {
 
-  @Mock StoreConfigurationProperties props;
+  @Mock(strictness = Mock.Strictness.LENIENT)
+  StoreConfigurationProperties props;
+
   @Mock PgMetrics metrics;
 
   @Mock SubscriptionRequestTO request;
