@@ -17,20 +17,38 @@ package org.factcast.itests.factus.client;
 
 import org.factcast.factus.snapshot.SnapshotCache;
 import org.factcast.itests.TestFactusApplication;
-import org.factcast.itests.factus.config.JdbcSnapshotCacheConfiguration;
+import org.factcast.itests.factus.config.MySqlJdbcSnapshotCacheConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.mysql.MySQLContainer;
 
-// TODO name POSTGRES
 @SpringBootTest
-@ContextConfiguration(classes = {TestFactusApplication.class, JdbcSnapshotCacheConfiguration.class})
+@ContextConfiguration(
+    classes = {TestFactusApplication.class, MySqlJdbcSnapshotCacheConfiguration.class})
 @DirtiesContext
-public class JdbcSnapshotCacheITest extends SnapshotCacheTest {
+public class MySqlJdbcSnapshotCacheITest extends SnapshotCacheTest {
+
+  @Container
+  static MySQLContainer mysql =
+      new MySQLContainer("mysql:8.4")
+          .withDatabaseName("testdb")
+          .withUsername("testuser")
+          .withPassword("testpass");
+
+  @DynamicPropertySource
+  static void mysqlProperties(DynamicPropertyRegistry registry) {
+    registry.add("spring.datasource.url", mysql::getJdbcUrl);
+    registry.add("spring.datasource.username", mysql::getUsername);
+    registry.add("spring.datasource.password", mysql::getPassword);
+  }
 
   @Autowired
-  public JdbcSnapshotCacheITest(SnapshotCache repository) {
+  public MySqlJdbcSnapshotCacheITest(SnapshotCache repository) {
     super(repository);
   }
 }

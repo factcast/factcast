@@ -51,7 +51,19 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
   @Override
   @SneakyThrows
   public void wipeExternalDataStore(TestContext ctx) {
-    erasePostgres(ctx.getApplicationContext().getBean(DataSource.class));
+    final DataSource dataSource = ctx.getApplicationContext().getBean(DataSource.class);
+    // there are few ITs that work with MySQL/Oracle
+    if (isPostgres(dataSource)) {
+      erasePostgres(dataSource);
+    }
+  }
+
+  public boolean isPostgres(DataSource dataSource) {
+    try (Connection c = dataSource.getConnection()) {
+      return "PostgreSQL".equalsIgnoreCase(c.getMetaData().getDatabaseProductName());
+    } catch (Exception e) {
+      throw new IllegalStateException("Failed to inspect DataSource", e);
+    }
   }
 
   @Override

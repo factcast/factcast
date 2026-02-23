@@ -123,7 +123,7 @@ CREATE TABLE IF NOT EXISTS factcast_snapshot
     last_fact_id           VARCHAR(36)  NOT NULL,
     bytes                  BLOB,
     snapshot_serializer_id VARCHAR(128) NOT NULL,
-    PRIMARY KEY (projection_class, aggregate_id)
+    UNIQUE KEY (projection_class, aggregate_id)
 );
 ```
 
@@ -139,7 +139,8 @@ CREATE TABLE factcast_snapshot
     last_fact_id           VARCHAR2(36)  NOT NULL,
     bytes                  BLOB,
     snapshot_serializer_id VARCHAR2(128) NOT NULL,
-    PRIMARY KEY (projection_class, aggregate_id)
+    CONSTRAINT uq_factcast_snapshot
+        UNIQUE (projection_class, aggregate_id)
 );
 ```
 

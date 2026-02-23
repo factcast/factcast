@@ -23,6 +23,8 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import javax.sql.DataSource;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -37,11 +39,15 @@ import org.factcast.factus.snapshot.SnapshotIdentifier;
 public class JdbcSnapshotCache implements SnapshotCache {
   public static final String VALIDATION_REGEX = "^\\w+$";
   public final String queryStatement;
-  public final String mergeStatement;
-  public final String updateLastAccessedStatement;
+  public final String snapshotUpdateStatement;
+  public final String snapshotInsertStatement;
+  public final String lastAccessedUpdateStatement;
+  public final String lastAccessedInsertStatement;
+
   public final String deleteStatement;
   public final String deleteLastAccessedStatement;
   private final DataSource dataSource;
+  private final Function<String, String> identifierNormalizer;
 
   private final ExecutorService lastAccessedUpdateExecutor =
       Executors.newSingleThreadExecutor(
@@ -66,31 +72,47 @@ public class JdbcSnapshotCache implements SnapshotCache {
             + tableName
             + " WHERE projection_class = ? AND aggregate_id = ?";
 
-    mergeStatement =
-        "MERGE INTO "
+    // part 1 of a replacement for a "MERGE INTO" snapshot which is not supported by all SQL flavors
+    snapshotUpdateStatement =
+        "UPDATE "
             + tableName
-            + " USING (VALUES (?, ?, ?, ?, ?)) as new (_projection_class, _aggregate_id, _last_fact_id, _bytes, _snapshot_serializer_id)"
-            + " ON projection_class=_projection_class AND aggregate_id=_aggregate_id"
-            + " WHEN MATCHED THEN"
-            + " UPDATE SET last_fact_id=_last_fact_id, bytes=_bytes, snapshot_serializer_id=_snapshot_serializer_id"
-            + " WHEN NOT MATCHED THEN"
-            + " INSERT VALUES (_projection_class, _aggregate_id, _last_fact_id, _bytes, _snapshot_serializer_id)";
+            + " SET last_fact_id = ?,"
+            + "    bytes = ?,"
+            + "    snapshot_serializer_id = ?"
+            + " WHERE projection_class = ?"
+            + "  AND aggregate_id = ?";
+
+    // part 2 of a replacement for a "MERGE INTO" snapshot which is not supported by all SQL flavors
+    snapshotInsertStatement =
+        " INSERT INTO "
+            + tableName
+            + " (projection_class, aggregate_id, last_fact_id, bytes, snapshot_serializer_id)"
+            + " VALUES (?, ?, ?, ?, ?)";
 
     deleteStatement =
         "DELETE FROM " + tableName + " WHERE projection_class = ? AND aggregate_id = ?";
 
-    updateLastAccessedStatement =
-        "MERGE INTO "
+    // part 1 of a replacement for a "MERGE INTO" lastAccessed which is not supported by all SQL
+    // flavors
+    lastAccessedUpdateStatement =
+        "UPDATE "
             + lastAccessedTableName
-            + " USING (SELECT ? AS _projection_class, ? AS _aggregate_id, ? as _last_accessed) AS new"
-            + " ON projection_class=_projection_class AND aggregate_id=_aggregate_id"
-            + " WHEN MATCHED AND last_accessed < _last_accessed THEN"
-            + " UPDATE SET last_accessed=_last_accessed"
-            + " WHEN NOT MATCHED THEN"
-            + " INSERT (projection_class, aggregate_id, last_accessed) VALUES (_projection_class, _aggregate_id, _last_accessed)";
+            + " SET last_accessed = ?"
+            + " WHERE projection_class = ?"
+            + "  AND aggregate_id = ?";
+
+    // part 2 of a replacement for a "MERGE INTO" lastAccessed which is not supported by all SQL
+    // flavors
+    lastAccessedInsertStatement =
+        " INSERT INTO "
+            + lastAccessedTableName
+            + " (projection_class, aggregate_id, last_accessed)"
+            + " VALUES (?, ?, ?)";
 
     deleteLastAccessedStatement =
         "DELETE FROM " + lastAccessedTableName + " WHERE projection_class = ? AND aggregate_id = ?";
+
+    identifierNormalizer = resolveIdentifierNormalizer();
 
     boolean snapTableExists = doesTableExist(tableName);
     boolean lastAccessedTableExists = doesTableExist(lastAccessedTableName);
@@ -125,11 +147,13 @@ public class JdbcSnapshotCache implements SnapshotCache {
   }
 
   @SneakyThrows
-  public boolean doesTableExist(String tableName) {
+  public boolean doesTableExist(@NonNull String tableName) {
     try (Connection connection = dataSource.getConnection();
         ResultSet rs =
-            connection.getMetaData().getTables(null, null, tableName, new String[] {"TABLE"})) {
-
+            connection
+                .getMetaData()
+                .getTables(
+                    null, null, identifierNormalizer.apply(tableName), new String[] {"TABLE"})) {
       return rs.next();
     }
   }
@@ -137,22 +161,31 @@ public class JdbcSnapshotCache implements SnapshotCache {
   @SneakyThrows
   public void validateColumns(String snapshotTableName, String lastAccessedTableName) {
     validateColumnsOnTable(
-        snapshotTableName,
+        identifierNormalizer.apply(snapshotTableName),
         Sets.newHashSet(
-            "projection_class", "aggregate_id", "last_fact_id", "bytes", "snapshot_serializer_id"));
+                "projection_class",
+                "aggregate_id",
+                "last_fact_id",
+                "bytes",
+                "snapshot_serializer_id")
+            .stream()
+            .map(identifierNormalizer)
+            .collect(Collectors.toSet()));
+
     validateColumnsOnTable(
-        lastAccessedTableName,
-        Sets.newHashSet("projection_class", "aggregate_id", "last_accessed"));
+        identifierNormalizer.apply(lastAccessedTableName),
+        Sets.newHashSet("projection_class", "aggregate_id", "last_accessed").stream()
+            .map(identifierNormalizer)
+            .collect(Collectors.toSet()));
   }
 
-  private void validateColumnsOnTable(String tableName, HashSet<String> columnsSet)
+  private void validateColumnsOnTable(String tableName, Set<String> columnsSet)
       throws SQLException {
     try (Connection connection = dataSource.getConnection();
         ResultSet columns = connection.getMetaData().getColumns(null, null, tableName, null)) {
 
       while (columns.next()) {
         String columnName = columns.getString("COLUMN_NAME");
-
         columnsSet.remove(columnName);
       }
       if (!columnsSet.isEmpty()) {
@@ -192,15 +225,38 @@ public class JdbcSnapshotCache implements SnapshotCache {
     return ScopedName.fromProjectionMetaData(id.projectionClass()).asString();
   }
 
-  /** Updates or creates the lastAccessed timestamp if it doesn't exist or equal today's' date. */
+  /** Updates or creates the lastAccessed timestamp if it doesn't exist or equal today's date. */
   @VisibleForTesting
   protected void updateLastAccessedTime(@NonNull SnapshotIdentifier id) {
     try (Connection connection = dataSource.getConnection();
-        PreparedStatement statement = connection.prepareStatement(updateLastAccessedStatement)) {
-      statement.setString(1, createKeyFor(id));
-      statement.setString(2, id.aggregateId() != null ? id.aggregateId().toString() : null);
-      statement.setTimestamp(3, Timestamp.valueOf(LocalDate.now().atStartOfDay()));
-      statement.executeUpdate();
+        PreparedStatement update = connection.prepareStatement(lastAccessedUpdateStatement);
+        PreparedStatement insert = connection.prepareStatement(lastAccessedInsertStatement)) {
+
+      // TODO sometimes nested (not: via find, yes: via store)!!!
+      connection.setAutoCommit(false);
+
+      final String projectionClass = createKeyFor(id);
+      final String aggIdOrNull = id.aggregateId() != null ? id.aggregateId().toString() : null;
+      final Timestamp nowAtStartOfDay = Timestamp.valueOf(LocalDate.now().atStartOfDay());
+
+      // try update first...
+      update.setTimestamp(1, nowAtStartOfDay);
+      update.setString(2, projectionClass);
+      update.setString(3, aggIdOrNull);
+
+      if (update.executeUpdate() == 0) {
+        // nothing to update? ... then just insert!
+        insert.setString(1, projectionClass);
+        insert.setString(2, aggIdOrNull);
+        insert.setTimestamp(3, nowAtStartOfDay);
+        if (insert.executeUpdate() == 0) {
+          connection.rollback();
+          throw new IllegalStateException(
+              "Failed to update last accessed time for snapshot: " + id);
+        }
+      }
+      // TODO sometimes nested!!! same as above
+      connection.commit();
     } catch (Exception e) {
       log.error("Failed to update last accessed time for snapshot {}", id, e);
     }
@@ -210,18 +266,40 @@ public class JdbcSnapshotCache implements SnapshotCache {
   @SneakyThrows
   public void store(@NonNull SnapshotIdentifier id, @NonNull SnapshotData snapshot) {
     try (Connection connection = dataSource.getConnection();
-        PreparedStatement statement = connection.prepareStatement(mergeStatement)) {
-      statement.setString(1, createKeyFor(id));
-      statement.setString(2, id.aggregateId() != null ? id.aggregateId().toString() : null);
-      statement.setString(3, snapshot.lastFactId().toString());
-      statement.setBytes(4, snapshot.serializedProjection());
-      statement.setString(5, snapshot.snapshotSerializerId().name());
-      if (statement.executeUpdate() == 0) {
-        throw new IllegalStateException(
-            "Failed to insert snapshot into database. SnapshotId: " + id);
-      } else {
-        updateLastAccessedTime(id);
+        PreparedStatement update = connection.prepareStatement(snapshotUpdateStatement);
+        PreparedStatement insert = connection.prepareStatement(snapshotInsertStatement)) {
+
+      connection.setAutoCommit(false);
+
+      final String lastFactId = snapshot.lastFactId().toString();
+      final byte[] bytes = snapshot.serializedProjection();
+      final String snapshotSerializerId = snapshot.snapshotSerializerId().name();
+      final String projectionClass = createKeyFor(id);
+      final String aggIdOrNull = id.aggregateId() != null ? id.aggregateId().toString() : null;
+
+      // try update first...
+      update.setString(1, lastFactId);
+      update.setBytes(2, bytes);
+      update.setString(3, snapshotSerializerId);
+      update.setString(4, projectionClass);
+      update.setString(5, aggIdOrNull);
+
+      if (update.executeUpdate() == 0) {
+        // nothing to update? ... then just insert!
+        insert.setString(1, projectionClass);
+        insert.setString(2, aggIdOrNull);
+        insert.setString(3, lastFactId);
+        insert.setBytes(4, bytes);
+        insert.setString(5, snapshotSerializerId);
+
+        if (insert.executeUpdate() == 0) {
+          connection.rollback();
+          throw new IllegalStateException(
+              "Failed to insert snapshot into database. SnapshotId: " + id);
+        }
       }
+      updateLastAccessedTime(id);
+      connection.commit();
     }
   }
 
@@ -249,6 +327,19 @@ public class JdbcSnapshotCache implements SnapshotCache {
       } finally {
         connection.setAutoCommit(previousAutoCommit);
       }
+    }
+  }
+
+  // TODO test
+  @SneakyThrows
+  @VisibleForTesting
+  Function<String, String> resolveIdentifierNormalizer() {
+    try (Connection connection = dataSource.getConnection()) {
+      if (connection.getMetaData().storesUpperCaseIdentifiers()) return String::toUpperCase;
+      if (connection.getMetaData().storesLowerCaseIdentifiers()) return String::toLowerCase;
+      log.debug(
+          "meta data identifiers stored neither in lower nor UPPER case, not using any modifying identity normalizer");
+      return s -> s;
     }
   }
 }
