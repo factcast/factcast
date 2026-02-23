@@ -281,7 +281,7 @@ public class PgQueryBuilder {
     return PgConstants.COLUMN_SER + " > " + serial;
   }
 
-  public void moveSerialsToTempTable(@NonNull String tempTableName) {
+  public void useTempTable(@NonNull String tempTableName) {
     this.tempTableName = tempTableName;
   }
 }

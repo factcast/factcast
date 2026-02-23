@@ -18,7 +18,6 @@ package org.factcast.store.internal.catchup.chunked;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
-import io.micrometer.core.instrument.Counter;
 import java.sql.*;
 import java.util.concurrent.atomic.*;
 import javax.sql.DataSource;
@@ -31,7 +30,7 @@ import org.factcast.store.internal.*;
 import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.listen.*;
-import org.factcast.store.internal.pipeline.ServerPipeline;
+import org.factcast.store.internal.pipeline.*;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -58,11 +57,8 @@ class PgChunkedCatchupTest {
   @NonNull
   PgMetrics metrics;
 
-  @Mock @NonNull Counter counter;
-
   @Mock @NonNull Connection c;
   @Mock @NonNull AtomicLong serial;
-  @Mock @NonNull PgConnectionSupplier connectionSupplier;
   @Mock SingleConnectionDataSource ds;
   @Mock PgCatchupFactory.Phase phase;
 
@@ -112,8 +108,7 @@ class PgChunkedCatchupTest {
 
       uut.run();
 
-      ArgumentCaptor<org.factcast.store.internal.pipeline.Signal> sigCap =
-          ArgumentCaptor.forClass(org.factcast.store.internal.pipeline.Signal.class);
+      ArgumentCaptor<Signal> sigCap = ArgumentCaptor.forClass(Signal.class);
       verify(pipeline).process(sigCap.capture());
       assertThat(sigCap.getValue().indicatesFlush()).isTrue();
     }

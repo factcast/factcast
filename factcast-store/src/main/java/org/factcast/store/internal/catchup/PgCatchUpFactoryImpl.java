@@ -22,7 +22,7 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.catchup.chunked.PgChunkedCatchup;
-import org.factcast.store.internal.catchup.fetching.PgFetchingCatchup;
+import org.factcast.store.internal.catchup.cursor.PgCursorCatchup;
 import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 
@@ -48,8 +48,7 @@ public class PgCatchUpFactoryImpl implements PgCatchupFactory {
 
     if (useChunked(phase)) {
       return new PgChunkedCatchup(props, metrics, request, pipeline, serial, holder, ds, phase);
-    } else
-      return new PgFetchingCatchup(props, metrics, request, pipeline, serial, holder, ds, phase);
+    } else return new PgCursorCatchup(props, metrics, request, pipeline, serial, holder, ds, phase);
   }
 
   private boolean useChunked(@NonNull PgCatchupFactory.Phase phase) {

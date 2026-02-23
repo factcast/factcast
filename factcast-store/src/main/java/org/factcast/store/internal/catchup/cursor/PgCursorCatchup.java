@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.internal.catchup.fetching;
+package org.factcast.store.internal.catchup.cursor;
 
 import com.google.common.annotations.VisibleForTesting;
 import io.micrometer.core.instrument.Timer;
@@ -39,9 +39,9 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowCallbackHandler;
 
 @Slf4j
-public class PgFetchingCatchup extends AbstractPgCatchup {
+public class PgCursorCatchup extends AbstractPgCatchup {
   @SuppressWarnings("java:S107")
-  public PgFetchingCatchup(
+  public PgCursorCatchup(
       @NonNull StoreConfigurationProperties props,
       @NonNull PgMetrics metrics,
       @NonNull SubscriptionRequestTO req,

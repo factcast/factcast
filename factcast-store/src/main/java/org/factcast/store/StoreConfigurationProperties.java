@@ -217,11 +217,11 @@ public class StoreConfigurationProperties implements InitializingBean {
   }
 
   public enum CatchupStrategy {
-    FETCHING,
+    CURSOR,
     CHUNKED
   }
 
-  CatchupStrategy catchupStrategy = CatchupStrategy.FETCHING;
+  CatchupStrategy catchupStrategy = CatchupStrategy.CURSOR;
 
   @Override
   public void afterPropertiesSet() throws Exception {

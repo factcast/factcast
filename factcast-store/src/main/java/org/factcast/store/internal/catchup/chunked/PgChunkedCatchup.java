@@ -33,7 +33,6 @@ import org.factcast.store.internal.pipeline.Signal;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.query.PgQueryBuilder;
 import org.factcast.store.internal.rowmapper.PgFactExtractor;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
@@ -122,38 +121,36 @@ public class PgChunkedCatchup extends AbstractPgCatchup {
     }
   }
 
-  @NotNull
-  String prepareChunkQuery(String tempTableName) {
+  @NonNull
+  String prepareChunkQuery(@NonNull String tempTableName) {
     return """
                 with chunk as (
                     with serialsFromTemp as (
-                        select ser from $TMP order by ser ASC limit $SIZE
+                        select ser from %s order by ser ASC limit %d
                     )
-                    delete from $TMP
+                    delete from %s
                         where ser in (select ser from serialsFromTemp)
                     returning ser
                 )
-                select $PROJECTION from fact
+                select %s from fact
                 where ser in (select ser from chunk)
                 order by ser ASC
 
                 """
         // don't want to mess with google formatting
-        .replace("$PROJECTION", PgConstants.PROJECTION_FACT)
-        .replace("$TMP", tempTableName)
-        .replace("$SIZE", Integer.toString(props.getPageSize()));
+        .formatted(tempTableName, props.getPageSize(), tempTableName, PgConstants.PROJECTION_FACT);
   }
 
   int prepareTemporaryTable(JdbcTemplate jdbc, String tempTableName) {
     createTempTable(jdbc, tempTableName);
 
     final var b = new PgQueryBuilder(req.specs(), statementHolder);
-    b.moveSerialsToTempTable(tempTableName);
+    b.useTempTable(tempTableName);
 
-    final var fromSerial = serial.get() < fastForward ? new AtomicLong(fastForward) : serial;
+    final var fromSerial = new AtomicLong(Math.max(serial.get(), fastForward));
     final var catchupSQL = b.createSQL(fromSerial.get());
     log.trace("{} catchup {} - facts starting with SER={}", req, phase, fromSerial.get());
-    log.trace("{} catchup {} - preparing temp table", req, phase);
+    log.trace("{} catchup {} - preparing temp table {}", req, phase, tempTableName);
 
     final var isFromScratch = (fromSerial.get() <= 0);
     final var timer = metrics.timer(StoreMetrics.OP.RESULT_STREAM_START, isFromScratch);
