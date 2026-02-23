@@ -26,6 +26,7 @@ import java.sql.*;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.function.UnaryOperator;
 import javax.sql.DataSource;
 import lombok.SneakyThrows;
 import nl.altindag.log.LogCaptor;
@@ -270,6 +271,7 @@ class JdbcSnapshotCacheTest {
   class WhenCrud {
     @Mock PreparedStatement preparedStatement;
     @Mock PreparedStatement lastAccessedPreparedStatement;
+    @Mock DatabaseMetaData metaData;
     private JdbcSnapshotCache jdbcSnapshotCache;
 
     @ProjectionMetaData(revision = 1L)
@@ -282,7 +284,8 @@ class JdbcSnapshotCacheTest {
     @SneakyThrows
     void setUp() {
       when(dataSource.getConnection()).thenReturn(connection);
-      when(connection.getMetaData().getTables(any(), any(), any(), any())).thenReturn(resultSet);
+      when(connection.getMetaData()).thenReturn(metaData);
+      when(metaData.getTables(any(), any(), any(), any())).thenReturn(resultSet);
       when(resultSet.next()).thenReturn(true);
 
       mockSnapshotTableColumns();
@@ -617,6 +620,55 @@ class JdbcSnapshotCacheTest {
               jdbcSnapshotCache.createKeyFor(SnapshotIdentifier.of(TestSnapshotProjection.class)))
           .isEqualTo(
               "org.factcast.core.snap.jdbc.JdbcSnapshotCacheTest$WhenCrud$TestSnapshotProjection_1");
+    }
+
+    @Nested
+    class WhenResolvingMetadataIdentifierNormalizer {
+
+      // unknown leave
+      // exception -> leave
+
+      @Test
+      @SneakyThrows
+      void storesLowerCase() {
+        when(metaData.storesLowerCaseIdentifiers()).thenReturn(true);
+
+        final UnaryOperator<String> normalizer = jdbcSnapshotCache.resolveIdentifierNormalizer();
+        assertThat(normalizer.apply("foo")).isEqualTo("foo");
+        assertThat(normalizer.apply("FOO")).isEqualTo("foo");
+        assertThat(normalizer.apply("FoO")).isEqualTo("foo");
+      }
+
+      @Test
+      @SneakyThrows
+      void storesUpperCase() {
+        when(metaData.storesUpperCaseIdentifiers()).thenReturn(true);
+
+        final UnaryOperator<String> normalizer = jdbcSnapshotCache.resolveIdentifierNormalizer();
+        assertThat(normalizer.apply("foo")).isEqualTo("FOO");
+        assertThat(normalizer.apply("FOO")).isEqualTo("FOO");
+        assertThat(normalizer.apply("FoO")).isEqualTo("FOO");
+      }
+
+      @Test
+      @SneakyThrows
+      void storesUnknown() {
+        final UnaryOperator<String> normalizer = jdbcSnapshotCache.resolveIdentifierNormalizer();
+        assertThat(normalizer.apply("foo")).isEqualTo("foo");
+        assertThat(normalizer.apply("FOO")).isEqualTo("FOO");
+        assertThat(normalizer.apply("FoO")).isEqualTo("FoO");
+      }
+
+      @Test
+      @SneakyThrows
+      void sqlExceptionWhileResolving() {
+        when(metaData.storesLowerCaseIdentifiers()).thenThrow(new SQLException("nope"));
+
+        final UnaryOperator<String> normalizer = jdbcSnapshotCache.resolveIdentifierNormalizer();
+        assertThat(normalizer.apply("foo")).isEqualTo("foo");
+        assertThat(normalizer.apply("FOO")).isEqualTo("FOO");
+        assertThat(normalizer.apply("FoO")).isEqualTo("FoO");
+      }
     }
   }
 
