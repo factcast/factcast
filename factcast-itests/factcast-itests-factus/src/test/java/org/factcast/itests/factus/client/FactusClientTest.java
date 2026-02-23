@@ -1087,4 +1087,46 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
       assertThat(callbacks).hasValue(0);
     }
   }
+
+  /**
+   * Testing, if a subscribed projection will receive duplicates. We check here if all events
+   * published are in fact consumed, and none of them pop up more than once.
+   */
+  @SneakyThrows
+  @Test
+  void issue4328_checkDuplicatesWithSubscribedProjection() throws InterruptedException {
+
+    DuplicateChecker subscribedProjection = new DuplicateChecker();
+
+    for (int i = 0; i < 10; i++) {
+      var f =
+          Fact.builder().ns("test").type("UserCreated").id(new UUID(0, i)).buildWithoutPayload();
+      factus.publish(f);
+    }
+    // then subscribe
+    factus.subscribe(subscribedProjection);
+
+    // then add plenty of facts while being subscribed, in order to trigger a fetch condensed
+    // queries and flushes to the client
+    for (int i = 10; i < 100; i++) {
+      var f =
+          Fact.builder().ns("test").type("UserCreated").id(new UUID(0, i)).buildWithoutPayload();
+      factus.publish(f);
+      // we'd like to be sure, we at least have two flushes, so we add some minor pauses.
+      if (i % 10 == 0) Thread.sleep(10);
+    }
+
+    UUID lastExpectedId = new UUID(0, 99);
+    factus.waitFor(subscribedProjection, lastExpectedId, Duration.ofSeconds(5));
+    assertThat(subscribedProjection.seen).hasSize(100);
+  }
+
+  static class DuplicateChecker extends LocalSubscribedProjection {
+    final Set<UUID> seen = new HashSet<>();
+
+    @HandlerFor(ns = "test", type = "UserCreated")
+    synchronized void apply(Fact f) {
+      if (!seen.add(f.id())) throw new IllegalStateException("duplicate");
+    }
+  }
 }
