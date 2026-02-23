@@ -1088,7 +1088,10 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
     }
   }
 
-  /** testing, if a subscribed projection will recieve duplicates. We check here if */
+  /**
+   * Testing, if a subscribed projection will receive duplicates. We check here if all events
+   * published are in fact consumed, and non of them pop up more than once.
+   */
   @SneakyThrows
   @Test
   void issue4328_checkDuplicatesWithSubscribedProjection() throws InterruptedException {
@@ -1113,8 +1116,9 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
       if (i % 10 == 0) Thread.sleep(10);
     }
 
-    factus.waitFor(subscribedProjection, new UUID(0, 99), Duration.ofSeconds(5));
-    assertThat(subscribedProjection.seen.size()).isEqualTo(100);
+    UUID lastExpectedId = new UUID(0, 99);
+    factus.waitFor(subscribedProjection, lastExpectedId, Duration.ofSeconds(5));
+    assertThat(subscribedProjection.seen).hasSize(100);
   }
 
   static class DuplicateChecker extends LocalSubscribedProjection {
