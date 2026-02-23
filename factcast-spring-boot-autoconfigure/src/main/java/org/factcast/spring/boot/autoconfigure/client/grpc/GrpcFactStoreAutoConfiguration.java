@@ -16,6 +16,7 @@
 package org.factcast.spring.boot.autoconfigure.client.grpc;
 
 import io.grpc.CompressorRegistry;
+import io.grpc.ManagedChannelBuilder;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import lombok.NonNull;
@@ -68,7 +69,8 @@ public class GrpcFactStoreAutoConfiguration {
   }
 
   @Bean
-  public GrpcChannelBuilderCustomizer retryChannelConfigurer() {
+  public <T extends ManagedChannelBuilder<T>>
+      GrpcChannelBuilderCustomizer<T> retryChannelConfigurer() {
     return (name, channelBuilder) -> channelBuilder.enableRetry().maxRetryAttempts(100);
   }
 

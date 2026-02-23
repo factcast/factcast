@@ -40,11 +40,4 @@ public class FactCastGrpcChannelFactoryImpl implements FactCastGrpcChannelFactor
   public Channel createChannel(@NonNull String name) {
     return cf.createChannel(name);
   }
-
-  @Override
-  public void close() {
-    // TODO issue4262
-    // might not be needed at all, the outer close was not called anyway
-    //  cf.close();
-  }
 }

@@ -4,6 +4,22 @@ type = "docs"
 weight = 100015
 +++
 
+## Upgrading to 0.10.0
+
+Version 0.10.0 switched from `net.devh:grpc-client-spring-boot-starter` to `org.springframework.grpc:spring-grpc-client-spring-boot-starter`.
+
+The following properties should be renamed accordingly:
+
+| Old Property                                     | New Property                                                     |
+| ------------------------------------------------ | ---------------------------------------------------------------- |
+| `grpc.client.factstore.address`                  | `spring.grpc.client.channels.factstore.address`                  |
+| `grpc.client.factstore.negotiation-type`         | `spring.grpc.client.channels.factstore.negotiation-type`         |
+| `grpc.client.factstore.enable-keep-alive`        | `spring.grpc.client.channels.factstore.enable-keep-alive`        |
+| `grpc.client.factstore.keep-alive-time`          | `spring.grpc.client.channels.factstore.keep-alive-time`          |
+| `grpc.client.factstore.keep-alive-without-calls` | `spring.grpc.client.channels.factstore.keep-alive-without-calls` |
+| `grpc.server.permit-keep-alive-without-calls`    | `spring.grpc.server.keep-alive.permit-without-calls`             |
+| `grpc.server.permit-keep-alive-time`             | `spring.grpc.server.keep-alive.permit-time`                      |
+
 ## Upgrading to 0.8.0
 
 Version 0.8.0 introduces changes to snapshot serialization, impacting the management of Redisson snapshots.
