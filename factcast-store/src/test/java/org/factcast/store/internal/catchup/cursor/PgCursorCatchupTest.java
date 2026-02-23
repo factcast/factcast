@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.internal.catchup.fetching;
+package org.factcast.store.internal.catchup.cursor;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.factcast.store.internal.catchup.fetching.PgFetchingCatchup.FIRST_ROW_FETCHING_THRESHOLD;
 import static org.mockito.Mockito.*;
 
 import io.micrometer.core.instrument.Counter;
@@ -32,6 +31,7 @@ import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.*;
 import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.StoreMetrics;
+import org.factcast.store.internal.catchup.AbstractPgCatchup;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.listen.*;
 import org.factcast.store.internal.pipeline.ServerPipeline;
@@ -50,7 +50,7 @@ import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
 @ExtendWith(MockitoExtension.class)
-class PgFetchingCatchupTest {
+class PgCursorCatchupTest {
 
   @Mock(strictness = Mock.Strictness.LENIENT)
   @NonNull
@@ -74,7 +74,7 @@ class PgFetchingCatchupTest {
   @Mock SingleConnectionDataSource ds;
   @Mock PgCatchupFactory.Phase phase;
 
-  @Spy @InjectMocks PgFetchingCatchup underTest;
+  @Spy @InjectMocks PgCursorCatchup underTest;
 
   @BeforeEach
   void setup() {}
@@ -88,7 +88,7 @@ class PgFetchingCatchupTest {
       when(req.debugInfo()).thenReturn("appName");
       var uut =
           spy(
-              new PgFetchingCatchup(
+              new PgCursorCatchup(
                   props,
                   metrics,
                   req,
@@ -107,7 +107,7 @@ class PgFetchingCatchupTest {
       when(req.debugInfo()).thenReturn("appName");
       var uut =
           spy(
-              new PgFetchingCatchup(
+              new PgCursorCatchup(
                   props,
                   metrics,
                   req,
@@ -286,9 +286,9 @@ class PgFetchingCatchupTest {
     @SneakyThrows
     @Test
     void logsIfAboveThreshold() {
-      try (LogCaptor logCaptor = LogCaptor.forClass(PgFetchingCatchup.class)) {
+      try (LogCaptor logCaptor = LogCaptor.forClass(PgCursorCatchup.class)) {
         final var tcbh = underTest.createTimedRowCallbackHandler(extractor, timer);
-        final var elapsed = FIRST_ROW_FETCHING_THRESHOLD.plusSeconds(5);
+        final var elapsed = AbstractPgCatchup.FIRST_ROW_FETCHING_THRESHOLD.plusSeconds(5);
         ResultSet rs = mock(ResultSet.class);
         when(timerSample.stop(timer)).thenReturn(elapsed.toNanos());
 

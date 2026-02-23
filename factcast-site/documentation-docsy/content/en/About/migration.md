@@ -190,8 +190,7 @@ _Please make sure you followed the migration guide if your current version is <0
   new namespace, so please adjust your projects accordingly.
 
 - Note that the default catchup strategy was changed from PAGED or TMPPAGED to FETCHING. Make sure your postgres does
-  not
-  timeout connections.
+  not timeout connections.
 
 #### Client
 

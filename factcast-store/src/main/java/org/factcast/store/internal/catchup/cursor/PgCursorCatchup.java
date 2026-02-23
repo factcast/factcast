@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.internal.catchup.fetching;
+package org.factcast.store.internal.catchup.cursor;
 
 import com.google.common.annotations.VisibleForTesting;
 import io.micrometer.core.instrument.Timer;
@@ -27,7 +27,7 @@ import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgFact;
 import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.StoreMetrics;
-import org.factcast.store.internal.catchup.PgCatchup;
+import org.factcast.store.internal.catchup.AbstractPgCatchup;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.pipeline.Signal;
@@ -39,28 +39,19 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowCallbackHandler;
 
 @Slf4j
-@RequiredArgsConstructor
-public class PgFetchingCatchup implements PgCatchup {
-
-  static final Duration FIRST_ROW_FETCHING_THRESHOLD = Duration.ofSeconds(1);
-
-  @NonNull final StoreConfigurationProperties props;
-
-  @NonNull final PgMetrics metrics;
-
-  @NonNull final SubscriptionRequestTO req;
-
-  @NonNull final ServerPipeline pipeline;
-
-  @NonNull final AtomicLong serial;
-
-  @NonNull final CurrentStatementHolder statementHolder;
-
-  @NonNull final DataSource ds;
-
-  @NonNull final PgCatchupFactory.Phase phase;
-
-  long fastForward = 0;
+public class PgCursorCatchup extends AbstractPgCatchup {
+  @SuppressWarnings("java:S107")
+  public PgCursorCatchup(
+      @NonNull StoreConfigurationProperties props,
+      @NonNull PgMetrics metrics,
+      @NonNull SubscriptionRequestTO req,
+      @NonNull ServerPipeline pipeline,
+      @NonNull AtomicLong serial,
+      @NonNull CurrentStatementHolder statementHolder,
+      @NonNull DataSource ds,
+      PgCatchupFactory.@NonNull Phase phase) {
+    super(props, metrics, req, pipeline, serial, statementHolder, ds, phase);
+  }
 
   @SneakyThrows
   @Override
@@ -131,10 +122,5 @@ public class PgFetchingCatchup implements PgCatchup {
         }
       }
     };
-  }
-
-  @Override
-  public void fastForward(long serialToStartFrom) {
-    this.fastForward = serialToStartFrom;
   }
 }

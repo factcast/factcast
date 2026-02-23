@@ -36,11 +36,16 @@ import org.springframework.jdbc.core.PreparedStatementSetter;
 @Slf4j
 public class PgQueryBuilder {
 
+  private static final String ORDER_BY = " ORDER BY ";
+  private static final String WHERE = " WHERE ";
+  private static final String FROM = " FROM ";
   private static final String AND = " AND ";
   private static final String OR = " OR ";
   public static final String CONTAINS_JSONB = " @> ?::jsonb ";
+
   private final @NonNull List<FactSpec> factSpecs;
   private final CurrentStatementHolder statementHolder;
+  private String tempTableName = null;
 
   public PgQueryBuilder(@NonNull List<FactSpec> specs) {
     factSpecs = specs;
@@ -222,30 +227,53 @@ public class PgQueryBuilder {
   }
 
   public String createSQL(long serial) {
-    return "SELECT "
-        + PgConstants.PROJECTION_FACT
-        + " FROM "
-        + PgConstants.TABLE_FACT
-        + " WHERE "
-        + createWhereClause()
-        + AND
-        + createSerialCriterionFor(serial)
-        + " ORDER BY "
-        + PgConstants.COLUMN_SER
-        + " ASC";
+
+    if (useTemporaryTable()) {
+      return "INSERT INTO "
+          + tempTableName
+          + "("
+          + PgConstants.COLUMN_SER
+          + ") SELECT "
+          + PgConstants.COLUMN_SER
+          + FROM
+          + PgConstants.TABLE_FACT
+          + WHERE
+          + createWhereClause()
+          + AND
+          + createSerialCriterionFor(serial);
+      // we don't need the order by here, because it will be ordered when reading from the temp
+      // table
+
+    } else
+      return "SELECT "
+          + PgConstants.PROJECTION_FACT
+          + FROM
+          + PgConstants.TABLE_FACT
+          + WHERE
+          + createWhereClause()
+          + AND
+          + createSerialCriterionFor(serial)
+          + ORDER_BY
+          + PgConstants.COLUMN_SER
+          + " ASC";
+  }
+
+  private boolean useTemporaryTable() {
+    return tempTableName != null;
   }
 
   public String createStateSQL(long serial) {
+
     String sql =
         "SELECT "
             + PgConstants.COLUMN_SER
-            + " FROM "
+            + FROM
             + PgConstants.TABLE_FACT
-            + " WHERE "
+            + WHERE
             + createWhereClause()
             + AND
             + createSerialCriterionFor(serial)
-            + " ORDER BY "
+            + ORDER_BY
             + PgConstants.COLUMN_SER
             + " DESC LIMIT 1";
     log.trace("creating state SQL for {} - SQL={}", factSpecs, sql);
@@ -256,5 +284,9 @@ public class PgQueryBuilder {
   // issue4328
   private static String createSerialCriterionFor(long serial) {
     return PgConstants.COLUMN_SER + " > " + serial;
+  }
+
+  public void useTempTable(@NonNull String tempTableName) {
+    this.tempTableName = tempTableName;
   }
 }
