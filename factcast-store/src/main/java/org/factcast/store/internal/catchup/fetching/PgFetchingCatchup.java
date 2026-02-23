@@ -73,8 +73,8 @@ public class PgFetchingCatchup extends AbstractPgCatchup {
     jdbc.setQueryTimeout(0); // disable query timeout
     final var b = new PgQueryBuilder(req.specs(), statementHolder);
     final var extractor = new PgFactExtractor(serial);
-    final var catchupSQL = b.createSQL(serial.get());
     final var fromSerial = serial.get() < fastForward ? new AtomicLong(fastForward) : serial;
+    final var catchupSQL = b.createSQL(fromSerial.get());
     final var isFromScratch = (fromSerial.get() <= 0);
     final var timer = metrics.timer(StoreMetrics.OP.RESULT_STREAM_START, isFromScratch);
     final var rowCallbackHandler = createTimedRowCallbackHandler(extractor, timer);
