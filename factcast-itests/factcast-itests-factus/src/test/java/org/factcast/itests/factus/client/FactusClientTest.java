@@ -1090,7 +1090,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
 
   /**
    * Testing, if a subscribed projection will receive duplicates. We check here if all events
-   * published are in fact consumed, and non of them pop up more than once.
+   * published are in fact consumed, and none of them pop up more than once.
    */
   @SneakyThrows
   @Test
