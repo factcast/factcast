@@ -19,12 +19,12 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.store.internal.PgConstants;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 
 /**
@@ -36,11 +36,16 @@ import org.springframework.jdbc.core.PreparedStatementSetter;
 @Slf4j
 public class PgQueryBuilder {
 
+  private static final String ORDER_BY = " ORDER BY ";
+  private static final String WHERE = " WHERE ";
+  private static final String FROM = " FROM ";
   private static final String AND = " AND ";
   private static final String OR = " OR ";
   public static final String CONTAINS_JSONB = " @> ?::jsonb ";
+
   private final @NonNull List<FactSpec> factSpecs;
   private final CurrentStatementHolder statementHolder;
+  private String tempTableName = null;
 
   public PgQueryBuilder(@NonNull List<FactSpec> specs) {
     factSpecs = specs;
@@ -52,7 +57,7 @@ public class PgQueryBuilder {
     this.statementHolder = holder;
   }
 
-  public PreparedStatementSetter createStatementSetter(@NonNull AtomicLong serial) {
+  public PreparedStatementSetter createStatementSetter() {
     return p -> {
       int count = 0;
       for (FactSpec spec : factSpecs) {
@@ -64,7 +69,6 @@ public class PgQueryBuilder {
         count = setMeta(p, count, spec);
         count = setMetaKeyExists(p, count, spec);
       }
-      p.setLong(++count, serial.get());
 
       if (statementHolder != null) {
         statementHolder.statement(p);
@@ -215,33 +219,74 @@ public class PgQueryBuilder {
           predicates.add(sb.toString());
         });
     String predicatesAsString = String.join(OR, predicates);
-    return "( " + predicatesAsString + " ) " + AND + PgConstants.COLUMN_SER + ">?";
+
+    // issue4328
+    // we don't want to parametrize the serial, so that PG is forced to recalculate the plan
+
+    return "( " + predicatesAsString + " ) ";
   }
 
-  public String createSQL() {
-    return "SELECT "
-        + PgConstants.PROJECTION_FACT
-        + " FROM "
-        + PgConstants.TABLE_FACT
-        + " WHERE "
-        + createWhereClause()
-        + " ORDER BY "
-        + PgConstants.COLUMN_SER
-        + " ASC";
+  public String createSQL(long serial) {
+
+    if (useTemporaryTable()) {
+      return "INSERT INTO "
+          + tempTableName
+          + "("
+          + PgConstants.COLUMN_SER
+          + ") SELECT "
+          + PgConstants.COLUMN_SER
+          + FROM
+          + PgConstants.TABLE_FACT
+          + WHERE
+          + createWhereClause()
+          + AND
+          + createSerialCriterionFor(serial);
+      // we don't need the order by here, because it will be ordered when reading from the temp
+      // table
+
+    } else
+      return "SELECT "
+          + PgConstants.PROJECTION_FACT
+          + FROM
+          + PgConstants.TABLE_FACT
+          + WHERE
+          + createWhereClause()
+          + AND
+          + createSerialCriterionFor(serial)
+          + ORDER_BY
+          + PgConstants.COLUMN_SER
+          + " ASC";
   }
 
-  public String createStateSQL() {
+  private boolean useTemporaryTable() {
+    return tempTableName != null;
+  }
+
+  public String createStateSQL(long serial) {
+
     String sql =
         "SELECT "
             + PgConstants.COLUMN_SER
-            + " FROM "
+            + FROM
             + PgConstants.TABLE_FACT
-            + " WHERE "
+            + WHERE
             + createWhereClause()
-            + " ORDER BY "
+            + AND
+            + createSerialCriterionFor(serial)
+            + ORDER_BY
             + PgConstants.COLUMN_SER
             + " DESC LIMIT 1";
     log.trace("creating state SQL for {} - SQL={}", factSpecs, sql);
     return sql;
+  }
+
+  @NotNull
+  // issue4328
+  private static String createSerialCriterionFor(long serial) {
+    return PgConstants.COLUMN_SER + " > " + serial;
+  }
+
+  public void useTempTable(@NonNull String tempTableName) {
+    this.tempTableName = tempTableName;
   }
 }

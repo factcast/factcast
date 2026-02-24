@@ -20,6 +20,56 @@ The following properties should be renamed accordingly:
 | `grpc.server.permit-keep-alive-without-calls`    | `spring.grpc.server.keep-alive.permit-without-calls`             |
 | `grpc.server.permit-keep-alive-time`             | `spring.grpc.server.keep-alive.permit-time`                      |
 
+## Upgrading to 0.9.14
+
+Version 0.9.14 introduces changes to the way `factcast-snapshotcache-jdbc` stores the `last_accessed` timestamps of
+snapshots. In case you are using this module, please follow the migration steps below.
+
+### Migration of the last_accessed timestamps
+
+_This only applies if you are already using `factcast-snapshotcache-jdbc` in your project._
+
+In previous versions, the `last_accessed` timestamp was stored together with the snapshot in the same table. As
+postgres copies the entire row on updates, updating the `last_accessed` field for every read of a snapshot causes the
+snapshot being copied frequently without any need. Therefore, the timestamp is now stored in a separate table.
+
+Analog to the initial creation of the snapshot table, please also create a new table for the `last_accessed` timestamps
+(as documented [here](/Usage/factus/projections/snapshots/snapshot-caching)).
+
+#### Transfer existing timestamps
+
+To migrate the existing timestamps to the new table, please execute the following SQL command (take into account that
+usage of the default table names is assumed here):
+
+```sql
+-- Examples provided in PSQL syntax, please adapt accordingly.
+
+-- For performance it might be best to drop the temp index if it was created before
+DROP INDEX IF EXISTS factcast_snapshot_last_accessed_index;
+
+-- migrate existing timestamps
+INSERT INTO factcast_snapshot_last_accessed(projection_class, aggregate_id, last_accessed)
+    (SELECT projection_class, aggregate_id, last_accessed::date FROM factcast_snapshot)
+ON CONFLICT DO NOTHING;
+-- should not happen, but you never know
+
+-- recreate index
+CREATE INDEX IF NOT EXISTS factcast_snapshot_last_accessed_index ON factcast_snapshot_last_accessed USING BTREE (last_accessed DESC);
+```
+
+If your table name differs from the default one, please provide it via the new application property with the name:
+`factcast.snapshot.jdbc.snapshotAccessTableName`.
+
+#### Cleanup
+
+At a later point in time, when the option to roll back to an older version of FactCast is no longer necessary, the
+deprecated field can be removed from the snapshot table by executing:
+
+```sql
+ALTER TABLE factcast_snapshot
+    DROP COLUMN last_accessed;
+```
+
 ## Upgrading to 0.8.0
 
 Version 0.8.0 introduces changes to snapshot serialization, impacting the management of Redisson snapshots.
@@ -156,8 +206,7 @@ _Please make sure you followed the migration guide if your current version is <0
   new namespace, so please adjust your projects accordingly.
 
 - Note that the default catchup strategy was changed from PAGED or TMPPAGED to FETCHING. Make sure your postgres does
-  not
-  timeout connections.
+  not timeout connections.
 
 #### Client
 

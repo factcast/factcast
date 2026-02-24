@@ -17,15 +17,14 @@ package org.factcast.core.snap.jdbc;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import java.sql.*;
 import java.time.LocalDate;
-import java.util.Optional;
-import java.util.Timer;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import javax.sql.DataSource;
 import lombok.SneakyThrows;
@@ -45,6 +44,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class JdbcSnapshotCacheTest {
+  public static final String TABLE_NAME = "table_snapshots";
+  public static final String LAST_ACCESSED_TABLE_NAME = "table_lastaccessed";
+
   @Mock DataSource dataSource;
 
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
@@ -56,25 +58,19 @@ class JdbcSnapshotCacheTest {
 
   @Nested
   class WhenCreatingTimer {
+
     @Test
     void createTimer() throws SQLException {
       when(dataSource.getConnection()).thenReturn(connection);
       when(connection.getMetaData().getTables(any(), any(), any(), any())).thenReturn(resultSet);
       when(resultSet.next()).thenReturn(true);
 
-      ResultSet columns = mock(ResultSet.class);
-      when(connection.getMetaData().getColumns(any(), any(), any(), any())).thenReturn(columns);
-      when(columns.next()).thenReturn(true, true, true, true, true, true, false);
-      when(columns.getString("COLUMN_NAME"))
-          .thenReturn(
-              "projection_class",
-              "aggregate_id",
-              "last_fact_id",
-              "bytes",
-              "snapshot_serializer_id",
-              "last_accessed");
+      JdbcSnapshotProperties properties = getJdbcSnapshotProperties();
 
-      JdbcSnapshotCache uut = new JdbcSnapshotCache(new JdbcSnapshotProperties(), dataSource);
+      mockSnapshotTableColumns();
+      mockLastAccessedTableColumns();
+
+      JdbcSnapshotCache uut = new JdbcSnapshotCache(properties, dataSource);
       Timer timer = uut.createTimer();
       assertThat(timer).isNotNull();
     }
@@ -85,71 +81,108 @@ class JdbcSnapshotCacheTest {
     @Test
     void test_invalidNameForTable() {
       JdbcSnapshotProperties properties =
-          new JdbcSnapshotProperties().setSnapshotTableName("name; drop table");
+          new JdbcSnapshotProperties()
+              .setSnapshotTableName("name; drop table")
+              .setSnapshotAccessTableName("valid");
       assertThatThrownBy(() -> new JdbcSnapshotCache(properties, dataSource))
           .isInstanceOf(IllegalArgumentException.class)
           .hasMessageContaining("Invalid table name");
     }
 
     @Test
-    void test_doNotCreateAndTableDoesntExist() throws SQLException {
+    void test_invalidNameForLastAccessedTable() {
+      JdbcSnapshotProperties properties =
+          new JdbcSnapshotProperties()
+              .setSnapshotTableName("valid")
+              .setSnapshotAccessTableName("name; drop table");
+      assertThatThrownBy(() -> new JdbcSnapshotCache(properties, dataSource))
+          .isInstanceOf(IllegalArgumentException.class)
+          .hasMessageContaining("Invalid table name");
+    }
+
+    @Test
+    void test_doNotCreate_tableDoesntExist() throws SQLException {
       when(dataSource.getConnection()).thenReturn(connection);
       when(connection.getMetaData().getTables(any(), any(), any(), any())).thenReturn(resultSet);
       when(resultSet.next()).thenReturn(false);
 
-      JdbcSnapshotProperties properties = new JdbcSnapshotProperties();
+      JdbcSnapshotProperties properties = getJdbcSnapshotProperties();
       assertThatThrownBy(() -> new JdbcSnapshotCache(properties, dataSource))
           .isInstanceOf(IllegalStateException.class)
           .hasMessageContaining("Snapshots table does not exist: ");
     }
 
     @Test
-    void test_doNotCreateAndTableIsNotValid() throws SQLException {
+    void test_doNotCreate_snapshotTableIsNotValid() throws SQLException {
       when(dataSource.getConnection()).thenReturn(connection);
       when(connection.getMetaData().getTables(any(), any(), any(), any())).thenReturn(resultSet);
       when(resultSet.next()).thenReturn(true);
 
       ResultSet columns = mock(ResultSet.class);
-      when(connection.getMetaData().getColumns(any(), any(), any(), any())).thenReturn(columns);
+      when(connection.getMetaData().getColumns(null, null, TABLE_NAME, null)).thenReturn(columns);
       when(columns.next()).thenReturn(true, false);
       when(columns.getString("COLUMN_NAME")).thenReturn("another");
 
-      JdbcSnapshotProperties properties = new JdbcSnapshotProperties();
+      JdbcSnapshotProperties properties = getJdbcSnapshotProperties();
       assertThatThrownBy(() -> new JdbcSnapshotCache(properties, dataSource))
           .isInstanceOf(IllegalStateException.class)
           .hasMessageContaining(
-              "Snapshot table schema is not compatible with Factus. Missing columns: ")
+              "Snapshot table schema is not compatible with Factus. Table "
+                  + TABLE_NAME
+                  + " is missing columns: ")
           .hasMessageContaining("projection_class")
           .hasMessageContaining("aggregate_id")
           .hasMessageContaining("last_fact_id")
           .hasMessageContaining("bytes")
-          .hasMessageContaining("snapshot_serializer_id")
+          .hasMessageContaining("snapshot_serializer_id");
+    }
+
+    @Test
+    void test_doNotCreate_lastAccessedTableIsNotValid() throws SQLException {
+      when(dataSource.getConnection()).thenReturn(connection);
+      when(connection.getMetaData().getTables(any(), any(), any(), any())).thenReturn(resultSet);
+      when(resultSet.next()).thenReturn(true);
+
+      mockSnapshotTableColumns();
+
+      ResultSet columns = mock(ResultSet.class);
+      when(connection.getMetaData().getColumns(null, null, LAST_ACCESSED_TABLE_NAME, null))
+          .thenReturn(columns);
+      when(columns.next()).thenReturn(true, false);
+      when(columns.getString("COLUMN_NAME")).thenReturn("another");
+
+      JdbcSnapshotProperties properties = getJdbcSnapshotProperties();
+      assertThatThrownBy(() -> new JdbcSnapshotCache(properties, dataSource))
+          .isInstanceOf(IllegalStateException.class)
+          .hasMessageContaining(
+              "Snapshot table schema is not compatible with Factus. Table "
+                  + LAST_ACCESSED_TABLE_NAME
+                  + " is missing columns: ")
+          .hasMessageContaining("projection_class")
+          .hasMessageContaining("aggregate_id")
           .hasMessageContaining("last_accessed");
     }
 
     @Test
-    void test_doNotCreateAndTableIsNotValid_oneColumnMissing() throws SQLException {
+    void test_doNotCreate_tableIsNotValid_oneColumnMissing() throws SQLException {
       when(dataSource.getConnection()).thenReturn(connection);
       when(connection.getMetaData().getTables(any(), any(), any(), any())).thenReturn(resultSet);
       when(resultSet.next()).thenReturn(true);
 
       ResultSet columns = mock(ResultSet.class);
       when(connection.getMetaData().getColumns(any(), any(), any(), any())).thenReturn(columns);
-      when(columns.next()).thenReturn(true, true, true, true, true, false);
+      when(columns.next()).thenReturn(true, true, true, true, false);
       when(columns.getString("COLUMN_NAME"))
-          .thenReturn(
-              "projection_class",
-              "aggregate_id",
-              "last_fact_id",
-              "bytes",
-              "snapshot_serializer_id");
+          .thenReturn("projection_class", "aggregate_id", "last_fact_id", "bytes");
 
-      JdbcSnapshotProperties properties = new JdbcSnapshotProperties();
+      JdbcSnapshotProperties properties = getJdbcSnapshotProperties();
       assertThatThrownBy(() -> new JdbcSnapshotCache(properties, dataSource))
           .isInstanceOf(IllegalStateException.class)
           .hasMessageContaining(
-              "Snapshot table schema is not compatible with Factus. Missing columns: ")
-          .hasMessageContaining("last_accessed");
+              "Snapshot table schema is not compatible with Factus. Table "
+                  + TABLE_NAME
+                  + " is missing columns: ")
+          .hasMessageContaining("snapshot_serializer_id");
     }
 
     @Test
@@ -158,23 +191,14 @@ class JdbcSnapshotCacheTest {
       when(connection.getMetaData().getTables(any(), any(), any(), any())).thenReturn(resultSet);
       when(resultSet.next()).thenReturn(true);
 
-      ResultSet columns = mock(ResultSet.class);
-      when(connection.getMetaData().getColumns(any(), any(), any(), any())).thenReturn(columns);
-      when(columns.next()).thenReturn(true, true, true, true, true, true, false);
-      when(columns.getString("COLUMN_NAME"))
-          .thenReturn(
-              "projection_class",
-              "aggregate_id",
-              "last_fact_id",
-              "bytes",
-              "snapshot_serializer_id",
-              "last_accessed");
+      mockSnapshotTableColumns();
+      mockLastAccessedTableColumns();
 
       LogCaptor logCaptor = LogCaptor.forClass(JdbcSnapshotCache.class);
 
       assertDoesNotThrow(
           () ->
-              new JdbcSnapshotCache(new JdbcSnapshotProperties(), dataSource) {
+              new JdbcSnapshotCache(getJdbcSnapshotProperties(), dataSource) {
                 @Override
                 protected Timer createTimer() {
                   return timer;
@@ -184,7 +208,7 @@ class JdbcSnapshotCacheTest {
       // make sure cleanup was scheduled
       verify(timer)
           .scheduleAtFixedRate(
-              argThat(a -> StaleSnapshotsTimerTask.class.isInstance(a)),
+              argThat(StaleSnapshotsTimerTask.class::isInstance),
               eq(0L),
               eq(TimeUnit.DAYS.toMillis(1)));
     }
@@ -195,21 +219,12 @@ class JdbcSnapshotCacheTest {
       when(connection.getMetaData().getTables(any(), any(), any(), any())).thenReturn(resultSet);
       when(resultSet.next()).thenReturn(true);
 
-      ResultSet columns = mock(ResultSet.class);
-      when(connection.getMetaData().getColumns(any(), any(), any(), any())).thenReturn(columns);
-      when(columns.next()).thenReturn(true, true, true, true, true, true, false);
-      when(columns.getString("COLUMN_NAME"))
-          .thenReturn(
-              "projection_class",
-              "aggregate_id",
-              "last_fact_id",
-              "bytes",
-              "snapshot_serializer_id",
-              "last_accessed");
+      mockSnapshotTableColumns();
+      mockLastAccessedTableColumns();
 
       LogCaptor logCaptor = LogCaptor.forClass(JdbcSnapshotCache.class);
 
-      JdbcSnapshotProperties properties = new JdbcSnapshotProperties();
+      JdbcSnapshotProperties properties = getJdbcSnapshotProperties();
       properties.setDeleteSnapshotStaleForDays(0);
       assertDoesNotThrow(
           () ->
@@ -230,21 +245,12 @@ class JdbcSnapshotCacheTest {
       when(connection.getMetaData().getTables(any(), any(), any(), any())).thenReturn(resultSet);
       when(resultSet.next()).thenReturn(true);
 
-      ResultSet columns = mock(ResultSet.class);
-      when(connection.getMetaData().getColumns(any(), any(), any(), any())).thenReturn(columns);
-      when(columns.next()).thenReturn(true, true, true, true, true, true, false);
-      when(columns.getString("COLUMN_NAME"))
-          .thenReturn(
-              "projection_class",
-              "aggregate_id",
-              "last_fact_id",
-              "bytes",
-              "snapshot_serializer_id",
-              "last_accessed");
+      mockSnapshotTableColumns();
+      mockLastAccessedTableColumns();
 
       LogCaptor logCaptor = LogCaptor.forClass(JdbcSnapshotCache.class);
 
-      JdbcSnapshotProperties properties = new JdbcSnapshotProperties();
+      JdbcSnapshotProperties properties = getJdbcSnapshotProperties();
       properties.setDeleteSnapshotStaleForDays(2);
       assertDoesNotThrow(
           () ->
@@ -263,6 +269,7 @@ class JdbcSnapshotCacheTest {
   @Nested
   class WhenCrud {
     @Mock PreparedStatement preparedStatement;
+    @Mock PreparedStatement lastAccessedPreparedStatement;
     private JdbcSnapshotCache jdbcSnapshotCache;
 
     @ProjectionMetaData(revision = 1L)
@@ -278,38 +285,32 @@ class JdbcSnapshotCacheTest {
       when(connection.getMetaData().getTables(any(), any(), any(), any())).thenReturn(resultSet);
       when(resultSet.next()).thenReturn(true);
 
-      ResultSet columns = mock(ResultSet.class);
-      when(connection.getMetaData().getColumns(any(), any(), any(), any())).thenReturn(columns);
-      when(columns.next()).thenReturn(true, true, true, true, true, true, false);
-      when(columns.getString("COLUMN_NAME"))
-          .thenReturn(
-              "projection_class",
-              "aggregate_id",
-              "last_fact_id",
-              "bytes",
-              "snapshot_serializer_id",
-              "last_accessed");
+      mockSnapshotTableColumns();
+      mockLastAccessedTableColumns();
       jdbcSnapshotCache =
           new JdbcSnapshotCache(
-              new JdbcSnapshotProperties().setDeleteSnapshotStaleForDays(0), dataSource);
+              getJdbcSnapshotProperties().setDeleteSnapshotStaleForDays(0), dataSource);
     }
 
     @Test
     @SneakyThrows
     void setSnapshot() {
       when(dataSource.getConnection()).thenReturn(connection);
-      when(connection.prepareStatement(any())).thenReturn(preparedStatement);
+      when(connection.prepareStatement(contains(TABLE_NAME))).thenReturn(preparedStatement);
+      when(connection.prepareStatement(contains(LAST_ACCESSED_TABLE_NAME)))
+          .thenReturn(lastAccessedPreparedStatement);
 
       SnapshotData snap =
           new SnapshotData(
               new byte[] {1, 2, 3}, SnapshotSerializerId.of("random"), UUID.randomUUID());
 
       when(preparedStatement.executeUpdate()).thenReturn(1);
+
+      // when
       jdbcSnapshotCache.store(SnapshotIdentifier.of(TestSnapshotProjection.class), snap);
 
       ArgumentCaptor<String> string = ArgumentCaptor.forClass(String.class);
       ArgumentCaptor<byte[]> bytes = ArgumentCaptor.forClass(byte[].class);
-      ArgumentCaptor<Timestamp> timestamp = ArgumentCaptor.forClass(Timestamp.class);
 
       verify(preparedStatement, times(4)).setString(any(Integer.class), string.capture());
       assertThat(string.getAllValues())
@@ -317,20 +318,35 @@ class JdbcSnapshotCacheTest {
               ScopedName.fromProjectionMetaData(TestSnapshotProjection.class).asString(),
               null,
               snap.lastFactId().toString(),
-              "random");
-
-      verify(preparedStatement, times(1)).setTimestamp(any(Integer.class), timestamp.capture());
-      assertThat(timestamp.getValue()).isEqualTo(Timestamp.valueOf(LocalDate.now().atStartOfDay()));
+              "random".toLowerCase(Locale.ROOT));
 
       verify(preparedStatement, times(1)).setBytes(any(Integer.class), bytes.capture());
       assertThat(bytes.getValue()).isEqualTo(snap.serializedProjection());
+
+      // Assert update of last accessed timestamp
+      ArgumentCaptor<String> lastAccessedKeys = ArgumentCaptor.forClass(String.class);
+      ArgumentCaptor<Timestamp> lastAccessedTimestamp = ArgumentCaptor.forClass(Timestamp.class);
+
+      verify(lastAccessedPreparedStatement).executeUpdate();
+      verify(lastAccessedPreparedStatement, times(2))
+          .setString(any(Integer.class), lastAccessedKeys.capture());
+      assertThat(lastAccessedKeys.getAllValues())
+          .containsExactly(
+              ScopedName.fromProjectionMetaData(TestSnapshotProjection.class).asString(), null);
+
+      verify(lastAccessedPreparedStatement, times(1))
+          .setTimestamp(any(Integer.class), lastAccessedTimestamp.capture());
+      assertThat(lastAccessedTimestamp.getValue())
+          .isEqualTo(Timestamp.valueOf(LocalDate.now().atStartOfDay()));
     }
 
     @Test
     @SneakyThrows
     void setSnapshot_fails() {
       when(dataSource.getConnection()).thenReturn(connection);
-      when(connection.prepareStatement(any())).thenReturn(preparedStatement);
+      when(connection.prepareStatement(contains(TABLE_NAME))).thenReturn(preparedStatement);
+      when(connection.prepareStatement(contains(LAST_ACCESSED_TABLE_NAME)))
+          .thenReturn(lastAccessedPreparedStatement);
 
       SnapshotData snap =
           new SnapshotData(
@@ -342,13 +358,16 @@ class JdbcSnapshotCacheTest {
       assertThatThrownBy(() -> jdbcSnapshotCache.store(id, snap))
           .isInstanceOf(IllegalStateException.class)
           .hasMessageContaining("Failed to insert snapshot into database. SnapshotId: ");
+      verifyNoInteractions(lastAccessedPreparedStatement);
     }
 
     @Test
     @SneakyThrows
     void clearSnapshot() {
       when(dataSource.getConnection()).thenReturn(connection);
-      when(connection.prepareStatement(any())).thenReturn(preparedStatement);
+      when(connection.prepareStatement(contains(TABLE_NAME))).thenReturn(preparedStatement);
+      when(connection.prepareStatement(contains(LAST_ACCESSED_TABLE_NAME)))
+          .thenReturn(lastAccessedPreparedStatement);
 
       jdbcSnapshotCache.remove(SnapshotIdentifier.of(TestSnapshotProjection.class));
 
@@ -360,15 +379,48 @@ class JdbcSnapshotCacheTest {
       assertThat(string.getAllValues())
           .containsExactly(
               ScopedName.fromProjectionMetaData(TestSnapshotProjection.class).asString(), null);
+
+      // Assert removal of last accessed timestamp
+      verify(lastAccessedPreparedStatement, times(1)).executeUpdate();
+      ArgumentCaptor<String> lastAccessedKeys = ArgumentCaptor.forClass(String.class);
+      verify(lastAccessedPreparedStatement, times(2))
+          .setString(any(Integer.class), lastAccessedKeys.capture());
+      verify(lastAccessedPreparedStatement, times(1)).executeUpdate();
+
+      assertThat(lastAccessedKeys.getAllValues())
+          .containsExactly(
+              ScopedName.fromProjectionMetaData(TestSnapshotProjection.class).asString(), null);
+
+      verify(connection).commit();
+    }
+
+    @Test
+    @SneakyThrows
+    void clearSnapshot_rollbackOnFailure() {
+      when(dataSource.getConnection()).thenReturn(connection);
+      when(connection.getAutoCommit()).thenReturn(true);
+      when(connection.prepareStatement(contains(TABLE_NAME))).thenReturn(preparedStatement);
+      when(connection.prepareStatement(contains(LAST_ACCESSED_TABLE_NAME)))
+          .thenReturn(lastAccessedPreparedStatement);
+      when(preparedStatement.executeUpdate()).thenThrow(new SQLException("failure"));
+
+      assertThatThrownBy(
+              () -> jdbcSnapshotCache.remove(SnapshotIdentifier.of(TestSnapshotProjection.class)))
+          .isInstanceOf(SQLException.class);
+
+      verify(connection).rollback();
+      verify(connection).setAutoCommit(true);
     }
 
     @Test
     @SneakyThrows
     void getSnapshot() {
       when(dataSource.getConnection()).thenReturn(connection);
-      when(connection.prepareStatement(any())).thenReturn(preparedStatement);
+      when(connection.prepareStatement(contains(TABLE_NAME))).thenReturn(preparedStatement);
       when(preparedStatement.executeQuery()).thenReturn(resultSet);
       when(resultSet.next()).thenReturn(true);
+      when(connection.prepareStatement(contains(LAST_ACCESSED_TABLE_NAME)))
+          .thenReturn(lastAccessedPreparedStatement);
 
       UUID lastFactId = UUID.randomUUID();
       byte[] bytes = {1, 2, 3};
@@ -378,8 +430,9 @@ class JdbcSnapshotCacheTest {
       when(resultSet.getString(3)).thenReturn(lastFactId.toString());
 
       JdbcSnapshotCache uut = spy(jdbcSnapshotCache);
-      doNothing().when(uut).updateLastAccessedTime(any());
       SnapshotIdentifier id = SnapshotIdentifier.of(TestSnapshotProjection.class);
+
+      // when
       SnapshotData snapshot = uut.find(id).get();
 
       assertThat(snapshot.lastFactId()).isEqualTo(lastFactId);
@@ -390,11 +443,28 @@ class JdbcSnapshotCacheTest {
 
       verify(preparedStatement, times(2)).setString(any(Integer.class), string.capture());
       verify(preparedStatement, times(1)).executeQuery();
-      verify(uut, times(1)).updateLastAccessedTime(id);
-
       assertThat(string.getAllValues())
           .containsExactly(
               ScopedName.fromProjectionMetaData(TestSnapshotProjection.class).asString(), null);
+
+      // Wait for async update of lastAccessed timestamp.
+      await()
+          .atMost(2, TimeUnit.SECONDS)
+          .untilAsserted(
+              () -> {
+                verify(uut, times(1)).updateLastAccessedTime(id);
+
+                ArgumentCaptor<String> lastAccessedKeys = ArgumentCaptor.forClass(String.class);
+                verify(lastAccessedPreparedStatement, times(2))
+                    .setString(any(Integer.class), lastAccessedKeys.capture());
+                verify(lastAccessedPreparedStatement, times(1)).executeUpdate();
+                assertThat(lastAccessedKeys.getAllValues())
+                    .containsExactly(
+                        ScopedName.fromProjectionMetaData(TestSnapshotProjection.class).asString(),
+                        null);
+
+                verify(lastAccessedPreparedStatement, times(1)).executeUpdate();
+              });
     }
 
     @Test
@@ -439,6 +509,30 @@ class JdbcSnapshotCacheTest {
           .isEqualTo(
               "org.factcast.core.snap.jdbc.JdbcSnapshotCacheTest$WhenCrud$TestSnapshotProjection_1");
     }
+  }
+
+  private static JdbcSnapshotProperties getJdbcSnapshotProperties() {
+    return new JdbcSnapshotProperties()
+        .setSnapshotTableName(TABLE_NAME)
+        .setSnapshotAccessTableName(LAST_ACCESSED_TABLE_NAME);
+  }
+
+  private void mockSnapshotTableColumns() throws SQLException {
+    ResultSet columns = mock(ResultSet.class);
+    when(connection.getMetaData().getColumns(null, null, TABLE_NAME, null)).thenReturn(columns);
+    when(columns.next()).thenReturn(true, true, true, true, true, false);
+    when(columns.getString("COLUMN_NAME"))
+        .thenReturn(
+            "projection_class", "aggregate_id", "last_fact_id", "bytes", "snapshot_serializer_id");
+  }
+
+  private void mockLastAccessedTableColumns() throws SQLException {
+    ResultSet columns = mock(ResultSet.class);
+    when(connection.getMetaData().getColumns(null, null, LAST_ACCESSED_TABLE_NAME, null))
+        .thenReturn(columns);
+    when(columns.next()).thenReturn(true, true, true, false);
+    when(columns.getString("COLUMN_NAME"))
+        .thenReturn("projection_class", "aggregate_id", "last_accessed");
   }
 
   @ProjectionMetaData(name = "hugo", revision = 1)

@@ -51,6 +51,7 @@ description: Properties you can use to configure FactCast
 | factcast.store.sizeOfThreadPoolForBufferedTransformations    | This is the number of threads we create for handling buffered transformations. It's implemented via work stealing thread pool. In early versions we used the common FJP which limits the parallelism to the number of cores - 1.                                                                                                                                                                                                                    | <nobr>25</nobr>                          |
 | factcast.store.readOnlyModeEnabled                           | Configures FactCast to work in read-only mode. You cannot publish any events in this mode and certain functionality like tail index generation or state token generation is disabled. You can still use a persistent schema store or transformation cache, however they will work in read-only mode. Additionally, liquibase is disabled.                                                                                                           | false                                    |
 | factcast.store.enumerationDirectModeEnabled                  | Despite of a Schema-Registry being defined or not, if set to true, enumeration of types or namespace will examine the data in the store directly, so that you only see data from already published facts.                                                                                                                                                                                                                                           | false                                    |
+| factcast.store.catchupStrategy                               | Available: CURSOR and CHUNKED. Cursor does the catchup query in one go and keeps the cursor open until the facts are sent to the client. Chunked runs queries limited to page-size rows instead.                                                                                                                                                                                                                                                    | CURSOR                                   |
 
 ---
 
@@ -78,10 +79,11 @@ description: Properties you can use to configure FactCast
 
 #### JDBC-Snapshots
 
-| Property                                          | Description                                                                                          | Default           |
-| ------------------------------------------------- | :--------------------------------------------------------------------------------------------------- | :---------------- |
-| factcast.snapshot.jdbc.deleteSnapshotStaleForDays | min number of days a snapshot is kept even though it is not read anymore. Must be a positive number. | 90                |
-| factcast.snapshot.jdbc.snapshotTableName          | optional name of the table for the snapshots. When not provided the default will be used             | factcast_snapshot |
+| Property                                          | Description                                                                                               | Default                         |
+| ------------------------------------------------- | :-------------------------------------------------------------------------------------------------------- | :------------------------------ |
+| factcast.snapshot.jdbc.deleteSnapshotStaleForDays | min number of days a snapshot is kept even though it is not read anymore. Must be a positive number.      | 90                              |
+| factcast.snapshot.jdbc.snapshotTableName          | optional name of the table for the snapshots. When not provided the default will be used                  | factcast_snapshot               |
+| factcast.snapshot.jdbc.snapshotAccessTableName    | optional name of the table for the snapshots access timestamp. When not provided the default will be used | factcast_snapshot_last_accessed |
 
 #### MongoDB-Snapshots
 

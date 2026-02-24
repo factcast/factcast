@@ -216,6 +216,13 @@ public class StoreConfigurationProperties implements InitializingBean {
     return schemaRegistryUrl != null;
   }
 
+  public enum CatchupStrategy {
+    CURSOR,
+    CHUNKED
+  }
+
+  CatchupStrategy catchupStrategy = CatchupStrategy.CURSOR;
+
   @Override
   public void afterPropertiesSet() throws Exception {
     if (integrationTestMode) {
