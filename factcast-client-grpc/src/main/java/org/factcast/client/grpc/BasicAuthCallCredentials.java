@@ -15,6 +15,7 @@
  */
 package org.factcast.client.grpc;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.grpc.CallCredentials;
 import io.grpc.Metadata;
 import java.nio.charset.StandardCharsets;
@@ -26,7 +27,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class BasicAuthCallCredentials extends CallCredentials {
 
-  private final String authorization;
+  @VisibleForTesting protected final String authorization;
 
   public static BasicAuthCallCredentials of(@NonNull String username, @NonNull String password) {
     String auth = username + ":" + password;
