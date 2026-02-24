@@ -202,7 +202,7 @@ public class JdbcSnapshotCache implements SnapshotCache {
     try (Connection connection = dataSource.getConnection();
         PreparedStatement statement = connection.prepareStatement(queryStatement)) {
       statement.setString(1, createKeyFor(id));
-      statement.setString(2, id.aggregateId() != null ? id.aggregateId().toString() : null);
+      statement.setString(2, id.aggIdAsStringOrNull());
       final ResultSet resultSet = statement.executeQuery();
       if (resultSet.next()) {
         SnapshotData snapshot =
@@ -232,7 +232,7 @@ public class JdbcSnapshotCache implements SnapshotCache {
         PreparedStatement insert = connection.prepareStatement(lastAccessedInsertStatement)) {
 
       final String classKey = createKeyFor(id);
-      final String aggIdOrNull = id.aggregateId() != null ? id.aggregateId().toString() : null;
+      final String aggIdOrNull = id.aggIdAsStringOrNull();
       final Timestamp startOfToday = Timestamp.valueOf(LocalDate.now().atStartOfDay());
 
       // try update first...
@@ -249,7 +249,7 @@ public class JdbcSnapshotCache implements SnapshotCache {
           log.error("Failed to update last accessed time for snapshot {}", id);
         }
       }
-    } catch (Exception e) {
+    } catch (SQLException e) {
       log.error("Failed to update last accessed time for snapshot {}", id, e);
     }
   }
@@ -257,58 +257,63 @@ public class JdbcSnapshotCache implements SnapshotCache {
   @Override
   public void store(@NonNull SnapshotIdentifier id, @NonNull SnapshotData snapshot) {
     try (Connection connection = dataSource.getConnection()) {
-      connection.setAutoCommit(false);
-
-      try (PreparedStatement update = connection.prepareStatement(snapshotUpdateStatement);
-          PreparedStatement insert = connection.prepareStatement(snapshotInsertStatement)) {
-
-        final String lastFactId = snapshot.lastFactId().toString();
-        final byte[] bytes = snapshot.serializedProjection();
-        final String snapshotSerializerId = snapshot.snapshotSerializerId().name();
-        final String classKey = createKeyFor(id);
-        final String aggIdOrNull = id.aggregateId() != null ? id.aggregateId().toString() : null;
-
-        // try update first...
-        update.setString(1, lastFactId);
-        update.setBytes(2, bytes);
-        update.setString(3, snapshotSerializerId);
-        update.setString(4, classKey);
-        update.setString(5, aggIdOrNull);
-        final double updated = update.executeUpdate();
-
-        if (updated == 0) {
-          // nothing to update? ... then just insert!
-          insert.setString(1, classKey);
-          insert.setString(2, aggIdOrNull);
-          insert.setString(3, lastFactId);
-          insert.setBytes(4, bytes);
-          insert.setString(5, snapshotSerializerId);
-          final int inserted = insert.executeUpdate();
-
-          if (inserted == 0) {
-            throw new IllegalStateException(
-                "Failed to insert snapshot into database. SnapshotId: " + id);
-          }
-        }
-        updateLastAccessedTime(id);
-        connection.commit();
-      } catch (Exception e) {
-        try {
-          connection.rollback();
-        } catch (SQLException sqlException) {
-          e.addSuppressed(sqlException);
-        }
-        throw e;
-      } finally {
-        try {
-          connection.setAutoCommit(true);
-        } catch (SQLException ignored) {
-          // what can you do...?
-        }
-      }
+      storeViaUpdateOrInsert(id, snapshot, connection);
     } catch (SQLException e) {
       throw new IllegalStateException(
           "Failed to insert snapshot into database. SnapshotId: " + id, e);
+    }
+  }
+
+  private void storeViaUpdateOrInsert(
+      SnapshotIdentifier id, SnapshotData snapshot, Connection connection) throws SQLException {
+    connection.setAutoCommit(false);
+
+    try (PreparedStatement update = connection.prepareStatement(snapshotUpdateStatement);
+        PreparedStatement insert = connection.prepareStatement(snapshotInsertStatement)) {
+
+      final String lastFactId = snapshot.lastFactId().toString();
+      final byte[] bytes = snapshot.serializedProjection();
+      final String snapshotSerializerId = snapshot.snapshotSerializerId().name();
+      final String classKey = createKeyFor(id);
+      final String aggIdOrNull = id.aggIdAsStringOrNull();
+
+      // try update first...
+      update.setString(1, lastFactId);
+      update.setBytes(2, bytes);
+      update.setString(3, snapshotSerializerId);
+      update.setString(4, classKey);
+      update.setString(5, aggIdOrNull);
+      final double updated = update.executeUpdate();
+
+      if (updated == 0) {
+        // nothing to update? ... then just insert!
+        insert.setString(1, classKey);
+        insert.setString(2, aggIdOrNull);
+        insert.setString(3, lastFactId);
+        insert.setBytes(4, bytes);
+        insert.setString(5, snapshotSerializerId);
+        final int inserted = insert.executeUpdate();
+
+        if (inserted == 0) {
+          throw new IllegalStateException(
+              "Failed to insert snapshot into database. SnapshotId: " + id);
+        }
+      }
+      updateLastAccessedTime(id);
+      connection.commit();
+    } catch (Exception e) {
+      try {
+        connection.rollback();
+      } catch (SQLException sqlException) {
+        e.addSuppressed(sqlException);
+      }
+      throw e;
+    } finally {
+      try {
+        connection.setAutoCommit(true);
+      } catch (SQLException ignored) {
+        // what can you do...?
+      }
     }
   }
 
@@ -322,7 +327,7 @@ public class JdbcSnapshotCache implements SnapshotCache {
           PreparedStatement lastAccessStatement =
               connection.prepareStatement(deleteLastAccessedStatement)) {
         final String key = createKeyFor(id);
-        final String aggId = id.aggregateId() != null ? id.aggregateId().toString() : null;
+        final String aggId = id.aggIdAsStringOrNull();
         snapshotStatement.setString(1, key);
         snapshotStatement.setString(2, aggId);
         snapshotStatement.executeUpdate();
