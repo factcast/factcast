@@ -625,9 +625,6 @@ class JdbcSnapshotCacheTest {
     @Nested
     class WhenResolvingMetadataIdentifierNormalizer {
 
-      // unknown leave
-      // exception -> leave
-
       @Test
       @SneakyThrows
       void storesLowerCase() {

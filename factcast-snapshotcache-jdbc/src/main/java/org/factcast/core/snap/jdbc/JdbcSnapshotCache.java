@@ -72,7 +72,7 @@ public class JdbcSnapshotCache implements SnapshotCache {
             + tableName
             + " WHERE projection_class = ? AND aggregate_id = ?";
 
-    // part 1 of a replacement for a "MERGE INTO" snapshot which is not supported by all SQL flavors
+    // for updating snapshots, "MERGE INTO" alternative part 1, to support more SQL flavors
     snapshotUpdateStatement =
         "UPDATE "
             + tableName
@@ -82,7 +82,7 @@ public class JdbcSnapshotCache implements SnapshotCache {
             + " WHERE projection_class = ?"
             + "  AND aggregate_id = ?";
 
-    // part 2 of a replacement for a "MERGE INTO" snapshot which is not supported by all SQL flavors
+    // for updating snapshots, "MERGE INTO" alternative part 2, to support more SQL flavors
     snapshotInsertStatement =
         " INSERT INTO "
             + tableName
@@ -92,8 +92,7 @@ public class JdbcSnapshotCache implements SnapshotCache {
     deleteStatement =
         "DELETE FROM " + tableName + " WHERE projection_class = ? AND aggregate_id = ?";
 
-    // part 1 of a replacement for a "MERGE INTO" lastAccessed which is not supported by all SQL
-    // flavors
+    // for updating lastAccessed, "MERGE INTO" alternative part 1, to support more SQL flavors
     lastAccessedUpdateStatement =
         "UPDATE "
             + lastAccessedTableName
@@ -101,8 +100,7 @@ public class JdbcSnapshotCache implements SnapshotCache {
             + " WHERE projection_class = ?"
             + "  AND aggregate_id = ?";
 
-    // part 2 of a replacement for a "MERGE INTO" lastAccessed which is not supported by all SQL
-    // flavors
+    // for updating lastAccessed, "MERGE INTO" alternative part 2, to support more SQL flavors
     lastAccessedInsertStatement =
         " INSERT INTO "
             + lastAccessedTableName
