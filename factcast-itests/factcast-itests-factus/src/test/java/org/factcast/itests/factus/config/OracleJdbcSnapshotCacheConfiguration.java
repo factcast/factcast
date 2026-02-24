@@ -34,7 +34,6 @@ public class OracleJdbcSnapshotCacheConfiguration {
     return new JdbcSnapshotProperties();
   }
 
-  // TODO add 2nd table+idx to docs
   @Bean
   public SnapshotCache snapshotCache(DataSource dataSource) {
     try (var connection = dataSource.getConnection();
