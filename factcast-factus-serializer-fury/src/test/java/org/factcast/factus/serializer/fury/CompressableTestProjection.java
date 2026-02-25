@@ -17,7 +17,6 @@ package org.factcast.factus.serializer.fury;
 
 import lombok.Data;
 import org.factcast.factus.projection.SnapshotProjection;
-import org.factcast.factus.serializer.fury.testjson.Root;
 
 @Data
 public class CompressableTestProjection implements SnapshotProjection {
@@ -30,5 +29,4 @@ public class CompressableTestProjection implements SnapshotProjection {
           + "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
           + "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
           + "Narf";
-  Root root;
 }

@@ -71,6 +71,7 @@
     <module>factcast-snapshotcache-mongodb</module>
     <module>factcast-factus-serializer-binary</module>
     <module>factcast-factus-serializer-fury</module>
+    <module>factcast-factus-serializer-fory</module>
   </modules>
   <scm>
     <connection>scm:git:git@github.com:factcast/factcast.git</connection>
