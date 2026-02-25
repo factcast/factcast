@@ -23,6 +23,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 import org.factcast.factus.serializer.*;
 import org.factcast.factus.serializer.binary.*;
+import org.factcast.factus.serializer.fory.*;
 import org.factcast.factus.serializer.fury.*;
 import org.springframework.core.io.ClassPathResource;
 
@@ -63,6 +64,8 @@ public class SerializerBenchmark {
             BinaryJacksonSnapshotSerializerCustomizer.defaultCustomizer()));
     benchmark("fury uncompressed", new FurySnapshotSerializer());
     benchmark("fury compressed", new LZ4FurySnapshotSerializer());
+    benchmark("fory uncompressed", new ForySnapshotSerializer());
+    benchmark("fory compressed", new LZ4ForySnapshotSerializer());
   }
 
   private static void benchmark(String title, SnapshotSerializer underTest) {
