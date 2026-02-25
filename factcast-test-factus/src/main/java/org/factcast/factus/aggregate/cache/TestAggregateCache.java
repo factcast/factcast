@@ -24,12 +24,12 @@ import org.factcast.factus.projection.*;
 import org.factcast.factus.projector.FactSpecProvider;
 
 @Slf4j
-public class TestAggregateCache<A extends Aggregate> extends AbstractAggregateCache<A> {
+public class TestAggregateCache<A extends Aggregate> extends DefaultAggregateCache<A> {
 
   private final List<UUID> trail = Collections.synchronizedList(new ArrayList<>());
 
-  public TestAggregateCache(@NonNull Factus factus, @NonNull FactSpecProvider factSpecProvider) {
-    super(factus, factSpecProvider);
+  public TestAggregateCache(@NonNull Class<A> aggregateType) {
+    super(aggregateType, c -> {});
   }
 
   public void clearTrail() {
@@ -37,12 +37,30 @@ public class TestAggregateCache<A extends Aggregate> extends AbstractAggregateCa
   }
 
   @Override
-  protected void invalidate(UUID uuid) {
+  public void invalidate(UUID uuid) {
     super.invalidate(uuid);
     synchronized (trail) {
       trail.add(uuid);
       trail.notifyAll();
     }
+  }
+
+  @Override
+  void invalidate(Set<UUID> uuids) {
+    super.invalidate(uuids);
+    synchronized (trail) {
+      trail.addAll(uuids);
+      trail.notifyAll();
+    }
+  }
+
+  @Override
+  public void invalidateAll() {
+    synchronized (trail) {
+      trail.addAll(cache.get().asMap().keySet());
+      trail.notifyAll();
+    }
+    super.invalidateAll();
   }
 
   public void waitForInvalidationOf(UUID uuid, Duration timeout)
@@ -72,4 +90,14 @@ public class TestAggregateCache<A extends Aggregate> extends AbstractAggregateCa
   }
 
   static class InvalidationTimeoutException extends RuntimeException {}
+
+  @Override
+  public void start(Factus factus, FactSpecProvider factSpecProvider) {
+    super.start(factus, factSpecProvider);
+  }
+
+  @Override
+  public void destroy() throws Exception {
+    super.destroy();
+  }
 }
