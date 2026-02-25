@@ -21,8 +21,8 @@ import com.fasterxml.jackson.core.StreamReadFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import org.assertj.core.api.Assertions;
-import org.factcast.factus.serializer.fury.testjson.*;
 import org.junit.jupiter.api.*;
+import testjson.*;
 
 class FurySnapshotSerializerTest {
 

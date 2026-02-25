@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2020 factcast.org
+ * Copyright © 2017-2024 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.serializer.fury;
+package testjson;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import lombok.Data;
-import org.factcast.factus.projection.SnapshotProjection;
 
 @Data
-public class TestProjection implements SnapshotProjection {
-  @JsonProperty String foo = "bar";
-  testjson.Root root;
+@JsonAutoDetect
+public class RedditVideo {
+
+  public int bitrate_kbps;
+
+  public String fallback_url;
+
+  public boolean has_audio;
+
+  public int height;
+
+  public int width;
+
+  public String scrubber_media_url;
+
+  public String dash_url;
+
+  public int duration;
+
+  public String hls_url;
+
+  public boolean is_gif;
+
+  public String transcoding_status;
 }

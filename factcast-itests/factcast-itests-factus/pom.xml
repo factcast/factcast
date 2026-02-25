@@ -115,10 +115,13 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-jdbc</artifactId>
     </dependency>
-
     <dependency>
       <groupId>org.factcast</groupId>
-      <artifactId>factcast-factus-bin-snapser</artifactId>
+      <artifactId>factcast-factus-serializer-binary</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.factcast</groupId>
+      <artifactId>factcast-factus-serializer-fury</artifactId>
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>

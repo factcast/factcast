@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.serializer.fury;
+package org.factcast.itests.factus.snapshot.serializer;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
