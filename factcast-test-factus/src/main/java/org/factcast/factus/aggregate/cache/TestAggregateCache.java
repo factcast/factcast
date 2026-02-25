@@ -22,9 +22,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.Factus;
 import org.factcast.factus.projection.*;
 import org.factcast.factus.projector.FactSpecProvider;
+import org.springframework.beans.factory.DisposableBean;
 
 @Slf4j
-public class TestAggregateCache<A extends Aggregate> extends DefaultAggregateCache<A> {
+public class TestAggregateCache<A extends Aggregate> extends DefaultAggregateCache<A>
+    implements DisposableBean {
 
   private final List<UUID> trail = Collections.synchronizedList(new ArrayList<>());
 
