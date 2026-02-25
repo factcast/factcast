@@ -24,7 +24,8 @@ import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 
 class ComplexExampleTest {
 
-  final String serializedWithFory15 = "AP8dLAT/qGTxmHV3OibRQCmIEp6KAU6S1IkUAWjJI6K6OBYE9E5j1kv0lwMesgAOdFypQerrP3gADAAB8hO6jkz/EG5hcmb/WgEM/3sAAAAAAAAAABAAAAAAAAD/XAEM/3sAAAAAAAAAABAAAAAAAAD/ZQEEAR0DHAT0TmPWS/SXAx6yc7KgQPZHK3MtfHgf1+LimhMzjLb/ewAAAAAAAAAAEAAAAAAAAP9sGRkLBfwsQJXNIUGzc6w=";
+  final String serializedWithFory15 =
+"AP8dLAT/qGTxmHV3OibRQCmIEp6KAU6S1IkUAWjJI6K6OBYE9E5j1kv0lwMesgAOdFypQerrP3gADAAB8hO6jkz/EG5hcmb/WgEM/3sAAAAAAAAAABAAAAAAAAD/XAEM/3sAAAAAAAAAABAAAAAAAAD/ZQEEAR0DHAT0TmPWS/SXAx6yc7KgQPZHK3MtfHgf1+LimhMzjLb/ewAAAAAAAAAAEAAAAAAAAP9sGRkLBfwsQJXNIUGzc6w=";
   final String serializedWithJackson =
       "{\"b\":true,\"s\":12,\"i\":623517,\"d\":0.872345763,\"l\":1273,\"c\":\"x\",\"txt\":\"narf\",\"list\":[{\"uuid\":\"00000000-0000-007b-0000-000000001000\"}],\"set\":[{\"uuid\":\"00000000-0000-007b-0000-000000001000\"}],\"map\":{\"1f787c2d-732b-47f6-b68c-33139ae2e2d7\":{\"uuid\":\"00000000-0000-007b-0000-000000001000\"}},\"bd\":0.7235481762346872364823468}";
 
