@@ -372,6 +372,7 @@ class PgTransformationCacheTest {
       underTest.registerWrite(TransformationCache.Key.of(UUID.randomUUID(), 1, "someChainId"), f);
       assertThat(underTest.buffer().size()).isOne();
 
+      Mockito.reset(jdbcTemplate);
       underTest.compact(THRESHOLD_DATE);
 
       // we should not have tried to compact due to readonly setting
