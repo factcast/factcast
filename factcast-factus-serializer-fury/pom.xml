@@ -12,6 +12,9 @@
   <!-- deprecated, kept for compatibility -->
   <artifactId>factcast-factus-serializer-fury</artifactId>
   <name>${project.groupId}:${project.artifactId}</name>
+  <description>This module is deprecated and scheduled for removal,
+    please use factcast-factus-serializer-fory
+    instead.</description>
   <properties>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
