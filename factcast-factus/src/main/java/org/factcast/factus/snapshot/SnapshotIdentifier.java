@@ -52,4 +52,9 @@ public class SnapshotIdentifier {
   public static SnapshotIdentifier from(@NonNull Aggregate agg) {
     return new SnapshotIdentifier(agg.getClass(), AggregateUtil.aggregateId(agg));
   }
+
+  @Nullable
+  public String aggIdAsStringOrNull() {
+    return aggregateId() != null ? aggregateId().toString() : null;
+  }
 }

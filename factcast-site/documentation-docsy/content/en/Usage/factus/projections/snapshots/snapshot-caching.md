@@ -123,27 +123,53 @@ CREATE TABLE IF NOT EXISTS factcast_snapshot
     last_fact_id           VARCHAR(36)  NOT NULL,
     bytes                  BLOB,
     snapshot_serializer_id VARCHAR(128) NOT NULL,
-    PRIMARY KEY (projection_class, aggregate_id)
+    UNIQUE KEY (projection_class, aggregate_id)
 );
 ```
 
-As well as a second table to store the timestamps of the last access per snapshot (see postgresql variant above).
+As well as a second table to store the timestamps of the last access per snapshot.
+
+```sql
+CREATE TABLE IF NOT EXISTS factcast_snapshot_last_accessed
+(
+    projection_class VARCHAR(512) NOT NULL,
+    aggregate_id VARCHAR(36) NULL,
+    last_accessed DATE NOT NULL DEFAULT (CURRENT_DATE),
+    UNIQUE KEY (projection_class, aggregate_id)
+);
+
+CREATE INDEX factcast_snapshot_last_accessed_index ON factcast_snapshot_last_accessed (last_accessed) USING BTREE;
+```
 
 **Oracle**
 
 ```sql
 CREATE TABLE factcast_snapshot
 (
-    projection_class       VARCHAR2(512) NOT NULL,
-    aggregate_id           VARCHAR2(36)  NULL,
-    last_fact_id           VARCHAR2(36)  NOT NULL,
-    bytes                  BLOB,
+    projection_class VARCHAR2(512) NOT NULL,
+    aggregate_id VARCHAR2(36) NULL,
+    last_fact_id VARCHAR2(36) NOT NULL,
+    bytes BLOB,
     snapshot_serializer_id VARCHAR2(128) NOT NULL,
-    PRIMARY KEY (projection_class, aggregate_id)
+    CONSTRAINT uq_factcast_snapshot
+        UNIQUE (projection_class, aggregate_id)
 );
 ```
 
-As well as a second table to store the timestamps of the last access per snapshot (see postgresql variant above).
+As well as a second table to store the timestamps of the last access per snapshot.
+
+```sql
+CREATE TABLE IF NOT EXISTS factcast_snapshot_last_accessed
+(
+    projection_class VARCHAR2(512),
+    aggregate_id VARCHAR2(36) NULL,
+    last_accessed DATE DEFAULT SYSDATE NOT NULL,
+    CONSTRAINT uq_factcast_snapshot_last_accessed
+        UNIQUE (projection_class, aggregate_id)
+);
+
+CREATE INDEX factcast_snapshot_last_accessed_index ON factcast_snapshot_last_accessed (last_accessed);
+```
 
 For further details, see the [JDBC Properties]({{< ref "/setup/properties#jdbc-snapshots">}}).
 
