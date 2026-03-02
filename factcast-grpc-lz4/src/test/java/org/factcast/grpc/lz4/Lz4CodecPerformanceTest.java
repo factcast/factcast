@@ -25,6 +25,6 @@ class Lz4CodecPerformanceTest extends AbstractCompressionPerformanceTest {
 
   @Override
   protected Codec getCodecToTest() {
-    return new Lz4GrpcClientCodec();
+    return new Lz4GrpcCodec();
   }
 }

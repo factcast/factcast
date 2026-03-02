@@ -18,17 +18,20 @@ package org.factcast.grpc.api;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import io.grpc.CompressorRegistry;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class CompressionCodecsTest {
 
+  @Spy private CompressorRegistry compressorRegistry = CompressorRegistry.getDefaultInstance();
   @InjectMocks private CompressionCodecs underTest;
 
   @Nested

@@ -24,6 +24,6 @@ class SnappycCodecPerformanceTest extends AbstractCompressionPerformanceTest {
 
   @Override
   protected Codec getCodecToTest() {
-    return new SnappycGrpcClientCodec();
+    return new SnappycGrpcCodec();
   }
 }

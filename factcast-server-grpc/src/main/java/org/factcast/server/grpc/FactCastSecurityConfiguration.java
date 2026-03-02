@@ -15,16 +15,17 @@
  */
 package org.factcast.server.grpc;
 
+import static org.springframework.security.config.Customizer.withDefaults;
+
 import java.util.Collections;
 import lombok.Generated;
 import lombok.extern.slf4j.Slf4j;
-import net.devh.boot.grpc.server.autoconfigure.GrpcServerSecurityAutoConfiguration;
-import net.devh.boot.grpc.server.security.authentication.BasicGrpcAuthenticationReader;
-import net.devh.boot.grpc.server.security.authentication.GrpcAuthenticationReader;
 import org.factcast.server.security.auth.FactCastSecurityProperties;
-import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.grpc.server.GlobalServerInterceptor;
+import org.springframework.grpc.server.security.AuthenticationProcessInterceptor;
+import org.springframework.grpc.server.security.GrpcSecurity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.ProviderManager;
@@ -39,20 +40,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @Generated
 @Configuration
 @EnableMethodSecurity(securedEnabled = true, proxyTargetClass = true)
-@AutoConfigureBefore(GrpcServerSecurityAutoConfiguration.class)
 public class FactCastSecurityConfiguration {
-
-  @Bean
-  GrpcAuthenticationReader authenticationReader(FactCastSecurityProperties p) {
-    if (p.isEnabled()) {
-      return new BasicGrpcAuthenticationReader();
-    }
-
-    UsernamePasswordAuthenticationToken disabled =
-        new UsernamePasswordAuthenticationToken("security_disabled", "security_disabled");
-    return (call, headers) -> disabled;
-  }
-
   @Bean
   AuthenticationProvider authenticationProvider(
       UserDetailsService uds, PasswordEncoder passwordEncoder) {
@@ -65,5 +53,26 @@ public class FactCastSecurityConfiguration {
   @Bean
   AuthenticationManager authenticationManager(AuthenticationProvider p) {
     return new ProviderManager(Collections.singletonList(p));
+  }
+
+  @Bean
+  @GlobalServerInterceptor
+  AuthenticationProcessInterceptor authenticationProcessInterceptor(
+      GrpcSecurity grpc,
+      FactCastSecurityProperties p,
+      AuthenticationProvider authenticationProvider)
+      throws Exception {
+    if (p.isEnabled()) {
+      return grpc.authorizeRequests(requests -> requests.allRequests().authenticated())
+          .httpBasic(withDefaults())
+          .authenticationProvider(authenticationProvider)
+          .build();
+    }
+
+    return grpc.authorizeRequests(requests -> requests.allRequests().authenticated())
+        .authenticationExtractor(
+            (headers, attributes, method) ->
+                new UsernamePasswordAuthenticationToken("security_disabled", "security_disabled"))
+        .build();
   }
 }

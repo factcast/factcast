@@ -4,6 +4,29 @@ type = "docs"
 weight = 100015
 +++
 
+## Upgrading to 0.10.0
+
+Version 0.10.0 switched from `net.devh:grpc-client-spring-boot-starter` to `org.springframework.grpc:spring-grpc-client-spring-boot-starter`.
+
+The following properties (documented for factcast) should be renamed accordingly:
+
+| Old Property                                     | New Property                                                     | Notes |
+| ------------------------------------------------ | ---------------------------------------------------------------- | ----- |
+| `grpc.client.factstore.address`                  | `spring.grpc.client.channels.factstore.address`                  |       |
+| `grpc.client.factstore.negotiation-type`         | `spring.grpc.client.channels.factstore.negotiation-type`         |       |
+| `grpc.client.factstore.enable-keep-alive`        | `spring.grpc.client.channels.factstore.enable-keep-alive`        |       |
+| `grpc.client.factstore.keep-alive-time`          | `spring.grpc.client.channels.factstore.keep-alive-time`          |       |
+| `grpc.client.factstore.keep-alive-without-calls` | `spring.grpc.client.channels.factstore.keep-alive-without-calls` |       |
+| `grpc.server.permit-keep-alive-without-calls`    | `spring.grpc.server.keep-alive.permit-without-calls`             |       |
+| `grpc.server.permit-keep-alive-time`             | `spring.grpc.server.keep-alive.permit-time`                      |       |
+
+For every other property previously made available by `net.devh:grpc-client-spring-boot-starter`, follow the rule of thumb:
+
+- `grpc.client.factstore.*` becomes `spring.grpc.client.channels.factstore.*`
+- `grpc.server.*` becomes `spring.grpc.server.*`
+
+Check the [spring-grpc documentation](https://docs.spring.io/spring-grpc/reference/appendix.html) for more details.
+
 ## Upgrading to 0.9.14
 
 Version 0.9.14 introduces changes to the way `factcast-snapshotcache-jdbc` stores the `last_accessed` timestamps of

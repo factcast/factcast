@@ -19,7 +19,8 @@ import io.grpc.Channel;
 import io.grpc.ClientInterceptor;
 import java.util.List;
 import lombok.NonNull;
-import net.devh.boot.grpc.client.channelfactory.GrpcChannelFactory;
+import org.springframework.grpc.client.ChannelBuilderOptions;
+import org.springframework.grpc.client.GrpcChannelFactory;
 
 public class FactCastGrpcChannelFactoryImpl implements FactCastGrpcChannelFactory {
 
@@ -32,16 +33,11 @@ public class FactCastGrpcChannelFactoryImpl implements FactCastGrpcChannelFactor
   @Override
   public Channel createChannel(
       @NonNull String name, @NonNull List<ClientInterceptor> interceptors) {
-    return cf.createChannel(name, interceptors);
+    return cf.createChannel(name, ChannelBuilderOptions.defaults().withInterceptors(interceptors));
   }
 
   @Override
   public Channel createChannel(@NonNull String name) {
     return cf.createChannel(name);
-  }
-
-  @Override
-  public void close() {
-    cf.close();
   }
 }

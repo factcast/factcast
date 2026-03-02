@@ -19,9 +19,9 @@ import io.grpc.Channel;
 import io.grpc.ClientInterceptor;
 import io.grpc.ManagedChannel;
 import java.util.List;
-import net.devh.boot.grpc.client.channelfactory.GrpcChannelFactory;
+import org.springframework.grpc.client.GrpcChannelFactory;
 
-public interface FactCastGrpcChannelFactory extends AutoCloseable {
+public interface FactCastGrpcChannelFactory {
 
   /**
    * Creates a new channel for the given service name. The returned channel will use all globally

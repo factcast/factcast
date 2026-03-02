@@ -194,7 +194,7 @@ Before writing your first integration test
   an `application.properties` file in the project's `resources` directory with the following content:
 
 ```
-grpc.client.factstore.negotiationType=PLAINTEXT
+spring.grpc.client.channels.factstore.negotiation-type=PLAINTEXT
 ```
 
 This will make the client application connect to the server without using TLS.
