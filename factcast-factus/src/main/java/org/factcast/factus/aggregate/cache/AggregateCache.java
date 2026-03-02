@@ -21,10 +21,17 @@ import lombok.NonNull;
 import org.factcast.factus.projection.Aggregate;
 
 public interface AggregateCache<A extends Aggregate> {
+
   @Nullable
   A get(@NonNull UUID id);
 
   void put(@NonNull UUID id, @NonNull A aggregate);
 
   Class<A> aggregateType();
+
+  void invalidateAll();
+
+  void invalidate(UUID id);
+
+  long size();
 }
