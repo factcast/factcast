@@ -33,6 +33,7 @@ import org.factcast.core.spec.*;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.*;
 import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.util.FactCastJson;
 import org.junit.jupiter.api.*;
 import org.mockito.Mockito;
 
@@ -1296,6 +1297,9 @@ public abstract class AbstractFactStoreTest {
 
     @Override
     public void onNext(Fact element) {
+      // for debugging a flaky test, we include the output here
+      System.out.println(FactCastJson.writeValueAsPrettyString(element));
+
       values.add(element);
     }
 
