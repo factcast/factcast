@@ -76,13 +76,11 @@ public class PostprocessToCollectionRecipe extends Recipe {
         JavaType type = typeExpr != null ? typeExpr.getType() : null;
         // This filters out primitives, arrays or empties
         return type instanceof JavaType.FullyQualified
-            && "java.util.List"
-                .equals(((JavaType.FullyQualified) type).getFullyQualifiedName());
+            && "java.util.List".equals(((JavaType.FullyQualified) type).getFullyQualifiedName());
       }
 
       private TypeTree replaceListWithCollection(TypeTree typeExpr) {
-        JavaType.ShallowClass collectionType =
-            JavaType.ShallowClass.build("java.util.Collection");
+        JavaType.ShallowClass collectionType = JavaType.ShallowClass.build("java.util.Collection");
 
         if (typeExpr instanceof J.AnnotatedType) {
           J.AnnotatedType annotated = (J.AnnotatedType) typeExpr;
@@ -104,9 +102,7 @@ public class PostprocessToCollectionRecipe extends Recipe {
               .withType(updatedType);
         }
         if (typeExpr instanceof J.Identifier) {
-          return ((J.Identifier) typeExpr)
-              .withSimpleName("Collection")
-              .withType(collectionType);
+          return ((J.Identifier) typeExpr).withSimpleName("Collection").withType(collectionType);
         }
         return typeExpr;
       }
