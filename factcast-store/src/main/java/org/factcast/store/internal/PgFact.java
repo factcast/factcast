@@ -62,14 +62,16 @@ public class PgFact implements Fact {
 
     // twice as fast as going through deser.
     // note that meta is materialized lazily
-    UUID id = UUID.fromString(header.path("id").toString());
-    String ns = header.path("ns").toString();
-    String type = header.path("type").toString();
+    UUID id = UUID.fromString(header.path("id").asText());
+    String ns = header.path("ns").asText();
+    String type = header.path("type").asText();
+    ;
     int version = header.path("version").asInt();
     ArrayNode aggIdsNode = (ArrayNode) header.path("aggIds");
     Set<UUID> aggIds =
         Lists.newArrayList(aggIdsNode).stream()
-            .map(n -> UUID.fromString(n.toString()))
+            .map(JsonNode::asText)
+            .map(UUID::fromString)
             .collect(Collectors.toSet());
     // this might be reasonable to turn to lazy, some day
     String jsonHeader = header.toString();

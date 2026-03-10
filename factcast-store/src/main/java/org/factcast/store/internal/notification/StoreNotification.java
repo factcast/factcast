@@ -126,7 +126,7 @@ public abstract class StoreNotification {
   }
 
   private static String getString(@NonNull JsonNode root, @NonNull String name) {
-    return root.get(name).toString();
+    return root.get(name).asText();
   }
 
   private static UUID getUUID(@NonNull JsonNode root, @NonNull String name) {
