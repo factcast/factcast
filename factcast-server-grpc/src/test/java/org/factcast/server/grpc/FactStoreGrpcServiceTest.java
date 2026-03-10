@@ -250,7 +250,10 @@ public class FactStoreGrpcServiceTest {
   static class TestToken extends TestingAuthenticationToken {
 
     public TestToken(FactCastUser principal) {
-      super("GOD", principal, AuthorityUtils.createAuthorityList(FactCastAuthority.AUTHENTICATED));
+      super(
+          principal,
+          principal,
+          AuthorityUtils.createAuthorityList(FactCastAuthority.AUTHENTICATED));
     }
 
     @Serial private static final long serialVersionUID = 1L;
@@ -259,7 +262,7 @@ public class FactStoreGrpcServiceTest {
   static class TokenWithoutPrincipal extends TestingAuthenticationToken {
 
     public TokenWithoutPrincipal() {
-      super("BR0KEN", null, AuthorityUtils.createAuthorityList(FactCastAuthority.AUTHENTICATED));
+      super(null, null, AuthorityUtils.createAuthorityList(FactCastAuthority.AUTHENTICATED));
     }
 
     @Serial private static final long serialVersionUID = 1L;
