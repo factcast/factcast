@@ -64,11 +64,11 @@ class JsTransformerTest {
 
     var result = uut.transform(transformation, om.convertValue(data, JsonNode.class));
 
-    Assertions.assertThat(result.get("displayName").toString()).isEqualTo("Hugo 38");
+    Assertions.assertThat(result.get("displayName").asText()).isEqualTo("Hugo 38");
     Assertions.assertThat(result.get("hobbies").isArray()).isTrue();
-    Assertions.assertThat(result.get("hobbies").get(0).toString()).isEqualTo("foo");
+    Assertions.assertThat(result.get("hobbies").get(0).asText()).isEqualTo("foo");
     Assertions.assertThat(result.get("childMap").get("anotherHobbies").isArray()).isTrue();
-    Assertions.assertThat(result.get("childMap").get("anotherHobbies").get(0).toString())
+    Assertions.assertThat(result.get("childMap").get("anotherHobbies").get(0).asText())
         .isEqualTo("bar");
   }
 
@@ -130,8 +130,8 @@ class JsTransformerTest {
       JsonNode n1 = result1.get();
       JsonNode n2 = result2.get();
 
-      assertThat(n1.get("x").toString()).isEqualTo("1");
-      assertThat(n2.get("x").toString()).isEqualTo("2");
+      assertThat(n1.get("x").asText()).isEqualTo("1");
+      assertThat(n2.get("x").asText()).isEqualTo("2");
     } finally {
       executor.shutdown();
     }
@@ -164,10 +164,10 @@ class JsTransformerTest {
       JsonNode n1 = result1.get();
       JsonNode n2 = result2.get();
 
-      assertThat(n1.get("y").toString()).isEqualTo("1");
-      assertThat(n1.get("foo").get("bar").toString()).isEqualTo("1");
-      assertThat(n2.get("y").toString()).isEqualTo("2");
-      assertThat(n2.get("foo").get("bar").toString()).isEqualTo("2");
+      assertThat(n1.get("y").asText()).isEqualTo("1");
+      assertThat(n1.get("foo").get("bar").asText()).isEqualTo("1");
+      assertThat(n2.get("y").asText()).isEqualTo("2");
+      assertThat(n2.get("foo").get("bar").asText()).isEqualTo("2");
     } finally {
       executor.shutdown();
     }

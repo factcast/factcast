@@ -37,7 +37,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Captor;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -58,7 +57,7 @@ class SnapshotDiskRepositoryImplTest {
 
   @Nested
   class WhenCrud {
-    @Captor private LogCaptor logCaptor = LogCaptor.forClass(SnapshotDiskRepositoryImpl.class);
+    private LogCaptor logCaptor = LogCaptor.forClass(SnapshotDiskRepositoryImpl.class);
 
     @BeforeEach
     void setup() {

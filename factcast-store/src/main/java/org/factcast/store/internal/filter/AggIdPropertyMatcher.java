@@ -67,7 +67,7 @@ public final class AggIdPropertyMatcher implements PGFactMatcher {
         }
       }
       // string comparison is twice as fast, compared to parsing a UUID
-      if (!v.toString().equals(payload.toString())) {
+      if (!v.toString().equals(payload.asText())) {
         return false;
       }
     }
