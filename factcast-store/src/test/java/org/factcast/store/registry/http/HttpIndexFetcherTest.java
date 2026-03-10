@@ -102,7 +102,9 @@ public class HttpIndexFetcherTest {
     OkHttpClient client = mock(OkHttpClient.class);
     when(client.newCall(any())).thenReturn(call);
 
-    uut = new HttpIndexFetcher(URI.create("http://ibm.com").toURL(), client, mock(RegistryMetrics.class));
+    uut =
+        new HttpIndexFetcher(
+            URI.create("http://ibm.com").toURL(), client, mock(RegistryMetrics.class));
 
     Request request = new Request.Builder().url("http://ibm.com").get().build();
     Response fail =
