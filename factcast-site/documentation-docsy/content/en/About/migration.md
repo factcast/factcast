@@ -30,11 +30,11 @@ public @NonNull Collection<FactSpec> postprocess(@NonNull Collection<FactSpec> s
 
 #### Migrating with OpenRewrite
 
-FactCast ships a recipe that rewrites the signature for you. **Run it before upgrading your FactCast dependency.** Once you bump to 0.9.16, the old `List<FactSpec>` signature is gone and the project won't compile, the recipe needs the old code still in place to match against.
+FactCast ships a recipe that rewrites the signature for you. **Run it before upgrading your FactCast dependency.** Once you bump to 0.11.0, the old `List<FactSpec>` signature is gone and the project won't compile, the recipe needs the old code still in place to match against.
 
 ##### Step 1: Add the plugin
 
-While still on your current FactCast version, add the OpenRewrite Maven plugin to your `pom.xml`. The plugin dependency points at `0.9.16` since that's where the recipe lives:
+While still on your current FactCast version, add the OpenRewrite Maven plugin to your `pom.xml`. The plugin dependency points at `0.11.0` since that's where the recipe lives:
 
 ```xml
 <build>
@@ -52,7 +52,7 @@ While still on your current FactCast version, add the OpenRewrite Maven plugin t
         <dependency>
           <groupId>org.factcast</groupId>
           <artifactId>factcast-factus</artifactId>
-          <version>0.9.16</version>
+          <version>0.11.0</version>
         </dependency>
       </dependencies>
     </plugin>
@@ -82,7 +82,7 @@ The recipe only touches the signature, not the body. `forEach`, `stream`, and `i
 
 ##### Step 5: Upgrade FactCast
 
-Bump `factcast-factus` and any other FactCast modules to `0.9.16`.
+Bump `factcast-factus` and any other FactCast modules to `0.11.0`.
 
 ##### Step 6: Clean up
 
