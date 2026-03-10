@@ -42,6 +42,7 @@ class PostprocessToCollectionRecipeTest implements RewriteTest {
                 + "    }\n"
                 + "}\n",
             "import java.util.Collection;\n"
+                + "import java.util.List;\n"
                 + "\n"
                 + "class MyProjection {\n"
                 + "    public Collection<String> postprocess(Collection<String> specsAsDiscovered) {\n"
@@ -63,6 +64,7 @@ class PostprocessToCollectionRecipeTest implements RewriteTest {
                 + "    }\n"
                 + "}\n",
             "import java.util.Collection;\n"
+                + "import java.util.List;\n"
                 + "import lombok.NonNull;\n"
                 + "\n"
                 + "class MyProjection {\n"
