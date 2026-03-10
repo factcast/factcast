@@ -20,6 +20,7 @@ import static org.mockito.Mockito.*;
 
 import io.micrometer.core.instrument.Tags;
 import jakarta.servlet.http.HttpServletResponse;
+import java.net.URI;
 import java.net.URL;
 import java.util.Date;
 import java.util.Map;
@@ -66,7 +67,7 @@ public class HttpIndexFetcherTest {
                         res.addHeader(ValidationConstants.HTTPHEADER_LAST_MODIFIED, since);
                       }
                     }))) {
-      URL baseUrl = new URL("http://localhost:" + s.port() + "/registry");
+      URL baseUrl = URI.create("http://localhost:" + s.port() + "/registry").toURL();
       uut = new HttpIndexFetcher(baseUrl, new NOPRegistryMetrics());
       assertTrue(uut.fetchIndex().isPresent());
       assertFalse(uut.fetchIndex().isPresent());
@@ -81,7 +82,7 @@ public class HttpIndexFetcherTest {
     try (TestHttpServer s =
         new TestHttpServer(
             config -> config.routes.get("/registry/index.json", ctx -> ctx.res().setStatus(404)))) {
-      URL baseUrl = new URL("http://localhost:" + s.port() + "/registry");
+      URL baseUrl = URI.create("http://localhost:" + s.port() + "/registry").toURL();
       uut = new HttpIndexFetcher(baseUrl, registryMetrics);
 
       assertThrows(SchemaRegistryUnavailableException.class, () -> uut.fetchIndex());
@@ -101,7 +102,7 @@ public class HttpIndexFetcherTest {
     OkHttpClient client = mock(OkHttpClient.class);
     when(client.newCall(any())).thenReturn(call);
 
-    uut = new HttpIndexFetcher(new URL("http://ibm.com"), client, mock(RegistryMetrics.class));
+    uut = new HttpIndexFetcher(URI.create("http://ibm.com").toURL(), client, mock(RegistryMetrics.class));
 
     Request request = new Request.Builder().url("http://ibm.com").get().build();
     Response fail =
