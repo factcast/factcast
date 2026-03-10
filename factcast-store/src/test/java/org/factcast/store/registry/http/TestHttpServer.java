@@ -15,18 +15,25 @@
  */
 package org.factcast.store.registry.http;
 
+import java.util.function.Consumer;
 import io.javalin.Javalin;
+import io.javalin.config.JavalinConfig;
 import lombok.experimental.Delegate;
 
 public class TestHttpServer implements AutoCloseable {
-  @Delegate final Javalin instance = Javalin.create();
+  @Delegate private final Javalin instance;
 
-  public TestHttpServer() {
+  public TestHttpServer(Consumer<JavalinConfig> configure) {
+    instance = Javalin.create(configure);
     instance.start(0);
   }
 
+  public TestHttpServer() {
+    this(config -> {});
+  }
+
   @Override
-  public void close() throws Exception {
+  public void close() {
     instance.stop();
   }
 }
