@@ -15,9 +15,9 @@
  */
 package org.factcast.store.registry.http;
 
-import java.util.function.Consumer;
 import io.javalin.Javalin;
 import io.javalin.config.JavalinConfig;
+import java.util.function.Consumer;
 import lombok.experimental.Delegate;
 
 public class TestHttpServer implements AutoCloseable {

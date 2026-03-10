@@ -81,12 +81,15 @@ public class HttpRegistryFileFetcherTest {
   public void testFetchSucceedsOnExampleSchema() throws Exception {
     String json = "{\"foo\":\"bar\"}";
 
-    try (TestHttpServer s = new TestHttpServer(config ->
-        config.routes.get("/registry/someId", ctx -> {
-          ctx.res().setStatus(200);
-          ctx.res().getOutputStream().write(json.getBytes());
-        })
-    )) {
+    try (TestHttpServer s =
+        new TestHttpServer(
+            config ->
+                config.routes.get(
+                    "/registry/someId",
+                    ctx -> {
+                      ctx.res().setStatus(200);
+                      ctx.res().getOutputStream().write(json.getBytes());
+                    }))) {
       URL baseUrl = new URL("http://localhost:" + s.port() + "/registry/");
       var uut = new HttpRegistryFileFetcher(baseUrl, new NOPRegistryMetrics());
       String fetch = uut.fetchSchema(new SchemaSource("someId", "123", "ns", "type", 8));
@@ -99,12 +102,15 @@ public class HttpRegistryFileFetcherTest {
   public void testFetchSucceedsOnExampleTransformation() throws Exception {
     String json = "{\"foo\":\"bar\"}";
 
-    try (TestHttpServer s = new TestHttpServer(config ->
-        config.routes.get("/registry/someId", ctx -> {
-          ctx.res().setStatus(200);
-          ctx.res().getOutputStream().write(json.getBytes());
-        })
-    )) {
+    try (TestHttpServer s =
+        new TestHttpServer(
+            config ->
+                config.routes.get(
+                    "/registry/someId",
+                    ctx -> {
+                      ctx.res().setStatus(200);
+                      ctx.res().getOutputStream().write(json.getBytes());
+                    }))) {
       URL baseUrl = new URL("http://localhost:" + s.port() + "/registry/");
       var uut = new HttpRegistryFileFetcher(baseUrl, registryMetrics);
 
