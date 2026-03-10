@@ -20,13 +20,12 @@ import java.sql.SQLException;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import org.factcast.core.Fact;
 import org.factcast.store.internal.PgConstants;
 import org.factcast.store.internal.PgFact;
 import org.springframework.jdbc.core.RowMapper;
 
 @RequiredArgsConstructor
-public class PgFactExtractor implements RowMapper<Fact> {
+public class PgFactExtractor implements RowMapper<PgFact> {
 
   final AtomicLong serial;
 

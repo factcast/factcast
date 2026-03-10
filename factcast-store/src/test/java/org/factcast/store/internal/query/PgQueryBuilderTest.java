@@ -31,7 +31,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -48,7 +47,6 @@ class PgQueryBuilderTest {
     @SneakyThrows
     @Test
     void happyPath() {
-      Mockito.when(serial.get()).thenReturn(120L);
       var spec1 = FactSpec.ns("ns1").type("t1").meta("foo", "bar").aggId(new UUID(0, 1));
       var spec2 =
           FactSpec.ns("ns2").type("t2").meta("foo", "bar").metaExists("e").metaDoesNotExist("!e");
@@ -56,7 +54,7 @@ class PgQueryBuilderTest {
       var spec4 = FactSpec.ns("ns4").aggId(new UUID(0, 1), new UUID(0, 2));
       var specs = Lists.newArrayList(spec1, spec2, spec3, spec4);
       var underTest = new PgQueryBuilder(specs);
-      var setter = underTest.createStatementSetter(serial);
+      var setter = underTest.createStatementSetter();
       var ps = mock(PreparedStatement.class);
 
       setter.setValues(ps);
@@ -87,17 +85,14 @@ class PgQueryBuilderTest {
               ++index,
               "{\"aggIds\": [\"00000000-0000-0000-0000-000000000001\",\"00000000-0000-0000-0000-000000000002\"]}");
 
-      // ser>?
-      verify(ps).setLong(++index, serial.get());
       verifyNoMoreInteractions(ps);
     }
 
     @SneakyThrows
     @Test
     void setsCurrentStatement() {
-      Mockito.when(serial.get()).thenReturn(120L);
       var underTest = new PgQueryBuilder(Lists.newArrayList(FactSpec.ns("ns3")), holder);
-      var setter = underTest.createStatementSetter(serial);
+      var setter = underTest.createStatementSetter();
       var ps = mock(PreparedStatement.class);
 
       setter.setValues(ps);
@@ -116,7 +111,7 @@ class PgQueryBuilderTest {
       var spec2 = FactSpec.ns("ns2").type("t2").meta("foo", "bar");
       var specs = Lists.newArrayList(spec1, spec2);
       var underTest = new PgQueryBuilder(specs);
-      var sql = normalized(underTest.createSQL());
+      var sql = normalized(underTest.createSQL(99));
 
       var expected =
           """
@@ -128,7 +123,7 @@ SELECT ser, header, payload,
   WHERE (
   (true AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)) OR
   (true AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)))
-  AND ser>?
+  AND ser>99
   ORDER BY ser ASC
 """;
       assertThat(normalized(sql)).isEqualTo(normalized(expected));
@@ -146,7 +141,7 @@ SELECT ser, header, payload,
               .version(1);
       var specs = Lists.newArrayList(spec1);
       var underTest = new PgQueryBuilder(specs);
-      var sql = underTest.createSQL();
+      var sql = underTest.createSQL(98);
 
       var expected =
           """
@@ -166,7 +161,7 @@ WHERE (
     AND (header @> ?::jsonb OR header @> ?::jsonb)
     )
   )
-  AND ser>? ORDER BY ser ASC
+  AND ser>98 ORDER BY ser ASC
 """;
 
       assertThat(normalized(sql)).isEqualTo(normalized(expected));
@@ -185,7 +180,7 @@ WHERE (
               .aggIdProperty("schnick.schnack.schnuck.orgId", id2);
       var specs = Lists.newArrayList(spec1);
       var underTest = new PgQueryBuilder(specs);
-      var sql = underTest.createSQL();
+      var sql = underTest.createSQL(97);
 
       // note that filtering cannot be done in the database, as the version is not defined.
       var expected =
@@ -214,7 +209,7 @@ WHERE
       )
     )
   )
-  AND ser > ?
+  AND ser > 97
 ORDER BY
   ser ASC
 
@@ -236,7 +231,7 @@ ORDER BY
               .aggIdProperty("schnick.schnack.schnuck.orgId", id2);
       var specs = Lists.newArrayList(spec1);
       var underTest = new PgQueryBuilder(specs);
-      var sql = underTest.createSQL();
+      var sql = underTest.createSQL(96);
 
       var expected =
           """
@@ -278,7 +273,7 @@ WHERE
       )
     )
   )
-  AND ser > ?
+  AND ser > 96
 ORDER BY
   ser ASC
                     """;
@@ -297,7 +292,7 @@ ORDER BY
       var spec2 = FactSpec.ns("ns2").type("t2").meta("foo", "bar");
       var specs = Lists.newArrayList(spec1, spec2);
       var underTest = new PgQueryBuilder(specs);
-      var sql = underTest.createSQL();
+      var sql = underTest.createSQL(95);
       var expected =
           """
 SELECT ser, header, payload,
@@ -310,7 +305,7 @@ SELECT ser, header, payload,
  WHERE (
  (true AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb) AND jsonb_path_exists(header, ?::jsonpath) AND NOT jsonb_path_exists(header, ?::jsonpath)) OR
  (true AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)) )
- AND ser>?
+ AND ser>95
  ORDER BY ser ASC
 """;
 
@@ -329,7 +324,7 @@ SELECT ser, header, payload,
       var spec3 = FactSpec.ns("ns3").type("t3").aggId(new UUID(0, 1), new UUID(0, 2));
       var specs = Lists.newArrayList(spec1, spec2, spec3);
       var underTest = new PgQueryBuilder(specs);
-      var sql = underTest.createStateSQL();
+      var sql = underTest.createStateSQL(94);
       var expected =
           """
 SELECT ser FROM fact
@@ -337,7 +332,7 @@ WHERE (
 (true AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)) OR
 (true AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)) OR
 (true AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb))
-AND ser > ? ORDER BY ser DESC LIMIT 1
+AND ser > 94 ORDER BY ser DESC LIMIT 1
 """;
 
       assertThat(normalized(sql)).isEqualTo(normalized(expected));

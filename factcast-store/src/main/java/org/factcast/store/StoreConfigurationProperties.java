@@ -45,6 +45,14 @@ public class StoreConfigurationProperties implements InitializingBean {
   int transformationCachePageSize = 100;
 
   /**
+   * defines the max number of transformed Facts being buffered in order to make flushing more
+   * efficient. This cannot be equal or greater than 10000, due to JDBC restrictions.
+   */
+  @Positive
+  @Max(9999)
+  int transformationCacheBufferSize = 1000;
+
+  /**
    * Optional URL to a Schema Registry. If this is null, validation will be disabled and a warning
    * will be issued. (Defaults to null) Currently a String type due to the fact that "classpath:" is
    * a spring-only protocol
@@ -201,6 +209,13 @@ public class StoreConfigurationProperties implements InitializingBean {
   public boolean isSchemaRegistryConfigured() {
     return schemaRegistryUrl != null;
   }
+
+  public enum CatchupStrategy {
+    CURSOR,
+    CHUNKED
+  }
+
+  CatchupStrategy catchupStrategy = CatchupStrategy.CURSOR;
 
   @Override
   public void afterPropertiesSet() throws Exception {

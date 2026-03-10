@@ -20,7 +20,6 @@ import java.sql.*;
 import java.sql.Date;
 import java.time.LocalDate;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicLong;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.*;
@@ -288,9 +287,8 @@ public class PgFactStore extends AbstractFactStore {
         StoreMetrics.OP.GET_STATE_FOR,
         () -> {
           PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs);
-          String stateSQL = pgQueryBuilder.createStateSQL();
-          PreparedStatementSetter statementSetter =
-              pgQueryBuilder.createStatementSetter(new AtomicLong(lastMatchingSerial));
+          String stateSQL = pgQueryBuilder.createStateSQL(lastMatchingSerial);
+          PreparedStatementSetter statementSetter = pgQueryBuilder.createStatementSetter();
 
           ResultSetExtractor<Long> rch =
               new ResultSetExtractor<>() {

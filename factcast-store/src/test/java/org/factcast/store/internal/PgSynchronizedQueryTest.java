@@ -30,7 +30,7 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.HighWaterMarkFetcher;
 import org.factcast.store.internal.listen.*;
 import org.factcast.store.internal.pipeline.*;
-import org.factcast.store.internal.query.CurrentStatementHolder;
+import org.factcast.store.internal.query.*;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -49,7 +49,7 @@ class PgSynchronizedQueryTest {
 
   PgSynchronizedQuery uut;
 
-  final String sql = "SELECT 42";
+  @Mock PgQueryBuilder builder;
 
   @Mock PreparedStatementSetter setter;
 
@@ -75,15 +75,16 @@ class PgSynchronizedQueryTest {
     when(ds.getConnection()).thenReturn(con);
     when(con.prepareStatement(anyString())).thenReturn(p);
     ResultSet rs = Mockito.mock(ResultSet.class);
-    Mockito.when(rs.next()).thenReturn(false);
+    when(rs.next()).thenReturn(false);
     when(p.executeQuery()).thenReturn(rs);
+    when(builder.createSQL(anyLong())).thenReturn("SELECT 42");
 
     uut =
         new PgSynchronizedQuery(
             "test",
             pipeline,
             connectionSupplier,
-            sql,
+            builder,
             setter,
             () -> true,
             serialToContinueFrom,
@@ -107,14 +108,15 @@ class PgSynchronizedQueryTest {
     when(ds.getConnection()).thenReturn(con);
     when(con.prepareStatement(anyString())).thenReturn(p);
     ResultSet rs = Mockito.mock(ResultSet.class);
-    Mockito.when(rs.next()).thenReturn(false);
+    when(rs.next()).thenReturn(false);
     when(p.executeQuery()).thenReturn(rs);
+    when(builder.createSQL(anyLong())).thenReturn("SELECT 42");
     uut =
         new PgSynchronizedQuery(
             "test",
             pipeline,
             connectionSupplier,
-            sql,
+            builder,
             setter,
             () -> true,
             serialToContinueFrom,
@@ -132,7 +134,7 @@ class PgSynchronizedQueryTest {
             "test",
             pipeline,
             connectionSupplier,
-            sql,
+            builder,
             setter,
             () -> true,
             serialToContinueFrom,
@@ -148,6 +150,7 @@ class PgSynchronizedQueryTest {
     when(ds.getConnection()).thenReturn(con);
     when(con.prepareStatement(anyString())).thenReturn(p);
     when(p.executeQuery()).thenThrow(exc);
+    when(builder.createSQL(anyLong())).thenReturn("THIS AINT SQL");
 
     assertThatThrownBy(() -> uut.run(false))
         // should be thrown unchanged
@@ -164,7 +167,7 @@ class PgSynchronizedQueryTest {
             "test",
             pipeline,
             connectionSupplier,
-            sql,
+            builder,
             setter,
             () -> true,
             serialToContinueFrom,
@@ -181,6 +184,7 @@ class PgSynchronizedQueryTest {
     when(ds.getConnection()).thenReturn(con);
     when(con.prepareStatement(anyString())).thenReturn(p);
     when(p.executeQuery()).thenThrow(exc);
+    when(builder.createSQL(anyLong())).thenReturn("SELECT 42");
 
     uut.run(false);
 
@@ -344,6 +348,7 @@ class PgSynchronizedQueryTest {
       ResultSet rs = Mockito.mock(ResultSet.class);
       when(rs.next()).thenReturn(true, false); // one result
       when(p.executeQuery()).thenReturn(rs);
+      when(builder.createSQL(anyLong())).thenReturn("SELECT 42");
 
       try (MockedStatic<PgFact> mockStatic = Mockito.mockStatic(PgFact.class)) {
         mockStatic.when(() -> PgFact.from(rs)).thenReturn(factToBeTransformed);
@@ -353,7 +358,7 @@ class PgSynchronizedQueryTest {
                 "test",
                 pipeline,
                 connectionSupplier,
-                sql,
+                builder,
                 setter,
                 () -> true,
                 serialToContinueFrom,

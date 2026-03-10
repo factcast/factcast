@@ -46,10 +46,12 @@ description: Properties you can use to configure FactCast
 | factcast.store.tailIndexingFastUpdateEnabled                 | controls if, when creating tail indexes, fastUpdate feature will be used. Note that depending on the pending list, this may introduce pauses when inserting facts (flushing the list)                                                                                                                                                                                                                                                               | <nobr>false</nobr>                       |
 | factcast.store.tailIndexingPendingListLimit                  | maximum size of the pending list when using factUpdate. (See https://www.postgresql.org/docs/16/gin-tips.html)                                                                                                                                                                                                                                                                                                                                      | <nobr>4096</nobr>                        |
 | factcast.store.transformationCachePageSize                   | Defines the max number of Facts being scheduled for transformation in one go. Must be positive and not exceed 32000.                                                                                                                                                                                                                                                                                                                                | <nobr>100</nobr>                         |
+| factcast.store.transformationCacheBufferSize                 | Defines the max number of transformed Facts being buffered in memory that will be flushed to the database in one go. Must be positive and not exceed 9999.                                                                                                                                                                                                                                                                                          | <nobr>1000</nobr>                        |
 | factcast.store.sizeOfThreadPoolForSubscriptions              | This is the number of threads we create for handling new subscriptions requests. It's implemented via a fixed thread pool. As soon as the subscription request finishes or enters phase 3 (follow) the thread is freed up again. In earlier versions we used the common FJP which limits the parallelism to the number of cores - 1. If you ever encounter too much database load or too high waiting time for subscriptions this can be an option. | <nobr>100</nobr>                         |
 | factcast.store.sizeOfThreadPoolForBufferedTransformations    | This is the number of threads we create for handling buffered transformations. It's implemented via work stealing thread pool. In early versions we used the common FJP which limits the parallelism to the number of cores - 1.                                                                                                                                                                                                                    | <nobr>25</nobr>                          |
 | factcast.store.readOnlyModeEnabled                           | Configures FactCast to work in read-only mode. You cannot publish any events in this mode and certain functionality like tail index generation or state token generation is disabled. You can still use a persistent schema store or transformation cache, however they will work in read-only mode. Additionally, liquibase is disabled.                                                                                                           | false                                    |
 | factcast.store.enumerationDirectModeEnabled                  | Despite of a Schema-Registry being defined or not, if set to true, enumeration of types or namespace will examine the data in the store directly, so that you only see data from already published facts.                                                                                                                                                                                                                                           | false                                    |
+| factcast.store.catchupStrategy                               | Available: CURSOR and CHUNKED. Cursor does the catchup query in one go and keeps the cursor open until the facts are sent to the client. Chunked runs queries limited to page-size rows instead.                                                                                                                                                                                                                                                    | CURSOR                                   |
 
 ---
 
@@ -77,10 +79,17 @@ description: Properties you can use to configure FactCast
 
 #### JDBC-Snapshots
 
-| Property                                          | Description                                                                                          | Default           |
-| ------------------------------------------------- | :--------------------------------------------------------------------------------------------------- | :---------------- |
-| factcast.snapshot.jdbc.deleteSnapshotStaleForDays | min number of days a snapshot is kept even though it is not read anymore. Must be a positive number. | 90                |
-| factcast.snapshot.jdbc.snapshotTableName          | optional name of the table for the snapshots. When not provided the default will be used             | factcast_snapshot |
+| Property                                          | Description                                                                                               | Default                         |
+| ------------------------------------------------- | :-------------------------------------------------------------------------------------------------------- | :------------------------------ |
+| factcast.snapshot.jdbc.deleteSnapshotStaleForDays | min number of days a snapshot is kept even though it is not read anymore. Must be a positive number.      | 90                              |
+| factcast.snapshot.jdbc.snapshotTableName          | optional name of the table for the snapshots. When not provided the default will be used                  | factcast_snapshot               |
+| factcast.snapshot.jdbc.snapshotAccessTableName    | optional name of the table for the snapshots access timestamp. When not provided the default will be used | factcast_snapshot_last_accessed |
+
+#### MongoDB-Snapshots
+
+| Property                                             | Description                                                                                          | Default |
+| ---------------------------------------------------- | :--------------------------------------------------------------------------------------------------- | :------ |
+| factcast.snapshot.mongodb.deleteSnapshotStaleForDays | min number of days a snapshot is kept even though it is not read anymore. Must be a positive number. | 90      |
 
 ### Snapshot Serializers
 
@@ -96,24 +105,24 @@ Properties you can use to configure gRPC:
 
 #### gRPC Client
 
-| Property                                       | Description                                                                                                                                  | Default | Example                     |
-| ---------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------- | :------ | :-------------------------- |
-| grpc.client.factstore.credentials              | Deprecated. Please use `factcast.grpc.client.user` and `factcast.grpc.client.password` instead                                               | none    | myUserName:mySecretPassword |
-| grpc.client.factstore.address                  | the address(es) fo the factcast server                                                                                                       | none    | static://localhost:9090     |
-| grpc.client.factstore.negotiationType          | Usage of TLS or Plaintext?                                                                                                                   | TLS     | PLAINTEXT                   |
-| grpc.client.factstore.enable-keep-alive        | Configures whether keepAlive should be enabled. Recommended for long running (follow) subscriptions                                          | false   | true                        |
-| grpc.client.factstore.keep-alive-time          | The default delay before sending keepAlives. Defaults to 60s. Please note that shorter intervals increase the network burden for the server. |         | 300                         |
-| grpc.client.factstore.keep-alive-without-calls | Configures whether keepAlive will be performed when there are no outstanding RPCs on a connection.                                           | false   | true                        |
+| Property                                                       | Description                                                                                                                                  | Default | Example                     |
+| -------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------- | :------ | :-------------------------- |
+| grpc.client.factstore.credentials                              | Deprecated. Please use `factcast.grpc.client.user` and `factcast.grpc.client.password` instead                                               | none    | myUserName:mySecretPassword |
+| spring.grpc.client.channels.factstore.address                  | the address(es) fo the factcast server                                                                                                       | none    | static://localhost:9090     |
+| spring.grpc.client.channels.factstore.negotiation-type         | Usage of TLS or Plaintext?                                                                                                                   | TLS     | PLAINTEXT                   |
+| spring.grpc.client.channels.factstore.enable-keep-alive        | Configures whether keepAlive should be enabled. Recommended for long running (follow) subscriptions                                          | false   | true                        |
+| spring.grpc.client.channels.factstore.keep-alive-time          | The default delay before sending keepAlives. Defaults to 60s. Please note that shorter intervals increase the network burden for the server. |         | 300                         |
+| spring.grpc.client.channels.factstore.keep-alive-without-calls | Configures whether keepAlive will be performed when there are no outstanding RPCs on a connection.                                           | false   | true                        |
 
 #### gRPC Client recommended settings
 
 ```
-grpc.client.factstore.enable-keep-alive=true
-grpc.client.factstore.keep-alive-time=300
-grpc.client.factstore.keep-alive-without-calls=true
+spring.grpc.client.channels.factstore.enable-keep-alive=true
+spring.grpc.client.channels.factstore.keep-alive-time=300
+spring.grpc.client.channels.factstore.keep-alive-without-calls=true
 ```
 
-Further details can be found here : `net.devh.boot.grpc.client.config.GrpcChannelProperties`.
+Further details can be found here : `org.springframework.grpc.autoconfigure.client.GrpcClientProperties`.
 
 #### FactCast client specific
 
@@ -134,8 +143,8 @@ Further details can be found here : `net.devh.boot.grpc.client.config.GrpcChanne
 
 | Property                                                                | Description                                                                                                                    | Default | Example |
 | ----------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------- | :------ | :------ |
-| grpc.server.permit-keep-alive-without-calls                             | Configures whether clients are allowed to send keep-alive HTTP/2 PINGs even if there are no outstanding RPCs on the connection | false   | true    |
-| grpc.server.permit-keep-alive-time                                      | Specifies the most aggressive keep-alive time in seconds clients are permitted to configure. Defaults to 5min.                 | 300     | 100     |
+| spring.grpc.server.keep-alive.permit-without-calls                      | Configures whether clients are allowed to send keep-alive HTTP/2 PINGs even if there are no outstanding RPCs on the connection | false   | true    |
+| spring.grpc.server.keep-alive.permit-time                               | Specifies the most aggressive keep-alive time in seconds clients are permitted to configure. Defaults to 5min.                 | 300     | 100     |
 | factcast.grpc.bandwith.numberOfFollowRequestsAllowedPerClientPerMinute  | after the given number of follow requests from the same client per minute, subscriptions are rejected with RESOURCE_EXHAUSTED  | 5       | 5       |
 | factcast.grpc.bandwith.initialNumberOfFollowRequestsAllowedPerClient    | ramp-up to compensate for client startup                                                                                       | 50      | 50      |
 | factcast.grpc.bandwith.numberOfCatchupRequestsAllowedPerClientPerMinute | after the given number of catchup requests from the same client per minute, subscriptions are rejected with RESOURCE_EXHAUSTED | 6000    | 6000    |
@@ -145,8 +154,8 @@ Further details can be found here : `net.devh.boot.grpc.client.config.GrpcChanne
 #### gRPC Server recommended settings
 
 ```
-grpc.server.permit-keep-alive-without-calls=true
-grpc.server.permit-keep-alive-time=100
+spring.grpc.server.keep-alive.permit-without-calls=true
+spring.grpc.server.keep-alive.permit-time=100
 ```
 
 ---
@@ -176,4 +185,4 @@ grpc.server.permit-keep-alive-time=100
 | factcast.ui.report.store.path | The path under which reports are stored if no external ReportStore is configured.                                            | /tmp/factcast-ui/report |
 | factcast.ui.report.store.s3   | The name of the S3 Bucket in which the reports are stored by the S3ReportStore. This overrides factcast.ui.report.store.path |                         |
 
-Further details can be found here : `net.devh.boot.grpc.server.config.GrpcServerProperties`.
+Further details can be found here : `org.springframework.grpc.autoconfigure.server.GrpcServerProperties`.

@@ -100,7 +100,7 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
                   new GenericContainer<>("factcast/factcast:" + config.factcastVersion())
                       .withExposedPorts(FC_PORT)
                       .withFileSystemBind(config.configDir(), "/config/")
-                      .withEnv("grpc_server_port", String.valueOf(FC_PORT))
+                      .withEnv("spring_grpc_server_port", String.valueOf(FC_PORT))
                       .withEnv(
                           "factcast_security_enabled", String.valueOf(config.securityEnabled()))
                       .withEnv("factcast_grpc_bandwidth_disabled", "true")
@@ -129,7 +129,7 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
 
     ProxiedEndpoint fcProxy = containers.fcProxy().get();
     String address = "static://" + fcProxy.host() + ":" + fcProxy.port();
-    System.setProperty("grpc.client.factstore.address", address);
+    System.setProperty("spring.grpc.client.channels.factstore.address", address);
 
     System.setProperty("spring.datasource.url", containers.db().getJdbcUrl());
     System.setProperty("spring.datasource.username", containers.db().getUsername());
@@ -143,17 +143,15 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
     try (Connection con = ds.getConnection();
         Statement st = con.createStatement()) {
       st.execute(
-          """
-          DO $$ DECLARE
-              r RECORD;
-          BEGIN
-              FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = current_schema()\
-           AND (NOT ((tablename like 'databasechangelog%') OR (tablename like 'qrtz%') OR\
-           (tablename = 'schedlock')))) LOOP
-                  EXECUTE 'TRUNCATE TABLE ' || quote_ident(r.tablename);
-              END LOOP;
-          END $$;\
-          """);
+          "DO $$ DECLARE\n"
+              + "    r RECORD;\n"
+              + "BEGIN\n"
+              + "    FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = current_schema()"
+              + " AND (NOT ((tablename like 'databasechangelog%') OR (tablename like 'qrtz%') OR"
+              + " (tablename = 'schedlock')))) LOOP\n"
+              + "        EXECUTE 'TRUNCATE TABLE ' || quote_ident(r.tablename) || ' cascade';\n"
+              + "    END LOOP;\n"
+              + "END $$;");
     }
   }
 

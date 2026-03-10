@@ -151,6 +151,21 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
       assertThat(jsonView()).not().containsText(USER4_EVENT_ID.toString());
     }
 
+    @RetryingTest(maxAttempts = 5, minSuccess = 1)
+    void queryFromScratch_whenNullOnSerial() {
+      loginFor("/ui/full");
+      selectNamespace("users");
+
+      setSerialToNull();
+
+      query();
+
+      assertThat(jsonView()).not().containsText(USER1_EVENT_ID.toString());
+      assertThat(jsonView()).not().containsText(USER2_EVENT_ID.toString());
+      assertThat(jsonView()).not().containsText(USER3_EVENT_ID.toString());
+      assertThat(jsonView()).not().containsText(USER4_EVENT_ID.toString());
+    }
+
     private void assertMetaCount(int count) {
       assertThat(
               page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Meta"))

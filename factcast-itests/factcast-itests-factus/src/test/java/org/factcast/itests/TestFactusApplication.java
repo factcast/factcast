@@ -25,6 +25,7 @@ import org.factcast.factus.serializer.JacksonSnapshotSerializer;
 import org.factcast.factus.serializer.SnapshotSerializer;
 import org.factcast.spring.boot.autoconfigure.snap.InMemoryAndDiskSnapshotCacheAutoConfiguration;
 import org.factcast.spring.boot.autoconfigure.snap.InMemorySnapshotCacheAutoConfiguration;
+import org.factcast.spring.boot.autoconfigure.snap.MongoDbSnapshotCacheAutoConfiguration;
 import org.factcast.spring.boot.autoconfigure.snap.RedissonSnapshotCacheAutoConfiguration;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -40,6 +41,7 @@ import org.springframework.context.annotation.Primary;
     exclude = {
       CompositeMeterRegistryAutoConfiguration.class,
       RedissonSnapshotCacheAutoConfiguration.class,
+      MongoDbSnapshotCacheAutoConfiguration.class,
       InMemorySnapshotCacheAutoConfiguration.class,
       InMemoryAndDiskSnapshotCacheAutoConfiguration.class,
     })

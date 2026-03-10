@@ -21,6 +21,7 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.FactCast;
 import org.factcast.factus.*;
+import org.factcast.factus.aggregate.cache.AggregateCacheFactory;
 import org.factcast.factus.event.*;
 import org.factcast.factus.metrics.*;
 import org.factcast.factus.projection.parameter.HandlerParameterContributors;
@@ -66,6 +67,12 @@ public class FactusAutoConfiguration {
   @ConditionalOnMissingBean
   public ProjectorFactory projectorFactory(EventSerializer ser) {
     return new DefaultProjectorFactory(ser, new HandlerParameterContributors());
+  }
+
+  @Bean
+  @ConditionalOnMissingBean
+  public AggregateCacheFactory aggregateCacheFactory(Factus factus, FactSpecProvider fsp) {
+    return new AggregateCacheFactory(factus, fsp);
   }
 
   @Bean

@@ -54,7 +54,9 @@ public class CachedAggregateLookupITest extends AbstractFactCastIntegrationTest 
 
     @Bean
     TestAggregateCache<User> getUserAbstractAggregateCache(Factus factus, FactSpecProvider fsp) {
-      return new TestAggregateCache<User>(factus, fsp) {};
+      TestAggregateCache<User> cache = new TestAggregateCache<User>(User.class);
+      cache.start(factus, fsp);
+      return cache;
     }
   }
 

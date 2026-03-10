@@ -22,6 +22,7 @@ import static org.mockito.Mockito.*;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import io.grpc.CompressorRegistry;
 import io.grpc.Status;
 import io.grpc.StatusException;
 import io.grpc.StatusRuntimeException;
@@ -32,6 +33,7 @@ import io.micrometer.core.instrument.Tags;
 import java.io.Serial;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.function.Supplier;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import nl.altindag.log.LogCaptor;
@@ -44,6 +46,7 @@ import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.subscription.observer.HighWaterMarkFetcher;
+import org.factcast.grpc.api.CompressionCodecs;
 import org.factcast.grpc.api.ConditionalPublishRequest;
 import org.factcast.grpc.api.EnumerateVersionsRequest;
 import org.factcast.grpc.api.StateForRequest;
@@ -77,8 +80,13 @@ public class FactStoreGrpcServiceTest {
   @Mock(lenient = true)
   GrpcLimitProperties grpcLimitProperties;
 
+  @Mock Supplier<GrpcRequestMetadata> grpcRequestMetadataSupplier;
   @Mock GrpcRequestMetadata grpcRequestMetadata;
   @Spy ServerMetrics metrics = new NOPServerMetrics();
+
+  @Spy
+  CompressionCodecs compressionCodecs =
+      new CompressionCodecs(CompressorRegistry.getDefaultInstance());
 
   @Captor ArgumentCaptor<List<Fact>> acFactList;
 
@@ -91,6 +99,7 @@ public class FactStoreGrpcServiceTest {
   @BeforeEach
   void setUp() {
 
+    lenient().when(grpcRequestMetadataSupplier.get()).thenReturn(grpcRequestMetadata);
     when(grpcLimitProperties.numberOfCatchupRequestsAllowedPerClientPerMinute()).thenReturn(5);
     when(grpcLimitProperties.initialNumberOfCatchupRequestsAllowedPerClient()).thenReturn(5);
 
@@ -116,13 +125,18 @@ public class FactStoreGrpcServiceTest {
 
     uut =
         new FactStoreGrpcService(
-            backend, grpcRequestMetadata, grpcLimitProperties, ffwdTarget, metrics);
+            backend,
+            grpcRequestMetadataSupplier,
+            grpcLimitProperties,
+            ffwdTarget,
+            metrics,
+            compressionCodecs);
   }
 
   @Test
   void currentTime() {
     var store = mock(FactStore.class);
-    var uut = new FactStoreGrpcService(store, grpcRequestMetadata);
+    var uut = new FactStoreGrpcService(store, grpcRequestMetadataSupplier);
     when(store.currentTime()).thenReturn(101L);
     StreamObserver<MSG_CurrentDatabaseTime> stream = mock(StreamObserver.class);
 
@@ -150,7 +164,7 @@ public class FactStoreGrpcServiceTest {
   @Test
   void fetchById() {
     var store = mock(FactStore.class);
-    var uut = new FactStoreGrpcService(store, grpcRequestMetadata);
+    var uut = new FactStoreGrpcService(store, grpcRequestMetadataSupplier);
     Fact fact = Fact.builder().ns("ns").type("type").id(UUID.randomUUID()).buildWithoutPayload();
     var expected = Optional.of(fact);
     when(store.fetchById(fact.id())).thenReturn(expected);
@@ -166,7 +180,7 @@ public class FactStoreGrpcServiceTest {
   @Test
   void fetchByIEmpty() {
     var store = mock(FactStore.class);
-    var uut = new FactStoreGrpcService(store, grpcRequestMetadata);
+    var uut = new FactStoreGrpcService(store, grpcRequestMetadataSupplier);
 
     Optional<Fact> expected = Optional.empty();
     UUID id = UUID.randomUUID();
@@ -185,7 +199,7 @@ public class FactStoreGrpcServiceTest {
     assertThatThrownBy(
             () -> {
               var store = mock(FactStore.class);
-              var uut = new FactStoreGrpcService(store, grpcRequestMetadata);
+              var uut = new FactStoreGrpcService(store, grpcRequestMetadataSupplier);
               Fact fact =
                   Fact.builder().ns("ns").type("type").id(UUID.randomUUID()).buildWithoutPayload();
               when(store.fetchById(fact.id())).thenThrow(IllegalMonitorStateException.class);
@@ -204,7 +218,7 @@ public class FactStoreGrpcServiceTest {
   @Test
   void fetchByIdAndVersion() throws TransformationException {
     var store = mock(FactStore.class);
-    var uut = new FactStoreGrpcService(store, grpcRequestMetadata);
+    var uut = new FactStoreGrpcService(store, grpcRequestMetadataSupplier);
     Fact fact = Fact.builder().ns("ns").type("type").id(UUID.randomUUID()).buildWithoutPayload();
     var expected = Optional.of(fact);
     when(store.fetchByIdAndVersion(fact.id(), 1)).thenReturn(expected);
@@ -220,7 +234,7 @@ public class FactStoreGrpcServiceTest {
   @Test
   void fetchByIdAndVersionEmpty() throws TransformationException {
     var store = mock(FactStore.class);
-    var uut = new FactStoreGrpcService(store, grpcRequestMetadata);
+    var uut = new FactStoreGrpcService(store, grpcRequestMetadataSupplier);
     Optional<Fact> expected = Optional.empty();
     @NonNull UUID id = UUID.randomUUID();
     when(store.fetchByIdAndVersion(id, 1)).thenReturn(expected);
@@ -290,7 +304,7 @@ public class FactStoreGrpcServiceTest {
     when(grpcRequestMetadata.clientId()).thenReturn(Optional.of(clientId));
     doNothing().when(backend).publish(acFactList.capture());
 
-    uut = new FactStoreGrpcService(backend, grpcRequestMetadata);
+    uut = new FactStoreGrpcService(backend, grpcRequestMetadataSupplier);
 
     Fact f1 = Fact.builder().ns("test").build("{}");
     MSG_Fact msg1 = conv.toProto(f1);
@@ -323,7 +337,7 @@ public class FactStoreGrpcServiceTest {
     uut =
         new FactStoreGrpcService(
             backend,
-            grpcRequestMetadata,
+            grpcRequestMetadataSupplier,
             new GrpcLimitProperties()
                 .initialNumberOfFollowRequestsAllowedPerClient(3)
                 .numberOfFollowRequestsAllowedPerClientPerMinute(1));
@@ -349,7 +363,7 @@ public class FactStoreGrpcServiceTest {
     uut =
         new FactStoreGrpcService(
             backend,
-            grpcRequestMetadata,
+            grpcRequestMetadataSupplier,
             new GrpcLimitProperties()
                 .initialNumberOfCatchupRequestsAllowedPerClient(3)
                 .numberOfCatchupRequestsAllowedPerClientPerMinute(1)
@@ -372,7 +386,7 @@ public class FactStoreGrpcServiceTest {
     uut =
         new FactStoreGrpcService(
             backend,
-            grpcRequestMetadata,
+            grpcRequestMetadataSupplier,
             new GrpcLimitProperties()
                 .initialNumberOfCatchupRequestsAllowedPerClient(3)
                 .numberOfCatchupRequestsAllowedPerClientPerMinute(1)
@@ -395,7 +409,7 @@ public class FactStoreGrpcServiceTest {
     uut =
         new FactStoreGrpcService(
             backend,
-            grpcRequestMetadata,
+            grpcRequestMetadataSupplier,
             new GrpcLimitProperties()
                 .initialNumberOfCatchupRequestsAllowedPerClient(3)
                 .numberOfCatchupRequestsAllowedPerClientPerMinute(1)
@@ -420,7 +434,7 @@ public class FactStoreGrpcServiceTest {
 
   @Test
   void testSerialOf() {
-    uut = new FactStoreGrpcService(backend, grpcRequestMetadata);
+    uut = new FactStoreGrpcService(backend, grpcRequestMetadataSupplier);
 
     StreamObserver so = mock(StreamObserver.class);
     assertThrows(NullPointerException.class, () -> uut.serialOf(null, so));
@@ -438,7 +452,7 @@ public class FactStoreGrpcServiceTest {
 
   @Test
   void testSerialOfThrows() {
-    uut = new FactStoreGrpcService(backend, grpcRequestMetadata);
+    uut = new FactStoreGrpcService(backend, grpcRequestMetadataSupplier);
 
     StreamObserver so = mock(StreamObserver.class);
     when(backend.serialOf(any(UUID.class))).thenThrow(UnsupportedOperationException.class);
@@ -450,7 +464,7 @@ public class FactStoreGrpcServiceTest {
 
   @Test
   void testEnumerateNamespaces() {
-    uut = new FactStoreGrpcService(backend, grpcRequestMetadata);
+    uut = new FactStoreGrpcService(backend, grpcRequestMetadataSupplier);
     StreamObserver so = mock(StreamObserver.class);
     when(backend.enumerateNamespaces()).thenReturn(Sets.newHashSet("foo", "bar"));
 
@@ -463,7 +477,7 @@ public class FactStoreGrpcServiceTest {
 
   @Test
   void testEnumerateNamespacesThrows() {
-    uut = new FactStoreGrpcService(backend, grpcRequestMetadata);
+    uut = new FactStoreGrpcService(backend, grpcRequestMetadataSupplier);
     StreamObserver so = mock(StreamObserver.class);
     when(backend.enumerateNamespaces()).thenThrow(UnsupportedOperationException.class);
     assertThatThrownBy(() -> uut.enumerateNamespaces(conv.empty(), so))
@@ -472,7 +486,7 @@ public class FactStoreGrpcServiceTest {
 
   @Test
   void testEnumerateTypes() {
-    uut = new FactStoreGrpcService(backend, grpcRequestMetadata);
+    uut = new FactStoreGrpcService(backend, grpcRequestMetadataSupplier);
     StreamObserver so = mock(StreamObserver.class);
 
     when(backend.enumerateTypes("ns")).thenReturn(Sets.newHashSet("foo", "bar"));
@@ -486,7 +500,7 @@ public class FactStoreGrpcServiceTest {
 
   @Test
   void testEnumerateTypesThrows() {
-    uut = new FactStoreGrpcService(backend, grpcRequestMetadata);
+    uut = new FactStoreGrpcService(backend, grpcRequestMetadataSupplier);
     StreamObserver so = mock(StreamObserver.class);
     when(backend.enumerateTypes("ns")).thenThrow(UnsupportedOperationException.class);
 
@@ -496,7 +510,7 @@ public class FactStoreGrpcServiceTest {
 
   @Test
   void testEnumerateVersions() {
-    uut = new FactStoreGrpcService(backend, grpcRequestMetadata);
+    uut = new FactStoreGrpcService(backend, grpcRequestMetadataSupplier);
     StreamObserver so = mock(StreamObserver.class);
 
     when(backend.enumerateVersions("ns", "type")).thenReturn(Sets.newHashSet(1, 2));
@@ -513,7 +527,7 @@ public class FactStoreGrpcServiceTest {
     when(backend.enumerateVersions("ns", "type")).thenThrow(UnsupportedOperationException.class);
     StreamObserver so = mock(StreamObserver.class);
 
-    uut = new FactStoreGrpcService(backend, grpcRequestMetadata);
+    uut = new FactStoreGrpcService(backend, grpcRequestMetadataSupplier);
     final var request = conv.toProto(new EnumerateVersionsRequest("ns", "type"));
 
     assertThatThrownBy(() -> uut.enumerateVersions(request, so))
@@ -689,7 +703,7 @@ public class FactStoreGrpcServiceTest {
     String clientId = "someApplication";
     when(grpcRequestMetadata.clientId()).thenReturn(Optional.of(clientId));
 
-    uut = new FactStoreGrpcService(backend, grpcRequestMetadata);
+    uut = new FactStoreGrpcService(backend, grpcRequestMetadataSupplier);
 
     UUID id = UUID.randomUUID();
 
@@ -1010,7 +1024,7 @@ public class FactStoreGrpcServiceTest {
   @Test
   void fetchBySerial() {
     var store = mock(FactStore.class);
-    var uut = new FactStoreGrpcService(store, grpcRequestMetadata);
+    var uut = new FactStoreGrpcService(store, grpcRequestMetadataSupplier);
     Fact fact =
         Fact.builder().ns("ns").type("type").id(UUID.randomUUID()).serial(31).buildWithoutPayload();
     var expected = Optional.of(fact);

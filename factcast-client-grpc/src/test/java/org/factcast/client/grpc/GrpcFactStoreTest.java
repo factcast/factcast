@@ -42,6 +42,7 @@ import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.grpc.api.Capabilities;
+import org.factcast.grpc.api.CompressionCodecs;
 import org.factcast.grpc.api.ConditionalPublishRequest;
 import org.factcast.grpc.api.Headers;
 import org.factcast.grpc.api.conv.ProtoConverter;
@@ -82,6 +83,8 @@ class GrpcFactStoreTest {
   @Mock(strictness = Mock.Strictness.LENIENT)
   RemoteFactStoreGrpc.RemoteFactStoreStub nonBlockingStub;
 
+  @Mock CompressionCodecs compressionCodecs;
+
   GrpcFactStore uut;
 
   @BeforeEach
@@ -89,7 +92,7 @@ class GrpcFactStoreTest {
     when(properties.getResilience()).thenReturn(resilienceConfig);
     resilienceConfig.setEnabled(false);
 
-    uut = new GrpcFactStore(grpcStubs, properties);
+    uut = new GrpcFactStore(grpcStubs, properties, compressionCodecs);
 
     when(grpcStubs.uncompressedBlocking(any())).thenReturn(uncompressedBlockingStub);
     when(grpcStubs.uncompressedBlocking()).thenReturn(uncompressedBlockingStub);
@@ -116,6 +119,7 @@ class GrpcFactStoreTest {
     serverProps.put(Capabilities.CODECS.toString(), " gzip,lz3,lz4, lz99");
     when(uncompressedBlockingStub.handshake(any()))
         .thenReturn(conv.toProto(ServerConfig.of(PROTOCOL_VERSION, serverProps)));
+    when(compressionCodecs.selectFrom(anyString())).thenReturn(Optional.of("gzip"));
     uut.reset();
     uut.initializeIfNecessary();
     verify(grpcStubs).compression("gzip");

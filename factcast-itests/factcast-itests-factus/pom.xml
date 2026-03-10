@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast-itests</artifactId>
-    <version>0.9.14-SNAPSHOT</version>
+    <version>0.10.1-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-itests-factus</artifactId>
@@ -48,6 +48,11 @@
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
+      <artifactId>factcast-test-mongodb</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.factcast</groupId>
       <artifactId>factcast-grpc-lz4</artifactId>
     </dependency>
     <dependency>
@@ -69,6 +74,10 @@
     <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-factus-dynamo</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.factcast</groupId>
+      <artifactId>factcast-factus-mongodb</artifactId>
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
@@ -101,10 +110,17 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-jdbc</artifactId>
     </dependency>
-
     <dependency>
       <groupId>org.factcast</groupId>
-      <artifactId>factcast-factus-bin-snapser</artifactId>
+      <artifactId>factcast-factus-serializer-binary</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.factcast</groupId>
+      <artifactId>factcast-factus-serializer-fury</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.factcast</groupId>
+      <artifactId>factcast-factus-serializer-fory</artifactId>
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
@@ -113,6 +129,10 @@
     <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-snapshotcache-local-memory</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.factcast</groupId>
+      <artifactId>factcast-snapshotcache-mongodb</artifactId>
     </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
@@ -161,7 +181,7 @@
     <dependency>
       <groupId>org.jboss.marshalling</groupId>
       <artifactId>jboss-marshalling-river</artifactId>
-      <version>2.2.3.Final</version>
+      <version>2.3.0</version>
     </dependency>
   </dependencies>
   <build>

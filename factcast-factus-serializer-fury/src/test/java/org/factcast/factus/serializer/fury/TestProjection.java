@@ -18,10 +18,9 @@ package org.factcast.factus.serializer.fury;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import org.factcast.factus.projection.SnapshotProjection;
-import org.factcast.factus.serializer.fury.testjson.Root;
 
 @Data
 public class TestProjection implements SnapshotProjection {
   @JsonProperty String foo = "bar";
-  Root root;
+  testjson.Root root;
 }

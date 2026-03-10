@@ -75,19 +75,24 @@ its type, and will invalidate the respective cache entries if any of those facts
 In essence, when using find/fetch with a typed aggregate cache, you will get a (potentially) slightly stale instance of
 the aggregate, but you will avoid the latency added by the 3 steps mentioned above.
 
-To enable aggregate caching, you need to register a typed cache for your aggregate type:
+To enable aggregate caching, you simply need to register a typed cache for your aggregate type using the `AggregateCacheFactory`:
 
 ```java
-
 @Bean
-AggregateCache<User> getUserAggregateCache(Factus factus, FactSpecProvider fsp) {
-    return new AbstractAggregateCache<User>(factus, fsp) {
-    };
+AggregateCache<User> getUserAggregateCache(AggregateCacheFactory cacheFactory) {
+  return cacheFactory.create(User.class);
+}
+```
+
+You could also configure the cache size like this:
+
+```java
+@Bean
+AggregateCache<User> getUserAggregateCache(AggregateCacheFactory cacheFactory) {
+  return cacheFactory.create(User.class, 200);
 }
 ```
 
 and then instead of calling `factus.fetch(User.class, id)`, you can call `factus.fetch(userAggregateCache, id)` if you
 are ok with a stale aggregate.
 Same goes for `find`.
-
-You can configure your AbstractAggregateCache by overriding the `configure` method.

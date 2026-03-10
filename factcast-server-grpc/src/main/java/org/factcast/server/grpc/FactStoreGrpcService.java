@@ -32,7 +32,6 @@ import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.devh.boot.grpc.server.service.GrpcService;
 import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.*;
@@ -47,6 +46,7 @@ import org.factcast.server.grpc.metrics.*;
 import org.factcast.server.grpc.metrics.ServerMetrics.OP;
 import org.factcast.server.security.auth.*;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.grpc.server.service.GrpcService;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.context.*;
 
@@ -68,12 +68,11 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
   static final AtomicLong subscriptionIdStore = new AtomicLong();
 
   @NonNull final FactStore store;
-  @NonNull final GrpcRequestMetadata grpcRequestMetadata;
+  @NonNull final Supplier<GrpcRequestMetadata> grpcRequestMetadataProvider;
   @NonNull final GrpcLimitProperties grpcLimitProperties;
   @NonNull final HighWaterMarkFetcher ffwdTarget;
   @NonNull final ServerMetrics metrics;
-
-  final CompressionCodecs codecs = new CompressionCodecs();
+  @NonNull final CompressionCodecs codecs;
 
   final ProtoConverter converter = new ProtoConverter();
 
@@ -81,27 +80,45 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
 
   @VisibleForTesting
   @Deprecated
-  protected FactStoreGrpcService(FactStore store, GrpcRequestMetadata grpcRequestMetadata) {
+  protected FactStoreGrpcService(
+      FactStore store, Supplier<GrpcRequestMetadata> grpcRequestMetadataProvider) {
     this(
         store,
-        grpcRequestMetadata,
+        grpcRequestMetadataProvider,
         new GrpcLimitProperties(),
         HighWaterMarkFetcher.forTest(),
-        new NOPServerMetrics());
+        new NOPServerMetrics(),
+        new CompressionCodecs(CompressorRegistry.getDefaultInstance()));
   }
 
   @VisibleForTesting
   @Deprecated
   protected FactStoreGrpcService(
-      FactStore store, GrpcRequestMetadata grpcRequestMetadata, GrpcLimitProperties props) {
-    this(store, grpcRequestMetadata, props, HighWaterMarkFetcher.forTest(), new NOPServerMetrics());
+      FactStore store,
+      Supplier<GrpcRequestMetadata> grpcRequestMetadataProvider,
+      GrpcLimitProperties props) {
+    this(
+        store,
+        grpcRequestMetadataProvider,
+        props,
+        HighWaterMarkFetcher.forTest(),
+        new NOPServerMetrics(),
+        new CompressionCodecs(CompressorRegistry.getDefaultInstance()));
   }
 
   @VisibleForTesting
   @Deprecated
   protected FactStoreGrpcService(
-      FactStore store, GrpcRequestMetadata grpcRequestMetadata, HighWaterMarkFetcher target) {
-    this(store, grpcRequestMetadata, new GrpcLimitProperties(), target, new NOPServerMetrics());
+      FactStore store,
+      Supplier<GrpcRequestMetadata> grpcRequestMetadataProvider,
+      HighWaterMarkFetcher target) {
+    this(
+        store,
+        grpcRequestMetadataProvider,
+        new GrpcLimitProperties(),
+        target,
+        new NOPServerMetrics(),
+        new CompressionCodecs(CompressorRegistry.getDefaultInstance()));
   }
 
   @Override
@@ -118,7 +135,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
 
     final int size = facts.size();
 
-    final var clientId = grpcRequestMetadata.clientId();
+    final var clientId = grpcRequestMetadataProvider.get().clientId();
     if (clientId.isPresent()) {
       final var id = clientId.get();
       facts = facts.stream().map(f -> tagFactSource(f, id)).toList();
@@ -136,7 +153,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
   }
 
   private String clientIdPrefix() {
-    return grpcRequestMetadata.clientId().map(id -> id + "|").orElse("");
+    return grpcRequestMetadataProvider.get().clientId().map(id -> id + "|").orElse("");
   }
 
   @Override
@@ -153,7 +170,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
 
       assertCanRead(namespaces);
 
-      resetDebugInfo(req, grpcRequestMetadata);
+      resetDebugInfo(req, grpcRequestMetadataProvider.get());
       BlockingStreamObserver<MSG_Notification> resp =
           new BlockingStreamObserver<>(req.toString(), (ServerCallStreamObserver) responseObserver);
 
@@ -163,7 +180,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
           new GrpcObserverAdapter(
               req.toString(),
               resp,
-              grpcRequestMetadata,
+              grpcRequestMetadataProvider.get(),
               serverExceptionLogger,
               metrics,
               req.keepaliveIntervalInMs());
@@ -284,9 +301,10 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
         () -> {
           initialize(responseObserver);
 
-          String clientId = Objects.requireNonNull(grpcRequestMetadata.clientIdAsString());
+          String clientId =
+              Objects.requireNonNull(grpcRequestMetadataProvider.get().clientIdAsString());
           String clientVersion =
-              Objects.requireNonNull(grpcRequestMetadata.clientVersionAsString());
+              Objects.requireNonNull(grpcRequestMetadataProvider.get().clientVersionAsString());
 
           log.info("Handshake from '{}' using version {}", clientId, clientVersion);
           metrics.count(
@@ -305,7 +323,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
     HashMap<String, String> properties = new HashMap<>();
     retrieveImplementationVersion(properties);
 
-    String name = grpcRequestMetadata.clientId().orElse("");
+    String name = grpcRequestMetadataProvider.get().clientId().orElse("");
     properties.put(Capabilities.CODECS.toString(), codecs.available());
     // since 0.5.2
     properties.put(Capabilities.FAST_STATE_TOKEN.toString(), Boolean.TRUE.toString());
@@ -404,7 +422,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
         facts.stream().map(Fact::ns).distinct().collect(Collectors.toList());
     assertCanWrite(namespaces);
 
-    final var clientId = grpcRequestMetadata.clientId();
+    final var clientId = grpcRequestMetadataProvider.get().clientId();
     if (clientId.isPresent()) {
       final var id = clientId.get();
       facts = facts.stream().map(f -> tagFactSource(f, id)).toList();
