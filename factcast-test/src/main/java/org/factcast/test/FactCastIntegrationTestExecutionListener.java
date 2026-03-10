@@ -194,10 +194,25 @@ public class FactCastIntegrationTestExecutionListener implements TestExecutionLi
             alias + ":" + port // target address (inside docker network)
             );
 
-    return new ProxiedEndpoint(proxy, toxiProxyHost, toxiProxy.getMappedPort(listenPort));
+    return new ProxiedEndpoint(
+        proxy,
+        toxiProxyHost,
+        toxiProxy.getMappedPort(listenPort),
+        TOXIPROXY_NETWORK_ALIAS,
+        listenPort);
   }
 
-  public record ProxiedEndpoint(Proxy proxy, String host, int port) {}
+  public record ProxiedEndpoint(
+      Proxy proxy,
+      /* Use this host and port if you want to connect from outside the docker network to the container. */
+      String host,
+      int port,
+      /*
+       * Use this host and port if you want to connect from inside the docker network to the
+       * container.
+       */
+      String toxiProxyHost,
+      int toxiProxyPort) {}
 
   public static ToxiproxyClient client() {
     return toxiClient;

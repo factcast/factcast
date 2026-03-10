@@ -19,7 +19,7 @@ import org.factcast.grpc.snappy.SnappycGrpcCodec;
 import org.factcast.server.grpc.FactStoreGrpcService;
 import org.springframework.boot.autoconfigure.*;
 import org.springframework.boot.autoconfigure.condition.*;
-import org.springframework.grpc.autoconfigure.server.GrpcServerAutoConfiguration;
+import org.springframework.boot.grpc.server.autoconfigure.GrpcServerAutoConfiguration;
 
 @AutoConfiguration
 @ConditionalOnClass({FactStoreGrpcService.class, SnappycGrpcCodec.class})

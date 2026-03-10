@@ -91,9 +91,9 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
 
               String jdbcUrl =
                   "jdbc:postgresql://"
-                      + FactCastIntegrationTestExecutionListener.TOXIPROXY_NETWORK_ALIAS
+                      + pgProxy.toxiProxyHost()
                       + ":"
-                      + pgProxy.port()
+                      + pgProxy.toxiProxyPort()
                       + "/"
                       + db.getDatabaseName();
               GenericContainer<?> fc =

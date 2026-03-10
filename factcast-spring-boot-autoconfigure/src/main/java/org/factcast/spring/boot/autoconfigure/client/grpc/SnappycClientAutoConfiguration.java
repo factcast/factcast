@@ -19,7 +19,7 @@ import org.factcast.client.grpc.GrpcFactStore;
 import org.factcast.grpc.snappy.SnappycGrpcCodec;
 import org.springframework.boot.autoconfigure.*;
 import org.springframework.boot.autoconfigure.condition.*;
-import org.springframework.grpc.autoconfigure.client.GrpcClientAutoConfiguration;
+import org.springframework.boot.grpc.client.autoconfigure.GrpcClientAutoConfiguration;
 
 /**
  * Configures optional Snappy Codec
