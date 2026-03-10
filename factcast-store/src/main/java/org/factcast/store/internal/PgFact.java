@@ -65,7 +65,6 @@ public class PgFact implements Fact {
     UUID id = UUID.fromString(header.path("id").asText());
     String ns = header.path("ns").asText();
     String type = header.path("type").asText();
-    ;
     int version = header.path("version").asInt();
     ArrayNode aggIdsNode = (ArrayNode) header.path("aggIds");
     Set<UUID> aggIds =
