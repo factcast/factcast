@@ -55,10 +55,12 @@ public class JsTransformer implements Transformer {
   @SuppressWarnings("unchecked")
   private JsonNode runJSTransformation(JsonNode input, String js) {
     try {
+      final Map<String, Object> jsonAsMap = FactCastJson.convertValue(input, Map.class);
+      final var jsArgument = JSArgument.byReference(jsonAsMap);
       JSEngine engine = getEngine(js);
       synchronized (engine) {
-        Map<String, Object> jsonAsMap = FactCastJson.convertValue(input, Map.class);
-        engine.invoke("transform", JSArgument.byReference(jsonAsMap));
+        engine.invoke("transform", jsArgument);
+        // TODO: investigate if this can be extracted out of the synchronized.
         return FactCastJson.toJsonNode(jsonAsMap);
       }
     } catch (RuntimeException e) {
