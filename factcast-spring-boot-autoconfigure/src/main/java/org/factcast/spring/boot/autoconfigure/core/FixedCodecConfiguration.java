@@ -26,6 +26,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 
+/** Taken from a newer version of spring-grpc and can be removed as soon as we move to SB4. */
 @Configuration
 public class FixedCodecConfiguration {
   @Bean
