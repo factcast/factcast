@@ -25,13 +25,12 @@
       </dependency>
 
       <dependency>
-        <groupId>org.eclipse.jetty.ee9</groupId>
-        <artifactId>jetty-ee9-bom</artifactId>
-        <version>12.0.15</version>
+        <groupId>org.eclipse.jetty</groupId>
+        <artifactId>jetty-bom</artifactId>
+        <version>${jetty-javalin.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
-
     </dependencies>
   </dependencyManagement>
   <dependencies>
@@ -211,6 +210,12 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-security</artifactId>
+      <version>${jetty-javalin.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
       <scope>test</scope>
@@ -219,11 +224,6 @@
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-util</artifactId>
       <version>${jetty-javalin.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.jetty.ee9</groupId>
-      <artifactId>jetty-ee9-security</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
