@@ -397,13 +397,6 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
     options.getByRole(AriaRole.OPTION, new Locator.GetByRoleOptions().setName(ns)).click();
   }
 
-  protected Locator openSerialSelector() {
-    page.locator("#starting-serial > input").click();
-    final var dialog = page.getByRole(AriaRole.DIALOG);
-    dialog.waitFor();
-    return dialog;
-  }
-
   protected void downloadExport() {
     clickButton("Export JSON");
   }
