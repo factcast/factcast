@@ -15,6 +15,7 @@
  */
 package org.factcast.spring.boot.autoconfigure.client.grpc;
 
+import io.grpc.Codec;
 import io.grpc.CompressorRegistry;
 import io.grpc.ManagedChannelBuilder;
 import jakarta.annotation.Nullable;
@@ -77,5 +78,17 @@ public class GrpcFactStoreAutoConfiguration {
   @Bean
   public CompressionCodecs compressionCodecs(CompressorRegistry compressorRegistry) {
     return new CompressionCodecs(compressorRegistry);
+  }
+
+  // simple noop codec for the handshake without compression
+  @Bean
+  public Codec noopCodec() {
+    return Codec.Identity.NONE;
+  }
+
+  // default gzip codec
+  @Bean
+  public Codec gzipCodec() {
+    return new Codec.Gzip();
   }
 }
