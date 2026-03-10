@@ -15,17 +15,21 @@
  */
 package org.factcast.spring.boot.autoconfigure.client.grpc;
 
+import io.grpc.CompressorRegistry;
+import io.grpc.ManagedChannelBuilder;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import lombok.NonNull;
-import net.devh.boot.grpc.client.channelfactory.*;
 import org.factcast.client.grpc.*;
 import org.factcast.core.store.FactStore;
+import org.factcast.grpc.api.CompressionCodecs;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.*;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.*;
+import org.springframework.grpc.client.GrpcChannelBuilderCustomizer;
+import org.springframework.grpc.client.GrpcChannelFactory;
 import org.springframework.util.StringUtils;
 
 /**
@@ -48,6 +52,7 @@ public class GrpcFactStoreAutoConfiguration {
       // we need a new namespace for those client properties
       @NonNull @Value("${grpc.client.factstore.credentials:#{null}}") Optional<String> credentials,
       @NonNull FactCastGrpcClientProperties properties,
+      @NonNull CompressionCodecs compressionCodecs,
       @Nullable @Value("${spring.application.name:#{null}}") String applicationName) {
 
     FactCastGrpcChannelFactory f = FactCastGrpcChannelFactory.createDefault(af);
@@ -60,11 +65,17 @@ public class GrpcFactStoreAutoConfiguration {
                         .filter(StringUtils::hasText)
                         .orElse(null));
 
-    return new GrpcFactStore(f, credentials, properties, id);
+    return new GrpcFactStore(f, credentials, properties, compressionCodecs, id);
   }
 
   @Bean
-  public GrpcChannelConfigurer retryChannelConfigurer() {
-    return (channelBuilder, name) -> channelBuilder.enableRetry().maxRetryAttempts(100);
+  public <T extends ManagedChannelBuilder<T>>
+      GrpcChannelBuilderCustomizer<T> retryChannelConfigurer() {
+    return (name, channelBuilder) -> channelBuilder.enableRetry().maxRetryAttempts(100);
+  }
+
+  @Bean
+  public CompressionCodecs compressionCodecs(CompressorRegistry compressorRegistry) {
+    return new CompressionCodecs(compressorRegistry);
   }
 }

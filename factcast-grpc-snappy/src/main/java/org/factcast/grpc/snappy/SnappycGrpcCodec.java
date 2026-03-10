@@ -20,13 +20,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import lombok.SneakyThrows;
-import net.devh.boot.grpc.common.codec.CodecType;
-import net.devh.boot.grpc.common.codec.GrpcCodec;
 import org.apache.commons.compress.compressors.snappy.FramedSnappyCompressorInputStream;
 import org.apache.commons.compress.compressors.snappy.FramedSnappyCompressorOutputStream;
 
-@GrpcCodec(advertised = true, codecType = CodecType.ALL)
-public class SnappycGrpcClientCodec implements Codec {
+public class SnappycGrpcCodec implements Codec {
 
   @Override
   public String getMessageEncoding() {
