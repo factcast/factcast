@@ -4,6 +4,96 @@ type = "docs"
 weight = 100015
 +++
 
+## Upgrading to 0.9.16
+
+### `Projection.postprocess` now takes a `Collection` instead of a `List`
+
+`Projection.postprocess` used to accept and return `List<FactSpec>`. It now uses `Collection<FactSpec>`.
+
+If you override it, update the signature:
+
+```java
+// before
+@Override
+public @NonNull List<FactSpec> postprocess(@NonNull List<FactSpec> specsAsDiscovered) {
+    // ...
+    return specsAsDiscovered;
+}
+
+// after
+@Override
+public @NonNull Collection<FactSpec> postprocess(@NonNull Collection<FactSpec> specsAsDiscovered) {
+    // ...
+    return specsAsDiscovered;
+}
+```
+
+#### Migrating with OpenRewrite
+
+FactCast ships a recipe that rewrites the signature for you. **Run it before upgrading your FactCast dependency.** Once you bump to 0.9.16, the old `List<FactSpec>` signature is gone and the project won't compile, the recipe needs the old code still in place to match against.
+
+##### Step 1: Add the plugin
+
+While still on your current FactCast version, add the OpenRewrite Maven plugin to your `pom.xml`. The plugin dependency points at `0.9.16` since that's where the recipe lives:
+
+```xml
+<build>
+  <plugins>
+    <plugin>
+      <groupId>org.openrewrite.maven</groupId>
+      <artifactId>rewrite-maven-plugin</artifactId>
+      <version>6.32.0</version>
+      <configuration>
+        <activeRecipes>
+          <recipe>org.factcast.factus.migration.PostprocessToCollection</recipe>
+        </activeRecipes>
+      </configuration>
+      <dependencies>
+        <dependency>
+          <groupId>org.factcast</groupId>
+          <artifactId>factcast-factus</artifactId>
+          <version>0.9.16</version>
+        </dependency>
+      </dependencies>
+    </plugin>
+  </plugins>
+</build>
+```
+
+##### Step 2: Preview
+
+```bash
+mvn rewrite:dryRun
+```
+
+Writes a patch to `target/rewrite/rewrite.patch` without touching your source. Check that it only affects `postprocess` overrides.
+
+##### Step 3: Apply
+
+```bash
+mvn rewrite:run
+```
+
+Updates parameter and return types from `List<FactSpec>` to `Collection<FactSpec>` and fixes imports.
+
+##### Step 4: Check method bodies
+
+The recipe only touches the signature, not the body. `forEach`, `stream`, and `isEmpty` all work on `Collection`, so most implementations need nothing more. If your body calls `get(int)`, `set(int, E)`, `sort(Comparator)`, or `subList(int, int)`, or assigns the parameter to a `List<FactSpec>` variable, fix those manually.
+
+##### Step 5: Upgrade FactCast
+
+Bump `factcast-factus` and any other FactCast modules to `0.9.16`.
+
+##### Step 6: Clean up
+
+Remove the OpenRewrite plugin config (or just the `activeRecipes` entry) from your `pom.xml`.
+
+##### Step 7: Verify
+
+```bash
+mvn clean verify
+```
+
 ## Upgrading to 0.9.14
 
 Version 0.9.14 introduces changes to the way `factcast-snapshotcache-jdbc` stores the `last_accessed` timestamps of
