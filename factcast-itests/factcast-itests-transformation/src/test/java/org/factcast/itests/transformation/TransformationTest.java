@@ -177,7 +177,7 @@ class TransformationTest extends AbstractFactCastIntegrationTest {
   }
 
   private String getString(Fact f, String name) throws JacksonException {
-    return FactCastJson.readTree(f.jsonPayload()).path(name).toString();
+    return FactCastJson.readTree(f.jsonPayload()).path(name).asText();
   }
 
   private boolean getBoolean(Fact f, String name) throws JacksonException {
