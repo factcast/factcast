@@ -16,6 +16,7 @@
 package org.factcast.store.registry.transformation.chains;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.annotations.VisibleForTesting;
 import java.util.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -53,7 +54,8 @@ public class JsTransformer implements Transformer {
   }
 
   @SuppressWarnings("unchecked")
-  private JsonNode runJSTransformation(JsonNode input, String js) {
+  @VisibleForTesting
+  protected JsonNode runJSTransformation(JsonNode input, String js) {
     try {
       final Map<String, Object> jsonAsMap = FactCastJson.convertValue(input, Map.class);
       final var jsArgument = JSArgument.byReference(jsonAsMap);
