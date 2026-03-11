@@ -56,7 +56,7 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
 
   private final PlatformTransactionManager platformTransactionManager;
 
-  private int bufferThreshold = 1000;
+  private int bufferThreshold = 10;
 
   public final int maxBufferSize;
 
@@ -106,7 +106,7 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
 
     PgFact factFromBuffer = buffer.get(key);
     if (factFromBuffer != null) {
-      registerAccess(key);
+      // registerAccess(key);
       registryMetrics.count(EVENT.TRANSFORMATION_CACHE_HIT);
       return Optional.of(factFromBuffer);
     }
@@ -121,7 +121,7 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
       registryMetrics.count(EVENT.TRANSFORMATION_CACHE_MISS);
       return Optional.empty();
     } else {
-      registerAccess(key);
+
       registryMetrics.count(EVENT.TRANSFORMATION_CACHE_HIT);
       return Optional.of(facts.get(0));
     }
@@ -159,21 +159,7 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
     registryMetrics.increase(EVENT.TRANSFORMATION_CACHE_MISS, misses);
     registryMetrics.increase(EVENT.TRANSFORMATION_CACHE_HIT, hits);
 
-    registerAccess(keys);
-
     return Sets.newHashSet(facts);
-  }
-
-  @VisibleForTesting
-  CompletableFuture<Void> registerAccess(Collection<Key> keys) {
-    buffer.putAllNull(keys);
-    return flushIfNecessary();
-  }
-
-  @VisibleForTesting
-  CompletableFuture<Void> registerAccess(Key cacheKey) {
-    buffer.put(cacheKey, null);
-    return flushIfNecessary();
   }
 
   @VisibleForTesting
@@ -185,18 +171,8 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
   @VisibleForTesting
   @SneakyThrows
   CompletableFuture<Void> flushIfNecessary() {
-    final var size = buffer.size();
-
-    if (size > maxBufferSize) {
-      flush();
-      return COMPLETED_FUTURE;
-    } else {
-      if (size >= bufferThreshold && tpe.getQueue().isEmpty()) {
-        return CompletableFuture.runAsync(this::flush, tpe);
-      } else {
-        return COMPLETED_FUTURE;
-      }
-    }
+    flush();
+    return COMPLETED_FUTURE;
   }
 
   @Override
