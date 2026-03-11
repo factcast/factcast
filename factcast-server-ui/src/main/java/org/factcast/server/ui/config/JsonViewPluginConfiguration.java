@@ -81,8 +81,7 @@ public class JsonViewPluginConfiguration {
 
   @Bean
   @ConditionalOnMissingBean
-  public TokenStreamFactory jsonFactory(ObjectMapper objectMapper) {
-    // TODO SB4 was: return new TokenStreamFactory(objectMapper);
-    return new JsonFactory(objectMapper);
+  public JsonFactory jsonFactory(JsonViewPluginObjectMapperCustomizer customizer) {
+    return new JsonFactory(createObjectMapper(customizer));
   }
 }

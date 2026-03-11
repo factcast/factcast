@@ -33,7 +33,8 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfiguration {
   @Bean
   SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-    return http.with(
+    return http.authorizeHttpRequests(registry -> registry.requestMatchers("/files/**").permitAll())
+        .with(
             VaadinSecurityConfigurer.vaadin(), configurer -> configurer.loginView(LoginView.class))
         .build();
   }

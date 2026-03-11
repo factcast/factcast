@@ -15,13 +15,13 @@
  */
 package org.factcast.server.ui.views;
 
-import com.vaadin.componentfactory.Popup;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.html.H4;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.popover.Popover;
 import com.vaadin.flow.component.textfield.Autocomplete;
 import com.vaadin.flow.component.textfield.BigDecimalField;
 import com.vaadin.flow.component.textfield.IntegerField;
@@ -40,8 +40,8 @@ public class SerialInputPanel extends HorizontalLayout {
   private final BigDecimalField to = new BigDecimalField("End serial");
   private final IntegerField limit = new IntegerField("Limit");
   private final IntegerField offset = new IntegerField("Offset");
-  private final Popup fromSerialHelperOverlay = new Popup();
-  private final Popup toSerialHelperOverlay = new Popup();
+  private final Popover fromSerialHelperOverlay = new Popover();
+  private final Popover toSerialHelperOverlay = new Popover();
 
   private final transient FactRepository repo;
 
@@ -51,11 +51,13 @@ public class SerialInputPanel extends HorizontalLayout {
     setClassName("flex-wrap");
     setJustifyContentMode(JustifyContentMode.BETWEEN);
 
-    fromSerialHelperOverlay.setTarget(from.getElement());
+    fromSerialHelperOverlay.setTarget(from);
+    fromSerialHelperOverlay.setId("fromSerialOverlay");
     from.setId("starting-serial");
     from.setAutocomplete(Autocomplete.OFF);
     from.addValueChangeListener(e -> setDefaultFromSerialAndUpdateEndSerial());
-    toSerialHelperOverlay.setTarget(to.getElement());
+    toSerialHelperOverlay.setTarget(to);
+    fromSerialHelperOverlay.setId("toSerialOverlay");
     to.setId("ending-serial");
     to.setAutocomplete(Autocomplete.OFF);
     to.addValueChangeListener(e -> updateEndSerialIfLowerThanStartSerial());
@@ -103,14 +105,14 @@ public class SerialInputPanel extends HorizontalLayout {
     latestSerial.addClickListener(
         event -> {
           from.setValue(BigDecimal.valueOf(repo.latestSerial()));
-          fromSerialHelperOverlay.hide();
+          fromSerialHelperOverlay.close();
         });
 
     Button fromScratch = new Button("From scratch");
     fromScratch.addClickListener(
         event -> {
           from.setValue(BigDecimal.ZERO);
-          fromSerialHelperOverlay.hide();
+          fromSerialHelperOverlay.close();
         });
 
     final var heading = new H4("Select start serial ");
@@ -122,7 +124,7 @@ public class SerialInputPanel extends HorizontalLayout {
     latestSerial.addClickListener(
         event -> {
           to.setValue(null);
-          toSerialHelperOverlay.hide();
+          fromSerialHelperOverlay.close();
         });
     final var heading = new H4("Select last serial");
     return new VerticalLayout(heading, until, latestSerial);
