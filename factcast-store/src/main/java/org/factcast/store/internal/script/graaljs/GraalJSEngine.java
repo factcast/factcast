@@ -58,6 +58,10 @@ public class GraalJSEngine implements JSEngine {
         return withTruffleClassloader(
             () -> {
               try {
+                log.trace(
+                    "Invoking transoformation function for {} with {} arguments",
+                    functionName,
+                    input.length);
                 return engine.invokeFunction(
                     functionName, Arrays.stream(input).map(Supplier::get).toArray());
               } catch (NoSuchMethodException | ScriptException e) {
