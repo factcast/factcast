@@ -26,8 +26,10 @@ import org.factcast.core.store.FactStore;
 import org.factcast.grpc.api.CompressionCodecs;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.*;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.grpc.client.autoconfigure.GrpcClientAutoConfiguration;
 import org.springframework.context.annotation.*;
 import org.springframework.grpc.client.GrpcChannelBuilderCustomizer;
 import org.springframework.grpc.client.GrpcChannelFactory;
@@ -41,8 +43,9 @@ import org.springframework.util.StringUtils;
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 @AutoConfiguration
 @ConditionalOnClass({GrpcFactStore.class, GrpcChannelFactory.class})
-@Import(FactCastGrpcClientProperties.class)
+@Import({FactCastGrpcClientProperties.class})
 @EnableConfigurationProperties
+@AutoConfigureBefore(GrpcClientAutoConfiguration.class)
 public class GrpcFactStoreAutoConfiguration {
 
   @Bean
