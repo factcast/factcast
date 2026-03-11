@@ -11,9 +11,6 @@
   </parent>
   <artifactId>factcast-store</artifactId>
   <name>${project.groupId}:${project.artifactId}</name>
-  <properties>
-    <jetty-javalin.version>11.0.26</jetty-javalin.version>
-  </properties>
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -179,45 +176,7 @@
     <dependency>
       <groupId>io.javalin</groupId>
       <artifactId>javalin</artifactId>
-      <version>6.7.0</version>
-      <scope>test</scope>
-    </dependency>
-    <!-- explicit jetty dependencies to workaround missing jetty12 compat ->
-      https://github.com/javalin/javalin/issues/2067 -->
-    <dependency>
-      <groupId>org.eclipse.jetty</groupId>
-      <artifactId>jetty-server</artifactId>
-      <version>${jetty-javalin.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.jetty</groupId>
-      <artifactId>jetty-http</artifactId>
-      <version>${jetty-javalin.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.jetty</groupId>
-      <artifactId>jetty-util</artifactId>
-      <version>${jetty-javalin.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.jetty</groupId>
-      <artifactId>jetty-security</artifactId>
-      <version>${jetty-javalin.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.jetty</groupId>
-      <artifactId>jetty-io</artifactId>
-      <version>${jetty-javalin.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.jetty</groupId>
-      <artifactId>jetty-xml</artifactId>
-      <version>${jetty-javalin.version}</version>
+      <version>7.0.1</version>
       <scope>test</scope>
     </dependency>
     <!-- end javalin -->
