@@ -24,7 +24,6 @@ import lombok.NonNull;
 import org.factcast.client.grpc.*;
 import org.factcast.core.store.FactStore;
 import org.factcast.grpc.api.CompressionCodecs;
-import org.factcast.spring.boot.autoconfigure.core.FixedCodecConfiguration;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
@@ -44,7 +43,7 @@ import org.springframework.util.StringUtils;
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 @AutoConfiguration
 @ConditionalOnClass({GrpcFactStore.class, GrpcChannelFactory.class})
-@Import({FactCastGrpcClientProperties.class, FixedCodecConfiguration.class})
+@Import({FactCastGrpcClientProperties.class})
 @EnableConfigurationProperties
 @AutoConfigureBefore(GrpcClientAutoConfiguration.class)
 public class GrpcFactStoreAutoConfiguration {
