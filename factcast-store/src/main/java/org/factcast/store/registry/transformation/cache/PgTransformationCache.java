@@ -50,15 +50,9 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
 
   @Getter(AccessLevel.PROTECTED)
   @VisibleForTesting
-  // entry of null means read, entry of non-null means write
-  private final CacheBuffer buffer;
-
   private final PlatformTransactionManager platformTransactionManager;
 
   static final int THRESHOLD_PERCENT = 80;
-
-  public final int maxBufferSize;
-  private final int bufferThreshold;
 
   public PgTransformationCache(
       PlatformTransactionManager platformTransactionManager,
@@ -86,11 +80,6 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
     this.storeConfigurationProperties = storeConfigurationProperties;
 
     registryMetrics.monitor(tpe, "transformation-cache");
-
-    this.maxBufferSize =
-        Math.min(maxBufferSize, 9999); // the batchUpdates used only support up to 10k
-    this.buffer = new CacheBuffer(registryMetrics);
-    this.bufferThreshold = (THRESHOLD_PERCENT * this.maxBufferSize) / 100;
   }
 
   @Override
@@ -100,12 +89,6 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
 
   @Override
   public Optional<PgFact> find(Key key) {
-
-    PgFact factFromBuffer = buffer.get(key);
-    if (factFromBuffer != null) {
-      registryMetrics.count(EVENT.TRANSFORMATION_CACHE_HIT);
-      return Optional.of(factFromBuffer);
-    }
 
     List<PgFact> facts =
         jdbcTemplate.query(selectViaFunction(new String[] {key.id()}), new PgFactRowMapper());
@@ -123,25 +106,12 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
   public Set<PgFact> findAll(Collection<Key> keysToFind) {
 
     ArrayList<Key> keys = Lists.newArrayList(keysToFind);
+    Set facts = new HashSet<PgFact>();
 
-    List<PgFact> facts = new ArrayList<>();
-    Iterator<Key> iterator = keys.iterator();
-    while (iterator.hasNext()) {
-      Key key = iterator.next();
-      PgFact found = buffer.get(key);
-      if (found != null) {
-        iterator.remove();
-        facts.add(found);
-      }
-    }
-
-    if (!keys.isEmpty()) {
-
-      facts.addAll(
-          jdbcTemplate.query(
-              selectViaFunction(keys.stream().map(Key::id).toArray(String[]::new)),
-              new PgFactRowMapper()));
-    }
+    facts.addAll(
+        jdbcTemplate.query(
+            selectViaFunction(keys.stream().map(Key::id).toArray(String[]::new)),
+            new PgFactRowMapper()));
 
     int hits = facts.size();
     int misses = keysToFind.size() - hits;
@@ -164,48 +134,13 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
 
   @VisibleForTesting
   CompletableFuture<Void> registerWrite(@NonNull TransformationCache.Key key, @NonNull PgFact f) {
-    buffer.put(key, f);
-    return flushIfNecessary();
-  }
-
-  @VisibleForTesting
-  @SneakyThrows
-  CompletableFuture<Void> flushIfNecessary() {
-    final var size = buffer.size();
-
-    if (size >= maxBufferSize) {
-      // make sure it does not exceed maxBufferSize
-      flush();
-      return COMPLETED_FUTURE;
-    } else {
-      // try to do it async if not already scheduled
-      synchronized (tpe) {
-        if (size >= bufferThreshold && tpe.getQueue().isEmpty()) {
-          return CompletableFuture.runAsync(this::flush, tpe);
-        } else {
-          return COMPLETED_FUTURE;
-        }
-      }
-    }
+    inTransactionWithLock(() -> Map.of(key, f));
+    return COMPLETED_FUTURE;
   }
 
   @Override
   public void compact(@NonNull ZonedDateTime thresholdDate) {
-    if (!storeConfigurationProperties.isReadOnlyModeEnabled()) {
-      flush();
-
-      registryMetrics.timed(
-          OP.COMPACT_TRANSFORMATION_CACHE,
-          () ->
-              inTransactionWithLock(
-                  () -> {
-                    Timestamp d = Timestamp.from(thresholdDate.toInstant());
-                    // will cascade down to tc_access
-                    jdbcTemplate.update(
-                        "DELETE FROM transformationcache WHERE cache_key in (SELECT cache_key FROM transformationcache_access WHERE last_access < ?)",
-                        d);
-                  }));
-    }
+    // disabled for now
   }
 
   @Override
@@ -242,24 +177,7 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
   }
 
   @Scheduled(fixedRate = 10, timeUnit = TimeUnit.MINUTES)
-  public void flush() {
-    // Before flushing, the buffer is wiped and again open for business.
-    // Until the flush is done, a copy of the buffer can be used to read from.
-    // Note that this is important even in readonly mode, as otherwise we'd run short on memory
-    buffer.clearAfter(
-        copy -> {
-          if (!copy.isEmpty() && !storeConfigurationProperties.isReadOnlyModeEnabled()) {
-            // we want to serialize flushing beyond instances in order to avoid parallel
-            // updates/insertions/deletions causing deadlocks
-            try {
-              inTransactionWithLock(() -> insertBufferedTransformations(copy));
-            } catch (Exception e) {
-              log.error(
-                  "Could not complete batch update of transformations on transformation cache.", e);
-            }
-          }
-        });
-  }
+  public void flush() {}
 
   /**
    * this is used to serialize writes to the table in order to prevent circular row lock situations

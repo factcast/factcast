@@ -59,7 +59,12 @@ public class JsTransformer implements Transformer {
       synchronized (engine) {
         Map<String, Object> jsonAsMap = FactCastJson.convertValue(input, Map.class);
         // retrieve the fact id
-        String idAsText = input.get("header").get("id").asText();
+        String idAsText =
+            Optional.ofNullable(input.get("header"))
+                .map(n -> n.get("id"))
+                .map(JsonNode::asText)
+                .orElse("unknown");
+
         try {
           log.trace("Invoking transformation for fact id: {}", idAsText);
           engine.invoke("transform", JSArgument.byReference(jsonAsMap));
