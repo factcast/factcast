@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.accordion.Accordion;
 import com.vaadin.flow.component.button.*;
+import com.vaadin.flow.component.dependency.NpmPackage;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.*;
 import com.vaadin.flow.component.notification.*;
@@ -45,6 +46,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 
 @Route(value = "ui/report", layout = MainLayout.class)
 @PageTitle("Report")
+// this is needed for the file download wrapper
+@NpmPackage(value = "@vaadin/polymer-legacy-adapter", version = "24.9.12")
 @PermitAll
 @SuppressWarnings({"java:S110", "java:S1948"})
 @Slf4j

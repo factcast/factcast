@@ -358,17 +358,13 @@ class FullQueryPageIntTest extends AbstractBrowserTest {
   private void addMetaEntry(@NonNull String key, @NonNull String value, int index) {
     page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Meta")).nth(index).click();
 
-    final var dialog = page.getByRole(AriaRole.DIALOG);
-    dialog.waitFor();
-    dialog.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Add")).click();
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Add").setExact(true))
+        .click();
+    page.getByRole(AriaRole.TEXTBOX, new Page.GetByRoleOptions().setName("Key")).fill(key);
+    page.getByRole(AriaRole.TEXTBOX, new Page.GetByRoleOptions().setName("Value")).fill(value);
+    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Add")).nth(2).click();
 
-    final var addDialog =
-        page.getByRole(AriaRole.DIALOG, new Page.GetByRoleOptions().setIncludeHidden(true)).nth(1);
-    addDialog.getByLabel("Key").fill(key);
-    addDialog.getByLabel("Value").fill(value);
-    addDialog.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Add")).click();
-
-    dialog.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Close")).click();
+    page.getByText("Close").click();
   }
 
   private void setAggId(@NonNull UUID aggId) {

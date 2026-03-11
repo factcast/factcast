@@ -39,7 +39,6 @@ import org.factcast.server.ui.plugins.JsonViewEntry;
 @NpmPackage(value = "monaco-editor", version = "0.33.0")
 @NpmPackage(value = "jsonc-parser", version = "3.2.0")
 @NpmPackage(value = "jsonpath-plus", version = "7.2.0")
-@NpmPackage(value = "@vaadin/polymer-legacy-adapter", version = "24.9.12") // TODO
 @NoCoverageReportToBeGenerated
 @SuppressWarnings("java:S1948")
 @RequiredArgsConstructor
