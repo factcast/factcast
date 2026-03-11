@@ -38,15 +38,22 @@ class StaleSnapshotsTimerTask extends TimerTask {
       @NonNull String lastAccessedTableName,
       int staleForDays) {
     this.dataSource = dataSource;
+    // no Oracle support for aliases in a DELETE statement
     this.statement =
         "DELETE FROM "
             + tableName
-            + " AS t1 WHERE EXISTS (SELECT 1 FROM "
+            + " WHERE EXISTS ("
+            + "  SELECT 1 FROM "
             + lastAccessedTableName
-            + " AS t2"
-            + " WHERE t1.projection_class = t2.projection_class"
-            + " AND t1.aggregate_id = t2.aggregate_id"
-            + " AND last_accessed < ?)";
+            + " t2"
+            + "  WHERE "
+            + tableName
+            + ".projection_class = t2.projection_class"
+            + "    AND "
+            + tableName
+            + ".aggregate_id = t2.aggregate_id"
+            + "    AND t2.last_accessed < ?"
+            + ")";
     this.staleForDays = staleForDays;
   }
 
