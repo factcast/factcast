@@ -56,7 +56,7 @@ class RetryableTransactionImpl implements RetryableTransaction {
   }
 
   @Override
-  public void publish(@NonNull org.factcast.factus.event.EventObject e) {
+  public void publish(@NonNull EventObject e) {
     toPublish.add(() -> factus.toFact(e));
   }
 

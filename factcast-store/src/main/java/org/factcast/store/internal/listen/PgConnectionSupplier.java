@@ -19,7 +19,8 @@ import com.google.common.annotations.VisibleForTesting;
 import java.sql.*;
 import java.util.*;
 import javax.sql.DataSource;
-import lombok.*;
+import lombok.NonNull;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tomcat.jdbc.pool.PoolConfiguration;
 import org.postgresql.jdbc.PgConnection;
@@ -163,6 +164,28 @@ public class PgConnectionSupplier {
       Collections.reverse(rev);
       rev.forEach(f -> f.beforeReturn(c));
       super.destroy();
+    }
+
+    public boolean isWrapperFor(Class<?> iface) throws java.sql.SQLException {
+      // TODO Auto-generated method stub
+      return iface != null && iface.isAssignableFrom(this.getClass());
+    }
+
+    public <T> T unwrap(Class<T> iface) throws java.sql.SQLException {
+      // TODO Auto-generated method stub
+      try {
+        if (iface != null && iface.isAssignableFrom(this.getClass())) {
+          return (T) this;
+        }
+        throw new java.sql.SQLException("Auto-generated unwrap failed; Revisit implementation");
+      } catch (Exception e) {
+        throw new java.sql.SQLException(e);
+      }
+    }
+
+    public java.util.logging.Logger getParentLogger() {
+      // TODO Auto-generated method stub
+      return null;
     }
   }
 }

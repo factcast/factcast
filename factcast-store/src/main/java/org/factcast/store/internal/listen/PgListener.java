@@ -23,7 +23,9 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
-import lombok.*;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.*;
@@ -188,7 +190,9 @@ public class PgListener implements InitializingBean, DisposableBean {
       PGNotification last = lastBCN.get();
       return nonFactInserts.stream()
           .filter(n -> !PgConstants.CHANNEL_BLACKLIST_CHANGE.equals(n.getName()) || n == last);
-    } else return nonFactInserts.stream();
+    } else {
+      return nonFactInserts.stream();
+    }
   }
 
   @VisibleForTesting
@@ -234,7 +238,7 @@ public class PgListener implements InitializingBean, DisposableBean {
       // return since there might have also received channel notifications
       pgMetrics
           .timer(StoreMetrics.OP.NOTIFY_ROUNDTRIP)
-          .record((System.nanoTime() - start), TimeUnit.NANOSECONDS);
+          .record(System.nanoTime() - start, TimeUnit.NANOSECONDS);
       return notifications;
     }
   }

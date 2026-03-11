@@ -17,10 +17,12 @@ package org.factcast.factus.redis;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import jakarta.annotation.Nullable;
 import java.time.Duration;
 import java.util.concurrent.atomic.*;
-import javax.annotation.Nullable;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.projection.WriterToken;
 import org.redisson.api.*;
@@ -59,8 +61,9 @@ public class RedisWriterToken implements WriterToken {
 
   @Override
   public boolean isValid() {
-    if (alreadyClosed()) return false; // it'll never come back
-
+    if (alreadyClosed()) {
+      return false; // it'll never come back
+    }
     long lastCheck = liveness.get();
     if (System.currentTimeMillis() - lastCheck < CHECK_INTERVAL) {
       return true;

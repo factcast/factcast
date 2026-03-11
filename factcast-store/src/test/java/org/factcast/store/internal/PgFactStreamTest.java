@@ -45,9 +45,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.quality.Strictness;
 import org.postgresql.util.PSQLException;
 import org.postgresql.util.ServerErrorMessage;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
@@ -330,7 +331,9 @@ class PgFactStreamTest {
       when(rs.isClosed()).thenReturn(false);
       // until
       PSQLException mockException =
-          mock(PSQLException.class, withSettings().strictness(Strictness.LENIENT));
+          mock(
+              PSQLException.class,
+              withSettings().strictness(org.mockito.quality.Strictness.LENIENT));
       when(rs.getString(anyString())).thenThrow(mockException);
 
       uut.processRow(rs);

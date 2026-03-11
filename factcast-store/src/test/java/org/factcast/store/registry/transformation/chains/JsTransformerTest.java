@@ -17,7 +17,7 @@ package org.factcast.store.registry.transformation.chains;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -96,18 +96,18 @@ class JsTransformerTest {
     when(transformation.transformationCode())
         .thenReturn(
             Optional.of(
-                "function transform(e) { \n"
-                    + "  console.log('Starting Busy Wait...'); \n"
-                    // code to do busy waiting in JS:
-                    + "  const date = Date.now();\n"
-                    + "  const milliseconds = 2000;\n"
-                    + "  let currentDate = null;\n"
-                    + "  do {\n"
-                    + "    currentDate = Date.now();\n"
-                    + "  } while (currentDate - date < milliseconds);\n"
-                    + "  console.log('Done busy waiting.'); \n"
-                    // actual transformation
-                    + "  e.x = e.y; }\n"));
+                """
+                function transform(e) {\s
+                  console.log('Starting Busy Wait...');\s
+                  const date = Date.now();
+                  const milliseconds = 2000;
+                  let currentDate = null;
+                  do {
+                    currentDate = Date.now();
+                  } while (currentDate - date < milliseconds);
+                  console.log('Done busy waiting.');\s
+                  e.x = e.y; }
+                """));
 
     var d1 = new HashMap<String, Object>();
     d1.put("y", "1");

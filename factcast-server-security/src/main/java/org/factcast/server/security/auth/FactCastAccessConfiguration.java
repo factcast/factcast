@@ -30,7 +30,7 @@ import org.factcast.core.util.FactCastJson;
 @NoArgsConstructor
 public class FactCastAccessConfiguration {
   @VisibleForTesting
-  @Getter(value = AccessLevel.PROTECTED)
+  @Getter(AccessLevel.PROTECTED)
   private final List<FactCastRole> roles = new LinkedList<>();
 
   @Getter private final List<FactCastAccount> accounts = new LinkedList<>();

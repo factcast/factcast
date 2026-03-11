@@ -17,12 +17,13 @@ package org.factcast.test.toxi;
 
 import eu.rekawek.toxiproxy.ToxiproxyClient;
 import lombok.NonNull;
-import org.testcontainers.containers.ToxiproxyContainer;
+import org.factcast.test.FactCastIntegrationTestExecutionListener;
 
 public class PostgresqlProxy extends AbstractToxiProxySupplier {
 
   public PostgresqlProxy(
-      @NonNull ToxiproxyContainer.ContainerProxy proxy, @NonNull ToxiproxyClient client) {
-    super(proxy, proxy.getName(), client);
+      @NonNull FactCastIntegrationTestExecutionListener.ProxiedEndpoint proxy,
+      @NonNull ToxiproxyClient client) {
+    super(proxy, client);
   }
 }

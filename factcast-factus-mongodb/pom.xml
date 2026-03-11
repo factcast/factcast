@@ -45,6 +45,8 @@
     <dependency>
       <groupId>org.springframework.retry</groupId>
       <artifactId>spring-retry</artifactId>
+      <!-- deprecated! -->
+      <version>2.0.12</version>
     </dependency>
 
     <dependency>
@@ -91,8 +93,7 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>${maven.compiler.version}</version>
         <configuration>
-          <source>1.8</source>
-          <target>1.8</target>
+          <release>17</release>
         </configuration>
       </plugin>
     </plugins>

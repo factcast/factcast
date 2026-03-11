@@ -18,16 +18,18 @@ package org.factcast.factus.spring.tx;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import jakarta.annotation.*;
 import java.time.*;
 import java.util.*;
-import javax.annotation.*;
-import lombok.*;
+import lombok.NonNull;
 import org.factcast.core.*;
 import org.factcast.factus.projection.*;
 import org.factcast.factus.projection.tx.*;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
-import org.mockito.*;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.*;
 import org.springframework.transaction.*;
 

@@ -18,7 +18,10 @@ package org.factcast.core.spec;
 import com.fasterxml.jackson.annotation.*;
 import java.util.*;
 import java.util.stream.Collectors;
-import lombok.*;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.ToString;
 
 /**
  * Defines a Specification of facts to match for a subscription.

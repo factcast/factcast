@@ -17,7 +17,7 @@ package org.factcast.core.lock;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
 
 import java.util.*;
 import java.util.concurrent.*;

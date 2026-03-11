@@ -124,8 +124,7 @@ public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
   /** optimistically 'locks' on an aggregate. shortcut to lock(Class,UUID) */
   @SuppressWarnings("unchecked")
   default <S extends SnapshotProjection> Locked<S> withLockOn(@NonNull S snapshotProjection) {
-    if (snapshotProjection instanceof Aggregate) {
-      Aggregate aggregate = (Aggregate) snapshotProjection;
+    if (snapshotProjection instanceof Aggregate aggregate) {
       return (Locked<S>) withLockOn(aggregate.getClass(), AggregateUtil.aggregateId(aggregate));
     } else {
       return (Locked<S>) withLockOn(snapshotProjection.getClass());
@@ -175,15 +174,14 @@ public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
                       .orElseThrow(
                           () ->
                               new IllegalArgumentException(
-                                  String.format(
-                                      "Fact with id %s not found. Make sure to publish before waiting for it.",
-                                      factId))));
+                                  "Fact with id %s not found. Make sure to publish before waiting for it."
+                                      .formatted(factId))));
       FactStreamPosition currentFsp = subscribedProjection.factStreamPosition();
       // until timeout is met or the factStreamPosition is greater than the serial
       for (int i = 1; currentFsp == null || currentFsp.serial() < serial; i++) {
         if (System.currentTimeMillis() - start > timeout.toMillis()) {
           throw new TimeoutException(
-              String.format("Timeout waiting for fact %s to be consumed.", factId));
+              "Timeout waiting for fact %s to be consumed.".formatted(factId));
         }
         Thread.sleep(retryBackoffMillis.applyAsLong(i));
         currentFsp = subscribedProjection.factStreamPosition();

@@ -16,13 +16,14 @@
 package org.factcast.schema.registry.plugin;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.google.common.collect.Sets;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
 import org.junit.jupiter.api.BeforeEach;
@@ -68,7 +69,7 @@ class CliArgumentBuilderTest {
 
     assertEquals(5, builder.length);
     assertEquals("-w", builder[3]);
-    assertTrue(Files.readAllLines(Paths.get(builder[4])).contains("bar"));
+    assertTrue(Files.readAllLines(Path.of(builder[4])).contains("bar"));
   }
 
   @Test
@@ -97,7 +98,7 @@ class CliArgumentBuilderTest {
     assertEquals("-o", builder[3]);
     assertEquals("bazz", builder[4]);
     assertEquals("-w", builder[5]);
-    assertTrue(Files.readAllLines(Paths.get(builder[6])).contains("bar"));
+    assertTrue(Files.readAllLines(Path.of(builder[6])).contains("bar"));
     assertEquals("-s", builder[7]);
     assertEquals("--schema-remove-fields", builder[8]);
     assertEquals("description,example", builder[9]);

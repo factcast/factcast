@@ -16,7 +16,8 @@
 package org.factcast.server.ui.adapter;
 
 import java.util.function.Consumer;
-import lombok.*;
+import lombok.Getter;
+import lombok.NonNull;
 import lombok.extern.java.Log;
 import org.factcast.core.Fact;
 
@@ -25,7 +26,7 @@ import org.factcast.core.Fact;
 public class UnlimitedConsumingObserver extends AbstractListObserver {
   private int offset;
   private final @NonNull Consumer<Fact> factConsumer;
-  private long processedFacts = 0;
+  private long processedFacts;
 
   public UnlimitedConsumingObserver(int offset, @NonNull Consumer<Fact> factConsumer) {
     this.offset = offset;

@@ -15,8 +15,8 @@
  */
 package org.factcast.factus.aggregate.cache;
 
+import jakarta.annotation.Nullable;
 import java.util.UUID;
-import javax.annotation.Nullable;
 import lombok.NonNull;
 import org.factcast.factus.projection.Aggregate;
 

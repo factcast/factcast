@@ -26,15 +26,15 @@ import org.factcast.test.PostgresVersion;
 import org.mockito.Mockito;
 import org.postgresql.Driver;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
-import org.springframework.boot.autoconfigure.jdbc.JdbcTemplateAutoConfiguration;
-import org.springframework.boot.autoconfigure.liquibase.LiquibaseAutoConfiguration;
-import org.springframework.boot.autoconfigure.transaction.TransactionAutoConfiguration;
+import org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration;
+import org.springframework.boot.jdbc.autoconfigure.JdbcTemplateAutoConfiguration;
+import org.springframework.boot.liquibase.autoconfigure.LiquibaseAutoConfiguration;
+import org.springframework.boot.transaction.autoconfigure.TransactionAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
-import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 
 @SuppressWarnings("resource")
 @Configuration
@@ -53,7 +53,7 @@ public class PgTestConfiguration {
     if (url == null) {
       String version = PostgresVersion.get();
       log.info("Trying to start postgres testcontainer version {}", version);
-      PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:" + version);
+      PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:" + version);
       postgres.start();
       url = postgres.getJdbcUrl();
       System.setProperty("spring.datasource.driver-class-name", Driver.class.getName());

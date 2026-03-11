@@ -15,9 +15,9 @@
  */
 package org.factcast.core.snap.redisson;
 
+import jakarta.annotation.Nullable;
 import java.util.Optional;
 import java.util.UUID;
-import javax.annotation.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;

@@ -16,7 +16,6 @@
 package org.factcast.grpc.api;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 import io.grpc.CompressorRegistry;
 import org.assertj.core.api.Assertions;

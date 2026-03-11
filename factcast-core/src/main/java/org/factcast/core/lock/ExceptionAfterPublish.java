@@ -15,6 +15,7 @@
  */
 package org.factcast.core.lock;
 
+import java.io.Serial;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.Getter;
@@ -24,7 +25,7 @@ import org.factcast.core.util.FactCastJson;
 
 public final class ExceptionAfterPublish extends IllegalStateException {
 
-  private static final long serialVersionUID = 1L;
+  @Serial private static final long serialVersionUID = 1L;
 
   @Getter @NonNull private final List<Fact> publishedFacts;
 

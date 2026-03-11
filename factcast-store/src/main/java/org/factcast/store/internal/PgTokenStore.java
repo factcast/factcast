@@ -40,8 +40,7 @@ public class PgTokenStore implements TokenStore {
   public @NonNull StateToken create(@NonNull State state) {
 
     String stateAsJson = FactCastJson.writeValueAsString(state);
-    UUID queryForObject =
-        jdbc.queryForObject(PgConstants.INSERT_TOKEN, new Object[] {stateAsJson}, UUID.class);
+    UUID queryForObject = jdbc.queryForObject(PgConstants.INSERT_TOKEN, UUID.class, stateAsJson);
     return new StateToken(queryForObject);
   }
 
@@ -58,8 +57,7 @@ public class PgTokenStore implements TokenStore {
   public @NonNull Optional<State> get(@NonNull StateToken token) {
     try {
       String state =
-          jdbc.queryForObject(
-              PgConstants.SELECT_STATE_FROM_TOKEN, new Object[] {token.uuid()}, String.class);
+          jdbc.queryForObject(PgConstants.SELECT_STATE_FROM_TOKEN, String.class, token.uuid());
       return Optional.of(FactCastJson.readValue(State.class, state));
     } catch (EmptyResultDataAccessException e) {
       return Optional.empty();

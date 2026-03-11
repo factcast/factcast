@@ -86,7 +86,7 @@ public abstract class AbstractCompressionPerformanceTest {
     long start = System.currentTimeMillis();
     r.run();
     long end = System.currentTimeMillis();
-    LoggerFactory.getLogger(getClass()).info("{}: {}ms", title, (end - start));
+    LoggerFactory.getLogger(getClass()).info("{}: {}ms", title, end - start);
   }
 
   interface ThrowingRunnable {

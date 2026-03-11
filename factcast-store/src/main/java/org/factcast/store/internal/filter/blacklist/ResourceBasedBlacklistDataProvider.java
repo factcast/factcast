@@ -71,7 +71,7 @@ public final class ResourceBasedBlacklistDataProvider
     Resource resource = resourceLoader.getResource(path);
     if (!resource.exists()) {
       throw new FileNotFoundException(
-          String.format("Blacklist could not be found at specified location: %s", path));
+          "Blacklist could not be found at specified location: %s".formatted(path));
     }
     return resource.getInputStream();
   }

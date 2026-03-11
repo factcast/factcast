@@ -15,7 +15,9 @@
  */
 package org.factcast.store.internal.notification;
 
-import lombok.*;
+import lombok.EqualsAndHashCode;
+import lombok.NonNull;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.store.internal.PgConstants;
 import org.jetbrains.annotations.Nullable;

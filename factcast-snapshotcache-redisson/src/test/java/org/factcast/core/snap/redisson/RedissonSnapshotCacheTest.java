@@ -22,7 +22,7 @@ import static org.mockito.Mockito.*;
 import java.time.Duration;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import lombok.*;
+import lombok.SneakyThrows;
 import org.factcast.core.snap.Snapshot;
 import org.factcast.factus.projection.Aggregate;
 import org.factcast.factus.projection.SnapshotProjection;
@@ -40,23 +40,22 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
 import org.redisson.client.codec.ByteArrayCodec;
 import org.redisson.client.codec.Codec;
-import org.redisson.spring.starter.RedissonAutoConfigurationV2;
-import org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration;
+import org.redisson.spring.starter.RedissonAutoConfigurationV4;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.SpyBean;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
+import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 @SpringBootTest
-@ContextConfiguration(classes = {RedissonAutoConfigurationV2.class, RedisAutoConfiguration.class})
-@ExtendWith(SpringExtension.class)
+@SpringJUnitConfig(classes = {RedissonAutoConfigurationV4.class})
+@ExtendWith(MockitoExtension.class)
 @Testcontainers
 @IntegrationTest
 class RedissonSnapshotCacheTest {
@@ -77,9 +76,10 @@ class RedissonSnapshotCacheTest {
     System.setProperty("spring.data.redis.port", String.valueOf(redis.getMappedPort(6379)));
   }
 
-  @SpyBean private RedissonClient redisson;
+  @MockitoSpyBean private RedissonClient redisson;
 
-  @Mock SnapshotSerializerSelector selector;
+  @Mock(strictness = Mock.Strictness.LENIENT)
+  SnapshotSerializerSelector selector;
 
   final SnapshotSerializer serializer = new DefaultSnapshotSerializer();
 

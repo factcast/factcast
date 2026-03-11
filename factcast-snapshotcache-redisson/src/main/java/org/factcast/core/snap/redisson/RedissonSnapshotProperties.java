@@ -15,9 +15,9 @@
  */
 package org.factcast.core.snap.redisson;
 
+import jakarta.annotation.Nullable;
 import java.util.Optional;
 import java.util.function.Supplier;
-import javax.annotation.Nullable;
 import lombok.Data;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
@@ -44,7 +44,7 @@ public class RedissonSnapshotProperties {
 
   int deleteSnapshotStaleForDays = 90;
 
-  RedissonCodec snapshotCacheRedissonCodec = RedissonCodec.MarshallingCodec;
+  RedissonCodec snapshotCacheRedissonCodec = RedissonCodec.Kryo5Codec;
 
   public int getRetentionTime() {
     return this.getDeleteSnapshotStaleForDays();
@@ -55,8 +55,6 @@ public class RedissonSnapshotProperties {
 
     /** When setting the codec to RedissonDefault, factcast will not specify a codec. */
     RedissonDefault(null),
-    @SuppressWarnings("deprecation")
-    MarshallingCodec(() -> new MarshallingCodec()),
     Kryo5Codec(() -> new Kryo5Codec()),
     JsonJacksonCodec(() -> new JsonJacksonCodec()),
     SmileJacksonCodec(() -> new SmileJacksonCodec()),

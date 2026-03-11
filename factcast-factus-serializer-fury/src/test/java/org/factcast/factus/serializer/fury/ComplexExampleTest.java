@@ -17,7 +17,7 @@ package org.factcast.factus.serializer.fury;
 
 import com.google.common.collect.*;
 import java.util.*;
-import lombok.*;
+import lombok.SneakyThrows;
 import org.apache.fury.*;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;

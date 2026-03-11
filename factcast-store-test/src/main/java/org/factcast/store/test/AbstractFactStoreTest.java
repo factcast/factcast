@@ -25,7 +25,9 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
-import lombok.*;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.SneakyThrows;
 import org.factcast.core.*;
 import org.factcast.core.lock.*;
 import org.factcast.core.lock.WithOptimisticLock.OptimisticRetriesExceededException;
@@ -972,7 +974,7 @@ public abstract class AbstractFactStoreTest {
                   if (c.getCount() > 0) {
                     c.countDown();
 
-                    if (Math.random() < 0.5) {
+                    if (ThreadLocalRandom.current().nextDouble() < 0.5) {
                       uut.publish(fact(agg1));
                     } else {
                       uut.publish(fact(agg2));
@@ -1012,7 +1014,7 @@ public abstract class AbstractFactStoreTest {
                   if (c.getCount() > 0) {
                     c.countDown();
 
-                    if (Math.random() < 0.5) {
+                    if (ThreadLocalRandom.current().nextDouble() < 0.5) {
                       uut.publish(fact(agg1));
                     } else {
                       uut.publish(fact(agg2));

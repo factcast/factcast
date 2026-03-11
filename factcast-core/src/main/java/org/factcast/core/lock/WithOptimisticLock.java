@@ -29,18 +29,18 @@ import org.factcast.core.store.StateToken;
 @Accessors(fluent = true, chain = true)
 public class WithOptimisticLock {
   @NonNull
-  @Getter(value = AccessLevel.PROTECTED)
+  @Getter(AccessLevel.PROTECTED)
   private final FactStore store;
 
   @NonNull
-  @Getter(value = AccessLevel.PROTECTED)
+  @Getter(AccessLevel.PROTECTED)
   private final List<FactSpec> factSpecs;
 
   @Setter private int retry = 10;
 
-  @Setter private long interval = 0;
+  @Setter private long interval;
 
-  private int count = 0;
+  private int count;
 
   @NonNull
   public PublishingResult attempt(@NonNull Attempt operation)
