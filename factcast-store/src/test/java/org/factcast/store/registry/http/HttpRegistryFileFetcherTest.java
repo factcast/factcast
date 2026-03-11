@@ -22,6 +22,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import io.micrometer.core.instrument.Tags;
+import java.net.URI;
 import java.net.URL;
 import lombok.SneakyThrows;
 import okhttp3.*;
@@ -49,8 +50,8 @@ public class HttpRegistryFileFetcherTest {
   @Test
   public void testCreateSchemaUrl() throws Exception {
     String id = "foo.json";
-    URL base = new URL("https://www.ibm.com/registry/");
-    URL createSchemaUrl = new URL(base, id);
+    URL base = URI.create("https://www.ibm.com/registry/").toURL();
+    URL createSchemaUrl = base.toURI().resolve(id).toURL();
 
     assertEquals("https://www.ibm.com/registry/foo.json", createSchemaUrl.toString());
   }
@@ -58,7 +59,7 @@ public class HttpRegistryFileFetcherTest {
   @Test
   public void testFetchThrowsOn404() throws Exception {
     try (TestHttpServer s = new TestHttpServer()) {
-      URL baseUrl = new URL("http://localhost:" + s.port() + "/registry/");
+      URL baseUrl = URI.create("http://localhost:" + s.port() + "/registry/").toURL();
       var uut = new HttpRegistryFileFetcher(baseUrl, registryMetrics);
 
       assertThrows(
@@ -79,18 +80,18 @@ public class HttpRegistryFileFetcherTest {
 
   @Test
   public void testFetchSucceedsOnExampleSchema() throws Exception {
-    try (TestHttpServer s = new TestHttpServer()) {
+    String json = "{\"foo\":\"bar\"}";
 
-      String json = "{\"foo\":\"bar\"}";
-
-      s.get(
-          "/registry/someId",
-          ctx -> {
-            ctx.res().setStatus(200);
-            ctx.res().getOutputStream().write(json.getBytes());
-          });
-
-      URL baseUrl = new URL("http://localhost:" + s.port() + "/registry/");
+    try (TestHttpServer s =
+        new TestHttpServer(
+            config ->
+                config.routes.get(
+                    "/registry/someId",
+                    ctx -> {
+                      ctx.res().setStatus(200);
+                      ctx.res().getOutputStream().write(json.getBytes());
+                    }))) {
+      URL baseUrl = URI.create("http://localhost:" + s.port() + "/registry/").toURL();
       var uut = new HttpRegistryFileFetcher(baseUrl, new NOPRegistryMetrics());
       String fetch = uut.fetchSchema(new SchemaSource("someId", "123", "ns", "type", 8));
 
@@ -100,18 +101,18 @@ public class HttpRegistryFileFetcherTest {
 
   @Test
   public void testFetchSucceedsOnExampleTransformation() throws Exception {
-    try (TestHttpServer s = new TestHttpServer()) {
+    String json = "{\"foo\":\"bar\"}";
 
-      String json = "{\"foo\":\"bar\"}";
-
-      s.get(
-          "/registry/someId",
-          ctx -> {
-            ctx.res().setStatus(200);
-            ctx.res().getOutputStream().write(json.getBytes());
-          });
-
-      URL baseUrl = new URL("http://localhost:" + s.port() + "/registry/");
+    try (TestHttpServer s =
+        new TestHttpServer(
+            config ->
+                config.routes.get(
+                    "/registry/someId",
+                    ctx -> {
+                      ctx.res().setStatus(200);
+                      ctx.res().getOutputStream().write(json.getBytes());
+                    }))) {
+      URL baseUrl = URI.create("http://localhost:" + s.port() + "/registry/").toURL();
       var uut = new HttpRegistryFileFetcher(baseUrl, registryMetrics);
 
       String fetch =
@@ -133,7 +134,7 @@ public class HttpRegistryFileFetcherTest {
     Call call = mock(Call.class);
     OkHttpClient client = mock(OkHttpClient.class);
     HttpRegistryFileFetcher uut =
-        new HttpRegistryFileFetcher(new URL("http://ibm.com"), client, registryMetrics);
+        new HttpRegistryFileFetcher(URI.create("http://ibm.com").toURL(), client, registryMetrics);
     when(client.newCall(any())).thenReturn(call);
 
     Request request = new Request.Builder().url("http://ibm.com").get().build();

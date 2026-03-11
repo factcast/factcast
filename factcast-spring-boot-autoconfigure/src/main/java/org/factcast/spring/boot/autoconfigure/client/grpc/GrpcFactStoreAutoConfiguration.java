@@ -15,6 +15,7 @@
  */
 package org.factcast.spring.boot.autoconfigure.client.grpc;
 
+import io.grpc.Codec;
 import io.grpc.CompressorRegistry;
 import io.grpc.ManagedChannelBuilder;
 import jakarta.annotation.Nullable;
@@ -23,11 +24,14 @@ import lombok.NonNull;
 import org.factcast.client.grpc.*;
 import org.factcast.core.store.FactStore;
 import org.factcast.grpc.api.CompressionCodecs;
+import org.factcast.spring.boot.autoconfigure.core.FixedCodecConfiguration;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.*;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.*;
+import org.springframework.grpc.autoconfigure.client.GrpcClientAutoConfiguration;
 import org.springframework.grpc.client.GrpcChannelBuilderCustomizer;
 import org.springframework.grpc.client.GrpcChannelFactory;
 import org.springframework.util.StringUtils;
@@ -40,8 +44,9 @@ import org.springframework.util.StringUtils;
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 @AutoConfiguration
 @ConditionalOnClass({GrpcFactStore.class, GrpcChannelFactory.class})
-@Import(FactCastGrpcClientProperties.class)
+@Import({FactCastGrpcClientProperties.class, FixedCodecConfiguration.class})
 @EnableConfigurationProperties
+@AutoConfigureBefore(GrpcClientAutoConfiguration.class)
 public class GrpcFactStoreAutoConfiguration {
 
   @Bean
@@ -77,5 +82,17 @@ public class GrpcFactStoreAutoConfiguration {
   @Bean
   public CompressionCodecs compressionCodecs(CompressorRegistry compressorRegistry) {
     return new CompressionCodecs(compressorRegistry);
+  }
+
+  // simple noop codec for the handshake without compression
+  @Bean
+  public Codec noopCodec() {
+    return Codec.Identity.NONE;
+  }
+
+  // default gzip codec
+  @Bean
+  public Codec gzipCodec() {
+    return new Codec.Gzip();
   }
 }
