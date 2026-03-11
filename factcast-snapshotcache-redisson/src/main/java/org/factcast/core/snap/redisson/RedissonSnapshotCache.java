@@ -23,13 +23,10 @@ import java.util.concurrent.TimeUnit;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.core.snap.Snapshot;
 import org.factcast.factus.projection.*;
-import org.factcast.factus.serializer.SnapshotSerializerId;
 import org.factcast.factus.snapshot.SnapshotCache;
 import org.factcast.factus.snapshot.SnapshotData;
 import org.factcast.factus.snapshot.SnapshotIdentifier;
-import org.factcast.factus.snapshot.SnapshotSerializerSelector;
 import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
 import org.redisson.client.codec.ByteArrayCodec;
@@ -42,7 +39,6 @@ public class RedissonSnapshotCache implements SnapshotCache {
   private static final String PREFIX = "sc_";
 
   final RedissonClient redisson;
-  final SnapshotSerializerSelector selector;
   private final RedissonSnapshotProperties properties;
 
   @NonNull
@@ -54,19 +50,6 @@ public class RedissonSnapshotCache implements SnapshotCache {
             .asString();
   }
 
-  @NonNull
-  @VisibleForTesting
-  String createLegacyKeyFor(@NonNull SnapshotIdentifier id) {
-    UUID aggId = id.aggregateId();
-
-    Class<? extends SnapshotProjection> type = id.projectionClass();
-    SnapshotSerializerId serializerId = selector.selectSeralizerFor(type).id();
-
-    return LegacySnapshotKeys.createKeyForType(id.projectionClass(), serializerId, aggId);
-  }
-
-  //////
-
   @Override
   public @NonNull Optional<SnapshotData> find(@NonNull SnapshotIdentifier id) {
     String key = createKeyFor(id);
@@ -75,24 +58,9 @@ public class RedissonSnapshotCache implements SnapshotCache {
     if (bytes != null && bytes.length > 0) {
       bucket.expireAsync(Duration.ofDays(properties.getRetentionTime()));
       return SnapshotData.from(bytes);
-    } else {
-      // find legacy snapshot
-      String legacyKey = createLegacyKeyFor(id);
-      RBucket<Snapshot> legacyBucket =
-          properties.getSnapshotCacheRedissonCodec().getBucket(redisson, legacyKey);
-      Optional<Snapshot> snapshot = Optional.ofNullable(legacyBucket.get());
-      if (snapshot.isPresent()) {
-        legacyBucket.expireAsync(Duration.ofDays(properties.getRetentionTime()));
-      }
-      Optional<SnapshotData> snapshotData =
-          snapshot.map(
-              s -> SnapshotData.from(s, selector.selectSeralizerFor(id.projectionClass()).id()));
-
-      // migrate
-      snapshotData.ifPresent(data -> store(id, data));
-
-      return snapshotData;
     }
+
+    return Optional.empty();
   }
 
   @Override
@@ -105,6 +73,5 @@ public class RedissonSnapshotCache implements SnapshotCache {
   @Override
   public void remove(@NonNull SnapshotIdentifier id) {
     redisson.getBucket(createKeyFor(id)).delete();
-    redisson.getBucket(createLegacyKeyFor(id)).delete();
   }
 }
