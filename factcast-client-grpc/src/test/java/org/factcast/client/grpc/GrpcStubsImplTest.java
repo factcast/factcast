@@ -33,7 +33,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class GrpcStubsImplTest {
 
   private static final String CHANNEL_NAME = "factstore";
-  @Mock private @NonNull Channel channel;
+  @Mock private @NonNull ManagedChannel channel;
   @Mock private CallCredentials basic;
   @Mock private FactCastGrpcChannelFactory factory;
   @Mock private Metadata meta;
@@ -43,7 +43,6 @@ class GrpcStubsImplTest {
 
   private static final String COMP = "COMP";
   private Deadline deadline = Deadline.after(10, TimeUnit.SECONDS);
-  ;
 
   @BeforeEach
   void setup() {
