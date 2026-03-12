@@ -33,7 +33,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class GrpcStubsImplTest {
 
   private static final String CHANNEL_NAME = "factstore";
-  @Mock private @NonNull ManagedChannel channel;
+  @Mock private @NonNull Channel channel;
   @Mock private CallCredentials basic;
   @Mock private FactCastGrpcChannelFactory factory;
   @Mock private Metadata meta;

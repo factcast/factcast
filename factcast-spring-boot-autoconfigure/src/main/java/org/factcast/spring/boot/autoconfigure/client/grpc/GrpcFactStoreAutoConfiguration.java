@@ -48,19 +48,22 @@ import org.springframework.util.StringUtils;
 @EnableConfigurationProperties
 @AutoConfigureBefore(GrpcClientAutoConfiguration.class)
 public class GrpcFactStoreAutoConfiguration {
+  @Bean
+  public FactCastGrpcChannelFactory factCastGrpcChannelFactory(@NonNull GrpcChannelFactory af) {
+    return FactCastGrpcChannelFactory.createDefault(af);
+  }
 
   @Bean
   @ConditionalOnMissingBean(FactStore.class)
   @Lazy
-  public GrpcFactStore factStore(
-      @NonNull GrpcChannelFactory af,
+  public FactStore factStore(
+      @NonNull FactCastGrpcChannelFactory factCastGrpcChannelFactory,
       // we need a new namespace for those client properties
       @NonNull @Value("${grpc.client.factstore.credentials:#{null}}") Optional<String> credentials,
       @NonNull FactCastGrpcClientProperties properties,
       @NonNull CompressionCodecs compressionCodecs,
       @Nullable @Value("${spring.application.name:#{null}}") String applicationName) {
 
-    FactCastGrpcChannelFactory f = FactCastGrpcChannelFactory.createDefault(af);
     String id =
         Optional.ofNullable(properties.getId())
             .orElseGet(
@@ -70,7 +73,8 @@ public class GrpcFactStoreAutoConfiguration {
                         .filter(StringUtils::hasText)
                         .orElse(null));
 
-    return new GrpcFactStore(f, credentials, properties, compressionCodecs, id);
+    return new GrpcFactStore(
+        factCastGrpcChannelFactory, credentials, properties, compressionCodecs, id);
   }
 
   @Bean

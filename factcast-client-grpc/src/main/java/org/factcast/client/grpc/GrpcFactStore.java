@@ -60,7 +60,7 @@ import org.springframework.beans.factory.annotation.Value;
  */
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 @Slf4j
-public class GrpcFactStore implements FactStore, GrpcHealthIndicator {
+public class GrpcFactStore implements FactStore {
   public static final ProtocolVersion PROTOCOL_VERSION = ProtocolVersion.of(1, 8, 0);
 
   private final CompressionCodecs codecs;
@@ -523,10 +523,5 @@ public class GrpcFactStore implements FactStore, GrpcHealthIndicator {
     // marks factstore as not initialized, so that a subsequent call needs to go through handshake
     // first. This is used to signal a faulty connection.
     this.initialized.set(false);
-  }
-
-  @Override
-  public boolean isHealthy() {
-    return stubs.isHealthy();
   }
 }

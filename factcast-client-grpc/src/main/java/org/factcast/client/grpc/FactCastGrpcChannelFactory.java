@@ -15,12 +15,13 @@
  */
 package org.factcast.client.grpc;
 
+import io.grpc.Channel;
 import io.grpc.ClientInterceptor;
 import io.grpc.ManagedChannel;
 import java.util.List;
 import org.springframework.grpc.client.GrpcChannelFactory;
 
-public interface FactCastGrpcChannelFactory {
+public interface FactCastGrpcChannelFactory extends GrpcHealthIndicator {
 
   /**
    * Creates a new channel for the given service name. The returned channel will use all globally
@@ -32,7 +33,7 @@ public interface FactCastGrpcChannelFactory {
    * @param name The name of the service.
    * @return The newly created channel for the given service.
    */
-  ManagedChannel createChannel(String name);
+  Channel createChannel(String name);
 
   /**
    * Creates a new channel for the given service name. The returned channel will use all globally
@@ -50,7 +51,7 @@ public interface FactCastGrpcChannelFactory {
    * @return The newly created channel for the given service.
    */
   @SuppressWarnings("unused")
-  ManagedChannel createChannel(String name, List<ClientInterceptor> interceptors);
+  Channel createChannel(String name, List<ClientInterceptor> interceptors);
 
   static FactCastGrpcChannelFactory createDefault(GrpcChannelFactory cf) {
     return new FactCastGrpcChannelFactoryImpl(cf);

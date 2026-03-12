@@ -15,29 +15,54 @@
  */
 package org.factcast.client.grpc;
 
+import io.grpc.Channel;
 import io.grpc.ClientInterceptor;
+import io.grpc.ConnectivityState;
 import io.grpc.ManagedChannel;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.function.Supplier;
 import lombok.NonNull;
 import org.springframework.grpc.client.ChannelBuilderOptions;
 import org.springframework.grpc.client.GrpcChannelFactory;
 
 public class FactCastGrpcChannelFactoryImpl implements FactCastGrpcChannelFactory {
 
+  private final Set<Supplier<Boolean>> healthSuppliers;
   private final GrpcChannelFactory cf;
 
   public FactCastGrpcChannelFactoryImpl(@NonNull GrpcChannelFactory cf) {
     this.cf = cf;
+    this.healthSuppliers = new HashSet<>();
   }
 
   @Override
-  public ManagedChannel createChannel(
+  public Channel createChannel(
       @NonNull String name, @NonNull List<ClientInterceptor> interceptors) {
-    return cf.createChannel(name, ChannelBuilderOptions.defaults().withInterceptors(interceptors));
+    final ManagedChannel channel =
+        cf.createChannel(name, ChannelBuilderOptions.defaults().withInterceptors(interceptors));
+
+    storeConnectivityStateSupplier(channel);
+
+    return channel;
   }
 
   @Override
-  public ManagedChannel createChannel(@NonNull String name) {
-    return cf.createChannel(name);
+  public Channel createChannel(@NonNull String name) {
+    final ManagedChannel channel = cf.createChannel(name);
+
+    storeConnectivityStateSupplier(channel);
+
+    return channel;
+  }
+
+  private void storeConnectivityStateSupplier(ManagedChannel channel) {
+    healthSuppliers.add(() -> channel.getState(false) != ConnectivityState.TRANSIENT_FAILURE);
+  }
+
+  @Override
+  public boolean isHealthy() {
+    return healthSuppliers.stream().allMatch(Supplier::get);
   }
 }

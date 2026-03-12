@@ -19,7 +19,7 @@ import io.grpc.Deadline;
 import javax.annotation.Nullable;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc;
 
-public interface GrpcStubs extends GrpcHealthIndicator {
+public interface GrpcStubs {
   default RemoteFactStoreGrpc.RemoteFactStoreBlockingStub uncompressedBlocking() {
     return uncompressedBlocking(null);
   }
