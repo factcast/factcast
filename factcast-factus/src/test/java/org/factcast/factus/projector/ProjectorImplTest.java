@@ -449,7 +449,8 @@ class ProjectorImplTest {
     List<FactSpec> factSpecs;
 
     @Override
-    public @NonNull List<FactSpec> postprocess(@NonNull List<FactSpec> specsAsDiscovered) {
+    public @NonNull Collection<FactSpec> postprocess(
+        @NonNull Collection<FactSpec> specsAsDiscovered) {
       return factSpecs;
     }
 
