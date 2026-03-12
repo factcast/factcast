@@ -52,7 +52,7 @@ public class GrpcFactStoreAutoConfiguration {
   @Bean
   @ConditionalOnMissingBean(FactStore.class)
   @Lazy
-  public FactStore factStore(
+  public GrpcFactStore factStore(
       @NonNull GrpcChannelFactory af,
       // we need a new namespace for those client properties
       @NonNull @Value("${grpc.client.factstore.credentials:#{null}}") Optional<String> credentials,

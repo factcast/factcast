@@ -15,8 +15,8 @@
  */
 package org.factcast.client.grpc;
 
-import io.grpc.Channel;
 import io.grpc.ClientInterceptor;
+import io.grpc.ManagedChannel;
 import java.util.List;
 import lombok.NonNull;
 import org.springframework.grpc.client.ChannelBuilderOptions;
@@ -31,13 +31,13 @@ public class FactCastGrpcChannelFactoryImpl implements FactCastGrpcChannelFactor
   }
 
   @Override
-  public Channel createChannel(
+  public ManagedChannel createChannel(
       @NonNull String name, @NonNull List<ClientInterceptor> interceptors) {
     return cf.createChannel(name, ChannelBuilderOptions.defaults().withInterceptors(interceptors));
   }
 
   @Override
-  public Channel createChannel(@NonNull String name) {
+  public ManagedChannel createChannel(@NonNull String name) {
     return cf.createChannel(name);
   }
 }

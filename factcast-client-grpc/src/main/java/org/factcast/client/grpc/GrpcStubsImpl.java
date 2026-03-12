@@ -17,8 +17,9 @@ package org.factcast.client.grpc;
 
 import com.google.common.annotations.VisibleForTesting;
 import io.grpc.CallCredentials;
-import io.grpc.Channel;
+import io.grpc.ConnectivityState;
 import io.grpc.Deadline;
+import io.grpc.ManagedChannel;
 import io.grpc.Metadata;
 import io.grpc.stub.AbstractStub;
 import io.grpc.stub.MetadataUtils;
@@ -33,7 +34,7 @@ import org.factcast.grpc.api.gen.RemoteFactStoreGrpc;
 @RequiredArgsConstructor
 public class GrpcStubsImpl implements GrpcStubs {
 
-  private final @NonNull Channel channel;
+  private final @NonNull ManagedChannel channel;
   private final @NonNull Metadata meta;
   private final @Nullable CallCredentials basic;
   private final @NonNull FactCastGrpcClientProperties properties;
@@ -108,5 +109,10 @@ public class GrpcStubsImpl implements GrpcStubs {
     Metadata m = new Metadata();
     m.put(Headers.MESSAGE_COMPRESSION, compressionId);
     return m;
+  }
+
+  public boolean isHealthy() {
+    // similar to what was done in the old grpc library
+    return channel.getState(false) != ConnectivityState.TRANSIENT_FAILURE;
   }
 }
