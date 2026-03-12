@@ -17,16 +17,19 @@ package org.factcast.spring.boot.autoconfigure.client.grpc;
 
 import static org.factcast.client.grpc.FactCastGrpcClientProperties.FACTCAST_GRPC_CLIENT_PREFIX;
 
+import org.factcast.client.grpc.GrpcFactStore;
 import org.factcast.client.grpc.GrpcHealthIndicator;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 
 @AutoConfiguration
 @AutoConfigureAfter(GrpcFactStoreAutoConfiguration.class)
+@ConditionalOnClass(GrpcFactStore.class)
 @ConditionalOnProperty(
     prefix = FACTCAST_GRPC_CLIENT_PREFIX,
     name = "health",
