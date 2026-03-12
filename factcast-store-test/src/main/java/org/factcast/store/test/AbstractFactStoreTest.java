@@ -33,6 +33,7 @@ import org.factcast.core.spec.*;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.*;
 import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.util.FactCastJson;
 import org.junit.jupiter.api.*;
 import org.mockito.Mockito;
 
@@ -179,11 +180,18 @@ public abstract class AbstractFactStoreTest {
           verify(observer, never()).onComplete();
           verify(observer, never()).onError(any());
           verify(observer, never()).onNext(any());
+
+          Mockito.reset(observer);
+          // now publish one
           uut.publish(
               Fact.of(
                   "{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}",
                   "{}"));
+
+          // wait for it to arrive
           observer.await(1);
+
+          // make sure we did not get more than one
           verify(observer, times(1)).onNext(any());
         });
   }
@@ -1285,10 +1293,13 @@ public abstract class AbstractFactStoreTest {
 
   private static class TestFactObserver implements FactObserver {
 
-    private final List<Fact> values = new CopyOnWriteArrayList<>();
+    private final List<Fact> values = Collections.synchronizedList(new ArrayList<>());
 
     @Override
     public void onNext(Fact element) {
+      // for debugging a flaky test, we include the output here
+      System.out.println(FactCastJson.writeValueAsPrettyString(element));
+
       values.add(element);
     }
 
