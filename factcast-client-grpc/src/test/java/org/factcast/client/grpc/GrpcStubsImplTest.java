@@ -43,7 +43,6 @@ class GrpcStubsImplTest {
 
   private static final String COMP = "COMP";
   private Deadline deadline = Deadline.after(10, TimeUnit.SECONDS);
-  ;
 
   @BeforeEach
   void setup() {
