@@ -19,7 +19,9 @@ import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.js.scriptengine.GraalJSScriptEngine;
 import java.util.*;
 import java.util.function.*;
+import javax.annotation.Nullable;
 import javax.script.ScriptException;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.store.internal.script.JSArgument;
 import org.factcast.store.internal.script.JSEngine;
@@ -30,9 +32,10 @@ public class GraalJSEngine implements JSEngine {
 
   private static final Object ENGINE_CREATION_MUTEX = new Object();
 
-  private final GraalJSScriptEngine engine;
+  @Getter private final GraalJSScriptEngine engine;
 
-  GraalJSEngine(String script) throws ScriptEngineException {
+  @Deprecated
+  public GraalJSEngine(@Nullable String script) throws ScriptEngineException {
     this.engine =
         withTruffleClassloader(
             () -> {
@@ -41,7 +44,7 @@ public class GraalJSEngine implements JSEngine {
                 synchronized (ENGINE_CREATION_MUTEX) {
                   var graalJSScriptEngine =
                       GraalJSScriptEngine.create(null, NashornCompatContextBuilder.CTX);
-                  graalJSScriptEngine.compile(script).eval();
+                  if (script != null) graalJSScriptEngine.compile(script).eval();
                   return graalJSScriptEngine;
                 }
               } catch (RuntimeException | ScriptException e) {
@@ -49,6 +52,10 @@ public class GraalJSEngine implements JSEngine {
                 throw new ScriptEngineException(e);
               }
             });
+  }
+
+  public GraalJSEngine() throws ScriptEngineException {
+    this(null);
   }
 
   @Override
