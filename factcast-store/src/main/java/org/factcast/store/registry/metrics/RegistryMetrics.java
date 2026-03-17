@@ -93,8 +93,7 @@ public interface RegistryMetrics {
   }
 
   enum GAUGE {
-    CACHE_BUFFER("transformationCacheBufferSize"),
-    CACHE_FLUSHING_BUFFER("transformationCacheFlushingBufferSize");
+    CACHE_BUFFER("transformationCacheBufferSize");
 
     @NonNull @Getter final String metric;
 

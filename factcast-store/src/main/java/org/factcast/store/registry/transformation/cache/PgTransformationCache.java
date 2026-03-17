@@ -30,7 +30,6 @@ import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.metrics.RegistryMetrics.*;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.jdbc.core.*;
-import org.springframework.jdbc.core.namedparam.*;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -246,7 +245,8 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
     // Before flushing, the buffer is wiped and again open for business.
     // Until the flush is done, a copy of the buffer can be used to read from.
     // Note that this is important even in readonly mode, as otherwise we'd run short on memory
-    buffer.clearAfter(
+
+    buffer.iterateSnapshotAndClear(
         copy -> {
           if (!copy.isEmpty() && !storeConfigurationProperties.isReadOnlyModeEnabled()) {
             // we want to serialize flushing beyond instances in order to avoid parallel
