@@ -120,7 +120,7 @@
     <!-- lter versions seem to break toxi -->
     <!-- 2.0.3 refers to unpublioshed artifacts, so that it is not usable right
       now -->
-    <testcontainers.version>2.0.3</testcontainers.version>
+    <testcontainers.version>2.0.4</testcontainers.version>
     <arrow.version>2.1.1</arrow.version>
     <micronaut.version>4.7.5</micronaut.version>
     <kotlin.version>2.3.20</kotlin.version>
