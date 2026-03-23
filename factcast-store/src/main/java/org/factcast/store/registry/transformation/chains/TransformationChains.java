@@ -125,7 +125,7 @@ public class TransformationChains implements TransformationStoreListener {
       throw new MissingTransformationInformationException(
           "Cannot reach any version in " + to + " from version " + from + " for " + key);
     } else {
-      // choose shortest path with bias to later versions
+      // choose the shortest path with bias to later versions
       List<Edge> finalPath = pickFinalPath(possiblePaths);
       List<Transformation> steps = map(finalPath, Edge::transformation);
       return TransformationChain.of(key, steps, toString(finalPath));
@@ -151,7 +151,7 @@ public class TransformationChains implements TransformationStoreListener {
     return possiblePaths.stream()
         // just take the shortest
         .filter(l -> l.size() == minSize)
-        // and pick the one with the highes sum of node versions
+        // and pick the one with the higher sum of node versions
         .max(Comparator.comparingInt(a -> a.stream().mapToInt(Edge::toVersion).sum()))
         .get();
   }
@@ -191,6 +191,12 @@ public class TransformationChains implements TransformationStoreListener {
 
   private static <N, E> List<E> map(@NonNull List<N> list, @NonNull Function<N, E> f) {
     return list.stream().map(f).collect(Collectors.toList());
+  }
+
+  public void clearCache() {
+    synchronized (cache) {
+      cache.clear();
+    }
   }
 
   @Override

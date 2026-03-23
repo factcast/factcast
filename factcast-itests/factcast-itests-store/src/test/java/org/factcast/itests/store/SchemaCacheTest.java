@@ -64,7 +64,7 @@ public class SchemaCacheTest {
                 return null;
               })
           .when(listener)
-          .on(any());
+          .on(any(SchemaStoreChangeNotification.class));
       UUID idv1 = UUID.randomUUID();
       Fact v1 = createTestFact(idv1, 1, "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\"}");
       fc.publish(v1);
@@ -113,7 +113,7 @@ public class SchemaCacheTest {
                 return null;
               })
           .when(listener)
-          .on(any());
+          .on(any(SchemaStoreChangeNotification.class));
       UUID idv1 = UUID.randomUUID();
       Fact v1 = createTestFact(idv1, 1, "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\"}");
       fc.publish(v1);
