@@ -162,7 +162,7 @@ public class PgQueryBuilder {
 
   private int setNs(PreparedStatement p, int count, FactSpec spec) throws SQLException {
     String ns = spec.ns();
-    if (ns != null && !"*".equals(ns)) {
+    if (!"*".equals(ns)) {
       p.setString(++count, "{\"ns\": \"" + spec.ns() + "\"}");
     }
     return count;
@@ -178,7 +178,7 @@ public class PgQueryBuilder {
 
           String ns = spec.ns();
 
-          if (ns != null && !"*".equals(ns)) {
+          if (!"*".equals(ns)) {
             sb.append(AND).append(PgConstants.COLUMN_HEADER).append(CONTAINS_JSONB);
           }
 

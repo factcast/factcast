@@ -174,7 +174,7 @@ class PgSynchronizedQuery {
       }
     }
 
-    private void escalateError(ResultSet rs, Throwable e) throws SQLException {
+    private void escalateError(ResultSet rs, Throwable e) {
       try {
         rs.close();
       } catch (Exception ignore) {

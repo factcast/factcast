@@ -148,7 +148,7 @@ public class PgChunkedCatchup extends AbstractPgCatchup {
     b.useTempTable(tempTableName);
 
     final var fromSerial = new AtomicLong(Math.max(serial.get(), fastForward));
-    final var catchupSQL = b.createSQL(fromSerial.get());
+    final var catchupSQL = b.createSQL();
     log.trace("{} catchup {} - facts starting with SER={}", req, phase, fromSerial.get());
     log.trace("{} catchup {} - preparing temp table {}", req, phase, tempTableName);
 
@@ -156,7 +156,7 @@ public class PgChunkedCatchup extends AbstractPgCatchup {
     final var timer = metrics.timer(StoreMetrics.OP.RESULT_STREAM_START, isFromScratch);
     Timer.Sample sample = metrics.startSample();
 
-    int matches = jdbc.update(catchupSQL, b.createStatementSetter());
+    int matches = jdbc.update(catchupSQL, b.createStatementSetter(fromSerial));
     log.trace("{} catchup {} - Temp table has {} matching serials", req, phase, matches);
     logIfAboveThreshold(Duration.ofNanos(sample.stop(timer)));
     return matches;
