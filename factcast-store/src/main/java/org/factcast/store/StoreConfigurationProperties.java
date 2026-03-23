@@ -47,7 +47,8 @@ public class StoreConfigurationProperties implements InitializingBean {
 
   /** defines the max number of Facts being scheduled for transformation */
   @Positive
-  @Max(32000)
+  @Max(5000)
+  @Min(10)
   int transformationCachePageSize = 100;
 
   /**
