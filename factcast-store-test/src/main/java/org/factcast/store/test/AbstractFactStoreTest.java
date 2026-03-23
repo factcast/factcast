@@ -16,6 +16,7 @@
 package org.factcast.store.test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -169,10 +170,14 @@ public abstract class AbstractFactStoreTest {
               Fact.of(
                   "{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}",
                   "{}"));
+          UUID lastId = UUID.randomUUID();
           uut.publish(
               Fact.of(
-                  "{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}",
-                  "{}"));
+                  "{\"id\":\"" + lastId + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
+
+          // ensure all 3 facts are committed and visible before subscribing fromNowOn
+          await().untilAsserted(() -> assertThat(uut.fetchById(lastId)).isPresent());
+
           TestFactObserver observer = testObserver();
           uut.subscribe(SubscriptionRequest.follow(ANY).fromNowOn(), observer).awaitCatchup();
           // nothing recieved
@@ -181,7 +186,6 @@ public abstract class AbstractFactStoreTest {
           verify(observer, never()).onError(any());
           verify(observer, never()).onNext(any());
 
-          Mockito.reset(observer);
           // now publish one
           uut.publish(
               Fact.of(
@@ -210,10 +214,14 @@ public abstract class AbstractFactStoreTest {
               Fact.of(
                   "{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}",
                   "{}"));
+          UUID lastId = UUID.randomUUID();
           uut.publish(
               Fact.of(
-                  "{\"id\":\"" + UUID.randomUUID() + "\",\"type\":\"someType\",\"ns\":\"default\"}",
-                  "{}"));
+                  "{\"id\":\"" + lastId + "\",\"type\":\"someType\",\"ns\":\"default\"}", "{}"));
+
+          // ensure all 3 facts are committed and visible before subscribing fromNowOn
+          await().untilAsserted(() -> assertThat(uut.fetchById(lastId)).isPresent());
+
           Subscription subscription =
               uut.subscribe(SubscriptionRequest.follow(ANY).fromNowOn(), observer).awaitCatchup();
           // nothing recieved
