@@ -15,6 +15,8 @@
  */
 package org.factcast.core.subscription;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Lists;
 import java.util.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -22,8 +24,6 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.factcast.core.spec.FactSpec;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Lists;
 
 /**
  * SubscriptionRequest intended to be used by clients for convenience.
