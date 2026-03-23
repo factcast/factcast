@@ -41,15 +41,6 @@ public class CacheClearAllNotification extends StoreNotification {
     return convert(n, json -> new CacheClearAllNotification());
   }
 
-  public static CacheClearAllNotification internal() {
-    return new CacheClearAllNotification() {
-      @Override
-      public boolean distributed() {
-        return false;
-      }
-    };
-  }
-
   @Override
   public String uniqueId() {
     return null;
