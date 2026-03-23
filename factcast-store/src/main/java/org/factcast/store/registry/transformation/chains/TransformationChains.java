@@ -193,6 +193,12 @@ public class TransformationChains implements TransformationStoreListener {
     return list.stream().map(f).collect(Collectors.toList());
   }
 
+  public void clearCache() {
+    synchronized (cache) {
+      cache.clear();
+    }
+  }
+
   @Override
   public void notifyFor(@NonNull TransformationKey key) {
     // invalidate cache for key
