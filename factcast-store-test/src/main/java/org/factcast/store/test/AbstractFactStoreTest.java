@@ -34,7 +34,6 @@ import org.factcast.core.spec.*;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.*;
 import org.factcast.core.subscription.observer.FactObserver;
-import org.factcast.core.util.FactCastJson;
 import org.junit.jupiter.api.*;
 import org.mockito.Mockito;
 
