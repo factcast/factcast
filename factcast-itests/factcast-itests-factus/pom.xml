@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast-itests</artifactId>
-    <version>0.10.2-SNAPSHOT</version>
+    <version>0.10.3-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-itests-factus</artifactId>
@@ -185,9 +185,9 @@
     </dependency>
 
     <dependency>
-      <groupId>mysql</groupId>
-      <artifactId>mysql-connector-java</artifactId>
-      <version>8.0.33</version>
+      <groupId>com.mysql</groupId>
+      <artifactId>mysql-connector-j</artifactId>
+      <version>9.6.0</version>
       <scope>test</scope>
     </dependency>
 

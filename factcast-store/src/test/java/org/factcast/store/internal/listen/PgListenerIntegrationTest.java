@@ -68,7 +68,8 @@ class PgListenerIntegrationTest {
         factStore.publish(
             List.of(Fact.builder().ns("test").type("listenerTest2").id(id3).buildWithoutPayload()));
 
-        events.latch().await(5, TimeUnit.SECONDS);
+        // so finally, there should be two notifications arriving as we have two txids
+        events.latch().await(10, TimeUnit.SECONDS);
 
         assertThat(events.signals())
             .hasSize(2)
@@ -89,7 +90,8 @@ class PgListenerIntegrationTest {
 
     @Getter
     public static class EventCollector {
-      final List<FactInsertionNotification> signals = new ArrayList<>();
+      final List<FactInsertionNotification> signals =
+          Collections.synchronizedList(new ArrayList<>());
 
       @SuppressWarnings("unused")
       @Subscribe

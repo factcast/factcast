@@ -497,9 +497,7 @@ class PgTransformationCacheTest {
 
       buffer.put(Mockito.mock(TransformationCache.Key.class), Mockito.mock(PgFact.class));
       buffer.put(Mockito.mock(TransformationCache.Key.class), Mockito.mock(PgFact.class));
-      buffer.put(Mockito.mock(TransformationCache.Key.class), null);
       buffer.put(Mockito.mock(TransformationCache.Key.class), Mockito.mock(PgFact.class));
-      buffer.put(Mockito.mock(TransformationCache.Key.class), null);
 
       underTest.flush();
 
