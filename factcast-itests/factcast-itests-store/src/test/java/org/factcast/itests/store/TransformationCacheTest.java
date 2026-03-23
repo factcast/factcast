@@ -24,6 +24,7 @@ import java.util.concurrent.CountDownLatch;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.subscription.MissingTransformationInformationException;
+import org.factcast.store.internal.notification.TransformationStoreChangeNotification;
 import org.factcast.store.registry.transformation.cache.PgTransformationCache;
 import org.factcast.store.registry.transformation.cache.PgTransformationStoreChangeListener;
 import org.factcast.store.registry.transformation.cache.TransformationCache;
@@ -35,9 +36,9 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 @ExtendWith(MockitoExtension.class)
 @SpringBootTest
@@ -50,7 +51,7 @@ public class TransformationCacheTest {
 
   @Autowired TransformationCache transformationCache;
 
-  @SpyBean PgTransformationStoreChangeListener listener;
+  @MockitoSpyBean PgTransformationStoreChangeListener listener;
 
   @Nested
   @DirtiesContext
@@ -65,7 +66,7 @@ public class TransformationCacheTest {
                 return null;
               })
           .when(listener)
-          .on(any());
+          .on(any(TransformationStoreChangeNotification.class));
       UUID id = UUID.randomUUID();
       Fact f = createTestFact(id, 1, "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\"}");
       fc.publish(f);
@@ -99,7 +100,7 @@ public class TransformationCacheTest {
                 return null;
               })
           .when(listener)
-          .on(any());
+          .on(any(TransformationStoreChangeNotification.class));
       UUID id = UUID.randomUUID();
       Fact f = createTestFact(id, 1, "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\"}");
       fc.publish(f);

@@ -77,6 +77,7 @@ public class PgConstants {
   public static final String CHANNEL_BLACKLIST_CHANGE = "blacklist_change";
   public static final String CHANNEL_SCHEMASTORE_CHANGE = "schemastore_change";
   public static final String CHANNEL_TRANSFORMATIONSTORE_CHANGE = "transformationstore_change";
+  public static final String CHANNEL_CACHE_INVALIDATE_ALL = "cache_invalidate_all";
   public static final String CHANNEL_FACT_UPDATE = "fact_update";
   // for testing
   public static final String CHANNEL_FACT_TRUNCATE = "fact_truncate";
@@ -213,6 +214,8 @@ public class PgConstants {
       LISTEN + CHANNEL_SCHEMASTORE_CHANGE;
   public static final String LISTEN_TRANSFORMATIONSTORE_CHANGE_CHANNEL_SQL =
       LISTEN + CHANNEL_TRANSFORMATIONSTORE_CHANGE;
+  public static final String LISTEN_CACHE_INVALIDATE_ALL_CHANNEL_SQL =
+      LISTEN + CHANNEL_CACHE_INVALIDATE_ALL;
 
   public static final String NOTIFY_ROUNDTRIP_SQL = "NOTIFY " + CHANNEL_ROUNDTRIP;
   public static final String UPDATE_FACT_SERIALS =
