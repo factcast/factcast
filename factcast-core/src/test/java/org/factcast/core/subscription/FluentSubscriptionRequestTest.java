@@ -87,9 +87,72 @@ public class FluentSubscriptionRequestTest {
   void testDebugInfo() {
     String debugInfo = SubscriptionRequest.catchup(FactSpec.ns("foo")).fromScratch().debugInfo();
     assertNotNull(debugInfo);
-    assertTrue(debugInfo.contains(getClass().getSimpleName()));
-    // method name
-    assertTrue(debugInfo.contains("testDebugInfo"));
+    // format: UUID (ClassName.methodName:lineNumber)
+    assertThat(debugInfo).matches("^[0-9a-f-]+ \\(.+\\..+:\\d+\\)$");
+  }
+
+  @Test
+  void findCallerFrame_directApiUsage() {
+    StackTraceElement[] stack = {
+      elem("org.factcast.core.subscription.FluentSubscriptionRequest", "createDebugInfo"),
+      elem("org.factcast.core.subscription.FluentSubscriptionRequest", "<init>"),
+      elem("org.factcast.core.subscription.SubscriptionRequest", "catchup"),
+      elem("com.myapp.service.OrderService", "placeOrder"),
+    };
+
+    StackTraceElement result = FluentSubscriptionRequest.findCallerFrame(stack);
+    assertThat(result.getClassName()).isEqualTo("com.myapp.service.OrderService");
+    assertThat(result.getMethodName()).isEqualTo("placeOrder");
+  }
+
+  @Test
+  void findCallerFrame_factusUsage() {
+    StackTraceElement[] stack = {
+      elem("org.factcast.core.subscription.FluentSubscriptionRequest", "createDebugInfo"),
+      elem("org.factcast.core.subscription.FluentSubscriptionRequest", "<init>"),
+      elem("org.factcast.core.subscription.SubscriptionRequest", "catchup"),
+      elem("org.factcast.factus.FactusImpl", "catchupProjection"),
+      elem("org.factcast.factus.FactusImpl", "fetch"),
+      elem("com.myapp.service.OrderService", "updateProjection"),
+    };
+
+    StackTraceElement result = FluentSubscriptionRequest.findCallerFrame(stack);
+    assertThat(result.getClassName()).isEqualTo("com.myapp.service.OrderService");
+    assertThat(result.getMethodName()).isEqualTo("updateProjection");
+  }
+
+  @Test
+  void findCallerFrame_skipsSpringProxies() {
+    StackTraceElement[] stack = {
+      elem("org.factcast.core.subscription.FluentSubscriptionRequest", "createDebugInfo"),
+      elem("org.factcast.core.subscription.SubscriptionRequest", "catchup"),
+      elem("org.factcast.factus.FactusImpl", "fetch"),
+      elem("org.springframework.cglib.proxy.MethodProxy", "invoke"),
+      elem("org.springframework.aop.framework.CglibAopProxy$CglibMethodInvocation", "proceed"),
+      elem("com.myapp.service.OrderService", "fetchOrder"),
+    };
+
+    StackTraceElement result = FluentSubscriptionRequest.findCallerFrame(stack);
+    assertThat(result.getClassName()).isEqualTo("com.myapp.service.OrderService");
+    assertThat(result.getMethodName()).isEqualTo("fetchOrder");
+  }
+
+  @Test
+  void findCallerFrame_allInternalFallsBackToIndex3() {
+    StackTraceElement[] stack = {
+      elem("org.factcast.core.A", "m1"),
+      elem("org.factcast.core.B", "m2"),
+      elem("org.factcast.core.C", "m3"),
+      elem("org.factcast.core.D", "m4"),
+    };
+
+    StackTraceElement result = FluentSubscriptionRequest.findCallerFrame(stack);
+    assertThat(result.getClassName()).isEqualTo("org.factcast.core.D");
+  }
+
+  private static StackTraceElement elem(String className, String methodName) {
+    return new StackTraceElement(
+        className, methodName, className.substring(className.lastIndexOf('.') + 1) + ".java", 42);
   }
 
   @Test

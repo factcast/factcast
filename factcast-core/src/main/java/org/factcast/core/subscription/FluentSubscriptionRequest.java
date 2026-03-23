@@ -22,6 +22,8 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.factcast.core.spec.FactSpec;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Lists;
 
 /**
  * SubscriptionRequest intended to be used by clients for convenience.
@@ -31,6 +33,17 @@ import org.factcast.core.spec.FactSpec;
 @FieldDefaults(level = AccessLevel.PROTECTED)
 @Getter
 class FluentSubscriptionRequest implements SubscriptionRequest {
+
+  private static final List<String> INTERNAL_PACKAGE_PREFIXES =
+      Lists.newArrayList(
+          "org.factcast.",
+          "java.",
+          "javax.",
+          "jdk.",
+          "sun.",
+          "com.sun.",
+          "org.springframework.",
+          "com.google.common.");
 
   boolean ephemeral;
 
@@ -56,17 +69,36 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
   }
 
   private String createDebugInfo() {
-    StackTraceElement stackTraceElement = new Exception().getStackTrace()[3];
+    StackTraceElement caller = findCallerFrame(new Exception().getStackTrace());
     return UUID.randomUUID()
         + " ("
-        + stackTraceElement
-            .getClassName()
-            .substring(stackTraceElement.getClassName().lastIndexOf(".") + 1)
+        + caller.getClassName().substring(caller.getClassName().lastIndexOf(".") + 1)
         + "."
-        + stackTraceElement.getMethodName()
+        + caller.getMethodName()
         + ":"
-        + stackTraceElement.getLineNumber()
+        + caller.getLineNumber()
         + ")";
+  }
+
+  @VisibleForTesting
+  static StackTraceElement findCallerFrame(StackTraceElement[] stack) {
+    for (StackTraceElement frame : stack) {
+      if (isExternalFrame(frame)) {
+        return frame;
+      }
+    }
+    // fallback: use original hardcoded index behavior
+    return stack.length > 3 ? stack[3] : stack[stack.length - 1];
+  }
+
+  private static boolean isExternalFrame(StackTraceElement frame) {
+    String className = frame.getClassName();
+    for (String prefix : INTERNAL_PACKAGE_PREFIXES) {
+      if (className.startsWith(prefix)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @RequiredArgsConstructor
