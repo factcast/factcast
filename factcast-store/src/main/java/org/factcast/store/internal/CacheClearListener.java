@@ -46,7 +46,7 @@ public class CacheClearListener implements SmartInitializingSingleton, Disposabl
    * The caches that are currently <b>not</b> supposed to be cleared are:
    *
    * <ul>
-   *   <li>PgTrasformationCache, as it might not be a good idea to get rid of all persisted
+   *   <li>PgTransformationCache, as it might not be a good idea to get rid of all persisted
    *       transformations, also considering that the {@link PgTransformationStoreChangeListener}
    *       should take care of individual types invalidation
    *   <li>PgFactIdToSerialMapper, as it should not be affected by changes whatsoever
