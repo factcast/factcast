@@ -15,6 +15,7 @@
  */
 package org.factcast.client.grpc;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.grpc.Channel;
 import io.grpc.ClientInterceptor;
 import io.grpc.ConnectivityState;
@@ -57,7 +58,8 @@ public class FactCastGrpcChannelFactoryImpl implements FactCastGrpcChannelFactor
     return channel;
   }
 
-  private void storeConnectivityStateSupplier(ManagedChannel channel) {
+  @VisibleForTesting
+  protected void storeConnectivityStateSupplier(@NonNull ManagedChannel channel) {
     healthSuppliers.add(() -> channel.getState(false) != ConnectivityState.TRANSIENT_FAILURE);
   }
 
