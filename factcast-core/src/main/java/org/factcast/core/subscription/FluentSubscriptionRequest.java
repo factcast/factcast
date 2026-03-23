@@ -15,8 +15,6 @@
  */
 package org.factcast.core.subscription;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Lists;
 import java.util.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -59,7 +57,8 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
   }
 
   private String createDebugInfo() {
-    StackTraceElement caller = StackTraceCallerHelper.findCallerFrame(new Exception().getStackTrace());
+    StackTraceElement caller =
+        StackTraceCallerHelper.findCallerFrame(new Exception().getStackTrace());
     return UUID.randomUUID()
         + " ("
         + caller.getClassName().substring(caller.getClassName().lastIndexOf(".") + 1)
