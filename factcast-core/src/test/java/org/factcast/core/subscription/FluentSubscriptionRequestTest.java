@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.util.LinkedList;
 import java.util.UUID;
 import org.factcast.core.spec.FactSpec;
+import org.factcast.core.util.StackTraceCallerHelper;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
 import org.mockito.InjectMocks;
@@ -100,7 +101,7 @@ public class FluentSubscriptionRequestTest {
       elem("com.myapp.service.OrderService", "placeOrder"),
     };
 
-    StackTraceElement result = FluentSubscriptionRequest.findCallerFrame(stack);
+    StackTraceElement result = StackTraceCallerHelper.findCallerFrame(stack);
     assertThat(result.getClassName()).isEqualTo("com.myapp.service.OrderService");
     assertThat(result.getMethodName()).isEqualTo("placeOrder");
   }
@@ -116,7 +117,7 @@ public class FluentSubscriptionRequestTest {
       elem("com.myapp.service.OrderService", "updateProjection"),
     };
 
-    StackTraceElement result = FluentSubscriptionRequest.findCallerFrame(stack);
+    StackTraceElement result = StackTraceCallerHelper.findCallerFrame(stack);
     assertThat(result.getClassName()).isEqualTo("com.myapp.service.OrderService");
     assertThat(result.getMethodName()).isEqualTo("updateProjection");
   }
@@ -132,7 +133,7 @@ public class FluentSubscriptionRequestTest {
       elem("com.myapp.service.OrderService", "fetchOrder"),
     };
 
-    StackTraceElement result = FluentSubscriptionRequest.findCallerFrame(stack);
+    StackTraceElement result = StackTraceCallerHelper.findCallerFrame(stack);
     assertThat(result.getClassName()).isEqualTo("com.myapp.service.OrderService");
     assertThat(result.getMethodName()).isEqualTo("fetchOrder");
   }
@@ -146,7 +147,7 @@ public class FluentSubscriptionRequestTest {
       elem("org.factcast.core.D", "m4"),
     };
 
-    StackTraceElement result = FluentSubscriptionRequest.findCallerFrame(stack);
+    StackTraceElement result = StackTraceCallerHelper.findCallerFrame(stack);
     assertThat(result.getClassName()).isEqualTo("org.factcast.core.D");
   }
 
