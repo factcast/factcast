@@ -101,8 +101,7 @@ public class FactTransformerServiceImpl implements FactTransformerService, AutoC
                 log.trace("batch processing {} transformation requests", req.size());
 
                 List<Pair<TransformationRequest, TransformationChain>> pairs =
-                    new ArrayList<>(
-                        req.stream().map(r -> Pair.of(r, toChain(r))).toList());
+                    new ArrayList<>(req.stream().map(r -> Pair.of(r, toChain(r))).toList());
                 Set<TransformationCache.Key> keys =
                     pairs.parallelStream()
                         .map(
@@ -117,8 +116,7 @@ public class FactTransformerServiceImpl implements FactTransformerService, AutoC
                 // parallel stream below
                 Map<UUID, PgFact> found =
                     new ConcurrentHashMap<>(
-                        cache.findAll(keys).stream()
-                            .collect(Collectors.toMap(PgFact::id, f -> f)));
+                        cache.findAll(keys).stream().collect(Collectors.toMap(PgFact::id, f -> f)));
                 log.trace(
                     "batch lookup found {} out of {} pre transformed facts",
                     found.size(),
@@ -133,11 +131,11 @@ public class FactTransformerServiceImpl implements FactTransformerService, AutoC
                 return indexStream
                     .mapToObj(
                         i -> {
-                          Pair<TransformationRequest, TransformationChain> c =
-                              pairs.set(i, null);
+                          Pair<TransformationRequest, TransformationChain> c = pairs.set(i, null);
                           PgFact e = c.left().toTransform();
                           PgFact cached = found.remove(e.id());
-                          return Objects.requireNonNullElseGet(cached, () -> doTransform(e, c.right()));
+                          return Objects.requireNonNullElseGet(
+                              cached, () -> doTransform(e, c.right()));
                         })
                     .toList();
               },
