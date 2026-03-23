@@ -51,7 +51,7 @@ import org.springframework.jdbc.datasource.*;
 @Slf4j
 class PgSynchronizedQuery {
 
-  final @NonNull PgQueryBuilder pgQueryBuilder;
+  @NonNull final String sql;
 
   @NonNull final PreparedStatementSetter setter;
 
@@ -70,7 +70,7 @@ class PgSynchronizedQuery {
       @NonNull String debugInfo,
       @NonNull ServerPipeline pipe,
       @NonNull PgConnectionSupplier connectionSupplier,
-      @NonNull PgQueryBuilder pgQueryBuilder,
+      @NonNull String sql,
       @NonNull PreparedStatementSetter setter,
       @NonNull Supplier<Boolean> isConnected,
       @NonNull AtomicLong serialToContinueFrom,
@@ -81,7 +81,7 @@ class PgSynchronizedQuery {
     this.serialToContinueFrom = serialToContinueFrom;
     this.hwmFetcher = hwmFetcher;
     this.connectionSupplier = connectionSupplier;
-    this.pgQueryBuilder = pgQueryBuilder;
+    this.sql = sql;
     this.setter = setter;
     this.statementHolder = statementHolder;
 
@@ -98,8 +98,6 @@ class PgSynchronizedQuery {
     if (!useIndex) filters.add(ConnectionModifier.withBitmapScanDisabled());
     try (SingleConnectionDataSource ds = connectionSupplier.getPooledAsSingleDataSource(filters)) {
       long latest = hwmFetcher.highWaterMark(ds).targetSer();
-      // Recreate every time for now. Might be a bit to expensive.
-      String sql = pgQueryBuilder.createSQL(serialToContinueFrom.get());
       new JdbcTemplate(ds)
           .query(
               sql,
