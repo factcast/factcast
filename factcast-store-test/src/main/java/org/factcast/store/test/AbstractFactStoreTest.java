@@ -1305,9 +1305,6 @@ public abstract class AbstractFactStoreTest {
 
     @Override
     public void onNext(Fact element) {
-      // for debugging a flaky test, we include the output here
-      System.out.println(FactCastJson.writeValueAsPrettyString(element));
-
       values.add(element);
     }
 
