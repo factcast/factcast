@@ -34,7 +34,7 @@ import org.junitpioneer.jupiter.RetryingTest;
 @Slf4j
 class ReportQueryPageIntTest extends AbstractBrowserTest {
 
-  final ObjectMapper om = new ObjectMapper();
+  final ObjectMapper om = new ObjectMapper().findAndRegisterModules();
 
   @RetryingTest(maxAttempts = 3)
   @SneakyThrows
@@ -84,7 +84,7 @@ class ReportQueryPageIntTest extends AbstractBrowserTest {
 
     try (final var input = download.createReadStream()) {
       final var report = om.readTree(input.readAllBytes());
-      assertThat(report.get("name").toString()).isEqualTo(id + ".json");
+      assertThat(report.get("name").asText()).isEqualTo(id + ".json");
       assertThat(report.get("events")).hasSize(4);
 
       // events are sorted from old to new
@@ -170,11 +170,11 @@ class ReportQueryPageIntTest extends AbstractBrowserTest {
 
   private void assertJsonEvent(
       JsonNode event, UUID eventId, UUID userId, String type, String firstName, String lastName) {
-    assertThat(event.get("header").get("type").toString()).isEqualTo(type);
-    assertThat(event.get("header").get("id").toString()).isEqualTo(eventId.toString());
-    assertThat(event.get("payload").get("userId").toString()).isEqualTo(userId.toString());
-    assertThat(event.get("payload").get("firstName").toString()).isEqualTo(firstName);
-    assertThat(event.get("payload").get("lastName").toString()).isEqualTo(lastName);
+    assertThat(event.get("header").get("type").asText()).isEqualTo(type);
+    assertThat(event.get("header").get("id").asText()).isEqualTo(eventId.toString());
+    assertThat(event.get("payload").get("userId").asText()).isEqualTo(userId.toString());
+    assertThat(event.get("payload").get("firstName").asText()).isEqualTo(firstName);
+    assertThat(event.get("payload").get("lastName").asText()).isEqualTo(lastName);
   }
 
   private void assertCriterion(FactCriteria criterion, String ns, String type, UUID aggId) {
