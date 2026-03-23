@@ -23,6 +23,7 @@ import io.micrometer.core.instrument.Tags;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -100,7 +101,8 @@ public class FactTransformerServiceImpl implements FactTransformerService, AutoC
                 log.trace("batch processing {} transformation requests", req.size());
 
                 List<Pair<TransformationRequest, TransformationChain>> pairs =
-                    req.stream().map(r -> Pair.of(r, toChain(r))).toList();
+                    new ArrayList<>(
+                        req.stream().map(r -> Pair.of(r, toChain(r))).toList());
                 Set<TransformationCache.Key> keys =
                     pairs.parallelStream()
                         .map(
@@ -111,29 +113,31 @@ public class FactTransformerServiceImpl implements FactTransformerService, AutoC
                                     p.right().id()))
                         .collect(Collectors.toSet());
 
+                // ConcurrentHashMap needed because remove is used from a potentially
+                // parallel stream below
                 Map<UUID, PgFact> found =
-                    cache.findAll(keys).stream().collect(Collectors.toMap(PgFact::id, f -> f));
+                    new ConcurrentHashMap<>(
+                        cache.findAll(keys).stream()
+                            .collect(Collectors.toMap(PgFact::id, f -> f)));
                 log.trace(
                     "batch lookup found {} out of {} pre transformed facts",
                     found.size(),
                     req.size());
 
-                Stream<Pair<TransformationRequest, TransformationChain>> pairStream =
-                    pairs.stream();
-                if (shouldBeParallel(pairs.stream().map(Pair::right))) {
+                boolean parallel = shouldBeParallel(pairs.stream().map(Pair::right));
+                IntStream indexStream = IntStream.range(0, pairs.size());
+                if (parallel) {
                   //noinspection DataFlowIssue
-                  pairStream = pairStream.parallel();
+                  indexStream = indexStream.parallel();
                 }
-                return pairStream
-                    .map(
-                        c -> {
+                return indexStream
+                    .mapToObj(
+                        i -> {
+                          Pair<TransformationRequest, TransformationChain> c =
+                              pairs.set(i, null);
                           PgFact e = c.left().toTransform();
-                          PgFact cached = found.get(e.id());
-                          if (cached != null) {
-                            return cached;
-                          } else {
-                            return doTransform(e, c.right());
-                          }
+                          PgFact cached = found.remove(e.id());
+                          return Objects.requireNonNullElseGet(cached, () -> doTransform(e, c.right()));
                         })
                     .toList();
               },
