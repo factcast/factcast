@@ -18,7 +18,7 @@ package org.factcast.store.internal;
 import static org.mockito.Mockito.*;
 
 import com.google.common.eventbus.EventBus;
-import org.factcast.store.internal.notification.CacheClearAllNotification;
+import org.factcast.store.internal.notification.CacheClearNotification;
 import org.factcast.store.registry.SchemaRegistry;
 import org.factcast.store.registry.transformation.chains.TransformationChains;
 import org.junit.jupiter.api.Nested;
@@ -29,12 +29,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class CacheClearAllListenerTest {
+class CacheClearListenerTest {
 
   @Mock private EventBus bus;
   @Mock private TransformationChains chains;
   @Mock private SchemaRegistry registry;
-  @InjectMocks private CacheClearAllListener underTest;
+  @InjectMocks private CacheClearListener underTest;
 
   @Nested
   class WhenAfteringSingletonsInstantiated {
@@ -47,7 +47,7 @@ class CacheClearAllListenerTest {
 
   @Nested
   class OnCacheClearAllNotification {
-    @Mock private CacheClearAllNotification ignore;
+    @Mock private CacheClearNotification ignore;
 
     @Test
     void clearsCaches() {

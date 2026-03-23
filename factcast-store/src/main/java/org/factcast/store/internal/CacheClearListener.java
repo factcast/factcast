@@ -19,8 +19,9 @@ import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.store.internal.notification.CacheClearAllNotification;
+import org.factcast.store.internal.notification.CacheClearNotification;
 import org.factcast.store.registry.SchemaRegistry;
+import org.factcast.store.registry.transformation.cache.PgTransformationStoreChangeListener;
 import org.factcast.store.registry.transformation.chains.TransformationChains;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.SmartInitializingSingleton;
@@ -30,7 +31,7 @@ import org.springframework.core.annotation.Order;
 @RequiredArgsConstructor
 @Slf4j
 @Order(Ordered.LOWEST_PRECEDENCE)
-public class CacheClearAllListener implements SmartInitializingSingleton, DisposableBean {
+public class CacheClearListener implements SmartInitializingSingleton, DisposableBean {
   private final EventBus bus;
 
   private final TransformationChains chains;
@@ -41,17 +42,18 @@ public class CacheClearAllListener implements SmartInitializingSingleton, Dispos
     bus.register(this);
   }
 
+  /**
+   * The caches that are currently <b>not</b> supposed to be cleared are:
+   *
+   * <ul>
+   *   <li>PgTrasformationCache, as it might not be a good idea to get rid of all persisted
+   *       transformations, also considering that the {@link PgTransformationStoreChangeListener}
+   *       should take care of individual types invalidation
+   *   <li>PgFactIdToSerialMapper, as it should not be affected by changes whatsoever
+   * </ul>
+   */
   @Subscribe
-  public void on(CacheClearAllNotification ignore) {
-    // not clearing:
-    // - PgTransformationCache, as it might not be a good idea to get rid of all persisted
-    // transformations,
-    //   also considering that the PgTransformationStoreChangeListener should take care of
-    // individual types invalidation
-    // - PgFactIdToSerialMapper, as it should not be affected by changes in whatsoever place unless
-    // deletions, which
-    //   should be handled by blacklisting, and even then, the cache should be able to recover by
-    // itself
+  public void on(CacheClearNotification ignore) {
     chains.clearCache();
     registry.clearNearCache();
   }

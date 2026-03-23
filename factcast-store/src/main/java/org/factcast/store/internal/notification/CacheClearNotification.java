@@ -34,11 +34,11 @@ import org.postgresql.PGNotification;
 @NonFinal
 @AllArgsConstructor
 @SuppressWarnings("java:S1845")
-public class CacheClearAllNotification extends StoreNotification {
+public class CacheClearNotification extends StoreNotification {
 
   @Nullable
-  public static CacheClearAllNotification from(@NonNull PGNotification n) {
-    return convert(n, json -> new CacheClearAllNotification());
+  public static CacheClearNotification from(@NonNull PGNotification n) {
+    return convert(n, json -> new CacheClearNotification());
   }
 
   @Override
