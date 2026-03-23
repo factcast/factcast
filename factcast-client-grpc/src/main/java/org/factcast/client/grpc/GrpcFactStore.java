@@ -32,7 +32,6 @@ import lombok.Generated;
 import lombok.NonNull;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import net.devh.boot.grpc.client.security.CallCredentialsHelper;
 import org.factcast.core.DuplicateFactException;
 import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpec;
@@ -64,7 +63,7 @@ import org.springframework.beans.factory.annotation.Value;
 public class GrpcFactStore implements FactStore {
   public static final ProtocolVersion PROTOCOL_VERSION = ProtocolVersion.of(1, 8, 0);
 
-  private final CompressionCodecs codecs = new CompressionCodecs();
+  private final CompressionCodecs codecs;
 
   private static final String CHANNEL_NAME = "factstore";
 
@@ -86,6 +85,7 @@ public class GrpcFactStore implements FactStore {
       @NonNull FactCastGrpcChannelFactory channelFactory,
       @NonNull @Value("${grpc.client.factstore.credentials:#{null}}") Optional<String> credentials,
       @NonNull FactCastGrpcClientProperties properties,
+      @NonNull CompressionCodecs compressionCodecs,
       @Nullable String clientId) {
 
     this(
@@ -95,14 +95,19 @@ public class GrpcFactStore implements FactStore {
             prepareMetaData(properties, clientId),
             configureCredentials(credentials, properties),
             properties),
-        properties);
+        properties,
+        compressionCodecs);
   }
 
   @VisibleForTesting
-  GrpcFactStore(@NonNull GrpcStubs stubs, @NonNull FactCastGrpcClientProperties properties) {
+  GrpcFactStore(
+      @NonNull GrpcStubs stubs,
+      @NonNull FactCastGrpcClientProperties properties,
+      @NonNull CompressionCodecs compressionCodecs) {
     this.stubs = stubs;
     this.properties = properties;
     this.resilience = new Resilience(properties.getResilience());
+    this.codecs = compressionCodecs;
   }
 
   @Override
@@ -306,7 +311,7 @@ public class GrpcFactStore implements FactStore {
               + password
               + "\".");
     }
-    return CallCredentialsHelper.basicAuth(user, password);
+    return BasicAuthCallCredentials.of(user, password);
   }
 
   private static void logServerVersion(Map<String, String> serverProperties) {

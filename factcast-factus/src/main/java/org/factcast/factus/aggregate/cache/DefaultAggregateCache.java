@@ -89,12 +89,13 @@ public class DefaultAggregateCache<A extends Aggregate> implements AggregateCach
   }
 
   protected void start(Factus factus, FactSpecProvider factSpecProvider) {
+
     Collection<FactSpec> factSpecs =
         factSpecProvider.forSnapshot(aggregateType).stream()
             .map(FactSpec::withoutAggIds)
             .collect(Collectors.toList());
     CacheBuilder<?, ?> builder = CacheBuilder.newBuilder();
-    configurer.accept(builder);
+    configure(configurer).accept(builder);
     builder.softValues();
     // TODO
     cache.set((Cache<@NonNull UUID, @NonNull A>) builder.build());
@@ -107,6 +108,10 @@ public class DefaultAggregateCache<A extends Aggregate> implements AggregateCach
                 createFactObserver());
     /**/
     log.info("Done setting up aggregate cache: {}", this.getClass().getSimpleName());
+  }
+
+  protected Consumer<CacheBuilder<?, ?>> configure(Consumer<CacheBuilder<?, ?>> configurer) {
+    return configurer;
   }
 
   protected void destroy() throws Exception {

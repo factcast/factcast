@@ -22,11 +22,9 @@ import io.grpc.ServerCallHandler;
 import io.grpc.ServerInterceptor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.devh.boot.grpc.server.interceptor.GrpcGlobalServerInterceptor;
 import org.factcast.grpc.api.CompressionCodecs;
 import org.factcast.grpc.api.Headers;
 
-@GrpcGlobalServerInterceptor
 @RequiredArgsConstructor
 @Slf4j
 public class GrpcCompressionInterceptor implements ServerInterceptor {

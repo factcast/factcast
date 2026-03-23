@@ -26,7 +26,9 @@ import java.sql.*;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.function.UnaryOperator;
 import javax.sql.DataSource;
+import lombok.NonNull;
 import lombok.SneakyThrows;
 import nl.altindag.log.LogCaptor;
 import org.factcast.factus.projection.*;
@@ -39,6 +41,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Answers;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -270,6 +273,7 @@ class JdbcSnapshotCacheTest {
   class WhenCrud {
     @Mock PreparedStatement preparedStatement;
     @Mock PreparedStatement lastAccessedPreparedStatement;
+    @Mock DatabaseMetaData metaData;
     private JdbcSnapshotCache jdbcSnapshotCache;
 
     @ProjectionMetaData(revision = 1L)
@@ -282,7 +286,8 @@ class JdbcSnapshotCacheTest {
     @SneakyThrows
     void setUp() {
       when(dataSource.getConnection()).thenReturn(connection);
-      when(connection.getMetaData().getTables(any(), any(), any(), any())).thenReturn(resultSet);
+      when(connection.getMetaData()).thenReturn(metaData);
+      when(metaData.getTables(any(), any(), any(), any())).thenReturn(resultSet);
       when(resultSet.next()).thenReturn(true);
 
       mockSnapshotTableColumns();
@@ -293,72 +298,243 @@ class JdbcSnapshotCacheTest {
     }
 
     @Test
+    void setSnapshotViaUpdateForSnapshotProjection() {
+      setSnapshotViaUpdateFor(SnapshotIdentifier.of(TestSnapshotProjection.class));
+    }
+
+    @Test
     @SneakyThrows
-    void setSnapshot() {
+    void setSnapshotViaUpdateForAggregate() {
+      setSnapshotViaUpdateFor(
+          SnapshotIdentifier.of(TestAggregateProjection.class, UUID.randomUUID()));
+    }
+
+    @SneakyThrows
+    void setSnapshotViaUpdateFor(@NonNull SnapshotIdentifier id) {
+      final PreparedStatement updateSnapshot = mock(PreparedStatement.class);
+      final PreparedStatement updateLastAccessed = mock(PreparedStatement.class);
+
       when(dataSource.getConnection()).thenReturn(connection);
-      when(connection.prepareStatement(contains(TABLE_NAME))).thenReturn(preparedStatement);
+      when(connection.prepareStatement(contains(TABLE_NAME))).thenReturn(updateSnapshot);
       when(connection.prepareStatement(contains(LAST_ACCESSED_TABLE_NAME)))
-          .thenReturn(lastAccessedPreparedStatement);
+          .thenReturn(updateLastAccessed);
 
       SnapshotData snap =
           new SnapshotData(
               new byte[] {1, 2, 3}, SnapshotSerializerId.of("random"), UUID.randomUUID());
 
-      when(preparedStatement.executeUpdate()).thenReturn(1);
+      when(updateSnapshot.executeUpdate())
+          .thenReturn(1); // updating snapshot works, no insert necessary
+      when(updateLastAccessed.executeUpdate())
+          .thenReturn(1); // updating last accessed works, no insert necessary
 
       // when
-      jdbcSnapshotCache.store(SnapshotIdentifier.of(TestSnapshotProjection.class), snap);
+      jdbcSnapshotCache.store(id, snap);
 
       ArgumentCaptor<String> string = ArgumentCaptor.forClass(String.class);
       ArgumentCaptor<byte[]> bytes = ArgumentCaptor.forClass(byte[].class);
 
-      verify(preparedStatement, times(4)).setString(any(Integer.class), string.capture());
+      verify(updateSnapshot).executeUpdate();
+      verify(updateSnapshot, times(4)).setString(any(Integer.class), string.capture());
       assertThat(string.getAllValues())
           .containsExactly(
-              ScopedName.fromProjectionMetaData(TestSnapshotProjection.class).asString(),
-              null,
               snap.lastFactId().toString(),
-              "random".toLowerCase(Locale.ROOT));
+              "random".toLowerCase(),
+              ScopedName.fromProjectionMetaData(id.projectionClass()).asString(),
+              id.aggIdAsStringOrNull());
 
-      verify(preparedStatement, times(1)).setBytes(any(Integer.class), bytes.capture());
+      verify(updateSnapshot, times(1)).setBytes(any(Integer.class), bytes.capture());
       assertThat(bytes.getValue()).isEqualTo(snap.serializedProjection());
 
       // Assert update of last accessed timestamp
       ArgumentCaptor<String> lastAccessedKeys = ArgumentCaptor.forClass(String.class);
       ArgumentCaptor<Timestamp> lastAccessedTimestamp = ArgumentCaptor.forClass(Timestamp.class);
 
-      verify(lastAccessedPreparedStatement).executeUpdate();
-      verify(lastAccessedPreparedStatement, times(2))
+      verify(updateLastAccessed).executeUpdate();
+      verify(updateLastAccessed, times(2))
           .setString(any(Integer.class), lastAccessedKeys.capture());
       assertThat(lastAccessedKeys.getAllValues())
           .containsExactly(
-              ScopedName.fromProjectionMetaData(TestSnapshotProjection.class).asString(), null);
+              ScopedName.fromProjectionMetaData(id.projectionClass()).asString(),
+              id.aggIdAsStringOrNull());
 
-      verify(lastAccessedPreparedStatement, times(1))
+      verify(updateLastAccessed, times(1))
           .setTimestamp(any(Integer.class), lastAccessedTimestamp.capture());
       assertThat(lastAccessedTimestamp.getValue())
           .isEqualTo(Timestamp.valueOf(LocalDate.now().atStartOfDay()));
+
+      InOrder inOrder = inOrder(connection);
+      inOrder.verify(connection).setAutoCommit(false);
+      inOrder.verify(connection).commit();
+      inOrder.verify(connection).setAutoCommit(true);
+      verify(connection, never()).rollback();
     }
 
     @Test
+    void setSnapshotViaInsertForSnapshotProjection() {
+      setSnapshotViaInsertFor(SnapshotIdentifier.of(TestSnapshotProjection.class));
+    }
+
+    @Test
+    void setSnapshotViaInsertForAggregate() {
+      setSnapshotViaInsertFor(
+          SnapshotIdentifier.of(TestAggregateProjection.class, UUID.randomUUID()));
+    }
+
     @SneakyThrows
-    void setSnapshot_fails() {
+    void setSnapshotViaInsertFor(@NonNull SnapshotIdentifier id) {
+      final PreparedStatement updateSnapshot = mock(PreparedStatement.class);
+      final PreparedStatement insertSnapshot = mock(PreparedStatement.class);
+      final PreparedStatement updateLastAccessed = mock(PreparedStatement.class);
+      final PreparedStatement insertLastAccessed = mock(PreparedStatement.class);
+
       when(dataSource.getConnection()).thenReturn(connection);
-      when(connection.prepareStatement(contains(TABLE_NAME))).thenReturn(preparedStatement);
+      when(connection.prepareStatement(contains(TABLE_NAME)))
+          .thenReturn(updateSnapshot, insertSnapshot);
       when(connection.prepareStatement(contains(LAST_ACCESSED_TABLE_NAME)))
-          .thenReturn(lastAccessedPreparedStatement);
+          .thenReturn(updateLastAccessed, insertLastAccessed);
 
       SnapshotData snap =
           new SnapshotData(
               new byte[] {1, 2, 3}, SnapshotSerializerId.of("random"), UUID.randomUUID());
 
-      when(preparedStatement.executeUpdate()).thenReturn(0);
+      when(updateSnapshot.executeUpdate()).thenReturn(0); // updating snapshot fails
+      when(insertSnapshot.executeUpdate()).thenReturn(1); // continue with insert
+      when(updateLastAccessed.executeUpdate()).thenReturn(0); // updating lastAccessed fails
+      when(insertLastAccessed.executeUpdate()).thenReturn(1); // continue with insert
+
+      // when
+      jdbcSnapshotCache.store(id, snap);
+
+      ArgumentCaptor<String> stringsInUpdate = ArgumentCaptor.forClass(String.class);
+      ArgumentCaptor<byte[]> bytesInUpdate = ArgumentCaptor.forClass(byte[].class);
+
+      // verify update statement
+      verify(updateSnapshot).executeUpdate();
+      verify(updateSnapshot, times(4)).setString(any(Integer.class), stringsInUpdate.capture());
+      assertThat(stringsInUpdate.getAllValues())
+          .containsExactly(
+              snap.lastFactId().toString(),
+              "random".toLowerCase(),
+              ScopedName.fromProjectionMetaData(id.projectionClass()).asString(),
+              id.aggIdAsStringOrNull());
+
+      verify(updateSnapshot, times(1)).setBytes(any(Integer.class), bytesInUpdate.capture());
+      assertThat(bytesInUpdate.getValue()).isEqualTo(snap.serializedProjection());
+
+      // verify insert statement
+      verify(insertSnapshot).executeUpdate();
+      ArgumentCaptor<String> stringsInInsert = ArgumentCaptor.forClass(String.class);
+      ArgumentCaptor<byte[]> bytesInInsert = ArgumentCaptor.forClass(byte[].class);
+
+      verify(insertSnapshot, times(4)).setString(any(Integer.class), stringsInInsert.capture());
+      assertThat(stringsInInsert.getAllValues())
+          .containsExactly(
+              ScopedName.fromProjectionMetaData(id.projectionClass()).asString(),
+              id.aggIdAsStringOrNull(),
+              snap.lastFactId().toString(),
+              "random");
+
+      verify(insertSnapshot, times(1)).setBytes(any(Integer.class), bytesInInsert.capture());
+      assertThat(bytesInInsert.getValue()).isEqualTo(snap.serializedProjection());
+
+      // Assert update of last accessed timestamp
+      ArgumentCaptor<String> lastAccessedKeysForUpdate = ArgumentCaptor.forClass(String.class);
+      ArgumentCaptor<Timestamp> lastAccessedTimestampForUpdate =
+          ArgumentCaptor.forClass(Timestamp.class);
+
+      verify(updateLastAccessed).executeUpdate();
+      verify(updateLastAccessed, times(2))
+          .setString(any(Integer.class), lastAccessedKeysForUpdate.capture());
+      assertThat(lastAccessedKeysForUpdate.getAllValues())
+          .containsExactly(
+              ScopedName.fromProjectionMetaData(id.projectionClass()).asString(),
+              id.aggIdAsStringOrNull());
+
+      verify(updateLastAccessed, times(1))
+          .setTimestamp(any(Integer.class), lastAccessedTimestampForUpdate.capture());
+      assertThat(lastAccessedTimestampForUpdate.getValue())
+          .isEqualTo(Timestamp.valueOf(LocalDate.now().atStartOfDay()));
+
+      // Assert insert of last accessed timestamp
+      ArgumentCaptor<String> lastAccessedKeysForInsert = ArgumentCaptor.forClass(String.class);
+      ArgumentCaptor<Timestamp> lastAccessedTimestampForInsert =
+          ArgumentCaptor.forClass(Timestamp.class);
+
+      verify(updateLastAccessed).executeUpdate();
+      verify(updateLastAccessed, times(2))
+          .setString(any(Integer.class), lastAccessedKeysForInsert.capture());
+      assertThat(lastAccessedKeysForInsert.getAllValues())
+          .containsExactly(
+              ScopedName.fromProjectionMetaData(id.projectionClass()).asString(),
+              id.aggIdAsStringOrNull());
+
+      verify(updateLastAccessed, times(1))
+          .setTimestamp(any(Integer.class), lastAccessedTimestampForInsert.capture());
+      assertThat(lastAccessedTimestampForInsert.getValue())
+          .isEqualTo(Timestamp.valueOf(LocalDate.now().atStartOfDay()));
+
+      InOrder inOrder = inOrder(connection);
+      inOrder.verify(connection).setAutoCommit(false);
+      inOrder.verify(connection).commit();
+      inOrder.verify(connection).setAutoCommit(true);
+      verify(connection, never()).rollback();
+    }
+
+    @Test
+    @SneakyThrows
+    void setSnapshotFailsBecauseZeroRowsWritten() {
+      final PreparedStatement update = mock(PreparedStatement.class);
+      final PreparedStatement insert = mock(PreparedStatement.class);
+
+      when(dataSource.getConnection()).thenReturn(connection);
+      when(connection.prepareStatement(any())).thenReturn(update, insert);
+
+      SnapshotData snap =
+          new SnapshotData(
+              new byte[] {1, 2, 3}, SnapshotSerializerId.of("random"), UUID.randomUUID());
+
+      when(update.executeUpdate()).thenReturn(0); // update fails
+      when(insert.executeUpdate()).thenReturn(0); // and insert fails
 
       SnapshotIdentifier id = SnapshotIdentifier.of(TestSnapshotProjection.class);
       assertThatThrownBy(() -> jdbcSnapshotCache.store(id, snap))
           .isInstanceOf(IllegalStateException.class)
-          .hasMessageContaining("Failed to insert snapshot into database. SnapshotId: ");
+          .hasMessage("Failed to insert snapshot into database. SnapshotId: " + id);
+
+      // at least try
+      verify(update).executeUpdate();
+      verify(insert).executeUpdate();
+
       verifyNoInteractions(lastAccessedPreparedStatement);
+
+      InOrder inOrder = inOrder(connection);
+      inOrder.verify(connection).setAutoCommit(false);
+      inOrder.verify(connection).rollback();
+      inOrder.verify(connection).setAutoCommit(true);
+      verify(connection, never()).commit();
+    }
+
+    @Test
+    @SneakyThrows
+    void setSnapshotFailsBecauseSqlException() {
+      when(dataSource.getConnection()).thenReturn(connection);
+      when(connection.prepareStatement(any())).thenThrow(new SQLException("nope"));
+
+      SnapshotData snap =
+          new SnapshotData(
+              new byte[] {1, 2, 3}, SnapshotSerializerId.of("random"), UUID.randomUUID());
+
+      SnapshotIdentifier id = SnapshotIdentifier.of(TestSnapshotProjection.class);
+      assertThatThrownBy(() -> jdbcSnapshotCache.store(id, snap))
+          .isInstanceOf(IllegalStateException.class)
+          .hasMessage("Failed to insert snapshot into database. SnapshotId: " + id);
+
+      InOrder inOrder = inOrder(connection);
+      inOrder.verify(connection).setAutoCommit(false);
+      inOrder.verify(connection).rollback();
+      inOrder.verify(connection).setAutoCommit(true);
+      verify(connection, never()).commit();
     }
 
     @Test
@@ -421,6 +597,8 @@ class JdbcSnapshotCacheTest {
       when(resultSet.next()).thenReturn(true);
       when(connection.prepareStatement(contains(LAST_ACCESSED_TABLE_NAME)))
           .thenReturn(lastAccessedPreparedStatement);
+      when(lastAccessedPreparedStatement.executeUpdate())
+          .thenReturn(1); // means: updating lastAccessed works, no insert necessary
 
       UUID lastFactId = UUID.randomUUID();
       byte[] bytes = {1, 2, 3};
@@ -508,6 +686,52 @@ class JdbcSnapshotCacheTest {
               jdbcSnapshotCache.createKeyFor(SnapshotIdentifier.of(TestSnapshotProjection.class)))
           .isEqualTo(
               "org.factcast.core.snap.jdbc.JdbcSnapshotCacheTest$WhenCrud$TestSnapshotProjection_1");
+    }
+
+    @Nested
+    class WhenResolvingMetadataIdentifierNormalizer {
+
+      @Test
+      @SneakyThrows
+      void storesLowerCase() {
+        when(metaData.storesLowerCaseIdentifiers()).thenReturn(true);
+
+        final UnaryOperator<String> normalizer = jdbcSnapshotCache.resolveIdentifierNormalizer();
+        assertThat(normalizer.apply("foo")).isEqualTo("foo");
+        assertThat(normalizer.apply("FOO")).isEqualTo("foo");
+        assertThat(normalizer.apply("FoO")).isEqualTo("foo");
+      }
+
+      @Test
+      @SneakyThrows
+      void storesUpperCase() {
+        when(metaData.storesUpperCaseIdentifiers()).thenReturn(true);
+
+        final UnaryOperator<String> normalizer = jdbcSnapshotCache.resolveIdentifierNormalizer();
+        assertThat(normalizer.apply("foo")).isEqualTo("FOO");
+        assertThat(normalizer.apply("FOO")).isEqualTo("FOO");
+        assertThat(normalizer.apply("FoO")).isEqualTo("FOO");
+      }
+
+      @Test
+      @SneakyThrows
+      void storesUnknown() {
+        final UnaryOperator<String> normalizer = jdbcSnapshotCache.resolveIdentifierNormalizer();
+        assertThat(normalizer.apply("foo")).isEqualTo("foo");
+        assertThat(normalizer.apply("FOO")).isEqualTo("FOO");
+        assertThat(normalizer.apply("FoO")).isEqualTo("FoO");
+      }
+
+      @Test
+      @SneakyThrows
+      void sqlExceptionWhileResolving() {
+        when(metaData.storesLowerCaseIdentifiers()).thenThrow(new SQLException("nope"));
+
+        final UnaryOperator<String> normalizer = jdbcSnapshotCache.resolveIdentifierNormalizer();
+        assertThat(normalizer.apply("foo")).isEqualTo("foo");
+        assertThat(normalizer.apply("FOO")).isEqualTo("FOO");
+        assertThat(normalizer.apply("FoO")).isEqualTo("FoO");
+      }
     }
   }
 
