@@ -56,6 +56,7 @@ public class BufferedTransformingServerPipeline extends AbstractServerPipeline {
 
   @RequiredArgsConstructor
   static class TransformedFactSupplier implements Supplier<Signal> {
+    //todo Force GC when in debug to see if the original fact is gone during an int test
     @Getter final TransformationRequest transformationRequest;
     @Setter PgFact resolved;
 
