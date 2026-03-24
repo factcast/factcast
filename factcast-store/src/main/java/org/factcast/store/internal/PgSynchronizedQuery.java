@@ -95,7 +95,13 @@ class PgSynchronizedQuery {
   public synchronized void run(boolean useIndex) {
     List<ConnectionModifier> filters =
         Lists.newArrayList(ConnectionModifier.withApplicationName(debugInfo));
-    if (!useIndex) filters.add(ConnectionModifier.withBitmapScanDisabled());
+    if (!useIndex) {
+      filters.add(ConnectionModifier.withBitmapScanDisabled());
+    } else {
+      // if we want to use gin indexes, we need to force custom plans to hit the partial index for
+      // the latest facts
+      filters.add(ConnectionModifier.withCustomPlanForced());
+    }
     try (SingleConnectionDataSource ds = connectionSupplier.getPooledAsSingleDataSource(filters)) {
       long latest = hwmFetcher.highWaterMark(ds).targetSer();
       new JdbcTemplate(ds)

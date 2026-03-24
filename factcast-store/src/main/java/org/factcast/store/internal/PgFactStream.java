@@ -197,6 +197,7 @@ public class PgFactStream {
   @NonNull
   SingleConnectionDataSource createSingleDataSource(@NonNull SubscriptionRequest request) {
     return connectionSupplier.getPooledAsSingleDataSource(
+        ConnectionModifier.withCustomPlanForced(),
         ConnectionModifier.withAutoCommitDisabled(),
         ConnectionModifier.withApplicationName(request.debugInfo()));
   }
