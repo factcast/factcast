@@ -217,7 +217,7 @@ class ProjectorImplTest {
       ProjectorImpl<ComplexAggregate> underTest = new ProjectorImpl<>(projection, eventSerializer);
 
       // RUN
-      List<FactSpec> factSpecs = underTest.createFactSpecs();
+      Collection<FactSpec> factSpecs = underTest.createFactSpecs();
 
       // ASSERT
       assertThat(factSpecs)
@@ -243,7 +243,7 @@ class ProjectorImplTest {
       ProjectorImpl<ComplexAggregate> underTest = new ProjectorImpl<>(aggregate, eventSerializer);
 
       // RUN
-      List<FactSpec> factSpecs = underTest.createFactSpecs();
+      Collection<FactSpec> factSpecs = underTest.createFactSpecs();
 
       // ASSERT
       Set<UUID> expectedAggIds = Collections.singleton(aggregateId);
@@ -271,7 +271,7 @@ class ProjectorImplTest {
           new ProjectorImpl<>(projection, eventSerializer);
 
       // RUN
-      List<FactSpec> factSpecs = underTest.createFactSpecs();
+      Collection<FactSpec> factSpecs = underTest.createFactSpecs();
 
       // ASSERT
       assertThat(factSpecs)
@@ -999,18 +999,18 @@ class ProjectorImplTest {
     void overridesNsFromMethodLevelAnnotationDiscover() {
       ProjectorImpl<Projection> uut =
           new ProjectorImpl<>(new SomeProjectionWithMethodLevelOverride(), eventSerializer);
-      List<FactSpec> factSpecs = uut.createFactSpecs();
+      Collection<FactSpec> factSpecs = uut.createFactSpecs();
       assertThat(factSpecs).hasSize(1);
-      assertThat(factSpecs.get(0).ns()).isEqualTo("m-targetForE2");
+      assertThat(factSpecs.iterator().next().ns()).isEqualTo("m-targetForE2");
     }
 
     @Test
     void overridesNsFromMethodLevelAnnotationLegal() {
       ProjectorImpl<Projection> uut =
           new ProjectorImpl<>(new SomeProjectionWithMethodLevelLegalTargetType(), eventSerializer);
-      List<FactSpec> factSpecs = uut.createFactSpecs();
+      Collection<FactSpec> factSpecs = uut.createFactSpecs();
       assertThat(factSpecs).hasSize(1);
-      assertThat(factSpecs.get(0).ns()).isEqualTo("m-targetForE2");
+      assertThat(factSpecs.iterator().next().ns()).isEqualTo("m-targetForE2");
     }
 
     @Test
@@ -1028,9 +1028,9 @@ class ProjectorImplTest {
     void overridesNsFromTypeLevelAnnotation() {
       ProjectorImpl<Projection> uut =
           new ProjectorImpl<>(new SomeProjectionWithTypeAnnotation(), eventSerializer);
-      List<FactSpec> factSpecs = uut.createFactSpecs();
+      Collection<FactSpec> factSpecs = uut.createFactSpecs();
       assertThat(factSpecs).hasSize(1);
-      assertThat(factSpecs.get(0).ns()).isEqualTo("s-targetForE1");
+      assertThat(factSpecs.iterator().next().ns()).isEqualTo("s-targetForE1");
     }
 
     @SuppressWarnings("OptionalGetWithoutIsPresent")
@@ -1038,7 +1038,7 @@ class ProjectorImplTest {
     void overridesNsFromTypeLevelAnnotationOnSuper() {
       ProjectorImpl<Projection> uut =
           new ProjectorImpl<>(new SomeProjectionWithTypeAnnotationOnParent(), eventSerializer);
-      List<FactSpec> factSpecs = uut.createFactSpecs();
+      Collection<FactSpec> factSpecs = uut.createFactSpecs();
       Optional<FactSpec> e1 = factSpecs.stream().filter(fs -> "E1".equals(fs.type())).findFirst();
       Optional<FactSpec> e2 = factSpecs.stream().filter(fs -> "E2".equals(fs.type())).findFirst();
       assertThat(e1.get().ns()).isEqualTo("s-targetForE1");
@@ -1069,19 +1069,19 @@ class ProjectorImplTest {
     @Test
     void deepInspection() {
       ProjectorImpl<Projection> uut = new ProjectorImpl<>(new L1(), eventSerializer);
-      assertThat(uut.createFactSpecs().get(0).ns()).isEqualTo("l1");
+      assertThat(uut.createFactSpecs().iterator().next().ns()).isEqualTo("l1");
     }
 
     @Test
     void deepInspection2() {
       ProjectorImpl<Projection> uut = new ProjectorImpl<>(new L2(), eventSerializer);
-      assertThat(uut.createFactSpecs().get(0).ns()).isEqualTo("l3");
+      assertThat(uut.createFactSpecs().iterator().next().ns()).isEqualTo("l3");
     }
 
     @Test
     void deepInspection3() {
       ProjectorImpl<Projection> uut = new ProjectorImpl<>(new L3(), eventSerializer);
-      assertThat(uut.createFactSpecs().get(0).ns()).isEqualTo("l3");
+      assertThat(uut.createFactSpecs().iterator().next().ns()).isEqualTo("l3");
     }
   }
 

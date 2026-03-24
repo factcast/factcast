@@ -211,7 +211,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
 
   @Override
   @SuppressWarnings("java:S2589")
-  public List<FactSpec> createFactSpecs() {
+  public Collection<FactSpec> createFactSpecs() {
     List<FactSpec> discovered =
         dispatchInfo.values().stream().map(d -> d.spec().copy()).collect(Collectors.toList());
 
@@ -231,7 +231,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
               + projection.getClass()
               + ". Either add handler methods or implement postprocess(Collection<FactSpec>)");
     }
-    return unmodifiableList(new ArrayList<>(ret));
+    return Collections.unmodifiableCollection(ret);
   }
 
   @Override
