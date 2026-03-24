@@ -58,7 +58,7 @@ or any other via
 
 - MongoDB / AWS DocumentDB
 <div style="text-align: center;">
-<img src="/logos/mongodb-logo.svg" width="100px" height="100px"/> 
+<img src="/logos/mongodb-logo.svg" width="100px" height="100px" style="padding-right: 15px;"/>
 <img src="/logos/documentdb-logo.svg" width="100px" height="100px"/> 
 </div>
 with more to come.

@@ -1,11 +1,11 @@
 +++
-title = "UserNames (MongoDb)"
-weight = 1000
+title = "UserNames (MongoDB)"
+weight = 1100
 type="docs"
 +++
 
-Here is a projection that handles _UserCreated_ and _UserDeleted_ events using MongoDB as datastore. Currently, with
-MongoDB no transactionally aware implementation is provided.
+Here is a projection that handles _UserCreated_ and _UserDeleted_ events using MongoDB as datastore. Currently, for
+MongoDB no transactionally aware projection implementation is provided.
 
 ## Configuration
 
@@ -77,4 +77,4 @@ void apply(UserChangedV1 e) {
 
 ## Full Example
 
-A full example for both subscribed and managed projections can be found [here](https://github.com/factcast/factcast/blob/main/factcast-examples/factcast-example-client-mongodb/src/main/java/org/factcast/example/client/mongodb/ExampleMongoDbClientitests.java).
+A full example for both subscribed and managed projections can be found [here](https://github.com/factcast/factcast/blob/main/factcast-examples/factcast-example-client-mongodb/src/main/java/org/factcast/example/client/mongodb/ExampleMongoDbClient.java).
