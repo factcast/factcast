@@ -51,6 +51,7 @@
     <module>factcast-store-sub-redis</module>
     <module>factcast-core</module>
     <module>factcast-factus</module>
+    <module>factcast-factus-migration</module>
     <module>factcast-factus-redis</module>
     <module>factcast-factus-spring-tx</module>
     <module>factcast-factus-dynamo</module>
