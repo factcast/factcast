@@ -337,6 +337,20 @@ class TransformationChainsTest {
     assertThat(cache).hasSize(1).containsKey(key2);
   }
 
+  @Test
+  void clearCache() {
+    Map<TransformationKey, Map<TransformationChains.VersionPath, TransformationChain>> cache =
+        uut.cache();
+    TransformationKey key1 = TransformationKey.of("ns", "type");
+    TransformationKey key2 = TransformationKey.of("ns", "otherType");
+    cache.put(key1, new HashMap<>());
+    cache.put(key2, new HashMap<>());
+
+    assertThat(cache).hasSize(2).containsKey(key2).containsKey(key1);
+    uut.clearCache();
+    assertThat(cache).isEmpty();
+  }
+
   private void bidir(ArrayList<Transformation> all, TransformationKey key, int i, int j) {
     all.add(SingleTransformation.of(key, i, j, js(i)));
     all.add(SingleTransformation.of(key, j, i, js(j)));
