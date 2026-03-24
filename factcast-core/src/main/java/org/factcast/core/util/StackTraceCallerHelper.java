@@ -15,7 +15,6 @@
  */
 package org.factcast.core.util;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import java.util.List;
 import lombok.AccessLevel;
