@@ -37,8 +37,8 @@ public class MongoDbSubscribedProjection extends AbstractMongoDbSubscribedProjec
   public MongoDbSubscribedProjection(@NonNull MongoDatabase mongoDatabase) {
 
     super(mongoDatabase);
-
-    userTable = mongoDatabase.getCollection("usersSubscribed", UserSchema.class);
+    String scopedName = getScopedName().with("UserNames").toString();
+    userTable = mongoDatabase.getCollection(scopedName, UserSchema.class);
   }
 
   public UserSchema findByFirstName(@NonNull String firstName) {
@@ -49,6 +49,7 @@ public class MongoDbSubscribedProjection extends AbstractMongoDbSubscribedProjec
   void apply(UserCreatedV1 e) {
     userTable.insertOne(
         UserSchema.builder()
+            .id(e.aggregateId())
             .displayName(e.lastName() + e.firstName())
             .firstName(e.firstName())
             .lastName(e.lastName())
@@ -61,8 +62,9 @@ public class MongoDbSubscribedProjection extends AbstractMongoDbSubscribedProjec
   void apply(UserChangedV1 e) {
     // Only the last name can be changed.
     userTable.replaceOne(
-        new Document("firstName", e.firstName()),
+        new Document("id", e.aggregateId()),
         UserSchema.builder()
+            .id(e.aggregateId())
             .firstName(e.firstName())
             .displayName(e.lastName() + e.firstName())
             .lastName(e.lastName())

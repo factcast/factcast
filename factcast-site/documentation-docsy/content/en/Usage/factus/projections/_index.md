@@ -34,7 +34,7 @@ local projections
 external projections
 
 - RDBMS like
-<center>
+<div style="text-align: center;">
 <img src="/logos/postgres-logo.svg" width="100px" height="100px"/>
 <img src="/logos/maria-logo.png" width="100px" height="100px"/>
 <img src="/logos/mysql-logo.svg" width="100px" height="100px"/>
@@ -43,18 +43,24 @@ external projections
 or any other via
 <img src="/logos/jdbc-logo.png" width="100px" height="100px"/>
 
-</center>
+</div>
 
 - Redis / Valkey
-<center>
+<div style="text-align: center;">
 <img src="/logos/redis-logo.png" width="100px" height="100px"/>
 <img src="/logos/valkey-logo.png" width="100px" height="100px"/> 
-</center>
+</div>
 
 - AWS DynamoDB
-<center>
+<div style="text-align: center;">
 <img src="/logos/dynamo-logo.svg" width="100px" height="100px"/> 
-</center>
+</div>
+
+- MongoDB / AWS DocumentDB
+<div style="text-align: center;">
+<img src="/logos/mongodb-logo.svg" width="100px" height="100px"/> 
+<img src="/logos/documentdb-logo.svg" width="100px" height="100px"/> 
+</div>
 with more to come.
 
 ## Projections in general

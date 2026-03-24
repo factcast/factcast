@@ -15,16 +15,16 @@
  */
 package org.factcast.example.client.mongodb.hello;
 
+import java.util.UUID;
 import lombok.*;
 import lombok.experimental.Accessors;
 
-@ToString
 @Data
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
 @Accessors(fluent = false)
 public final class UserSchema {
+
+  private UUID id;
 
   private String firstName;
 
