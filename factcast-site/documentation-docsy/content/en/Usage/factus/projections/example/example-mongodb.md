@@ -34,8 +34,11 @@ public class UserNames extends AbstractMongoDbSubscribedProjection {
 
   @Data
   @Builder
+  @AllArgsConstructor
+  @NoArgsConstructor
   @Accessors(fluent = false)
   public final class UserSchema {
+    @BsonProperty("id")
     private UUID id;
     private String firstName;
     private String lastName;
