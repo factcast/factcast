@@ -36,7 +36,7 @@ import org.factcast.factus.projection.WriterToken;
 
 @Slf4j
 @SuppressWarnings({"java:S1133", "java:S2142"})
-abstract class AbstractMongoDbProjection implements MongoDbProjection {
+public abstract class AbstractMongoDbProjection implements MongoDbProjection {
   public static final String STATE_COLLECTION = "states";
   public static final String LOCK_COLLECTION = "locks";
   public static final String PROJECTION_CLASS_FIELD = "projectionKey";
