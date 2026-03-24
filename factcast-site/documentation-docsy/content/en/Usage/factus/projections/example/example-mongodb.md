@@ -26,7 +26,7 @@ public class UserNames extends AbstractMongoDbSubscribedProjection {
 
   public UserNames(@NonNull MongoDatabase mongoDatabase) {
     super(mongoDatabase);
-    String scopedName = getScopedName().with("userNames").toString();
+    String scopedName = getScopedName().with("userNames").asString();
     userCollection = mongoDatabase.getCollection(scopedName, UserSchema.class);
   }
 
