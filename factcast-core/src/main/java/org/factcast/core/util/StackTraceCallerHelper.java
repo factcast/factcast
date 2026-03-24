@@ -19,7 +19,6 @@ public class StackTraceCallerHelper {
           "org.springframework.",
           "com.google.common.");
 
-  @VisibleForTesting
   public static StackTraceElement findCallerFrame(StackTraceElement[] stack) {
     for (StackTraceElement frame : stack) {
       if (isExternalFrame(frame)) {
