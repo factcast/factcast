@@ -53,7 +53,8 @@ class PgQueryBuilderTest {
           FactSpec.ns("ns2").type("t2").meta("foo", "bar").metaExists("e").metaDoesNotExist("!e");
       var spec3 = FactSpec.ns("ns3");
       var spec4 = FactSpec.ns("ns4").aggId(new UUID(0, 1), new UUID(0, 2));
-      var specs = Lists.newArrayList(spec1, spec2, spec3, spec4);
+      var spec5 = FactSpec.ns("*").type("t3");
+      var specs = Lists.newArrayList(spec1, spec2, spec3, spec4, spec5);
       var underTest = new PgQueryBuilder(specs);
       var setter = underTest.createStatementSetter(serial);
       var ps = mock(PreparedStatement.class);
@@ -85,6 +86,9 @@ class PgQueryBuilderTest {
           .setString(
               ++index,
               "{\"aggIds\": [\"00000000-0000-0000-0000-000000000001\",\"00000000-0000-0000-0000-000000000002\"]}");
+
+      // 5th spec - wildcard ns
+      verify(ps).setString(++index, "{\"type\": \"t3\"}");
 
       // ser>?
       verify(ps).setLong(++index, serial.get());
