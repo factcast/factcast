@@ -315,6 +315,34 @@ SELECT ser, header, payload,
 
       assertThat(normalized(sql)).isEqualTo(normalized(expected));
     }
+
+    @Test
+    void nsWildcardAndType() {
+      var spec1 = FactSpec.ns("foo").type("bar");
+      var spec2 = FactSpec.ns("foo").type("*");
+      var spec3 = FactSpec.ns("*").type("*");
+      var specs = Lists.newArrayList(spec1, spec2, spec3);
+      var underTest = new PgQueryBuilder(specs);
+      var sql = underTest.createSQL();
+      var expected =
+          """
+SELECT ser, header, payload,
+ header->>'id' AS id,
+ header->>'aggIds' AS aggIds,
+ header->>'ns' AS ns,
+ header->>'type' AS type,
+ header->>'version' AS version
+ FROM fact
+ WHERE (
+ (true AND header @> ?::jsonb AND header @> ?::jsonb) OR
+ (true AND header @> ?::jsonb) OR
+ (true) )
+ AND ser>?
+ ORDER BY ser ASC
+""";
+
+      assertThat(normalized(sql)).isEqualTo(normalized(expected));
+    }
   }
 
   @Nested
