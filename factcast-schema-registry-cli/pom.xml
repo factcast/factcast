@@ -14,7 +14,7 @@
   <properties>
     <main.class>org.factcast.schema.registry.cli.Application</main.class>
 
-    <kotest.version>6.1.7</kotest.version>
+    <kotest.version>6.1.8</kotest.version>
   </properties>
 
   <dependencyManagement>
