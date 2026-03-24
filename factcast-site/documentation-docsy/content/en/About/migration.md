@@ -42,7 +42,7 @@ While still on your current FactCast version, add the OpenRewrite Maven plugin t
     <plugin>
       <groupId>org.openrewrite.maven</groupId>
       <artifactId>rewrite-maven-plugin</artifactId>
-      <version>6.32.0</version>
+      <version>6.34.0</version>
       <configuration>
         <activeRecipes>
           <recipe>org.factcast.factus.migration.PostprocessToCollection</recipe>
@@ -51,7 +51,7 @@ While still on your current FactCast version, add the OpenRewrite Maven plugin t
       <dependencies>
         <dependency>
           <groupId>org.factcast</groupId>
-          <artifactId>factcast-factus</artifactId>
+          <artifactId>factcast-factus-migration</artifactId>
           <version>0.11.0</version>
         </dependency>
       </dependencies>
