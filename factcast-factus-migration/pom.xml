@@ -12,17 +12,17 @@
   <artifactId>factcast-factus-migration</artifactId>
   <name>${project.groupId}:${project.artifactId}</name>
 
-	<dependencyManagement>
-		<dependencies>
-			<dependency>
-				<groupId>org.factcast</groupId>
-				<artifactId>factcast-internal-dep-boot</artifactId>
-				<version>${project.version}</version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
-		</dependencies>
-	</dependencyManagement>
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.factcast</groupId>
+        <artifactId>factcast-internal-dep-boot</artifactId>
+        <version>${project.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 
   <dependencies>
     <dependency>
