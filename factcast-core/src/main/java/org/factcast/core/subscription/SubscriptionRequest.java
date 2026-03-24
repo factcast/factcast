@@ -76,4 +76,15 @@ public interface SubscriptionRequest {
     return new FluentSubscriptionRequest.Builder(new FluentSubscriptionRequest())
         .follow(specification);
   }
+
+  static SpecBuilder follow(@NonNull FactSpec specification, @NonNull String debugInfo) {
+    return new FluentSubscriptionRequest.Builder(new FluentSubscriptionRequest(debugInfo))
+        .follow(specification);
+  }
+
+  static SpecBuilder follow(@NonNull Collection<FactSpec> specification, @NonNull String debugInfo) {
+    return new FluentSubscriptionRequest.Builder(new FluentSubscriptionRequest(debugInfo))
+        .follow(specification);
+  }
+
 }

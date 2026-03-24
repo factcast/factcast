@@ -15,6 +15,7 @@
  */
 package org.factcast.core.subscription;
 
+import static org.factcast.core.util.StackTraceCallerHelper.createDebugInfo;
 import java.util.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -56,17 +57,9 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
     streamInfo = true;
   }
 
-  private String createDebugInfo() {
-    StackTraceElement caller =
-        StackTraceCallerHelper.findCallerFrame(new Exception().getStackTrace());
-    return UUID.randomUUID()
-        + " ("
-        + caller.getClassName().substring(caller.getClassName().lastIndexOf(".") + 1)
-        + "."
-        + caller.getMethodName()
-        + ":"
-        + caller.getLineNumber()
-        + ")";
+  FluentSubscriptionRequest(@NonNull String debugInfo) {
+    this.debugInfo = debugInfo;
+    streamInfo = true;
   }
 
   @RequiredArgsConstructor

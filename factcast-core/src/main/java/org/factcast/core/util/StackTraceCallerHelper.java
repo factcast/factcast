@@ -16,9 +16,12 @@
 package org.factcast.core.util;
 
 import com.google.common.collect.Lists;
+import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class StackTraceCallerHelper {
@@ -31,7 +34,8 @@ public class StackTraceCallerHelper {
           "sun.",
           "com.sun.",
           "org.springframework.",
-          "com.google.common.");
+          "com.google.common.",
+          "io.micrometer.");
 
   public static StackTraceElement findCallerFrame(StackTraceElement[] stack) {
     for (StackTraceElement frame : stack) {
@@ -41,6 +45,18 @@ public class StackTraceCallerHelper {
     }
     // fallback: use original hardcoded index behavior
     return stack.length > 3 ? stack[3] : stack[stack.length - 1];
+  }
+
+  public static String createDebugInfo() {
+    StackTraceElement caller = findCallerFrame(new Exception().getStackTrace());
+    return UUID.randomUUID()
+        + " ("
+        + caller.getClassName().substring(caller.getClassName().lastIndexOf(".") + 1)
+        + "."
+        + caller.getMethodName()
+        + ":"
+        + caller.getLineNumber()
+        + ")";
   }
 
   private static boolean isExternalFrame(StackTraceElement frame) {
