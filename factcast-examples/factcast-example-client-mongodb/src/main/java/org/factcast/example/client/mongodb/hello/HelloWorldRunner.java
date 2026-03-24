@@ -39,7 +39,7 @@ public class HelloWorldRunner implements CommandLineRunner {
 
   @NonNull private MongoDatabase mongoDatabase;
 
-  @NonNull private MongoDbSubscribedProjection subscription;
+  @NonNull private UsersMongoDbSubscribedProjection subscription;
 
   @Override
   public void run(String... args) throws Exception {
@@ -63,12 +63,17 @@ public class HelloWorldRunner implements CommandLineRunner {
     for (int i = 0; i < 2; i++) {
       threads.submit(
           () -> {
-            log.info("Starting thread");
-            final MongoDbProjection projection = new MongoDbProjection(mongoDatabase);
-            factus.update(projection);
-            log.info("Finished update at position: {}", projection.factStreamPosition());
-            log.info("Total count users: {}", projection.findsAll().size());
-            log.info("Done");
+            try {
+              log.info("Starting thread");
+              final UsersMongoDbManagedProjection projection =
+                  new UsersMongoDbManagedProjection(mongoDatabase);
+              factus.update(projection);
+              log.info("Finished update at position: {}", projection.factStreamPosition());
+              log.info("Total count users: {}", projection.findsAll().size());
+              log.info("Done");
+            } catch (Exception e) {
+              log.error(e.getMessage());
+            }
           });
     }
     threads.shutdown();
