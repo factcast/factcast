@@ -16,61 +16,44 @@
 package org.factcast.store.registry.transformation.cache;
 
 import static org.factcast.store.registry.metrics.RegistryMetrics.GAUGE.CACHE_BUFFER;
-import static org.factcast.store.registry.metrics.RegistryMetrics.GAUGE.CACHE_FLUSHING_BUFFER;
 
 import com.google.common.annotations.VisibleForTesting;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
-import javax.annotation.Nullable;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.store.internal.PgFact;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 
+@Slf4j
 class CacheBuffer {
-  private final Object mutex = new Object() {};
-
-  // Currently we allow null values in the buffer, reason why we can't use ConcurrentHashMap.
-  @Getter(AccessLevel.PROTECTED)
-  private final Map<TransformationCache.Key, PgFact> buffer = new HashMap<>();
 
   @Getter(AccessLevel.PROTECTED)
-  private final Map<TransformationCache.Key, PgFact> flushingBuffer = new HashMap<>();
+  private final Map<TransformationCache.Key, PgFact> buffer =
+      Collections.synchronizedMap(new HashMap<>());
 
   @Getter(AccessLevel.PROTECTED)
   private final AtomicLong bufferSizeMetric;
 
-  @Getter(AccessLevel.PROTECTED)
-  private final AtomicLong flushingBufferSizeMetric;
-
   public CacheBuffer(RegistryMetrics registryMetrics) {
     this.bufferSizeMetric = registryMetrics.gauge(CACHE_BUFFER, new AtomicLong(0));
-    this.flushingBufferSizeMetric = registryMetrics.gauge(CACHE_FLUSHING_BUFFER, new AtomicLong(0));
   }
 
   PgFact get(@NonNull TransformationCache.Key key) {
-    synchronized (mutex) {
-      return Optional.ofNullable(buffer.get(key)).orElse(flushingBuffer.get(key));
-    }
+    // we accept that we may get a null result here during flushing of the buffer
+    return buffer.get(key);
   }
 
-  void put(@NonNull TransformationCache.Key cacheKey, @Nullable PgFact factOrNull) {
-    synchronized (mutex) {
-      // do not override potential transformations
-      // cannot use computeIfAbsent here as null values are not allowed.
-      if (factOrNull != null || !buffer.containsKey(cacheKey)) {
-        buffer.put(cacheKey, factOrNull);
-      }
-    }
+  void put(@NonNull TransformationCache.Key cacheKey, @NonNull PgFact f) {
+    buffer.putIfAbsent(cacheKey, f);
   }
 
   int size() {
-    synchronized (mutex) {
-      return buffer.size();
-    }
+    return buffer.size();
   }
 
   /**
@@ -79,42 +62,22 @@ class CacheBuffer {
    *
    * @param consumer the consumer that will process the buffered data before being cleared.
    */
-  void clearAfter(@NonNull Consumer<Map<TransformationCache.Key, Fact>> consumer) {
-    // the consumer is not synchronized, in order to allow concurrent access to the buffer
-    // while it's processing the data.
-    try {
-      beforeClearConsumer();
-      consumer.accept(new HashMap<>(flushingBuffer));
-    } finally {
-      afterClearConsumer();
+  void iterateSnapshotAndClear(@NonNull Consumer<Map<TransformationCache.Key, Fact>> consumer) {
+    HashMap<TransformationCache.Key, Fact> flushing;
+    synchronized (buffer) {
+      bufferSizeMetric.set(buffer.size());
+      flushing = new HashMap<>(buffer);
+      buffer.clear();
     }
-  }
-
-  void putAllNull(Collection<TransformationCache.Key> keys) {
-    synchronized (mutex) {
-      keys.forEach(k -> put(k, null));
+    try {
+      consumer.accept(flushing);
+    } catch (Exception e) {
+      log.warn("While flushing cacheBuffer", e);
     }
   }
 
   @VisibleForTesting
   boolean containsKey(TransformationCache.Key key) {
-    synchronized (mutex) {
-      return buffer.containsKey(key);
-    }
-  }
-
-  private void beforeClearConsumer() {
-    synchronized (mutex) {
-      bufferSizeMetric.set(buffer.size());
-      flushingBuffer.putAll(buffer);
-      buffer.clear();
-    }
-  }
-
-  private void afterClearConsumer() {
-    synchronized (mutex) {
-      flushingBufferSizeMetric.set(flushingBuffer.size());
-      flushingBuffer.clear();
-    }
+    return buffer.containsKey(key);
   }
 }

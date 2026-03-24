@@ -47,8 +47,8 @@ import org.redisson.client.codec.Codec;
 import org.redisson.spring.starter.RedissonAutoConfigurationV2;
 import org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -77,7 +77,7 @@ class RedissonSnapshotCacheTest {
     System.setProperty("spring.data.redis.port", String.valueOf(redis.getMappedPort(6379)));
   }
 
-  @SpyBean private RedissonClient redisson;
+  @MockitoSpyBean private RedissonClient redisson;
 
   @Mock SnapshotSerializerSelector selector;
 

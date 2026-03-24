@@ -22,6 +22,7 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.factcast.core.spec.FactSpec;
+import org.factcast.core.util.StackTraceCallerHelper;
 
 /**
  * SubscriptionRequest intended to be used by clients for convenience.
@@ -56,16 +57,15 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
   }
 
   private String createDebugInfo() {
-    StackTraceElement stackTraceElement = new Exception().getStackTrace()[3];
+    StackTraceElement caller =
+        StackTraceCallerHelper.findCallerFrame(new Exception().getStackTrace());
     return UUID.randomUUID()
         + " ("
-        + stackTraceElement
-            .getClassName()
-            .substring(stackTraceElement.getClassName().lastIndexOf(".") + 1)
+        + caller.getClassName().substring(caller.getClassName().lastIndexOf(".") + 1)
         + "."
-        + stackTraceElement.getMethodName()
+        + caller.getMethodName()
         + ":"
-        + stackTraceElement.getLineNumber()
+        + caller.getLineNumber()
         + ")";
   }
 
