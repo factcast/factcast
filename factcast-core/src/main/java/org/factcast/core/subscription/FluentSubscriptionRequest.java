@@ -16,6 +16,7 @@
 package org.factcast.core.subscription;
 
 import static org.factcast.core.util.StackTraceCallerHelper.createDebugInfo;
+
 import java.util.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -23,7 +24,6 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.factcast.core.spec.FactSpec;
-import org.factcast.core.util.StackTraceCallerHelper;
 
 /**
  * SubscriptionRequest intended to be used by clients for convenience.

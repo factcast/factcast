@@ -16,12 +16,10 @@
 package org.factcast.core.util;
 
 import com.google.common.collect.Lists;
-import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class StackTraceCallerHelper {
