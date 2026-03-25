@@ -51,14 +51,15 @@ public class StackTraceCallerHelper {
     String simpleClassName =
         caller.getClassName().substring(caller.getClassName().lastIndexOf(".") + 1);
 
-    StringBuilder sb = new StringBuilder()
-        .append(UUID.randomUUID())
-        .append(" (")
-        .append(simpleClassName)
-        .append('.')
-        .append(caller.getMethodName())
-        .append(':')
-        .append(caller.getLineNumber());
+    StringBuilder sb =
+        new StringBuilder()
+            .append(UUID.randomUUID())
+            .append(" (")
+            .append(simpleClassName)
+            .append('.')
+            .append(caller.getMethodName())
+            .append(':')
+            .append(caller.getLineNumber());
 
     if (aggregateOrProjection != null) {
       sb.append(" | ").append(aggregateOrProjection.getSimpleName());

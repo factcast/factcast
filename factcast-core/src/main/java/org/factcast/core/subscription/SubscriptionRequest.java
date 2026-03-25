@@ -78,23 +78,31 @@ public interface SubscriptionRequest {
   }
 
   // overloads with projection/aggregate class for richer debugInfo
-  static SpecBuilder follow(@NonNull FactSpec specification, @NonNull Class<?> aggregateOrProjection) {
-    return new FluentSubscriptionRequest.Builder(new FluentSubscriptionRequest(aggregateOrProjection))
+  static SpecBuilder follow(
+      @NonNull FactSpec specification, @NonNull Class<?> aggregateOrProjection) {
+    return new FluentSubscriptionRequest.Builder(
+            new FluentSubscriptionRequest(aggregateOrProjection))
         .follow(specification);
   }
 
-  static SpecBuilder follow(@NonNull Collection<FactSpec> specification, @NonNull Class<?> aggregateOrProjection) {
-    return new FluentSubscriptionRequest.Builder(new FluentSubscriptionRequest(aggregateOrProjection))
+  static SpecBuilder follow(
+      @NonNull Collection<FactSpec> specification, @NonNull Class<?> aggregateOrProjection) {
+    return new FluentSubscriptionRequest.Builder(
+            new FluentSubscriptionRequest(aggregateOrProjection))
         .follow(specification);
   }
 
-  static SpecBuilder catchup(@NonNull FactSpec specification, @NonNull Class<?> aggregateOrProjection) {
-    return new FluentSubscriptionRequest.Builder(new FluentSubscriptionRequest(aggregateOrProjection))
+  static SpecBuilder catchup(
+      @NonNull FactSpec specification, @NonNull Class<?> aggregateOrProjection) {
+    return new FluentSubscriptionRequest.Builder(
+            new FluentSubscriptionRequest(aggregateOrProjection))
         .catchup(specification);
   }
 
-  static SpecBuilder catchup(@NonNull Collection<FactSpec> specification, @NonNull Class<?> aggregateOrProjection) {
-    return new FluentSubscriptionRequest.Builder(new FluentSubscriptionRequest(aggregateOrProjection))
+  static SpecBuilder catchup(
+      @NonNull Collection<FactSpec> specification, @NonNull Class<?> aggregateOrProjection) {
+    return new FluentSubscriptionRequest.Builder(
+            new FluentSubscriptionRequest(aggregateOrProjection))
         .catchup(specification);
   }
 }
