@@ -60,7 +60,6 @@ public class JsTransformer implements Transformer {
       JSEngine engine = getEngine(js);
       synchronized (engine) {
         engine.invoke("transform", jsArgument);
-        // TODO: investigate if this can be extracted out of the synchronized.
         return FactCastJson.toJsonNode(jsonAsMap);
       }
     } catch (RuntimeException e) {
