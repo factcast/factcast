@@ -53,8 +53,7 @@ public class BufferedTransformingServerPipeline extends AbstractServerPipeline {
   }
 
   static class TransformedFactSupplier implements Supplier<Signal> {
-    @Getter
-    private TransformationRequest transformationRequest;
+    @Getter private TransformationRequest transformationRequest;
     private PgFact resolved;
 
     TransformedFactSupplier(@NonNull TransformationRequest transformationRequest) {
