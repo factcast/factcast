@@ -16,10 +16,12 @@
 package org.factcast.schema.registry.cli.validation
 
 import com.fasterxml.jackson.databind.JsonNode
+import org.factcast.core.util.FactCastJson
 import org.factcast.schema.registry.cli.domain.Event
 import org.factcast.schema.registry.cli.domain.Namespace
 import org.factcast.schema.registry.cli.domain.Transformation
 import org.factcast.schema.registry.cli.fs.FileSystemService
+import org.factcast.store.internal.script.JsonString
 import org.factcast.store.registry.transformation.SingleTransformation
 import org.factcast.store.registry.transformation.TransformationKey
 import org.factcast.store.registry.transformation.chains.TransformationChain
@@ -55,7 +57,10 @@ class TransformationEvaluator(
             "no-real-meaning"
         )
 
-        return transformer.transform(chain, data)
+        // inefficient
+        val input = JsonString.of(data.toString());
+        // inefficient
+        return FactCastJson.readTree(transformer.transform(chain, input).json());
     }
 
 

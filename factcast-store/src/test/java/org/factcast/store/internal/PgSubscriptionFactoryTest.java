@@ -31,7 +31,6 @@ import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.pipeline.ServerPipelineFactory;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
-import org.factcast.store.internal.script.JSEngineFactory;
 import org.factcast.store.internal.telemetry.PgStoreTelemetry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -54,7 +53,6 @@ class PgSubscriptionFactoryTest {
   @Mock private PgMetrics metrics;
   @Mock private PgStoreTelemetry telemetry;
 
-  @Mock private JSEngineFactory engineFactory;
   @Mock private ServerPipelineFactory pipelineFactory;
   @Mock private PgConnectionSupplier connectionSupplier;
 
@@ -74,7 +72,6 @@ class PgSubscriptionFactoryTest {
             catchupFactory,
             target,
             pipelineFactory,
-            engineFactory,
             metrics,
             telemetry);
   }

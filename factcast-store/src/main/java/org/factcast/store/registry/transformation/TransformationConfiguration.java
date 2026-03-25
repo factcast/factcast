@@ -19,7 +19,6 @@ import liquibase.integration.spring.SpringLiquibase;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.store.StoreConfigurationProperties;
-import org.factcast.store.internal.script.JSEngineFactory;
 import org.factcast.store.internal.transformation.FactTransformerService;
 import org.factcast.store.registry.SchemaRegistry;
 import org.factcast.store.registry.metrics.RegistryMetrics;
@@ -75,9 +74,8 @@ public class TransformationConfiguration {
     return new TransformationChains(r, registryMetrics);
   }
 
-  @Bean
-  public Transformer transformer(@NonNull JSEngineFactory engineFactory) {
-    return new JsTransformer(engineFactory);
+  public Transformer transformer() {
+    return new JsTransformer();
   }
 
   @Bean

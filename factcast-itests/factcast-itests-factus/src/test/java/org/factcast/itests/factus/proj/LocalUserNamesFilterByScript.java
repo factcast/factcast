@@ -54,8 +54,7 @@ public class LocalUserNamesFilterByScript extends LocalManagedProjection {
 
   @SneakyThrows
   @Handler
-  @FilterByScript(
-      "function isGeorge(header, payload){" + "return payload.userName == 'George';" + "}")
+  @FilterByScript("function isGeorge(header, payload){ return payload.userName == 'George'; }")
   protected void apply(UserCreated created) {
     userNames().put(created.aggregateId(), created.userName());
   }

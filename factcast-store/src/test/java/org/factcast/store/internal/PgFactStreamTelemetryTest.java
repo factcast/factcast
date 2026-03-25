@@ -28,7 +28,6 @@ import org.factcast.store.internal.filter.blacklist.Blacklist;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
-import org.factcast.store.internal.script.JSEngineFactory;
 import org.factcast.store.internal.telemetry.PgStoreTelemetry;
 import org.factcast.store.internal.transformation.FactTransformerService;
 import org.junit.jupiter.api.Test;
@@ -50,7 +49,6 @@ class PgFactStreamTelemetryTest {
   @Mock Blacklist blacklist;
   @Mock PgMetrics metrics;
   @Mock ServerPipeline serverPipeline;
-  @Mock JSEngineFactory ef;
   @Mock PgStoreTelemetry telemetry;
   @Mock SubscriptionRequestTO req;
 

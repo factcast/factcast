@@ -26,9 +26,9 @@ import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.TransformationException;
-import org.factcast.core.util.FactCastJson;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgFact;
+import org.factcast.store.internal.script.JsonString;
 import org.factcast.store.internal.transformation.TransformationRequest;
 import org.factcast.store.registry.NOPRegistryMetrics;
 import org.factcast.store.registry.metrics.RegistryMetrics;
@@ -203,7 +203,7 @@ class FactTransformerServiceImplTest {
       TransformationCache.Key cacheKey = TransformationCache.Key.of(fact.id(), 5, "myChainId");
       when(cache.find(cacheKey)).thenReturn(Optional.empty());
       Transformation t;
-      when(trans.transform(same(chain), eq(FactCastJson.readTree(fact.jsonPayload()))))
+      when(trans.transform(same(chain), eq(JsonString.of(fact.jsonPayload()))))
           .thenThrow(TransformationException.class);
 
       assertThatThrownBy(
@@ -238,8 +238,8 @@ class FactTransformerServiceImplTest {
       TransformationCache.Key cacheKey = TransformationCache.Key.of(fact.id(), 5, "myChainId");
       when(cache.find(cacheKey)).thenReturn(Optional.empty());
       Transformation t;
-      when(trans.transform(same(chain), eq(FactCastJson.readTree(fact.jsonPayload()))))
-          .thenReturn(FactCastJson.readTree("{\"a\":2}"));
+      when(trans.transform(same(chain), eq(JsonString.of(fact.jsonPayload()))))
+          .thenReturn(JsonString.of("{\"a\":2}"));
 
       Fact transformed = underTest.transform(req);
       assertThat(transformed.jsonPayload()).isEqualTo("{\"a\":2}");
@@ -264,14 +264,13 @@ class FactTransformerServiceImplTest {
       when(req.toTransform()).thenReturn(fact);
 
       when(chain.id()).thenReturn("myChainId");
-      when(chain.key()).thenReturn(TransformationKey.of("a", "b"));
       when(chain.toVersion()).thenReturn(5);
       when(chains.get(eq(key), eq(4), eq(Collections.singleton(5)))).thenReturn(chain);
       TransformationCache.Key cacheKey = TransformationCache.Key.of(fact.id(), 5, "myChainId");
       when(cache.findAll(Set.of(cacheKey))).thenReturn(Collections.emptySet());
       Transformation t;
-      when(trans.transform(same(chain), eq(FactCastJson.readTree(fact.jsonPayload()))))
-          .thenReturn(FactCastJson.readTree("{\"a\":2}"));
+      when(trans.transform(same(chain), eq(JsonString.of(fact.jsonPayload()))))
+          .thenReturn(JsonString.of("{\"a\":2}"));
 
       List<PgFact> transformed = underTest.transform(Lists.newArrayList(req));
       assertThat(transformed.get(0).jsonPayload()).isEqualTo("{\"a\":2}");
@@ -310,14 +309,13 @@ class FactTransformerServiceImplTest {
       var req2 = new TransformationRequest(fact2, Collections.singleton(5));
 
       when(chain.id()).thenReturn("chain1");
-      when(chain.key()).thenReturn(TransformationKey.of("a", "b"));
       when(chains.get(eq(key1), eq(4), eq(Collections.singleton(5)))).thenReturn(chain);
       when(chains.get(eq(key2), eq(4), eq(Collections.singleton(5)))).thenReturn(chain);
 
       when(cache.findAll(any())).thenReturn(Sets.newHashSet(fact2transformed));
 
-      when(trans.transform(same(chain), eq(FactCastJson.readTree(fact.jsonPayload()))))
-          .thenReturn(FactCastJson.readTree("{\"a\":2}"));
+      when(trans.transform(same(chain), eq(JsonString.of(fact.jsonPayload()))))
+          .thenReturn(JsonString.of("{\"a\":2}"));
 
       List<PgFact> transformed = underTest.transform(Lists.newArrayList(req1, req2));
       assertThat(transformed.get(0).type()).isEqualTo("type1");
