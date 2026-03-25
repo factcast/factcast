@@ -16,12 +16,13 @@
 package org.factcast.store.internal.transformation;
 
 import java.util.*;
+import javax.annotation.Nullable;
 import lombok.Getter;
 import lombok.NonNull;
 import org.factcast.store.internal.PgFact;
 
 public class TransformationRequest {
-  @Getter private @NonNull PgFact toTransform;
+  @Getter private @Nullable PgFact toTransform;
   @Getter private final Set<Integer> targetVersions;
 
   public TransformationRequest(@NonNull PgFact toTransform, Set<Integer> targetVersions) {
