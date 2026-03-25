@@ -23,7 +23,6 @@ import io.micrometer.core.instrument.Tags;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -101,7 +100,7 @@ public class FactTransformerServiceImpl implements FactTransformerService, AutoC
                 log.trace("batch processing {} transformation requests", req.size());
 
                 List<Pair<TransformationRequest, TransformationChain>> pairs =
-                    new ArrayList<>(req.stream().map(r -> Pair.of(r, toChain(r))).toList());
+                    req.stream().map(r -> Pair.of(r, toChain(r))).toList();
                 Set<TransformationCache.Key> keys =
                     pairs.parallelStream()
                         .map(
@@ -122,17 +121,16 @@ public class FactTransformerServiceImpl implements FactTransformerService, AutoC
                     found.size(),
                     req.size());
 
-                boolean parallel = shouldBeParallel(pairs.stream().map(Pair::right));
-                IntStream indexStream = IntStream.range(0, pairs.size());
-                if (parallel) {
+                Stream<Pair<TransformationRequest, TransformationChain>> pairStream =
+                    pairs.stream();
+                if (shouldBeParallel(pairs.stream().map(Pair::right))) {
                   //noinspection DataFlowIssue
-                  indexStream = indexStream.parallel();
+                  pairStream = pairStream.parallel();
                 }
-                return indexStream
-                    .mapToObj(
-                        i -> {
-                          Pair<TransformationRequest, TransformationChain> c = pairs.set(i, null);
-                          PgFact e = c.left().toTransform();
+                return pairStream
+                    .map(
+                        c -> {
+                          PgFact e = c.left().consumeToTransform();
                           PgFact cached = found.remove(e.id());
                           return Objects.requireNonNullElseGet(
                               cached, () -> doTransform(e, c.right()));

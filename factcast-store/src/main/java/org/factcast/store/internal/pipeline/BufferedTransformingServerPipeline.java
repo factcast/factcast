@@ -23,8 +23,6 @@ import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import lombok.Getter;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.store.internal.PgFact;
@@ -54,11 +52,19 @@ public class BufferedTransformingServerPipeline extends AbstractServerPipeline {
     BUFFERING
   }
 
-  @RequiredArgsConstructor
   static class TransformedFactSupplier implements Supplier<Signal> {
-    //todo Force GC when in debug to see if the original fact is gone during an int test
-    @Getter final TransformationRequest transformationRequest;
-    @Setter PgFact resolved;
+    @Getter
+    private TransformationRequest transformationRequest;
+    private PgFact resolved;
+
+    TransformedFactSupplier(@NonNull TransformationRequest transformationRequest) {
+      this.transformationRequest = transformationRequest;
+    }
+
+    void resolved(PgFact fact) {
+      this.resolved = fact;
+      this.transformationRequest = null;
+    }
 
     @Override
     public Signal.FactSignal get() {

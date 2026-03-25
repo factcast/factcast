@@ -262,6 +262,7 @@ class FactTransformerServiceImplTest {
 
       when(req.targetVersions()).thenReturn(Collections.singleton(5));
       when(req.toTransform()).thenReturn(fact);
+      when(req.consumeToTransform()).thenReturn(fact);
 
       when(chain.id()).thenReturn("myChainId");
       when(chain.key()).thenReturn(TransformationKey.of("a", "b"));
