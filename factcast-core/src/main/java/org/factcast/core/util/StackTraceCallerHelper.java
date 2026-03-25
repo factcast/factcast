@@ -16,12 +16,11 @@
 package org.factcast.core.util;
 
 import com.google.common.collect.Lists;
-import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import javax.annotation.Nullable;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class StackTraceCallerHelper {
@@ -47,16 +46,25 @@ public class StackTraceCallerHelper {
     return stack.length > 3 ? stack[3] : stack[stack.length - 1];
   }
 
-  public static String createDebugInfo() {
+  public static String createDebugInfo(@Nullable Class<?> aggregateOrProjection) {
     StackTraceElement caller = findCallerFrame(new Exception().getStackTrace());
-    return UUID.randomUUID()
-        + " ("
-        + caller.getClassName().substring(caller.getClassName().lastIndexOf(".") + 1)
-        + "."
-        + caller.getMethodName()
-        + ":"
-        + caller.getLineNumber()
-        + ")";
+    String simpleClassName =
+        caller.getClassName().substring(caller.getClassName().lastIndexOf(".") + 1);
+
+    StringBuilder sb = new StringBuilder()
+        .append(UUID.randomUUID())
+        .append(" (")
+        .append(simpleClassName)
+        .append('.')
+        .append(caller.getMethodName())
+        .append(':')
+        .append(caller.getLineNumber());
+
+    if (aggregateOrProjection != null) {
+      sb.append(" | ").append(aggregateOrProjection.getSimpleName());
+    }
+
+    return sb.append(')').toString();
   }
 
   private static boolean isExternalFrame(StackTraceElement frame) {

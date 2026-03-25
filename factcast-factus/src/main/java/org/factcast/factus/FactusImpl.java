@@ -213,7 +213,7 @@ public class FactusImpl implements Factus {
         };
 
     return fc.subscribe(
-        SubscriptionRequest.follow(handler.createFactSpecs())
+        SubscriptionRequest.follow(handler.createFactSpecs(), subscribedProjection.getClass())
             .fromNullable(
                 Optional.ofNullable(subscribedProjection.factStreamPosition())
                     .map(FactStreamPosition::factId)
@@ -390,7 +390,7 @@ public class FactusImpl implements Factus {
     // thread are guaranteed to be visible when leaving the block
     //
     synchronized (projection) {
-      fc.subscribe(SubscriptionRequest.catchup(factSpecs).fromNullable(stateOrNull), fo)
+      fc.subscribe(SubscriptionRequest.catchup(factSpecs, projection.getClass()).fromNullable(stateOrNull), fo)
           .awaitComplete();
     }
     return Optional.ofNullable(positionOfLastFactApplied.get())

@@ -53,12 +53,11 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
   String pid;
 
   FluentSubscriptionRequest() {
-    debugInfo = createDebugInfo();
-    streamInfo = true;
+    this(null);
   }
 
-  FluentSubscriptionRequest(@NonNull String debugInfo) {
-    this.debugInfo = debugInfo;
+  FluentSubscriptionRequest(Class<?> aggregateOrProjection) {
+    debugInfo = createDebugInfo(aggregateOrProjection);
     streamInfo = true;
   }
 
