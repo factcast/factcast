@@ -22,6 +22,7 @@ import javax.annotation.Nullable;
 import lombok.*;
 import org.apache.commons.lang3.StringUtils;
 import org.factcast.core.spec.*;
+import org.factcast.core.util.FactCastJson;
 import org.factcast.store.internal.PgFact;
 
 /**
@@ -47,9 +48,10 @@ public final class AggIdPropertyMatcher implements PGFactMatcher {
     return aggIdPropertiesMatch(t);
   }
 
+  @SneakyThrows
   @VisibleForTesting
   boolean aggIdPropertiesMatch(PgFact t) {
-    JsonNode payloadRoot = t.jsonPayloadParsed();
+    JsonNode payloadRoot = FactCastJson.readTree(t.jsonPayload());
 
     for (Map.Entry<String, UUID> entry : aggIdProperties.entrySet()) {
       String k = entry.getKey();

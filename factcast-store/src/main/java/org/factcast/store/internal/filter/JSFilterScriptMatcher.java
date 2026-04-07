@@ -15,13 +15,15 @@
  */
 package org.factcast.store.internal.filter;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Preconditions;
+import java.util.Map;
 import javax.annotation.Nullable;
 import lombok.*;
 import org.factcast.core.spec.*;
+import org.factcast.core.util.FactCastJson;
 import org.factcast.store.internal.PgFact;
-import org.factcast.store.internal.script.*;
+import org.factcast.store.internal.script.graaljs.NashornCompatContextBuilder;
+import org.graalvm.polyglot.*;
 
 /**
  * Matches facts against specifications using the contained filterScripts
@@ -30,13 +32,21 @@ import org.factcast.store.internal.script.*;
  */
 public final class JSFilterScriptMatcher implements PGFactMatcher {
 
-  final JSEngine scriptEngine;
+  private static final Engine engine = Engine.newBuilder("js").build();
 
-  private JSFilterScriptMatcher(@NonNull FactSpec spec, @NonNull JSEngineFactory ef) {
-    FilterScript script = spec.filterScript();
-    Preconditions.checkNotNull(script);
-    Preconditions.checkNotNull(script.source());
-    scriptEngine = getEngine(script, ef);
+  interface BooleanFunction {
+    boolean test(Map<String, Object> header, Map<String, Object> payload);
+  }
+
+  private final Source source;
+
+  private JSFilterScriptMatcher(@NonNull FactSpec spec) {
+    FilterScript filterScript = spec.filterScript();
+    // filterscript might be named like "function x(header,payload){...}" so that
+    // we need to convert it into an anonymous function
+    String finalScript = "function (h,p) { var fn=" + filterScript.source() + "; return fn(h,p); }";
+    this.source = Source.create(filterScript.languageIdentifier(), finalScript);
+    Preconditions.checkNotNull(source);
   }
 
   @Override
@@ -47,32 +57,18 @@ public final class JSFilterScriptMatcher implements PGFactMatcher {
   @SneakyThrows
   @Generated
   boolean scriptMatch(PgFact t) {
-    JsonNode headerNode = t.jsonHeaderParsed();
-    JsonNode payloadNode = t.jsonPayloadParsed();
-    return (Boolean)
-        scriptEngine.invoke(
-            "test", JSArgument.byValue(headerNode), JSArgument.byValue(payloadNode));
+    Map<String, Object> header = FactCastJson.readValue(Map.class, t.jsonHeader());
+    Map<String, Object> payload = FactCastJson.readValue(Map.class, t.jsonPayload());
+
+    try (Context ctx = NashornCompatContextBuilder.CTX.engine(engine).build()) {
+      return ctx.eval(source).as(BooleanFunction.class).test(header, payload);
+    }
   }
 
-  @SneakyThrows
-  @Generated
-  private static synchronized JSEngine getEngine(
-      FilterScript filterScript, @NonNull JSEngineFactory ef) {
-
-    return switch (filterScript.languageIdentifier()) {
-        //  currently only supports language js
-      case "js" -> ef.getOrCreateFor("var test=" + filterScript.source());
-      default ->
-          throw new IllegalArgumentException(
-              "Unsupported Script language: " + filterScript.languageIdentifier());
-    };
-  }
-
-  public static @Nullable JSFilterScriptMatcher matches(
-      @NonNull FactSpec spec, @NonNull JSEngineFactory ef) {
+  public static @Nullable JSFilterScriptMatcher matches(@NonNull FactSpec spec) {
     FilterScript script = spec.filterScript();
     if (script != null && !script.source().isBlank()) {
-      return new JSFilterScriptMatcher(spec, ef);
+      return new JSFilterScriptMatcher(spec);
     }
 
     // otherwise

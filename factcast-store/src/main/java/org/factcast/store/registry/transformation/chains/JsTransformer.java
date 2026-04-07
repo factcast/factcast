@@ -15,57 +15,60 @@
  */
 package org.factcast.store.registry.transformation.chains;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.cache.*;
 import java.util.*;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.util.FactCastJson;
-import org.factcast.store.internal.script.JSArgument;
-import org.factcast.store.internal.script.JSEngine;
-import org.factcast.store.internal.script.JSEngineFactory;
-import org.factcast.store.internal.script.exception.ScriptEngineException;
+import org.factcast.store.internal.script.JsonString;
+import org.factcast.store.internal.script.graaljs.NashornCompatContextBuilder;
 import org.factcast.store.registry.transformation.Transformation;
+import org.graalvm.polyglot.*;
 
 @RequiredArgsConstructor
 @Slf4j
 public class JsTransformer implements Transformer {
-
-  private final JSEngineFactory scriptEngineCache;
-
-  @Override
-  public JsonNode transform(Transformation t, JsonNode input) throws TransformationException {
-    if (t.transformationCode().isEmpty()) {
-      return input;
-    } else {
-      String js = t.transformationCode().get();
-      return runJSTransformation(input, js);
-    }
-  }
-
-  private JSEngine getEngine(String js) {
-    try {
-      return scriptEngineCache.getOrCreateFor(js);
-    } catch (ScriptEngineException e) {
-      log.debug("Exception during engine creation. Escalating.", e);
-      throw new TransformationException(e);
-    }
-  }
+  protected static final Engine engine = Engine.newBuilder("js").build();
+    protected static final CacheLoader<String, Source> loader =
+            CacheLoader.from(key -> Source.create("js", key));
+  protected static final LoadingCache<String, Source> cache =
+      CacheBuilder.newBuilder().softValues().build(loader);
 
   @SuppressWarnings("unchecked")
-  private JsonNode runJSTransformation(JsonNode input, String js) {
+  private JsonString runJSTransformation(JsonString input, String js) {
     try {
-      final Map<String, Object> jsonAsMap = FactCastJson.convertValue(input, Map.class);
-      final var jsArgument = JSArgument.byReference(jsonAsMap);
-      JSEngine engine = getEngine(js);
-      synchronized (engine) {
-        engine.invoke("transform", jsArgument);
-        return FactCastJson.toJsonNode(jsonAsMap);
+      Source s = cache.get(js);
+      final Map<String, Object> jsonAsMap = FactCastJson.readValue(Map.class, input.json());
+      try (Context ctx = NashornCompatContextBuilder.CTX.engine(engine).build()) {
+        ctx.eval(s).as(Fnc.class).run(jsonAsMap);
+        return JsonString.of(FactCastJson.toJsonNode(jsonAsMap).toString());
       }
-    } catch (RuntimeException e) {
+
+    } catch (Exception e) {
       // debug level, because it is escalated.
       log.debug("Exception during transformation. Escalating.", e);
       throw new TransformationException(e);
+    }
+  }
+
+  interface Fnc {
+    void run(Map<String, Object> arg);
+  }
+
+  @Override
+  public JsonString transform(Transformation t, JsonString input) throws TransformationException {
+
+      final var transformationCode = t.transformationCode();
+
+      if (transformationCode.isEmpty()) {
+      return input;
+    } else {
+      String script =
+          "function (e) { var wrapped="
+              + transformationCode.get()
+              + "; wrapped(e); return e; }";
+      return runJSTransformation(input, script);
     }
   }
 }

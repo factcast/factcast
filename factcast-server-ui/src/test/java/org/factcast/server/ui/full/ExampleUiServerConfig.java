@@ -20,17 +20,11 @@ import org.factcast.core.Fact;
 import org.factcast.server.ui.plugins.JsonEntryMetaData;
 import org.factcast.server.ui.plugins.JsonPayload;
 import org.factcast.server.ui.plugins.JsonViewPlugin;
-import org.factcast.store.internal.script.JSEngineFactory;
-import org.factcast.store.internal.script.graaljs.GraalJSEngineFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class ExampleUiServerConfig {
-  @Bean
-  public JSEngineFactory jsEngineFactory() {
-    return new GraalJSEngineFactory();
-  }
 
   @Bean
   public JsonViewPlugin testPlugin() {

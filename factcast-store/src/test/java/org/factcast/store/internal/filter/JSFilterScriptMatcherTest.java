@@ -24,15 +24,11 @@ import lombok.NonNull;
 import org.factcast.core.*;
 import org.factcast.core.spec.*;
 import org.factcast.store.internal.PgFact;
-import org.factcast.store.internal.script.JSEngineFactory;
-import org.factcast.store.internal.script.graaljs.GraalJSEngineFactory;
 import org.junit.jupiter.api.*;
 import org.mockito.*;
 
 /** see FactSpecMatcherScriptingTest for more tests including execution of scripts */
 class JSFilterScriptMatcherTest {
-
-  final JSEngineFactory ef = new GraalJSEngineFactory();
 
   @Test
   void testScriptMatch() {
@@ -48,8 +44,23 @@ class JSFilterScriptMatcherTest {
             PgFact.from(new TestFact().meta("x", "y"))));
   }
 
+  @Test
+  void testScriptMatchWithNamedFunction() {
+    assertTrue(scriptMatch(FactSpec.ns("default"), PgFact.from(new TestFact())));
+    assertFalse(
+        scriptMatch(
+            FactSpec.ns("default")
+                .filterScript(FilterScript.js("function guenni(h,e){ return false }")),
+            PgFact.from(new TestFact())));
+    assertTrue(
+        scriptMatch(
+            FactSpec.ns("default")
+                .filterScript(FilterScript.js("function guenni(h,e){ return h.meta.x=='y' }")),
+            PgFact.from(new TestFact().meta("x", "y"))));
+  }
+
   private boolean scriptMatch(@NonNull FactSpec s, @NonNull PgFact f) {
-    JSFilterScriptMatcher matches = JSFilterScriptMatcher.matches(s, ef);
+    JSFilterScriptMatcher matches = JSFilterScriptMatcher.matches(s);
     return matches == null || matches.scriptMatch(f);
   }
 
@@ -57,7 +68,7 @@ class JSFilterScriptMatcherTest {
   void testMatchesByScript() {
     String script = "function (h,p) { return p.test == 1 }";
     Predicate<PgFact> p =
-        JSFilterScriptMatcher.matches(FactSpec.ns("1").filterScript(FilterScript.js(script)), ef);
+        JSFilterScriptMatcher.matches(FactSpec.ns("1").filterScript(FilterScript.js(script)));
     assertThat(p).isNotNull();
     assertTrue(p.test(PgFact.from(new TestFact().ns("1").jsonPayload("{\"test\":1}"))));
     assertFalse(p.test(PgFact.from(new TestFact().ns("1").jsonPayload("{\"test\":2}"))));
@@ -66,15 +77,13 @@ class JSFilterScriptMatcherTest {
 
   @Test
   void skipsBlank() {
-    assertThat(
-            JSFilterScriptMatcher.matches(FactSpec.ns("1").filterScript(FilterScript.js("  ")), ef))
+    assertThat(JSFilterScriptMatcher.matches(FactSpec.ns("1").filterScript(FilterScript.js("  "))))
         .isNull();
   }
 
   @Test
   void skipsEmpty() {
-    assertThat(
-            JSFilterScriptMatcher.matches(FactSpec.ns("1").filterScript(FilterScript.js("")), ef))
+    assertThat(JSFilterScriptMatcher.matches(FactSpec.ns("1").filterScript(FilterScript.js(""))))
         .isNull();
   }
 
@@ -82,7 +91,7 @@ class JSFilterScriptMatcherTest {
   void doesNotSkipNonEmpty() {
     assertThat(
             JSFilterScriptMatcher.matches(
-                FactSpec.ns("1").filterScript(FilterScript.js("  true ")), ef))
+                FactSpec.ns("1").filterScript(FilterScript.js("  true "))))
         .isNotNull();
   }
 }

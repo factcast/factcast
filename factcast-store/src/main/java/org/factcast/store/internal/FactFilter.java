@@ -24,7 +24,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.store.internal.filter.*;
-import org.factcast.store.internal.script.JSEngineFactory;
 
 /**
  * Predicate to filter Facts selected by the database query.
@@ -42,13 +41,13 @@ public class FactFilter implements PGFactMatcher {
 
   private final List<PGFactMatcher> matchers = new LinkedList<>();
 
-  public FactFilter(@NonNull SubscriptionRequest req, @NonNull JSEngineFactory ef) {
+  public FactFilter(@NonNull SubscriptionRequest req) {
 
     for (FactSpec spec : req.specs()) {
       // in order to test to true, we need to find ANY spec for which we match ALL matchers
       // (1A && 1B && 1C) || (2A && 2B) || ...
 
-      @Nullable PGFactMatcher js = JSFilterScriptMatcher.matches(spec, ef);
+      @Nullable PGFactMatcher js = JSFilterScriptMatcher.matches(spec);
       @Nullable PGFactMatcher aggID = AggIdPropertyMatcher.matches(spec);
 
       if (js != null || aggID != null) {
