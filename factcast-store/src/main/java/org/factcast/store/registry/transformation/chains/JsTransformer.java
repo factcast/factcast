@@ -30,13 +30,8 @@ import org.graalvm.polyglot.*;
 @Slf4j
 public class JsTransformer implements Transformer {
   protected static final Engine engine = Engine.newBuilder("js").build();
-  protected static final CacheLoader<String, Source> loader =
-      new CacheLoader<String, Source>() {
-        @Override
-        public Source load(String key) throws Exception {
-          return Source.create("js", key);
-        }
-      };
+    protected static final CacheLoader<String, Source> loader =
+            CacheLoader.from(key -> Source.create("js", key));
   protected static final LoadingCache<String, Source> cache =
       CacheBuilder.newBuilder().softValues().build(loader);
 
