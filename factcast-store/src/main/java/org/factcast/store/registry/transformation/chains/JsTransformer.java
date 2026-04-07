@@ -30,8 +30,8 @@ import org.graalvm.polyglot.*;
 @Slf4j
 public class JsTransformer implements Transformer {
   protected static final Engine engine = Engine.newBuilder("js").build();
-    protected static final CacheLoader<String, Source> loader =
-            CacheLoader.from(key -> Source.create("js", key));
+  protected static final CacheLoader<String, Source> loader =
+      CacheLoader.from(key -> Source.create("js", key));
   protected static final LoadingCache<String, Source> cache =
       CacheBuilder.newBuilder().softValues().build(loader);
 
@@ -59,15 +59,13 @@ public class JsTransformer implements Transformer {
   @Override
   public JsonString transform(Transformation t, JsonString input) throws TransformationException {
 
-      final var transformationCode = t.transformationCode();
+    final var transformationCode = t.transformationCode();
 
-      if (transformationCode.isEmpty()) {
+    if (transformationCode.isEmpty()) {
       return input;
     } else {
       String script =
-          "function (e) { var wrapped="
-              + transformationCode.get()
-              + "; wrapped(e); return e; }";
+          "function (e) { var wrapped=" + transformationCode.get() + "; wrapped(e); return e; }";
       return runJSTransformation(input, script);
     }
   }
