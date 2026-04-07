@@ -143,6 +143,9 @@ public class FactTransformerServiceImpl implements FactTransformerService, AutoC
                                       })
                                   .toList())
                       .get();
+                } catch (InterruptedException e) {
+                  Thread.currentThread().interrupt();
+                  throw ExceptionHelper.toRuntime(e);
                 } catch (Exception e) {
                   throw ExceptionHelper.toRuntime(e.getCause());
                 }
