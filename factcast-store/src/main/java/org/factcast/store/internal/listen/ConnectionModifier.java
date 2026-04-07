@@ -51,7 +51,7 @@ public interface ConnectionModifier {
   }
 
   @RequiredArgsConstructor
-  @EqualsAndHashCode(of = {"property", "value"})
+  @EqualsAndHashCode(of = {"propertyName", "value"})
   @SuppressWarnings("java:S2077")
   class Property implements ConnectionModifier {
     final String propertyName;
