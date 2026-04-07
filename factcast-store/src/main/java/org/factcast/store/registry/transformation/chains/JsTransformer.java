@@ -59,12 +59,14 @@ public class JsTransformer implements Transformer {
   @Override
   public JsonString transform(Transformation t, JsonString input) throws TransformationException {
 
-    if (t.transformationCode().isEmpty()) {
+      final var transformationCode = t.transformationCode();
+
+      if (transformationCode.isEmpty()) {
       return input;
     } else {
       String script =
           "function (e) { var wrapped="
-              + t.transformationCode().get()
+              + transformationCode.get()
               + "; wrapped(e); return e; }";
       return runJSTransformation(input, script);
     }
