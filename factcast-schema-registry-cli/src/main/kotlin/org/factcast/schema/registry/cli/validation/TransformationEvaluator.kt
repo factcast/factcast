@@ -59,7 +59,7 @@ class TransformationEvaluator(
 
         // inefficient, but not important here
         val input = JsonString.of(data.toString());
-        // inefficient
+        // inefficient, but not important here
         return FactCastJson.readTree(transformer.transform(chain, input).json());
     }
 
