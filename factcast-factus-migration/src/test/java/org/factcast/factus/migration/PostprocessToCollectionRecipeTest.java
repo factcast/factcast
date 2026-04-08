@@ -27,76 +27,138 @@ class PostprocessToCollectionRecipeTest implements RewriteTest {
   @Override
   public void defaults(RecipeSpec spec) {
     spec.recipe(new PostprocessToCollectionRecipe())
-        .parser(JavaParser.fromJavaVersion().classpath("lombok"));
+        .parser(
+            JavaParser.fromJavaVersion()
+                .classpath("lombok", "factcast-core", "factcast-factus"));
   }
 
   @Test
   void changesListParamAndReturnType() {
     rewriteRun(
         java(
-            "import java.util.List;\n"
-                + "\n"
-                + "class MyProjection {\n"
-                + "    public List<String> postprocess(List<String> specsAsDiscovered) {\n"
-                + "        return specsAsDiscovered;\n"
-                + "    }\n"
-                + "}\n",
-            "import java.util.Collection;\n"
-                + "import java.util.List;\n"
-                + "\n"
-                + "class MyProjection {\n"
-                + "    public Collection<String> postprocess(Collection<String> specsAsDiscovered) {\n"
-                + "        return specsAsDiscovered;\n"
-                + "    }\n"
-                + "}\n"));
+            """
+            import java.util.List;
+            import org.factcast.core.spec.FactSpec;
+            import org.factcast.factus.projection.Projection;
+
+            class MyProjection implements Projection {
+                public List<FactSpec> postprocess(List<FactSpec> specsAsDiscovered) {
+                    return specsAsDiscovered;
+                }
+            }
+            """,
+            // List import is kept because OpenRewrite's maybeRemoveImport does not
+            // remove it when it still has it loaded on memory
+            """
+            import java.util.Collection;
+            import java.util.List;
+            import org.factcast.core.spec.FactSpec;
+            import org.factcast.factus.projection.Projection;
+
+            class MyProjection implements Projection {
+                public Collection<FactSpec> postprocess(Collection<FactSpec> specsAsDiscovered) {
+                    return specsAsDiscovered;
+                }
+            }
+            """));
   }
 
   @Test
   void changesAnnotatedReturnType() {
     rewriteRun(
         java(
-            "import java.util.List;\n"
-                + "import lombok.NonNull;\n"
-                + "\n"
-                + "class MyProjection {\n"
-                + "    public @NonNull List<String> postprocess(@NonNull List<String> specsAsDiscovered) {\n"
-                + "        return specsAsDiscovered;\n"
-                + "    }\n"
-                + "}\n",
-            "import java.util.Collection;\n"
-                + "import java.util.List;\n"
-                + "import lombok.NonNull;\n"
-                + "\n"
-                + "class MyProjection {\n"
-                + "    public @NonNull Collection<String> postprocess(@NonNull Collection<String> specsAsDiscovered) {\n"
-                + "        return specsAsDiscovered;\n"
-                + "    }\n"
-                + "}\n"));
+            """
+            import java.util.List;
+            import lombok.NonNull;
+            import org.factcast.core.spec.FactSpec;
+            import org.factcast.factus.projection.Projection;
+
+            class MyProjection implements Projection {
+                public @NonNull List<FactSpec> postprocess(@NonNull List<FactSpec> specsAsDiscovered) {
+                    return specsAsDiscovered;
+                }
+            }
+            """,
+            // List import is kept because OpenRewrite's maybeRemoveImport does not
+            // remove it when it still has it loaded on memory
+            """
+            import java.util.Collection;
+            import java.util.List;
+            import lombok.NonNull;
+            import org.factcast.core.spec.FactSpec;
+            import org.factcast.factus.projection.Projection;
+
+            class MyProjection implements Projection {
+                public @NonNull Collection<FactSpec> postprocess(@NonNull Collection<FactSpec> specsAsDiscovered) {
+                    return specsAsDiscovered;
+                }
+            }
+            """));
   }
 
   @Test
   void doesNotChangeOtherMethodNames() {
     rewriteRun(
         java(
-            "import java.util.List;\n"
-                + "\n"
-                + "class MyProjection {\n"
-                + "    public List<String> configure(List<String> specsAsDiscovered) {\n"
-                + "        return specsAsDiscovered;\n"
-                + "    }\n"
-                + "}\n"));
+            """
+            import java.util.List;
+            import org.factcast.core.spec.FactSpec;
+            import org.factcast.factus.projection.Projection;
+
+            class MyProjection implements Projection {
+                public List<FactSpec> configure(List<FactSpec> specsAsDiscovered) {
+                    return specsAsDiscovered;
+                }
+            }
+            """));
   }
 
   @Test
   void doesNotChangeAlreadyMigratedMethod() {
     rewriteRun(
         java(
-            "import java.util.Collection;\n"
-                + "\n"
-                + "class MyProjection {\n"
-                + "    public Collection<String> postprocess(Collection<String> specsAsDiscovered) {\n"
-                + "        return specsAsDiscovered;\n"
-                + "    }\n"
-                + "}\n"));
+            """
+            import java.util.Collection;
+            import org.factcast.core.spec.FactSpec;
+            import org.factcast.factus.projection.Projection;
+
+            class MyProjection implements Projection {
+                public Collection<FactSpec> postprocess(Collection<FactSpec> specsAsDiscovered) {
+                    return specsAsDiscovered;
+                }
+            }
+            """));
+  }
+
+  @Test
+  void doesNotChangeNonProjectionClass() {
+    rewriteRun(
+        java(
+            """
+            import java.util.List;
+            import org.factcast.core.spec.FactSpec;
+
+            class NotAProjection {
+                public List<FactSpec> postprocess(List<FactSpec> specsAsDiscovered) {
+                    return specsAsDiscovered;
+                }
+            }
+            """));
+  }
+
+  @Test
+  void doesNotChangeWrongTypeParam() {
+    rewriteRun(
+        java(
+            """
+            import java.util.List;
+            import org.factcast.factus.projection.Projection;
+
+            class MyProjection implements Projection {
+                public List<String> postprocess(List<String> items) {
+                    return items;
+                }
+            }
+            """));
   }
 }

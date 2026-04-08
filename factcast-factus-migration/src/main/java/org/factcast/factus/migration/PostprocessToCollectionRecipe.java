@@ -16,6 +16,7 @@
 package org.factcast.factus.migration;
 
 import java.util.Collections;
+import java.util.List;
 import lombok.EqualsAndHashCode;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.Recipe;
@@ -69,14 +70,41 @@ public class PostprocessToCollectionRecipe extends Recipe {
           return false;
         }
 
+        JavaType.Method methodType = md.getMethodType();
+        if (methodType == null) {
+          return false;
+        }
+
+        JavaType.FullyQualified declaringType = methodType.getDeclaringType();
+        if (!declaringType.isAssignableTo("org.factcast.factus.projection.Projection")) {
+          return false;
+        }
+
         // Use typeExpression.getType() directly: J.VariableDeclarations.getType() delegates to
         // the inner NamedVariable's type which is not updated when we replace typeExpression.
         TypeTree typeExpr =
             ((J.VariableDeclarations) md.getParameters().get(0)).getTypeExpression();
         JavaType type = typeExpr != null ? typeExpr.getType() : null;
-        // This filters out primitives, arrays or empties
-        return type instanceof JavaType.FullyQualified
-            && "java.util.List".equals(((JavaType.FullyQualified) type).getFullyQualifiedName());
+
+        if (!(type instanceof JavaType.FullyQualified fq)) {
+          return false;
+        }
+        if (!"java.util.List".equals(fq.getFullyQualifiedName())) {
+          return false;
+        }
+        return typeParamFactSpec(fq);
+      }
+
+      private boolean typeParamFactSpec(JavaType.FullyQualified fq) {
+        List<JavaType> typeParameters = fq.getTypeParameters();
+        if (typeParameters.isEmpty()) {
+          return false;
+        }
+        JavaType paramType = typeParameters.get(0);
+        if (paramType instanceof JavaType.FullyQualified fqp) {
+          return fqp.getFullyQualifiedName().equals("org.factcast.core.spec.FactSpec");
+        }
+        return false;
       }
 
       private TypeTree replaceListWithCollection(TypeTree typeExpr) {
