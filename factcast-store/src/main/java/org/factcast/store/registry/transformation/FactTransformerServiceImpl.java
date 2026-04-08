@@ -160,23 +160,6 @@ public class FactTransformerServiceImpl implements FactTransformerService, AutoC
     }
   }
 
-  /**
-   * idea is to prevent the overhead of going parallel if all chains target the same warm
-   * script-engine as we'd have a serializing effect there due to synchronization.
-   *
-   * @return if the transformations should go parallel
-   */
-  @VisibleForTesting
-  boolean shouldBeParallel(@NonNull Stream<TransformationChain> chains) {
-    // if there is more than one distinct engine used, return true
-    return chains
-            .filter(Objects::nonNull)
-            .mapToInt(tc -> tc.id().hashCode() + tc.key().hashCode())
-            .distinct()
-            .count()
-        > 1;
-  }
-
   @NonNull
   public PgFact doTransform(@NonNull PgFact e, @NonNull TransformationChain chain) {
 

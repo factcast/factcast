@@ -84,62 +84,6 @@ class FactTransformerServiceImplTest {
     }
 
     @Test
-    void shouldBeParallelOnlyOneRequest() {
-      Transformation tf1 = mock(Transformation.class);
-      TransformationKey key1 = TransformationKey.of("foo", "bar");
-      when(tf1.key()).thenReturn(key1);
-
-      chain = TransformationChain.of(key1, Lists.newArrayList(tf1), "[1,2,3]");
-
-      List<TransformationChain> chains = Lists.newArrayList(chain);
-      assertThat(underTest.shouldBeParallel(chains.stream())).isFalse();
-    }
-
-    @Test
-    void shouldBeParallelSameChain() {
-      Transformation tf1 = mock(Transformation.class);
-      TransformationKey key1 = TransformationKey.of("foo", "bar");
-      when(tf1.key()).thenReturn(key1);
-
-      chain = TransformationChain.of(key1, Lists.newArrayList(tf1), "[1,2,3]");
-
-      List<TransformationChain> chains = Lists.newArrayList(chain, chain);
-
-      assertThat(underTest.shouldBeParallel(chains.stream())).isFalse();
-    }
-
-    @Test
-    void shouldBeParallelDifferentKey() {
-      Transformation tf1 = mock(Transformation.class);
-      TransformationKey key1 = TransformationKey.of("foo", "bar");
-      when(tf1.key()).thenReturn(key1);
-
-      Transformation tf2 = mock(Transformation.class);
-      TransformationKey key2 = TransformationKey.of("foo", "baz");
-      when(tf2.key()).thenReturn(key2);
-
-      var chain1 = TransformationChain.of(key1, Lists.newArrayList(tf1), "[1,2,3]");
-      var chain2 = TransformationChain.of(key2, Lists.newArrayList(tf2), "[1,2,3]");
-
-      List<TransformationChain> chains = Lists.newArrayList(chain1, chain2);
-
-      assertThat(underTest.shouldBeParallel(chains.stream())).isTrue();
-    }
-
-    @Test
-    void shouldBeParallelDifferentId() {
-      Transformation tf1 = mock(Transformation.class);
-      TransformationKey key1 = TransformationKey.of("foo", "bar");
-      when(tf1.key()).thenReturn(key1);
-      var chain1 = TransformationChain.of(key1, Lists.newArrayList(tf1), "[1,2,3]");
-      var chain2 = TransformationChain.of(key1, Lists.newArrayList(tf1), "[1,3]");
-
-      List<TransformationChain> chains = Lists.newArrayList(chain1, chain2);
-
-      assertThat(underTest.shouldBeParallel(chains.stream())).isTrue();
-    }
-
-    @Test
     void returnsCached() {
       when(fact.version()).thenReturn(4);
       when(fact.ns()).thenReturn("ns");
