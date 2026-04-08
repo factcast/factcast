@@ -273,17 +273,17 @@ public class PgFactStore extends AbstractFactStore {
 
   @Override
   @NonNull
-  protected State getStateFor(@NonNull List<FactSpec> specs) {
+  protected State getStateFor(@NonNull Collection<FactSpec> specs) {
     return doGetState(specs, 0);
   }
 
   @Override
   @NonNull
-  protected State getStateFor(@NonNull List<FactSpec> specs, long lastMatchingSerial) {
+  protected State getStateFor(@NonNull Collection<FactSpec> specs, long lastMatchingSerial) {
     return doGetState(specs, lastMatchingSerial);
   }
 
-  private State doGetState(@NotNull List<FactSpec> specs, long lastMatchingSerial) {
+  private State doGetState(@NotNull Collection<FactSpec> specs, long lastMatchingSerial) {
     return metrics.time(
         StoreMetrics.OP.GET_STATE_FOR,
         () -> {
@@ -307,7 +307,7 @@ public class PgFactStore extends AbstractFactStore {
 
   @Override
   @NonNull
-  protected State getCurrentStateFor(List<FactSpec> specs) {
+  protected State getCurrentStateFor(Collection<FactSpec> specs) {
     return metrics.time(
         StoreMetrics.OP.GET_STATE_FOR,
         () -> {

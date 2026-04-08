@@ -467,7 +467,7 @@ public class FactusImpl implements Factus {
     P fresh = fetch(projectionClass);
     Projector<SnapshotProjection> snapshotProjectionEventApplier = ehFactory.create(fresh);
     Collection<FactSpec> specs = snapshotProjectionEventApplier.createFactSpecs();
-    return new Locked<>(fc, this, fresh, new ArrayList<>(specs), factusMetrics);
+    return new Locked<>(fc, this, fresh, specs, factusMetrics);
   }
 
   @Override

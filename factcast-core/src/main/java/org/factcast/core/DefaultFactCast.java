@@ -63,7 +63,7 @@ class DefaultFactCast implements FactCast {
 
   @Override
   @NonNull
-  public LockedOperationBuilder lock(@NonNull List<FactSpec> scope) {
+  public LockedOperationBuilder lock(@NonNull Collection<FactSpec> scope) {
     return new LockedOperationBuilder(store, scope);
   }
 

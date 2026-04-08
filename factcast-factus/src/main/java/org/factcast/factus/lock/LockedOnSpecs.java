@@ -15,7 +15,7 @@
  */
 package org.factcast.factus.lock;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -37,7 +37,7 @@ public class LockedOnSpecs {
 
   @NonNull final FactCast fc;
   @NonNull final Factus factus;
-  @NonNull final List<FactSpec> specs;
+  @NonNull final Collection<FactSpec> specs;
   @NonNull final FactusMetrics metrics;
 
   @Setter
@@ -63,7 +63,7 @@ public class LockedOnSpecs {
 
   @SuppressWarnings({"UnusedReturnValue", "rawtypes"})
   public <R, I extends Projection> R attempt(
-      Consumer<RetryableTransaction> consumer, Function<List<Fact>, R> resultFn) {
+      Consumer<RetryableTransaction> consumer, Function<Collection<Fact>, R> resultFn) {
     Locked<I> delegate = new Locked<I>(fc, factus, null, specs, metrics);
 
     if (retries != null) {
