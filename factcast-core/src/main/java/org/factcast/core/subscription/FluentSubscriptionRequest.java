@@ -108,8 +108,7 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
       return this;
     }
 
-    public @NonNull SpecBuilder catchup(
-        Collection<FactSpec> specification) {
+    public @NonNull SpecBuilder catchup(Collection<FactSpec> specification) {
       if (specification.isEmpty()) {
         throw new IllegalArgumentException("At least one FactSpec is needed for a subscription");
       }
@@ -144,8 +143,7 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
       return this;
     }
 
-    public @NonNull SpecBuilder follow(
-        Collection<FactSpec> specification) {
+    public @NonNull SpecBuilder follow(Collection<FactSpec> specification) {
       if (specification.isEmpty()) {
         throw new IllegalArgumentException("At least one FactSpec is needed for a subscription");
       }
