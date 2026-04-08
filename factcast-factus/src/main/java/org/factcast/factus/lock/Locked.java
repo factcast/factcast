@@ -46,7 +46,7 @@ public class Locked<I extends Projection> {
 
   private final I projectionOrNull;
 
-  @NonNull private final List<FactSpec> specs;
+  @NonNull private final Collection<FactSpec> specs;
 
   @NonNull private final FactusMetrics factusMetrics;
 
@@ -69,7 +69,7 @@ public class Locked<I extends Projection> {
 
   @SuppressWarnings("UnusedReturnValue")
   public <R> R attempt(
-      BiConsumer<I, RetryableTransaction> bodyToExecute, Function<List<Fact>, R> resultFn) {
+      BiConsumer<I, RetryableTransaction> bodyToExecute, Function<Collection<Fact>, R> resultFn) {
     try {
       PublishingResult result =
           fc.lock(specs)

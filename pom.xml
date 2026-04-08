@@ -51,6 +51,7 @@
     <module>factcast-store-sub-redis</module>
     <module>factcast-core</module>
     <module>factcast-factus</module>
+    <module>factcast-factus-migration</module>
     <module>factcast-factus-redis</module>
     <module>factcast-factus-spring-tx</module>
     <module>factcast-factus-dynamo</module>
@@ -132,6 +133,7 @@
     <mongodb-driver.version>5.6.4</mongodb-driver.version>
     <shedlock.version>7.7.0</shedlock.version>
     <byte-buddy.version>1.18.8-jdk5</byte-buddy.version>
+    <rewrite-java.version>8.76.0</rewrite-java.version>
     <skipUnitTests>false</skipUnitTests>
     <postgres.version>15</postgres.version>
     <sonar.exclusions>**/src/test/java/**/*.java</sonar.exclusions>

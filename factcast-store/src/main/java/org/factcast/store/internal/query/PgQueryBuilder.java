@@ -43,16 +43,17 @@ public class PgQueryBuilder {
   private static final String OR = " OR ";
   public static final String CONTAINS_JSONB = " @> ?::jsonb ";
 
-  private final @NonNull List<FactSpec> factSpecs;
+  private final @NonNull Collection<FactSpec> factSpecs;
   private final CurrentStatementHolder statementHolder;
   private String tempTableName = null;
 
-  public PgQueryBuilder(@NonNull List<FactSpec> specs) {
+  public PgQueryBuilder(@NonNull Collection<FactSpec> specs) {
     factSpecs = specs;
     statementHolder = null;
   }
 
-  public PgQueryBuilder(@NonNull List<FactSpec> specs, @NonNull CurrentStatementHolder holder) {
+  public PgQueryBuilder(
+      @NonNull Collection<FactSpec> specs, @NonNull CurrentStatementHolder holder) {
     factSpecs = specs;
     this.statementHolder = holder;
   }
