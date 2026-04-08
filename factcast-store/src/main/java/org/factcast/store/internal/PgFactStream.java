@@ -139,7 +139,7 @@ public class PgFactStream {
     fastForward(hwm);
     // propagate catchup
     if (isConnected()) {
-      log.trace("{} signaling catchup", request);
+      log.debug("{} signaling catchup", request);
       // signal catchup
       telemetry.onCatchup(request);
       pipeline.process(Signal.catchup());
