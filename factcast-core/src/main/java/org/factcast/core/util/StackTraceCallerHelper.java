@@ -16,7 +16,8 @@
 package org.factcast.core.util;
 
 import com.google.common.collect.Lists;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Stream;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
@@ -31,25 +32,36 @@ public class StackTraceCallerHelper {
           "sun.",
           "com.sun.",
           "org.springframework.",
-          "com.google.common.");
+          "com.google.common.",
+          "io.micrometer.");
 
   public static StackTraceElement findCallerFrame(StackTraceElement[] stack) {
-    for (StackTraceElement frame : stack) {
-      if (isExternalFrame(frame)) {
-        return frame;
-      }
-    }
-    // fallback: use original hardcoded index behavior
-    return stack.length > 3 ? stack[3] : stack[stack.length - 1];
+    return Stream.of(stack)
+        .filter(StackTraceCallerHelper::isExternalFrame)
+        .findFirst()
+        .orElseGet(() -> stack.length > 3 ? stack[3] : stack[stack.length - 1]);
+  }
+
+  public static String createDebugInfo() {
+    StackTraceElement caller = findCallerFrame(new Exception().getStackTrace());
+    String simpleClassName =
+        caller.getClassName().substring(caller.getClassName().lastIndexOf(".") + 1);
+
+    StringBuilder sb =
+        new StringBuilder()
+            .append(UUID.randomUUID())
+            .append(" (")
+            .append(simpleClassName)
+            .append('.')
+            .append(caller.getMethodName())
+            .append(':')
+            .append(caller.getLineNumber());
+
+    return sb.append(')').toString();
   }
 
   private static boolean isExternalFrame(StackTraceElement frame) {
     String className = frame.getClassName();
-    for (String prefix : INTERNAL_PACKAGE_PREFIXES) {
-      if (className.startsWith(prefix)) {
-        return false;
-      }
-    }
-    return true;
+    return INTERNAL_PACKAGE_PREFIXES.stream().noneMatch(className::startsWith);
   }
 }
