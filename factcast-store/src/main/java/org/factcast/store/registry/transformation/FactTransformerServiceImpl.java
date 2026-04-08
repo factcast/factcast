@@ -17,7 +17,6 @@ package org.factcast.store.registry.transformation;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.annotations.VisibleForTesting;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import java.util.*;
@@ -113,8 +112,11 @@ public class FactTransformerServiceImpl implements FactTransformerService, AutoC
                                     p.right().id()))
                         .collect(Collectors.toSet());
 
+                // ConcurrentHashMap needed because remove is used from a potentially
+                // parallel stream below
                 Map<UUID, PgFact> found =
-                    cache.findAll(keys).stream().collect(Collectors.toMap(PgFact::id, f -> f));
+                    cache.findAll(keys).stream()
+                        .collect(Collectors.toConcurrentMap(PgFact::id, f -> f));
                 log.trace(
                     "batch lookup found {} out of {} pre transformed facts",
                     found.size(),
@@ -133,13 +135,10 @@ public class FactTransformerServiceImpl implements FactTransformerService, AutoC
                               pairStream
                                   .map(
                                       c -> {
-                                        PgFact e = c.left().toTransform();
-                                        PgFact cached = found.get(e.id());
-                                        if (cached != null) {
-                                          return cached;
-                                        } else {
-                                          return doTransform(e, c.right());
-                                        }
+                                        PgFact e = c.left().pop();
+                                        PgFact cached = found.remove(e.id());
+                                        return Objects.requireNonNullElseGet(
+                                            cached, () -> doTransform(e, c.right()));
                                       })
                                   .toList())
                       .get();
@@ -159,23 +158,6 @@ public class FactTransformerServiceImpl implements FactTransformerService, AutoC
       // make sure TransformationExceptions are escalated as such
       throw ExceptionHelper.toRuntime(e.getCause());
     }
-  }
-
-  /**
-   * idea is to prevent the overhead of going parallel if all chains target the same warm
-   * script-engine as we'd have a serializing effect there due to synchronization.
-   *
-   * @return if the transformations should go parallel
-   */
-  @VisibleForTesting
-  boolean shouldBeParallel(@NonNull Stream<TransformationChain> chains) {
-    // if there is more than one distinct engine used, return true
-    return chains
-            .filter(Objects::nonNull)
-            .mapToInt(tc -> tc.id().hashCode() + tc.key().hashCode())
-            .distinct()
-            .count()
-        > 1;
   }
 
   @NonNull
