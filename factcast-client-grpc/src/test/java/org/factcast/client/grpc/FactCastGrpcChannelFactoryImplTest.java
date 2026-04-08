@@ -15,17 +15,25 @@
  */
 package org.factcast.client.grpc;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.google.common.collect.Lists;
 import io.grpc.ClientInterceptor;
+import io.grpc.ConnectivityState;
+import io.grpc.ManagedChannel;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.grpc.client.GrpcChannelFactory;
 
@@ -33,7 +41,7 @@ import org.springframework.grpc.client.GrpcChannelFactory;
 class FactCastGrpcChannelFactoryImplTest {
 
   @Mock private GrpcChannelFactory cf;
-  @InjectMocks private FactCastGrpcChannelFactoryImpl underTest;
+  @InjectMocks @Spy private FactCastGrpcChannelFactoryImpl underTest;
 
   @Nested
   class WhenCreatingChannelWithInterceptors {
@@ -41,12 +49,14 @@ class FactCastGrpcChannelFactoryImplTest {
 
     @Test
     void returnsChannel() {
+      doNothing().when(underTest).storeConnectivityStateSupplier(any());
       String name = "testChannel";
 
       underTest.createChannel(name, Lists.newArrayList(clientInterceptor));
 
       verify(cf)
           .createChannel(eq(name), argThat(cb -> cb.interceptors().contains(clientInterceptor)));
+      verify(underTest).storeConnectivityStateSupplier(any());
     }
   }
 
@@ -54,11 +64,46 @@ class FactCastGrpcChannelFactoryImplTest {
   class WhenCreatingChannel {
     @Test
     void returnsChannel() {
+      doNothing().when(underTest).storeConnectivityStateSupplier(any());
       String name = "testChannel";
 
       underTest.createChannel(name);
 
       verify(cf).createChannel(name);
+      verify(underTest).storeConnectivityStateSupplier(any());
+    }
+  }
+
+  @Nested
+  class HealthChecks {
+    @Mock private ManagedChannel channel;
+
+    @Test
+    void isHealthy() {
+      when(channel.getState(anyBoolean()))
+          .thenReturn(
+              ConnectivityState.READY,
+              ConnectivityState.IDLE,
+              ConnectivityState.CONNECTING,
+              ConnectivityState.SHUTDOWN);
+
+      underTest.storeConnectivityStateSupplier(channel);
+      underTest.storeConnectivityStateSupplier(channel);
+      underTest.storeConnectivityStateSupplier(channel);
+      underTest.storeConnectivityStateSupplier(channel);
+
+      assertThat(underTest.isHealthy()).isTrue();
+    }
+
+    @Test
+    void notHealthy() {
+      when(channel.getState(anyBoolean()))
+          .thenReturn(ConnectivityState.READY, ConnectivityState.TRANSIENT_FAILURE);
+
+      underTest.storeConnectivityStateSupplier(channel);
+      underTest.storeConnectivityStateSupplier(channel);
+
+      assertThat(underTest.isHealthy()).isFalse();
     }
   }
 }

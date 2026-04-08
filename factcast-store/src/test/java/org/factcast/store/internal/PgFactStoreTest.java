@@ -425,8 +425,9 @@ class PgFactStoreTest {
       List<FactSpec> specs = Lists.newArrayList(spec1);
 
       PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs);
-      String stateSQL = pgQueryBuilder.createStateSQL(16L);
-      PreparedStatementSetter statementSetter = pgQueryBuilder.createStatementSetter();
+      String stateSQL = pgQueryBuilder.createStateSQL();
+      PreparedStatementSetter statementSetter =
+          pgQueryBuilder.createStatementSetter(new AtomicLong(0));
 
       ArgumentCaptor<PreparedStatementSetter> captor =
           ArgumentCaptor.forClass(PreparedStatementSetter.class);
@@ -436,6 +437,7 @@ class PgFactStoreTest {
 
       PreparedStatement ps = mock(PreparedStatement.class);
       captor.getValue().setValues(ps);
+      verify(ps).setLong(3, 16L);
     }
   }
 
@@ -456,8 +458,9 @@ class PgFactStoreTest {
       List<FactSpec> specs = Lists.newArrayList(spec1);
 
       PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs);
-      String stateSQL = pgQueryBuilder.createStateSQL(16);
-      PreparedStatementSetter statementSetter = pgQueryBuilder.createStatementSetter();
+      String stateSQL = pgQueryBuilder.createStateSQL();
+      PreparedStatementSetter statementSetter =
+          pgQueryBuilder.createStatementSetter(new AtomicLong(12));
       ArgumentCaptor<PreparedStatementSetter> captor =
           ArgumentCaptor.forClass(PreparedStatementSetter.class);
       when(jdbcTemplate.query(eq(stateSQL), captor.capture(), any(ResultSetExtractor.class)))
@@ -466,6 +469,7 @@ class PgFactStoreTest {
 
       PreparedStatement ps = mock(PreparedStatement.class);
       captor.getValue().setValues(ps);
+      verify(ps).setLong(3, 16L);
     }
   }
 
@@ -485,6 +489,7 @@ class PgFactStoreTest {
       List<FactSpec> specs = Lists.newArrayList(spec1);
 
       PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs);
+      String stateSQL = pgQueryBuilder.createStateSQL();
       when(jdbcTemplate.queryForObject(PgConstants.LAST_SERIAL_IN_LOG, Long.class)).thenReturn(32L);
       assertThat(underTest.getCurrentStateFor(specs).serialOfLastMatchingFact()).isEqualTo(32L);
     }

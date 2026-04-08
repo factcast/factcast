@@ -19,16 +19,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import java.util.*;
 import org.factcast.core.subscription.MissingTransformationInformationException;
-import org.factcast.core.util.FactCastJson;
-import org.factcast.store.internal.script.JSEngineFactory;
-import org.factcast.store.internal.script.graaljs.GraalJSEngineFactory;
+import org.factcast.store.internal.script.JsonString;
 import org.factcast.store.registry.SchemaRegistry;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.transformation.SingleTransformation;
@@ -47,8 +44,7 @@ class TransformationChainsTest {
   final TransformationChains uut = new TransformationChains(r, registryMetrics);
 
   final TransformationKey key = TransformationKey.of("ns", "UserCreated");
-  final JSEngineFactory engineFactory = new GraalJSEngineFactory();
-  final JsTransformer transformer = new JsTransformer(engineFactory);
+  final JsTransformer transformer = new JsTransformer();
 
   @Test
   void testAddingNewArray() throws Exception {
@@ -66,9 +62,8 @@ class TransformationChainsTest {
     Assertions.assertEquals("[1, 2, 3]", chain.id());
     assertThat(chain.transformationCode()).isPresent();
 
-    JsonNode input = FactCastJson.readTree("{}");
-    JsonNode actual = transformer.transform(chain, input);
-    assertThat(actual.toString()).isEqualTo("{\"arr\":[1,2,3,\"4\"],\"newField\":true}");
+    JsonString actual = transformer.transform(chain, JsonString.of("{}"));
+    assertThat(actual.json()).isEqualTo("{\"arr\":[1,2,3,\"4\"],\"newField\":true}");
   }
 
   @Test
@@ -90,9 +85,8 @@ class TransformationChainsTest {
     Assertions.assertEquals("[2, 3, 4, 5]", chain.id());
     assertThat(chain.transformationCode()).isPresent();
 
-    JsonNode input = FactCastJson.readTree("{}");
-    JsonNode actual = transformer.transform(chain, input);
-    assertThat(actual.toString()).isEqualTo("{\"stage2\":true,\"stage3\":true,\"stage4\":true}");
+    JsonString actual = transformer.transform(chain, JsonString.of("{}"));
+    assertThat(actual.json()).isEqualTo("{\"stage2\":true,\"stage3\":true,\"stage4\":true}");
   }
 
   @Test
@@ -143,9 +137,8 @@ class TransformationChainsTest {
     Assertions.assertEquals("[1, 2, 6, 7]", chain.id());
     assertThat(chain.transformationCode()).isPresent();
 
-    JsonNode input = FactCastJson.readTree("{}");
-    JsonNode actual = transformer.transform(chain, input);
-    assertThat(actual.toString()).isEqualTo("{\"stage1\":true,\"stage6\":true}");
+    JsonString actual = transformer.transform(chain, JsonString.of("{}"));
+    assertThat(actual.json()).isEqualTo("{\"stage1\":true,\"stage6\":true}");
   }
 
   @Test
@@ -171,9 +164,8 @@ class TransformationChainsTest {
     Assertions.assertEquals("[1, 2, 5, 6, 7]", chain.id());
     assertThat(chain.transformationCode()).isPresent();
 
-    JsonNode input = FactCastJson.readTree("{}");
-    JsonNode actual = transformer.transform(chain, input);
-    assertThat(actual.toString())
+    JsonString actual = transformer.transform(chain, JsonString.of("{}"));
+    assertThat(actual.json())
         .isEqualTo("{\"stage1\":true,\"stage2\":true,\"stage5\":true,\"stage6\":true}");
   }
 
@@ -300,9 +292,8 @@ class TransformationChainsTest {
 
     TransformationChain chain = uut.get(key, 3, Collections.singleton(1));
 
-    JsonNode input = FactCastJson.readTree("{}");
-    JsonNode actual = transformer.transform(chain, input);
-    assertThat(actual).hasToString("{\"stage1\":true}");
+    JsonString actual = transformer.transform(chain, JsonString.of("{}"));
+    assertThat(actual.json()).hasToString("{\"stage1\":true}");
   }
 
   @Test
@@ -335,6 +326,20 @@ class TransformationChainsTest {
     assertThat(cache).hasSize(2).containsKey(key2).containsKey(key1);
     uut.notifyFor(key1);
     assertThat(cache).hasSize(1).containsKey(key2);
+  }
+
+  @Test
+  void clearCache() {
+    Map<TransformationKey, Map<TransformationChains.VersionPath, TransformationChain>> cache =
+        uut.cache();
+    TransformationKey key1 = TransformationKey.of("ns", "type");
+    TransformationKey key2 = TransformationKey.of("ns", "otherType");
+    cache.put(key1, new HashMap<>());
+    cache.put(key2, new HashMap<>());
+
+    assertThat(cache).hasSize(2).containsKey(key2).containsKey(key1);
+    uut.clearCache();
+    assertThat(cache).isEmpty();
   }
 
   private void bidir(ArrayList<Transformation> all, TransformationKey key, int i, int j) {

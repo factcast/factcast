@@ -66,6 +66,25 @@ class ConnectionModifierTest {
   }
 
   @Nested
+  class ForceCustomPlan {
+
+    @Mock PreparedStatement p;
+
+    @SneakyThrows
+    @Test
+    void forcesCustomPlan() {
+      var uut = new ConnectionModifier.ForceCustomPlan();
+      when(c.createStatement()).thenReturn(p);
+      uut.afterBorrow(c);
+      Mockito.verify(p).execute("SET plan_cache_mode='force_custom_plan'");
+
+      Mockito.reset(p);
+      uut.beforeReturn(c);
+      Mockito.verify(p).execute("RESET plan_cache_mode");
+    }
+  }
+
+  @Nested
   class Property {
 
     @Mock PreparedStatement p;

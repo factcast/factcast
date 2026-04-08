@@ -26,11 +26,13 @@ import org.springframework.boot.context.properties.NestedConfigurationProperty;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@ConfigurationProperties(prefix = "factcast.grpc.client")
+@ConfigurationProperties(prefix = FactCastGrpcClientProperties.FACTCAST_GRPC_CLIENT_PREFIX)
 @Data
 @Accessors(fluent = false)
 @Slf4j
 public class FactCastGrpcClientProperties implements InitializingBean {
+
+  public static final String FACTCAST_GRPC_CLIENT_PREFIX = "factcast.grpc.client";
 
   private int maxInboundMessageSize = GrpcConstants.DEFAULT_CLIENT_INBOUND_MESSAGE_SIZE;
 
@@ -67,6 +69,8 @@ public class FactCastGrpcClientProperties implements InitializingBean {
 
   @NestedConfigurationProperty
   private ResilienceConfiguration resilience = new ResilienceConfiguration();
+
+  private boolean healthCheckEnabled = true;
 
   @Override
   public void afterPropertiesSet() throws Exception {

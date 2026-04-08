@@ -74,12 +74,12 @@ public class PgCursorCatchup extends AbstractPgCatchup {
     final var b = new PgQueryBuilder(req.specs(), statementHolder);
     final var extractor = new PgFactExtractor(serial);
     final var fromSerial = serial.get() < fastForward ? new AtomicLong(fastForward) : serial;
-    final var catchupSQL = b.createSQL(fromSerial.get());
+    final var catchupSQL = b.createSQL();
     final var isFromScratch = (fromSerial.get() <= 0);
     final var timer = metrics.timer(StoreMetrics.OP.RESULT_STREAM_START, isFromScratch);
     final var rowCallbackHandler = createTimedRowCallbackHandler(extractor, timer);
     log.trace("{} catchup {} - facts starting with SER={}", req, phase, fromSerial.get());
-    jdbc.query(catchupSQL, b.createStatementSetter(), rowCallbackHandler);
+    jdbc.query(catchupSQL, b.createStatementSetter(fromSerial), rowCallbackHandler);
   }
 
   @VisibleForTesting

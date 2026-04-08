@@ -32,6 +32,7 @@ import org.factcast.core.util.ExceptionHelper;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.*;
+import org.factcast.store.internal.script.JsonString;
 import org.factcast.store.internal.transformation.FactTransformerService;
 import org.factcast.store.internal.transformation.TransformationRequest;
 import org.factcast.store.registry.metrics.RegistryMetrics;
@@ -65,7 +66,7 @@ public class FactTransformerServiceImpl implements FactTransformerService, AutoC
     this.registryMetrics = registryMetrics;
     this.pool =
         registryMetrics.monitor(
-            Executors.newWorkStealingPool(props.getSizeOfThreadPoolForBufferedTransformations()),
+            new ForkJoinPool(props.getSizeOfThreadPoolForBufferedTransformations()),
             "parallel-transformation");
   }
 
@@ -101,6 +102,7 @@ public class FactTransformerServiceImpl implements FactTransformerService, AutoC
 
                 List<Pair<TransformationRequest, TransformationChain>> pairs =
                     req.stream().map(r -> Pair.of(r, toChain(r))).toList();
+
                 Set<TransformationCache.Key> keys =
                     pairs.parallelStream()
                         .map(
@@ -122,20 +124,30 @@ public class FactTransformerServiceImpl implements FactTransformerService, AutoC
                     req.size());
 
                 Stream<Pair<TransformationRequest, TransformationChain>> pairStream =
-                    pairs.stream();
-                if (shouldBeParallel(pairs.stream().map(Pair::right))) {
-                  //noinspection DataFlowIssue
-                  pairStream = pairStream.parallel();
+                    pairs.parallelStream();
+
+                try {
+
+                  // trying to avoid default FJP
+                  // https://blog.krecan.net/2014/03/18/how-to-specify-thread-pool-for-java-8-parallel-streams/
+
+                  return pool.submit(
+                          () ->
+                              pairStream
+                                  .map(
+                                      c -> {
+                                        PgFact e = c.left().toTransform();
+                                        PgFact cached = found.remove(e.id());
+                                        return Objects.requireNonNullElseGet(cached, () -> doTransform(e, c.right()));
+                                      })
+                                  .toList())
+                      .get();
+                } catch (InterruptedException e) {
+                  Thread.currentThread().interrupt();
+                  throw ExceptionHelper.toRuntime(e);
+                } catch (Exception e) {
+                  throw ExceptionHelper.toRuntime(e.getCause());
                 }
-                return pairStream
-                    .map(
-                        c -> {
-                          PgFact e = c.left().pop();
-                          PgFact cached = found.remove(e.id());
-                          return Objects.requireNonNullElseGet(
-                              cached, () -> doTransform(e, c.right()));
-                        })
-                    .toList();
               },
               pool)
           .get();
@@ -172,14 +184,21 @@ public class FactTransformerServiceImpl implements FactTransformerService, AutoC
         RegistryMetrics.OP.TRANSFORMATION,
         () -> {
           try {
-            JsonNode input = FactCastJson.readTree(e.jsonPayload());
+
+            // patch new version to header
             JsonNode header = FactCastJson.readTree(e.jsonHeader());
             ((ObjectNode) header).put("version", chain.toVersion());
-            JsonNode transformedPayload = trans.transform(chain, input);
-            PgFact transformed = PgFact.of(header, transformedPayload);
+
+            JsonString input = JsonString.of(e.jsonPayload());
+            JsonString transformedPayload = trans.transform(chain, input);
+
+            // we're intentionally using string here, keeping the jsonNodes around consumes more
+            // memory
+            PgFact transformed = PgFact.of(header.toString(), transformedPayload.json());
             cache.put(
                 TransformationCache.Key.of(transformed.id(), transformed.version(), chain.id()),
                 transformed);
+
             return transformed;
           } catch (Exception e1) {
             registryMetrics.count(

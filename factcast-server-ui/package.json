@@ -3,8 +3,8 @@
   "license": "UNLICENSED",
   "type": "module",
   "dependencies": {
+    "@polymer/iron-media-query": "^3.0.1",
     "@polymer/polymer": "3.5.2",
-    "@vaadin-component-factory/vcf-popup": "24.0.3",
     "@vaadin/bundles": "24.10.0",
     "@vaadin/common-frontend": "0.0.19",
     "@vaadin/polymer-legacy-adapter": "24.10.0",
@@ -47,8 +47,8 @@
   },
   "vaadin": {
     "dependencies": {
+      "@polymer/iron-media-query": "^3.0.1",
       "@polymer/polymer": "3.5.2",
-      "@vaadin-component-factory/vcf-popup": "24.0.3",
       "@vaadin/bundles": "24.10.0",
       "@vaadin/common-frontend": "0.0.19",
       "@vaadin/polymer-legacy-adapter": "24.10.0",
@@ -89,7 +89,7 @@
       "workbox-core": "7.4.0",
       "workbox-precaching": "7.4.0"
     },
-    "hash": "d000239b1decd470b1c7658423551d2e2145983b14817076c8882776d9c91f49"
+    "hash": "76e766097a0d252f59b19a2e6db31feb1b22fc91aa85fadca168afecdb7a4163"
   },
   "pnpm": {
     "overrides": {
@@ -110,7 +110,6 @@
       "jsonpath-plus": "$jsonpath-plus",
       "@vaadin/vaadin-themable-mixin": "$@vaadin/vaadin-themable-mixin",
       "@vaadin/vaadin-lumo-styles": "$@vaadin/vaadin-lumo-styles",
-      "@vaadin-component-factory/vcf-popup": "$@vaadin-component-factory/vcf-popup",
       "@vaadin/vaadin-material-styles": "$@vaadin/vaadin-material-styles",
       "monaco-editor": "$monaco-editor",
       "@vaadin/router": "2.0.1",
@@ -171,7 +170,8 @@
       "@vaadin/tooltip": "24.10.0",
       "@vaadin/upload": "24.10.0",
       "@vaadin/vertical-layout": "24.10.0",
-      "@vaadin/virtual-list": "24.10.0"
+      "@vaadin/virtual-list": "24.10.0",
+      "@polymer/iron-media-query": "$@polymer/iron-media-query"
     }
   }
 }

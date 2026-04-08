@@ -51,7 +51,7 @@ class PgSynchronizedQueryTest {
 
   PgSynchronizedQuery uut;
 
-  @Mock PgQueryBuilder builder;
+  final String sql = "SELECT 42";
 
   @Mock PreparedStatementSetter setter;
 
@@ -79,14 +79,13 @@ class PgSynchronizedQueryTest {
     ResultSet rs = Mockito.mock(ResultSet.class);
     when(rs.next()).thenReturn(false);
     when(p.executeQuery()).thenReturn(rs);
-    when(builder.createSQL(anyLong())).thenReturn("SELECT 42");
 
     uut =
         new PgSynchronizedQuery(
             "test",
             pipeline,
             connectionSupplier,
-            builder,
+            sql,
             setter,
             () -> true,
             serialToContinueFrom,
@@ -112,13 +111,12 @@ class PgSynchronizedQueryTest {
     ResultSet rs = Mockito.mock(ResultSet.class);
     when(rs.next()).thenReturn(false);
     when(p.executeQuery()).thenReturn(rs);
-    when(builder.createSQL(anyLong())).thenReturn("SELECT 42");
     uut =
         new PgSynchronizedQuery(
             "test",
             pipeline,
             connectionSupplier,
-            builder,
+            sql,
             setter,
             () -> true,
             serialToContinueFrom,
@@ -136,7 +134,7 @@ class PgSynchronizedQueryTest {
             "test",
             pipeline,
             connectionSupplier,
-            builder,
+            sql,
             setter,
             () -> true,
             serialToContinueFrom,
@@ -152,7 +150,6 @@ class PgSynchronizedQueryTest {
     when(ds.getConnection()).thenReturn(con);
     when(con.prepareStatement(anyString())).thenReturn(p);
     when(p.executeQuery()).thenThrow(exc);
-    when(builder.createSQL(anyLong())).thenReturn("THIS AINT SQL");
 
     assertThatThrownBy(() -> uut.run(false))
         // should be thrown unchanged
@@ -171,7 +168,7 @@ class PgSynchronizedQueryTest {
             "test",
             pipeline,
             connectionSupplier,
-            builder,
+            sql,
             setter,
             () -> true,
             serialToContinueFrom,
@@ -188,7 +185,6 @@ class PgSynchronizedQueryTest {
     when(ds.getConnection()).thenReturn(con);
     when(con.prepareStatement(anyString())).thenReturn(p);
     when(p.executeQuery()).thenThrow(exc);
-    when(builder.createSQL(anyLong())).thenReturn("SELECT 42");
 
     uut.run(false);
 
@@ -352,7 +348,6 @@ class PgSynchronizedQueryTest {
       ResultSet rs = Mockito.mock(ResultSet.class);
       when(rs.next()).thenReturn(true, false); // one result
       when(p.executeQuery()).thenReturn(rs);
-      when(builder.createSQL(anyLong())).thenReturn("SELECT 42");
 
       try (MockedStatic<PgFact> mockStatic = Mockito.mockStatic(PgFact.class)) {
         mockStatic.when(() -> PgFact.from(rs)).thenReturn(factToBeTransformed);
@@ -362,7 +357,7 @@ class PgSynchronizedQueryTest {
                 "test",
                 pipeline,
                 connectionSupplier,
-                builder,
+                sql,
                 setter,
                 () -> true,
                 serialToContinueFrom,

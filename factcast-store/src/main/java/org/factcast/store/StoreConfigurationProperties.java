@@ -47,16 +47,19 @@ public class StoreConfigurationProperties implements InitializingBean {
 
   /** defines the max number of Facts being scheduled for transformation */
   @Positive
-  @Max(32000)
+  @Max(5000)
+  @Min(10)
   int transformationCachePageSize = 100;
 
   /**
    * defines the max number of transformed Facts being buffered in order to make flushing more
-   * efficient. This cannot be equal or greater than 10000, due to JDBC restrictions.
+   * efficient. This cannot be equal or greater than 10000, due to JDBC restrictions. Be careful
+   * when setting this to a high value, as this could cause memory issues in combination with large
+   * Facts.
    */
   @Positive
   @Max(9999)
-  int transformationCacheBufferSize = 1000;
+  int transformationCacheBufferSize = 50;
 
   /**
    * Optional URL to a Schema Registry. If this is null, validation will be disabled and a warning
