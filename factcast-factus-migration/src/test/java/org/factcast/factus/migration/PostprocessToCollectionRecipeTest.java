@@ -28,8 +28,7 @@ class PostprocessToCollectionRecipeTest implements RewriteTest {
   public void defaults(RecipeSpec spec) {
     spec.recipe(new PostprocessToCollectionRecipe())
         .parser(
-            JavaParser.fromJavaVersion()
-                .classpath("lombok", "factcast-core", "factcast-factus"));
+            JavaParser.fromJavaVersion().classpath("lombok", "factcast-core", "factcast-factus"));
   }
 
   @Test
