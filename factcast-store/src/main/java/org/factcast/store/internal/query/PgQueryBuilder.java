@@ -52,7 +52,8 @@ public class PgQueryBuilder {
     statementHolder = null;
   }
 
-  public PgQueryBuilder(@NonNull Collection<FactSpec> specs, @NonNull CurrentStatementHolder holder) {
+  public PgQueryBuilder(
+      @NonNull Collection<FactSpec> specs, @NonNull CurrentStatementHolder holder) {
     factSpecs = specs;
     this.statementHolder = holder;
   }
