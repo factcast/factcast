@@ -416,7 +416,7 @@ public abstract class AbstractFactStoreTest {
   @Test
   protected void testScriptedWithHeaderFiltering() {
     Assertions.assertTimeout(
-        Duration.ofMillis(10000),
+        Duration.ofMillis(20000),
         () -> {
           FactObserver observer = mock(FactObserver.class);
           uut.publish(

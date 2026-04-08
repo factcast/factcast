@@ -68,47 +68,47 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
     private final FluentSubscriptionRequest toBuild = new FluentSubscriptionRequest();
 
     @Override
-    public @org.jspecify.annotations.NonNull SpecBuilder or(@NonNull FactSpec specification) {
+    public @NonNull SpecBuilder or(@NonNull FactSpec specification) {
       toBuild.specs.add(specification);
       return this;
     }
 
     @Override
-    public @org.jspecify.annotations.NonNull SubscriptionRequest fromScratch() {
+    public @NonNull SubscriptionRequest fromScratch() {
       return toBuild;
     }
 
     @Override
-    public @org.jspecify.annotations.NonNull SubscriptionRequest fromNowOn() {
+    public @NonNull SubscriptionRequest fromNowOn() {
       toBuild.ephemeral = true;
       return toBuild;
     }
 
     @Override
-    public @org.jspecify.annotations.NonNull SubscriptionRequest from(@NonNull UUID id) {
+    public @NonNull SubscriptionRequest from(@NonNull UUID id) {
       toBuild.startingAfter = id;
       return toBuild;
     }
 
     @Override
-    public @org.jspecify.annotations.NonNull SubscriptionRequest fromNullable(UUID id) {
+    public @NonNull SubscriptionRequest fromNullable(UUID id) {
       toBuild.startingAfter = id;
       return toBuild;
     }
 
-    public @org.jspecify.annotations.NonNull SpecBuilder follow(@NonNull FactSpec specification) {
+    public @NonNull SpecBuilder follow(@NonNull FactSpec specification) {
       or(specification);
       toBuild.continuous = true;
       return this;
     }
 
-    public @org.jspecify.annotations.NonNull SpecBuilder catchup(@NonNull FactSpec specification) {
+    public @NonNull SpecBuilder catchup(@NonNull FactSpec specification) {
       or(specification);
       toBuild.continuous = false;
       return this;
     }
 
-    public @org.jspecify.annotations.NonNull SpecBuilder catchup(
+    public @NonNull SpecBuilder catchup(
         Collection<FactSpec> specification) {
       if (specification.isEmpty()) {
         throw new IllegalArgumentException("At least one FactSpec is needed for a subscription");
@@ -118,7 +118,7 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
     }
 
     @Override
-    public @org.jspecify.annotations.NonNull SpecBuilder withMaxBatchDelayInMs(long msec) {
+    public @NonNull SpecBuilder withMaxBatchDelayInMs(long msec) {
       if (msec < 10) {
         throw new IllegalArgumentException("The minimum maxBatchDelayInMs is 10msec");
       }
@@ -128,13 +128,13 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
     }
 
     @Override
-    public @org.jspecify.annotations.NonNull SpecBuilder withDebugHintFrom(Class<?> clazz) {
+    public @NonNull SpecBuilder withDebugHintFrom(Class<?> clazz) {
       toBuild.debugInfo += " | " + clazz.getName();
       return this;
     }
 
     @Override
-    public @org.jspecify.annotations.NonNull SpecBuilder withKeepaliveIntervalInMs(long msec) {
+    public @NonNull SpecBuilder withKeepaliveIntervalInMs(long msec) {
       if (msec > 0 && msec < 3000) {
         throw new IllegalArgumentException(
             "The minimum keepaliveIntervalInMs is 3000ms. To disable keepalive, set it to 0.");
@@ -144,7 +144,7 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
       return this;
     }
 
-    public @org.jspecify.annotations.NonNull SpecBuilder follow(
+    public @NonNull SpecBuilder follow(
         Collection<FactSpec> specification) {
       if (specification.isEmpty()) {
         throw new IllegalArgumentException("At least one FactSpec is needed for a subscription");
