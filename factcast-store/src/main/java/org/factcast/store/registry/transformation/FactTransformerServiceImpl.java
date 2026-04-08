@@ -17,7 +17,6 @@ package org.factcast.store.registry.transformation;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.annotations.VisibleForTesting;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import java.util.*;
@@ -138,7 +137,8 @@ public class FactTransformerServiceImpl implements FactTransformerService, AutoC
                                       c -> {
                                         PgFact e = c.left().toTransform();
                                         PgFact cached = found.remove(e.id());
-                                        return Objects.requireNonNullElseGet(cached, () -> doTransform(e, c.right()));
+                                        return Objects.requireNonNullElseGet(
+                                            cached, () -> doTransform(e, c.right()));
                                       })
                                   .toList())
                       .get();
