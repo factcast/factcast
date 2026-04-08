@@ -86,8 +86,7 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
 
     @Override
     public @NonNull SubscriptionRequest from(@NonNull UUID id) {
-      toBuild.startingAfter = id;
-      return toBuild;
+      return fromNullable(id);
     }
 
     @Override
