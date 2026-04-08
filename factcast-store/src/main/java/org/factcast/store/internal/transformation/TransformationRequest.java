@@ -25,7 +25,7 @@ public class TransformationRequest {
   @Getter private @Nullable PgFact toTransform;
   @Getter private final Set<Integer> targetVersions;
 
-  public TransformationRequest(@NonNull PgFact toTransform, Set<Integer> targetVersions) {
+  public TransformationRequest(@NonNull PgFact toTransform, @NonNull Set<Integer> targetVersions) {
     this.toTransform = toTransform;
     this.targetVersions = targetVersions;
   }
@@ -33,12 +33,14 @@ public class TransformationRequest {
   /**
    * Returns the PgFact and clears the internal reference so the original fact can be GC'd earlier.
    */
-  public @NonNull PgFact consumeToTransform() {
-    PgFact ref = toTransform;
-    if (ref == null) {
-      throw new IllegalStateException("PgFact already consumed");
+  public @NonNull PgFact pop() {
+    try {
+      if (toTransform == null) {
+        throw new IllegalStateException("PgFact already consumed");
+      }
+      return toTransform;
+    } finally {
+      toTransform = null;
     }
-    toTransform = null;
-    return ref;
   }
 }

@@ -25,11 +25,11 @@ import org.junit.jupiter.api.Test;
 class TransformationRequestTest {
 
   @Test
-  void consumeToTransformReturnsFactAndClearsReference() {
+  void popReturnsFactAndClearsReference() {
     PgFact fact = PgFact.from(new TestFact().version(1));
     TransformationRequest uut = new TransformationRequest(fact, Set.of(2));
 
-    PgFact consumed = uut.consumeToTransform();
+    PgFact consumed = uut.pop();
 
     assertThat(consumed).isSameAs(fact);
     assertThat(uut.toTransform()).isNull();
@@ -40,9 +40,9 @@ class TransformationRequestTest {
     PgFact fact = PgFact.from(new TestFact().version(1));
     TransformationRequest uut = new TransformationRequest(fact, Set.of(2));
 
-    uut.consumeToTransform();
+    uut.pop();
 
-    assertThatThrownBy(uut::consumeToTransform)
+    assertThatThrownBy(uut::pop)
         .isInstanceOf(IllegalStateException.class)
         .hasMessage("PgFact already consumed");
   }
