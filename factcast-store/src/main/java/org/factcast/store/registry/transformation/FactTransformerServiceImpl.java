@@ -113,7 +113,9 @@ public class FactTransformerServiceImpl implements FactTransformerService, AutoC
 
                 // ConcurrentHashMap needed because remove is used from a potentially
                 // parallel stream below
-                Map<UUID, PgFact> found = cache.findAll(keys).stream().collect(Collectors.toConcurrentMap(PgFact::id, f -> f));
+                Map<UUID, PgFact> found =
+                    cache.findAll(keys).stream()
+                        .collect(Collectors.toConcurrentMap(PgFact::id, f -> f));
                 log.trace(
                     "batch lookup found {} out of {} pre transformed facts",
                     found.size(),
