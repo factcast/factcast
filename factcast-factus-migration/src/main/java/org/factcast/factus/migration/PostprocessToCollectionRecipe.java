@@ -77,7 +77,8 @@ public class PostprocessToCollectionRecipe extends Recipe {
     private static JavaType.FullyQualified getFirstParameterType(J.MethodDeclaration md) {
       // Use typeExpression.getType() directly: J.VariableDeclarations.getType() delegates to
       // the inner NamedVariable's type which is not updated when we replace typeExpression.
-      TypeTree typeExpr = ((J.VariableDeclarations) md.getParameters().get(0)).getTypeExpression();
+      TypeTree typeExpr =
+          ((J.VariableDeclarations) md.getParameters().getFirst()).getTypeExpression();
       JavaType type = typeExpr != null ? typeExpr.getType() : null;
 
       if (type instanceof JavaType.FullyQualified fq) {
