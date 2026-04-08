@@ -135,7 +135,7 @@ public class FactTransformerServiceImpl implements FactTransformerService, AutoC
                               pairStream
                                   .map(
                                       c -> {
-                                        PgFact e = c.left().toTransform();
+                                        PgFact e = c.left().pop();
                                         PgFact cached = found.remove(e.id());
                                         return Objects.requireNonNullElseGet(
                                             cached, () -> doTransform(e, c.right()));
