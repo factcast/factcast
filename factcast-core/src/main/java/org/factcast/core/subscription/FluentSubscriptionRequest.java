@@ -96,12 +96,14 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
       return toBuild;
     }
 
+    @Override
     public @NonNull SpecBuilder follow(@NonNull FactSpec specification) {
       or(specification);
       toBuild.continuous = true;
       return this;
     }
 
+    @Override
     public @NonNull SpecBuilder catchup(@NonNull FactSpec specification) {
       or(specification);
       toBuild.continuous = false;
