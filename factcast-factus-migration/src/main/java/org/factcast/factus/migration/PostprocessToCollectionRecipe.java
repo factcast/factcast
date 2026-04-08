@@ -15,9 +15,12 @@
  */
 package org.factcast.factus.migration;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import javax.annotation.Nullable;
 import lombok.EqualsAndHashCode;
+import org.factcast.core.spec.FactSpec;
+import org.factcast.factus.projection.Projection;
+import org.jspecify.annotations.NonNull;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.Recipe;
 import org.openrewrite.TreeVisitor;
@@ -30,12 +33,12 @@ import org.openrewrite.java.tree.TypeTree;
 public class PostprocessToCollectionRecipe extends Recipe {
 
   @Override
-  public String getDisplayName() {
+  public @NonNull String getDisplayName() {
     return "Migrate Projection.postprocess from List to Collection";
   }
 
   @Override
-  public String getDescription() {
+  public @NonNull String getDescription() {
     return "Changes postprocess(List<FactSpec>) overrides to postprocess(Collection<FactSpec>).";
   }
 
@@ -46,74 +49,79 @@ public class PostprocessToCollectionRecipe extends Recipe {
 
   private static class PostprocessVisitor extends JavaIsoVisitor<ExecutionContext> {
     @Override
-    public J.MethodDeclaration visitMethodDeclaration(
-        J.MethodDeclaration md, ExecutionContext ctx) {
+    public J.@NonNull MethodDeclaration visitMethodDeclaration(
+        J.@NonNull MethodDeclaration md, ExecutionContext ctx) {
       md = super.visitMethodDeclaration(md, ctx);
 
-      if (!isPostprocessWithListParam(md)) {
-        return md;
+      if (shouldBeReplaced(md)) {
+        J.VariableDeclarations param = (J.VariableDeclarations) md.getParameters().get(0);
+        param = param.withTypeExpression(replaceListWithCollection(param.getTypeExpression()));
+        md = md.withParameters(Collections.singletonList(param));
+        md = md.withReturnTypeExpression(replaceListWithCollection(md.getReturnTypeExpression()));
+
+        maybeAddImport(Collection.class.getName());
+        maybeRemoveImport(List.class.getName());
       }
-
-      J.VariableDeclarations param = (J.VariableDeclarations) md.getParameters().get(0);
-      param = param.withTypeExpression(replaceListWithCollection(param.getTypeExpression()));
-      md = md.withParameters(Collections.singletonList(param));
-      md = md.withReturnTypeExpression(replaceListWithCollection(md.getReturnTypeExpression()));
-
-      maybeAddImport("java.util.Collection");
-      maybeRemoveImport("java.util.List");
 
       return md;
     }
 
-    private boolean isPostprocessWithListParam(J.MethodDeclaration md) {
-      if (!"postprocess".equals(md.getSimpleName())) {
-        return false;
-      }
-      if (md.getParameters().size() != 1) {
-        return false;
-      }
+    private boolean shouldBeReplaced(J.MethodDeclaration md) {
+      JavaType.FullyQualified param = getFirstParameterType(md);
+      return (methodIsCalledPostProcess(md)
+          && methodHasExactlyOneParameter(md)
+          && methodDeclaredByProjection(md.getMethodType())
+          && isTypeListOfFactSpec(param));
+    }
 
-      JavaType.Method methodType = md.getMethodType();
-      if (methodType == null) {
-        return false;
-      }
-
-      JavaType.FullyQualified declaringType = methodType.getDeclaringType();
-      if (!declaringType.isAssignableTo("org.factcast.factus.projection.Projection")) {
-        return false;
-      }
-
+    private static JavaType.FullyQualified getFirstParameterType(J.MethodDeclaration md) {
       // Use typeExpression.getType() directly: J.VariableDeclarations.getType() delegates to
       // the inner NamedVariable's type which is not updated when we replace typeExpression.
       TypeTree typeExpr = ((J.VariableDeclarations) md.getParameters().get(0)).getTypeExpression();
       JavaType type = typeExpr != null ? typeExpr.getType() : null;
 
-      if (!(type instanceof JavaType.FullyQualified fq)) {
-        return false;
-      }
-      if (!"java.util.List".equals(fq.getFullyQualifiedName())) {
-        return false;
-      }
-      return typeParamFactSpec(fq);
+      if (type instanceof JavaType.FullyQualified fq) {
+        return fq;
+      } else return null;
     }
 
-    private boolean typeParamFactSpec(JavaType.FullyQualified fq) {
+    private static boolean isTypeListOfFactSpec(@Nullable JavaType.FullyQualified fq) {
+      return fq != null
+          && List.class.getName().equals(fq.getFullyQualifiedName())
+          && hasTypeParamFactSpec(fq);
+    }
+
+    private static boolean methodDeclaredByProjection(@Nullable JavaType.Method methodType) {
+      return methodType != null
+          && methodType.getDeclaringType().isAssignableTo(Projection.class.getName());
+    }
+
+    private static boolean methodHasExactlyOneParameter(J.MethodDeclaration md) {
+      return md.getParameters().size() == 1;
+    }
+
+    private static boolean methodIsCalledPostProcess(J.MethodDeclaration md) {
+      return "postprocess".equals(md.getSimpleName());
+    }
+
+    private static boolean hasTypeParamFactSpec(JavaType.FullyQualified fq) {
       List<JavaType> typeParameters = fq.getTypeParameters();
-      if (typeParameters.isEmpty()) {
-        return false;
-      }
-      JavaType paramType = typeParameters.get(0);
-      if (paramType instanceof JavaType.FullyQualified fqp) {
-        return fqp.getFullyQualifiedName().equals("org.factcast.core.spec.FactSpec");
+      if (!typeParameters.isEmpty()) {
+        {
+          JavaType paramType = typeParameters.get(0);
+          if (paramType instanceof JavaType.FullyQualified fqp) {
+            return fqp.getFullyQualifiedName().equals(FactSpec.class.getName());
+          }
+        }
       }
       return false;
     }
 
     private TypeTree replaceListWithCollection(TypeTree typeExpr) {
-      JavaType.ShallowClass collectionType = JavaType.ShallowClass.build("java.util.Collection");
+      JavaType.ShallowClass collectionType =
+          JavaType.ShallowClass.build(Collection.class.getName());
 
-      if (typeExpr instanceof J.AnnotatedType) {
-        J.AnnotatedType annotated = (J.AnnotatedType) typeExpr;
+      if (typeExpr instanceof J.AnnotatedType annotated) {
         // Recursively replace the inner type expression, keeping the annotations intact
         return annotated.withTypeExpression(
             replaceListWithCollection(annotated.getTypeExpression()));
