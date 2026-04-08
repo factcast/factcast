@@ -17,6 +17,7 @@ package org.factcast.factus.migration;
 
 import java.util.Collections;
 import java.util.List;
+import lombok.EqualsAndHashCode;
 import org.openrewrite.ExecutionContext;
 import org.openrewrite.Recipe;
 import org.openrewrite.TreeVisitor;
@@ -24,7 +25,6 @@ import org.openrewrite.java.JavaIsoVisitor;
 import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.JavaType;
 import org.openrewrite.java.tree.TypeTree;
-import lombok.EqualsAndHashCode;
 
 @EqualsAndHashCode(callSuper = false)
 public class PostprocessToCollectionRecipe extends Recipe {
@@ -85,8 +85,7 @@ public class PostprocessToCollectionRecipe extends Recipe {
 
       // Use typeExpression.getType() directly: J.VariableDeclarations.getType() delegates to
       // the inner NamedVariable's type which is not updated when we replace typeExpression.
-      TypeTree typeExpr =
-          ((J.VariableDeclarations) md.getParameters().get(0)).getTypeExpression();
+      TypeTree typeExpr = ((J.VariableDeclarations) md.getParameters().get(0)).getTypeExpression();
       JavaType type = typeExpr != null ? typeExpr.getType() : null;
 
       if (!(type instanceof JavaType.FullyQualified fq)) {
@@ -121,10 +120,9 @@ public class PostprocessToCollectionRecipe extends Recipe {
       }
       if (typeExpr instanceof J.ParameterizedType pt) {
         J.Identifier clazz = (J.Identifier) pt.getClazz();
-        JavaType updatedType = pt.getType() instanceof JavaType.Parameterized ptt
-                ? new JavaType.Parameterized(
-                    null,
-                    collectionType, ptt.getTypeParameters())
+        JavaType updatedType =
+            pt.getType() instanceof JavaType.Parameterized ptt
+                ? new JavaType.Parameterized(null, collectionType, ptt.getTypeParameters())
                 : collectionType;
         return pt.withClazz(clazz.withSimpleName("Collection").withType(collectionType))
             .withType(updatedType);
