@@ -213,7 +213,8 @@ public class FactusImpl implements Factus {
         };
 
     return fc.subscribe(
-        SubscriptionRequest.follow(handler.createFactSpecs()).withDebugHintFrom(subscribedProjection.getClass())
+        SubscriptionRequest.follow(handler.createFactSpecs())
+            .withDebugHintFrom(subscribedProjection.getClass())
             .fromNullable(
                 Optional.ofNullable(subscribedProjection.factStreamPosition())
                     .map(FactStreamPosition::factId)
@@ -391,7 +392,8 @@ public class FactusImpl implements Factus {
     //
     synchronized (projection) {
       fc.subscribe(
-              SubscriptionRequest.catchup(factSpecs).withDebugHintFrom(projection.getClass())
+              SubscriptionRequest.catchup(factSpecs)
+                  .withDebugHintFrom(projection.getClass())
                   .fromNullable(stateOrNull),
               fo)
           .awaitComplete();
