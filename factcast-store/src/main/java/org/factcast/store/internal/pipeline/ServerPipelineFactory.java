@@ -22,7 +22,6 @@ import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.util.NoCoverageReportToBeGenerated;
 import org.factcast.store.internal.*;
 import org.factcast.store.internal.filter.blacklist.Blacklist;
-import org.factcast.store.internal.script.JSEngineFactory;
 import org.factcast.store.internal.transformation.FactTransformerService;
 import org.factcast.store.internal.transformation.FactTransformers;
 
@@ -33,7 +32,6 @@ public class ServerPipelineFactory {
   @NonNull final PgMetrics metrics;
   @NonNull final Blacklist blacklist;
   @NonNull final FactTransformerService factTransformerService;
-  @NonNull final JSEngineFactory jsEngineFactory;
 
   public ServerPipeline create(
       @NonNull SubscriptionRequest subreq, @NonNull SubscriptionImpl sub, int maxBufferSize) {
@@ -42,7 +40,7 @@ public class ServerPipelineFactory {
     chain = new MetricServerPipeline(chain, metrics);
 
     // needs to be executed AFTER transformation
-    chain = new FilteringServerPipeline(chain, new FactFilter(subreq, jsEngineFactory));
+    chain = new FilteringServerPipeline(chain, new FactFilter(subreq));
 
     chain =
         new BufferedTransformingServerPipeline(

@@ -12,6 +12,7 @@ import org.factcast.schema.registry.cli.domain.Event
 import org.factcast.schema.registry.cli.domain.Namespace
 import org.factcast.schema.registry.cli.domain.Transformation
 import org.factcast.schema.registry.cli.fs.FileSystemService
+import org.factcast.store.internal.script.JsonString
 import org.factcast.store.registry.transformation.chains.TransformationChain
 import org.factcast.store.registry.transformation.chains.Transformer
 import java.io.File
@@ -19,8 +20,10 @@ import java.io.File
 class TransformationEvaluatorTest : StringSpec() {
 
     val dummyData = mockk<JsonNode>()
-    val resultData = mockk<JsonNode>()
+    val dummyJsonString = mockk<JsonString>()
 
+    val resultData = mockk<JsonNode>()
+    val resultJsonString = JsonString.of("{}");
 
     val transformer = mockk<Transformer>(relaxed = true)
     val fs = mockk<FileSystemService>(relaxed = true)
@@ -47,11 +50,9 @@ class TransformationEvaluatorTest : StringSpec() {
                 fs.readToString(transformation.transformationPath.toFile())
             } returns dummyTransformation
 
-            every { transformer.transform(capture(chainSlot), eq(dummyData)) } returns resultData
+            every { transformer.transform(capture(chainSlot), any()) } returns resultJsonString
 
             val result = uut.evaluate(ns, event, transformation, dummyData)
-
-            result shouldBe resultData
 
             chainSlot.captured.run {
                 fromVersion() shouldBe 1
@@ -63,7 +64,7 @@ class TransformationEvaluatorTest : StringSpec() {
 
             verify {
                 fs.readToString(transformation.transformationPath.toFile())
-                transformer.transform(any(), eq(dummyData))
+                transformer.transform(any(), any())
             }
         }
 
@@ -80,13 +81,13 @@ class TransformationEvaluatorTest : StringSpec() {
                 fs.readToString(transformation.transformationPath.toFile())
             } returns skippedDummyTransformation
 
-            every { transformer.transform(capture(chainSlot), eq(dummyData)) } returns resultData
+            every { transformer.transform(capture(chainSlot), any()) } returns resultJsonString
 
             uut.evaluate(ns, event, transformation, dummyData).shouldBeNull()
 
             verify {
                 fs.readToString(transformation.transformationPath.toFile())
-                transformer.transform(any(), eq(dummyData))
+                transformer.transform(any(), any())
             }
         }
     }

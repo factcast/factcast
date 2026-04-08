@@ -15,24 +15,51 @@
  */
 package org.factcast.core.subscription;
 
-import java.util.UUID;
+import java.util.*;
+import javax.annotation.Nullable;
 import lombok.NonNull;
 import org.factcast.core.spec.FactSpec;
 
 public interface SpecBuilder {
 
+  @NonNull
   SpecBuilder or(@NonNull FactSpec specification);
 
+  @NonNull
   SubscriptionRequest from(@NonNull UUID id);
 
-  SubscriptionRequest fromNullable(UUID id);
+  @NonNull
+  SubscriptionRequest fromNullable(@Nullable UUID id);
 
+  @NonNull
   SubscriptionRequest fromScratch();
 
+  @NonNull
   SubscriptionRequest fromNowOn();
 
   // mutators
+  @NonNull
+  SpecBuilder follow(@NonNull Collection<FactSpec> specification);
+
+  @NonNull
+  default SpecBuilder follow(@NonNull FactSpec specification) {
+    return follow(Collections.singletonList(specification));
+  }
+
+  @NonNull
+  SpecBuilder catchup(@NonNull Collection<FactSpec> specification);
+
+  @NonNull
+  default SpecBuilder catchup(@NonNull FactSpec specification) {
+    return catchup(Collections.singletonList(specification));
+  }
+
+  @NonNull
   SpecBuilder withKeepaliveIntervalInMs(long msec);
 
+  @NonNull
   SpecBuilder withMaxBatchDelayInMs(long msec);
+
+  @NonNull
+  SpecBuilder withDebugHintFrom(@NonNull Class<?> clazz);
 }

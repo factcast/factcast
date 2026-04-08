@@ -28,7 +28,6 @@ import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.pipeline.*;
 import org.factcast.store.internal.query.*;
-import org.factcast.store.internal.script.JSEngineFactory;
 import org.factcast.store.internal.telemetry.PgStoreTelemetry;
 
 // TODO integrate with PGQuery
@@ -46,7 +45,6 @@ public class PgSubscriptionFactory implements AutoCloseable {
 
   final HighWaterMarkFetcher hwmFetcher;
   final ServerPipelineFactory pipelineFactory;
-  final JSEngineFactory jsEngineFactory;
   final ExecutorService es;
   final PgStoreTelemetry telemetry;
   private final int maxPipelineBufferSize;
@@ -59,7 +57,6 @@ public class PgSubscriptionFactory implements AutoCloseable {
       PgCatchupFactory catchupFactory,
       HighWaterMarkFetcher hwmFetcher,
       ServerPipelineFactory pipelineFactory,
-      JSEngineFactory jsEngineFactory,
       PgMetrics metrics,
       PgStoreTelemetry telemetry) {
     this.connectionSupplier = connectionSupplier;
@@ -68,7 +65,6 @@ public class PgSubscriptionFactory implements AutoCloseable {
     this.catchupFactory = catchupFactory;
     this.hwmFetcher = hwmFetcher;
     this.pipelineFactory = pipelineFactory;
-    this.jsEngineFactory = jsEngineFactory;
     this.telemetry = telemetry;
 
     this.maxPipelineBufferSize = props.getTransformationCachePageSize();

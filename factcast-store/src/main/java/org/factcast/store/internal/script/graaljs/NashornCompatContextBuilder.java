@@ -29,7 +29,7 @@ public class NashornCompatContextBuilder {
     System.setProperty("polyglot.engine.WarnInterpreterOnly", "false");
   }
 
-  static final Context.Builder CTX =
+  public static final Context.Builder CTX =
       Context.newBuilder("js")
           .allowExperimentalOptions(true)
           .option("js.syntax-extensions", "true")

@@ -594,6 +594,14 @@ databaseChangeLog:
             splitStatements: false
             stripComments: true
 
-
-
-
+  - changeSet:
+     id: issue4444
+     author: leflamm
+     runInTransaction: false
+     changes:
+       - sqlFile:
+           encoding: utf8
+           path: factcast/issue4444/create_hash_idx_on_transformationcache.sql
+           relativeToChangelogFile: true
+           splitStatements: false
+           stripComments: true

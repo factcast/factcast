@@ -16,12 +16,31 @@
 package org.factcast.store.internal.transformation;
 
 import java.util.*;
+import javax.annotation.Nullable;
+import lombok.Getter;
 import lombok.NonNull;
-import lombok.Value;
 import org.factcast.store.internal.PgFact;
 
-@Value
 public class TransformationRequest {
-  @NonNull PgFact toTransform;
-  Set<Integer> targetVersions;
+  @Getter private @Nullable PgFact toTransform;
+  @Getter private final Set<Integer> targetVersions;
+
+  public TransformationRequest(@NonNull PgFact toTransform, @NonNull Set<Integer> targetVersions) {
+    this.toTransform = toTransform;
+    this.targetVersions = targetVersions;
+  }
+
+  /**
+   * Returns the PgFact and clears the internal reference so the original fact can be GC'd earlier.
+   */
+  public @NonNull PgFact pop() {
+    try {
+      if (toTransform == null) {
+        throw new IllegalStateException("PgFact already consumed");
+      }
+      return toTransform;
+    } finally {
+      toTransform = null;
+    }
+  }
 }

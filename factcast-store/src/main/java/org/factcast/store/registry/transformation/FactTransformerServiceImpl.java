@@ -17,7 +17,6 @@ package org.factcast.store.registry.transformation;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.annotations.VisibleForTesting;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import java.util.*;
@@ -32,6 +31,7 @@ import org.factcast.core.util.ExceptionHelper;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.*;
+import org.factcast.store.internal.script.JsonString;
 import org.factcast.store.internal.transformation.FactTransformerService;
 import org.factcast.store.internal.transformation.TransformationRequest;
 import org.factcast.store.registry.metrics.RegistryMetrics;
@@ -65,7 +65,7 @@ public class FactTransformerServiceImpl implements FactTransformerService, AutoC
     this.registryMetrics = registryMetrics;
     this.pool =
         registryMetrics.monitor(
-            Executors.newWorkStealingPool(props.getSizeOfThreadPoolForBufferedTransformations()),
+            new ForkJoinPool(props.getSizeOfThreadPoolForBufferedTransformations()),
             "parallel-transformation");
   }
 
@@ -101,6 +101,7 @@ public class FactTransformerServiceImpl implements FactTransformerService, AutoC
 
                 List<Pair<TransformationRequest, TransformationChain>> pairs =
                     req.stream().map(r -> Pair.of(r, toChain(r))).toList();
+
                 Set<TransformationCache.Key> keys =
                     pairs.parallelStream()
                         .map(
@@ -111,31 +112,42 @@ public class FactTransformerServiceImpl implements FactTransformerService, AutoC
                                     p.right().id()))
                         .collect(Collectors.toSet());
 
+                // ConcurrentHashMap needed because remove is used from a potentially
+                // parallel stream below
                 Map<UUID, PgFact> found =
-                    cache.findAll(keys).stream().collect(Collectors.toMap(PgFact::id, f -> f));
+                    cache.findAll(keys).stream()
+                        .collect(Collectors.toConcurrentMap(PgFact::id, f -> f));
                 log.trace(
                     "batch lookup found {} out of {} pre transformed facts",
                     found.size(),
                     req.size());
 
                 Stream<Pair<TransformationRequest, TransformationChain>> pairStream =
-                    pairs.stream();
-                if (shouldBeParallel(pairs.stream().map(Pair::right))) {
-                  //noinspection DataFlowIssue
-                  pairStream = pairStream.parallel();
+                    pairs.parallelStream();
+
+                try {
+
+                  // trying to avoid default FJP
+                  // https://blog.krecan.net/2014/03/18/how-to-specify-thread-pool-for-java-8-parallel-streams/
+
+                  return pool.submit(
+                          () ->
+                              pairStream
+                                  .map(
+                                      c -> {
+                                        PgFact e = c.left().pop();
+                                        PgFact cached = found.remove(e.id());
+                                        return Objects.requireNonNullElseGet(
+                                            cached, () -> doTransform(e, c.right()));
+                                      })
+                                  .toList())
+                      .get();
+                } catch (InterruptedException e) {
+                  Thread.currentThread().interrupt();
+                  throw ExceptionHelper.toRuntime(e);
+                } catch (Exception e) {
+                  throw ExceptionHelper.toRuntime(e.getCause());
                 }
-                return pairStream
-                    .map(
-                        c -> {
-                          PgFact e = c.left().toTransform();
-                          PgFact cached = found.get(e.id());
-                          if (cached != null) {
-                            return cached;
-                          } else {
-                            return doTransform(e, c.right());
-                          }
-                        })
-                    .toList();
               },
               pool)
           .get();
@@ -148,23 +160,6 @@ public class FactTransformerServiceImpl implements FactTransformerService, AutoC
     }
   }
 
-  /**
-   * idea is to prevent the overhead of going parallel if all chains target the same warm
-   * script-engine as we'd have a serializing effect there due to synchronization.
-   *
-   * @return if the transformations should go parallel
-   */
-  @VisibleForTesting
-  boolean shouldBeParallel(@NonNull Stream<TransformationChain> chains) {
-    // if there is more than one distinct engine used, return true
-    return chains
-            .filter(Objects::nonNull)
-            .mapToInt(tc -> tc.id().hashCode() + tc.key().hashCode())
-            .distinct()
-            .count()
-        > 1;
-  }
-
   @NonNull
   public PgFact doTransform(@NonNull PgFact e, @NonNull TransformationChain chain) {
 
@@ -172,14 +167,21 @@ public class FactTransformerServiceImpl implements FactTransformerService, AutoC
         RegistryMetrics.OP.TRANSFORMATION,
         () -> {
           try {
-            JsonNode input = FactCastJson.readTree(e.jsonPayload());
+
+            // patch new version to header
             JsonNode header = FactCastJson.readTree(e.jsonHeader());
             ((ObjectNode) header).put("version", chain.toVersion());
-            JsonNode transformedPayload = trans.transform(chain, input);
-            PgFact transformed = PgFact.of(header, transformedPayload);
+
+            JsonString input = JsonString.of(e.jsonPayload());
+            JsonString transformedPayload = trans.transform(chain, input);
+
+            // we're intentionally using string here, keeping the jsonNodes around consumes more
+            // memory
+            PgFact transformed = PgFact.of(header.toString(), transformedPayload.json());
             cache.put(
                 TransformationCache.Key.of(transformed.id(), transformed.version(), chain.id()),
                 transformed);
+
             return transformed;
           } catch (Exception e1) {
             registryMetrics.count(

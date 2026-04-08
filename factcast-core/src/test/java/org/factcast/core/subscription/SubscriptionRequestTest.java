@@ -15,6 +15,7 @@
  */
 package org.factcast.core.subscription;
 
+import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Arrays;
@@ -94,9 +95,92 @@ public class SubscriptionRequestTest {
   @Test
   void testFollowMaxDelay() {
     FactSpec s = FactSpec.ns("xx");
-    final SubscriptionRequest r = SubscriptionRequest.follow(7, s).fromScratch();
+    final SubscriptionRequest r = SubscriptionRequest.follow(17, s).fromScratch();
     assertTrue(r.specs().contains(s));
     assertEquals(1, r.specs().size());
-    assertEquals(7, r.maxBatchDelayInMs());
+    assertEquals(17, r.maxBatchDelayInMs());
   }
+
+  @Test
+  void testMinimumMaxDelay() {
+    org.assertj.core.api.Assertions.assertThatThrownBy(
+            () -> {
+              SubscriptionRequest r =
+                  SubscriptionRequest.follow(1, FactSpec.ns("asd")).fromScratch();
+            })
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  // overloads with projection/aggregate class
+
+  @Test
+  void testFollowWithClass() {
+    FactSpec s = FactSpec.ns("xx");
+    final SubscriptionRequest r =
+        SubscriptionRequest.follow(s).withDebugHintFrom(MyProjection.class).fromScratch();
+    assertTrue(r.specs().contains(s));
+    assertEquals(1, r.specs().size());
+    assertTrue(r.continuous());
+    assertThat(r.debugInfo()).contains("MyProjection");
+  }
+
+  @Test
+  void testFollowCollectionWithClass() {
+    FactSpec ns1 = FactSpec.ns("ns1");
+    FactSpec ns2 = FactSpec.ns("ns2");
+    final SubscriptionRequest r =
+        SubscriptionRequest.follow(Arrays.asList(ns1, ns2))
+            .withDebugHintFrom(MyProjection.class)
+            .fromScratch();
+    assertTrue(r.specs().contains(ns1));
+    assertTrue(r.specs().contains(ns2));
+    assertEquals(2, r.specs().size());
+    assertTrue(r.continuous());
+    assertThat(r.debugInfo()).contains("MyProjection");
+  }
+
+  @Test
+  void testCatchupWithClass() {
+    FactSpec s = FactSpec.ns("xx");
+    final SubscriptionRequest r =
+        SubscriptionRequest.catchup(s).withDebugHintFrom(MyProjection.class).fromScratch();
+    assertTrue(r.specs().contains(s));
+    assertEquals(1, r.specs().size());
+    assertFalse(r.continuous());
+    assertThat(r.debugInfo()).contains("MyProjection");
+  }
+
+  @Test
+  void testCatchupCollectionWithClass() {
+    FactSpec ns1 = FactSpec.ns("ns1");
+    FactSpec ns2 = FactSpec.ns("ns2");
+    final SubscriptionRequest r =
+        SubscriptionRequest.builder()
+            .withDebugHintFrom(MyProjection.class)
+            .catchup(Arrays.asList(ns1, ns2))
+            .fromScratch();
+    assertTrue(r.specs().contains(ns1));
+    assertTrue(r.specs().contains(ns2));
+    assertEquals(2, r.specs().size());
+    assertFalse(r.continuous());
+    assertThat(r.debugInfo()).contains(MyProjection.class.getName());
+  }
+
+  @Test
+  void testDebugInfoWithoutClass() {
+    SubscriptionRequest r = SubscriptionRequest.catchup(FactSpec.ns("xx")).fromScratch();
+    assertThat(r.debugInfo()).doesNotContain("|");
+  }
+
+  @Test
+  void testDebugInfoWithClass() {
+    SubscriptionRequest r =
+        SubscriptionRequest.builder()
+            .catchup(FactSpec.ns("xx"))
+            .withDebugHintFrom(MyProjection.class)
+            .fromScratch();
+    assertThat(r.debugInfo()).endsWith(MyProjection.class.getName());
+  }
+
+  static class MyProjection {}
 }

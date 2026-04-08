@@ -21,7 +21,7 @@ import io.grpc.ManagedChannel;
 import java.util.List;
 import org.springframework.grpc.client.GrpcChannelFactory;
 
-public interface FactCastGrpcChannelFactory {
+public interface FactCastGrpcChannelFactory extends GrpcHealthIndicator {
 
   /**
    * Creates a new channel for the given service name. The returned channel will use all globally
