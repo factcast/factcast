@@ -15,10 +15,7 @@
  */
 package org.factcast.core.subscription;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import lombok.NonNull;
 import org.factcast.core.spec.FactSpec;
 
@@ -49,31 +46,39 @@ public interface SubscriptionRequest {
 
   String pid();
 
-  // ------------
+  static SpecBuilder builder() {
+    return FluentSubscriptionRequest.builder();
+  }
+
+  // ------------ static factory methods ------------
+  // basically shortcuts for creating and followin/catching up a default builder.
   static SpecBuilder follow(@NonNull FactSpec specification) {
-    return new FluentSubscriptionRequest.Builder(new FluentSubscriptionRequest())
-        .follow(specification);
-  }
-
-  static SpecBuilder follow(long maxBatchDelayInMs, @NonNull FactSpec specification) {
-    FluentSubscriptionRequest toBuild = new FluentSubscriptionRequest();
-    toBuild.maxBatchDelayInMs = maxBatchDelayInMs;
-    return new FluentSubscriptionRequest.Builder(toBuild).follow(specification);
-  }
-
-  static SpecBuilder catchup(@NonNull FactSpec specification) {
-    return new FluentSubscriptionRequest.Builder(new FluentSubscriptionRequest())
-        .catchup(specification);
-  }
-
-  // convenience
-  static SpecBuilder catchup(@NonNull Collection<FactSpec> specification) {
-    return new FluentSubscriptionRequest.Builder(new FluentSubscriptionRequest())
-        .catchup(specification);
+    return follow(Collections.singletonList(specification));
   }
 
   static SpecBuilder follow(@NonNull Collection<FactSpec> specification) {
-    return new FluentSubscriptionRequest.Builder(new FluentSubscriptionRequest())
+    return FluentSubscriptionRequest.builder().follow(specification);
+  }
+
+  static SpecBuilder catchup(@NonNull FactSpec specification) {
+    return catchup(Collections.singletonList(specification));
+  }
+
+  static SpecBuilder catchup(@NonNull Collection<FactSpec> specification) {
+    return FluentSubscriptionRequest.builder().catchup(specification);
+  }
+
+  /**
+   * use builder().follow(spec).withMaxBatchDelay(maxBatchDelayInMs) instead
+   *
+   * @param maxBatchDelayInMs
+   * @param specification
+   * @return
+   */
+  @Deprecated
+  static SpecBuilder follow(long maxBatchDelayInMs, @NonNull FactSpec specification) {
+    return FluentSubscriptionRequest.builder()
+        .withMaxBatchDelayInMs(maxBatchDelayInMs)
         .follow(specification);
   }
 }

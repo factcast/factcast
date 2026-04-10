@@ -223,7 +223,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
 
   @Override
   @SuppressWarnings("java:S2589")
-  public List<FactSpec> createFactSpecs() {
+  public Collection<FactSpec> createFactSpecs() {
     List<FactSpec> discovered =
         dispatchInfo.values().stream().map(d -> d.spec().copy()).collect(Collectors.toList());
 
@@ -236,15 +236,15 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
       }
     }
 
-    List<FactSpec> ret = projection.postprocess(discovered);
+    Collection<FactSpec> ret = projection.postprocess(discovered);
     //noinspection ConstantConditions
     if (ret == null || ret.isEmpty()) {
       throw new InvalidHandlerDefinition(
           "No FactSpecs discovered from "
               + projection.getClass()
-              + ". Either add handler methods or implement postprocess(List<FactSpec)");
+              + ". Either add handler methods or implement postprocess(Collection<FactSpec>)");
     }
-    return unmodifiableList(ret);
+    return Collections.unmodifiableCollection(ret);
   }
 
   @Override

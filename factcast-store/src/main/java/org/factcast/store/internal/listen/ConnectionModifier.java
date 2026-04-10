@@ -45,14 +45,18 @@ public interface ConnectionModifier {
     return new DisableAutoCommit();
   }
 
+  static ConnectionModifier withCustomPlanForced() {
+    return new ForceCustomPlan();
+  }
+
   private static JdbcTemplate jdbc(Connection connection) {
     return new JdbcTemplate(new SingleConnectionDataSource(connection, true));
   }
 
   @RequiredArgsConstructor
-  @EqualsAndHashCode(of = {"property", "value"})
+  @EqualsAndHashCode(of = {"propertyName", "value"})
   @SuppressWarnings("java:S2077")
-  public class Property implements ConnectionModifier {
+  class Property implements ConnectionModifier {
     final String propertyName;
     final String value;
 
@@ -96,6 +100,19 @@ public interface ConnectionModifier {
     @Override
     public void beforeReturn(Connection connection) {
       jdbc(connection).execute("RESET enable_bitmapscan");
+    }
+  }
+
+  @EqualsAndHashCode
+  class ForceCustomPlan implements ConnectionModifier {
+    @Override
+    public void afterBorrow(Connection connection) {
+      jdbc(connection).execute("SET plan_cache_mode='force_custom_plan'");
+    }
+
+    @Override
+    public void beforeReturn(Connection connection) {
+      jdbc(connection).execute("RESET plan_cache_mode");
     }
   }
 }

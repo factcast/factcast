@@ -51,7 +51,7 @@ import org.springframework.jdbc.datasource.*;
 @Slf4j
 class PgSynchronizedQuery {
 
-  final @NonNull PgQueryBuilder pgQueryBuilder;
+  @NonNull final String sql;
 
   @NonNull final PreparedStatementSetter setter;
 
@@ -70,7 +70,7 @@ class PgSynchronizedQuery {
       @NonNull String debugInfo,
       @NonNull ServerPipeline pipe,
       @NonNull PgConnectionSupplier connectionSupplier,
-      @NonNull PgQueryBuilder pgQueryBuilder,
+      @NonNull String sql,
       @NonNull PreparedStatementSetter setter,
       @NonNull Supplier<Boolean> isConnected,
       @NonNull AtomicLong serialToContinueFrom,
@@ -81,7 +81,7 @@ class PgSynchronizedQuery {
     this.serialToContinueFrom = serialToContinueFrom;
     this.hwmFetcher = hwmFetcher;
     this.connectionSupplier = connectionSupplier;
-    this.pgQueryBuilder = pgQueryBuilder;
+    this.sql = sql;
     this.setter = setter;
     this.statementHolder = statementHolder;
 
@@ -97,11 +97,13 @@ class PgSynchronizedQuery {
         Lists.newArrayList(ConnectionModifier.withApplicationName(debugInfo));
     if (!useIndex) {
       filters.add(ConnectionModifier.withBitmapScanDisabled());
+    } else {
+      // if we want to use gin indexes, we need to force custom plans to hit the partial index for
+      // the latest facts
+      filters.add(ConnectionModifier.withCustomPlanForced());
     }
     try (SingleConnectionDataSource ds = connectionSupplier.getPooledAsSingleDataSource(filters)) {
       long latest = hwmFetcher.highWaterMark(ds).targetSer();
-      // Recreate every time for now. Might be a bit to expensive.
-      String sql = pgQueryBuilder.createSQL(serialToContinueFrom.get());
       new JdbcTemplate(ds)
           .query(
               sql,
@@ -178,7 +180,7 @@ class PgSynchronizedQuery {
       }
     }
 
-    private void escalateError(ResultSet rs, Throwable e) throws SQLException {
+    private void escalateError(ResultSet rs, Throwable e) {
       try {
         rs.close();
       } catch (Exception ignore) {

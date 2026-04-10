@@ -15,17 +15,17 @@
  */
 package org.factcast.core.store;
 
-import java.util.List;
+import java.util.Collection;
 import lombok.Data;
 import org.factcast.core.spec.FactSpec;
 
 @Data
 public class State {
-  List<FactSpec> specs;
+  Collection<FactSpec> specs;
 
   long serialOfLastMatchingFact;
 
-  public static State of(List<FactSpec> specs, long lastSerial) {
+  public static State of(Collection<FactSpec> specs, long lastSerial) {
     return new State().serialOfLastMatchingFact(lastSerial).specs(specs);
   }
 }

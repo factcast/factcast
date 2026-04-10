@@ -216,6 +216,7 @@ public class FactusImpl implements Factus {
 
     return fc.subscribe(
         SubscriptionRequest.follow(handler.createFactSpecs())
+            .withDebugHintFrom(subscribedProjection.getClass())
             .fromNullable(
                 Optional.ofNullable(subscribedProjection.factStreamPosition())
                     .map(FactStreamPosition::factId)
@@ -386,13 +387,17 @@ public class FactusImpl implements Factus {
           }
         };
 
-    List<FactSpec> factSpecs = handler.createFactSpecs();
+    Collection<FactSpec> factSpecs = handler.createFactSpecs();
 
     // the sole purpose of this synchronization is to make sure that writes from the fact delivery
     // thread are guaranteed to be visible when leaving the block
     //
     synchronized (projection) {
-      fc.subscribe(SubscriptionRequest.catchup(factSpecs).fromNullable(stateOrNull), fo)
+      fc.subscribe(
+              SubscriptionRequest.catchup(factSpecs)
+                  .withDebugHintFrom(projection.getClass())
+                  .fromNullable(stateOrNull),
+              fo)
           .awaitComplete();
     }
     return Optional.ofNullable(positionOfLastFactApplied.get())
@@ -440,8 +445,8 @@ public class FactusImpl implements Factus {
   @Override
   public <M extends ManagedProjection> Locked<M> withLockOn(@NonNull M managedProjection) {
     Projector<M> applier = ehFactory.create(managedProjection);
-    List<FactSpec> specs = applier.createFactSpecs();
-    return new Locked<>(fc, this, managedProjection, specs, factusMetrics);
+    Collection<FactSpec> specs = applier.createFactSpecs();
+    return new Locked<>(fc, this, managedProjection, new ArrayList<>(specs), factusMetrics);
   }
 
   @Override
@@ -454,15 +459,15 @@ public class FactusImpl implements Factus {
                         "Aggregate %s with id %s does not exist."
                             .formatted(aggregateClass.getSimpleName(), id)));
     Projector<SnapshotProjection> snapshotProjectionEventApplier = ehFactory.create(fresh);
-    List<FactSpec> specs = snapshotProjectionEventApplier.createFactSpecs();
-    return new Locked<>(fc, this, fresh, specs, factusMetrics);
+    Collection<FactSpec> specs = snapshotProjectionEventApplier.createFactSpecs();
+    return new Locked<>(fc, this, fresh, new ArrayList<>(specs), factusMetrics);
   }
 
   @Override
   public <P extends SnapshotProjection> Locked<P> withLockOn(@NonNull Class<P> projectionClass) {
     P fresh = fetch(projectionClass);
     Projector<SnapshotProjection> snapshotProjectionEventApplier = ehFactory.create(fresh);
-    List<FactSpec> specs = snapshotProjectionEventApplier.createFactSpecs();
+    Collection<FactSpec> specs = snapshotProjectionEventApplier.createFactSpecs();
     return new Locked<>(fc, this, fresh, specs, factusMetrics);
   }
 

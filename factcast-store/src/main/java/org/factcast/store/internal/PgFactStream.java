@@ -103,12 +103,14 @@ public class PgFactStream {
   @NotNull
   PgSynchronizedQuery createPgSynchronizedQuery() {
     PgQueryBuilder q = new PgQueryBuilder(request.specs(), statementHolder);
-    PreparedStatementSetter setter = q.createStatementSetter();
+    String sql = q.createSQL();
+    log.trace("created query SQL for {} - SQL={}", request.specs(), sql);
+    PreparedStatementSetter setter = q.createStatementSetter(serial);
     return new PgSynchronizedQuery(
         request.debugInfo(),
         pipeline,
         connectionSupplier,
-        q,
+        sql,
         setter,
         this::isConnected,
         serial,
@@ -138,7 +140,7 @@ public class PgFactStream {
     fastForward(hwm);
     // propagate catchup
     if (isConnected()) {
-      log.trace("{} signaling catchup", request);
+      log.debug("{} signaling catchup", request);
       // signal catchup
       telemetry.onCatchup(request);
       pipeline.process(Signal.catchup());
@@ -199,6 +201,7 @@ public class PgFactStream {
   @NonNull
   SingleConnectionDataSource createSingleDataSource(@NonNull SubscriptionRequest request) {
     return connectionSupplier.getPooledAsSingleDataSource(
+        ConnectionModifier.withCustomPlanForced(),
         ConnectionModifier.withAutoCommitDisabled(),
         ConnectionModifier.withApplicationName(request.debugInfo()));
   }

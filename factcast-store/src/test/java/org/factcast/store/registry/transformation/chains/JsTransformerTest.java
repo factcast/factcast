@@ -15,19 +15,17 @@
  */
 package org.factcast.store.registry.transformation.chains;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.*;
 import java.util.*;
 import java.util.concurrent.*;
 import lombok.SneakyThrows;
 import nl.altindag.log.LogCaptor;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.subscription.TransformationException;
-import org.factcast.store.internal.script.graaljs.GraalJSEngineFactory;
+import org.factcast.core.util.FactCastJson;
+import org.factcast.store.internal.script.JsonString;
 import org.factcast.store.registry.transformation.Transformation;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -37,12 +35,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class JsTransformerTest {
 
-  private JsTransformer uut = new JsTransformer(new GraalJSEngineFactory());
+  private JsTransformer uut = new JsTransformer();
 
   private final ObjectMapper om = new ObjectMapper();
 
   @Mock Transformation transformation;
 
+  @SneakyThrows
   @Test
   void testTransform() {
     when(transformation.transformationCode())
@@ -62,7 +61,8 @@ class JsTransformerTest {
 
     data.put("childMap", childMap);
 
-    var result = uut.transform(transformation, om.convertValue(data, JsonNode.class));
+    var jsonArgument = FactCastJson.toJsonNode(data);
+    var result = uut.transform(transformation, JsonString.of(jsonArgument.toString())).toJsonNode();
 
     Assertions.assertThat(result.get("displayName").asText()).isEqualTo("Hugo 38");
     Assertions.assertThat(result.get("hobbies").isArray()).isTrue();
@@ -82,7 +82,7 @@ class JsTransformerTest {
     var data = new HashMap<String, Object>();
     data.put("oldMap", new HashMap<String, Object>());
 
-    var result = uut.transform(transformation, om.convertValue(data, JsonNode.class));
+    var result = uut.transform(transformation, JsonString.from(data)).toJsonNode();
 
     Assertions.assertThat(result.get("newMap").isObject()).isTrue();
     Assertions.assertThat(result.get("newArray").isArray()).isTrue();
@@ -116,12 +116,10 @@ class JsTransformerTest {
     d2.put("y", "2");
 
     // warm up engine
-    uut.transform(transformation, om.convertValue(d1, JsonNode.class));
+    uut.transform(transformation, JsonString.from(d1));
 
-    Callable<JsonNode> c1 =
-        () -> uut.transform(transformation, om.convertValue(d1, JsonNode.class));
-    Callable<JsonNode> c2 =
-        () -> uut.transform(transformation, om.convertValue(d2, JsonNode.class));
+    Callable<JsonNode> c1 = () -> uut.transform(transformation, JsonString.from(d1)).toJsonNode();
+    Callable<JsonNode> c2 = () -> uut.transform(transformation, JsonString.from(d2)).toJsonNode();
 
     ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(2);
     try {
@@ -130,8 +128,8 @@ class JsTransformerTest {
       JsonNode n1 = result1.get();
       JsonNode n2 = result2.get();
 
-      assertThat(n1.get("x").asText()).isEqualTo("1");
-      assertThat(n2.get("x").asText()).isEqualTo("2");
+      Assertions.assertThat(n1.get("x").asText()).isEqualTo("1");
+      Assertions.assertThat(n2.get("x").asText()).isEqualTo("2");
     } finally {
       executor.shutdown();
     }
@@ -150,12 +148,10 @@ class JsTransformerTest {
     d2.put("y", "2");
 
     // warm up engine
-    uut.transform(transformation, om.convertValue(d1, JsonNode.class));
+    uut.transform(transformation, JsonString.from(d1));
 
-    Callable<JsonNode> c1 =
-        () -> uut.transform(transformation, om.convertValue(d1, JsonNode.class));
-    Callable<JsonNode> c2 =
-        () -> uut.transform(transformation, om.convertValue(d2, JsonNode.class));
+    Callable<JsonNode> c1 = () -> uut.transform(transformation, JsonString.from(d1)).toJsonNode();
+    Callable<JsonNode> c2 = () -> uut.transform(transformation, JsonString.from(d2)).toJsonNode();
 
     ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(2);
     try {
@@ -164,10 +160,10 @@ class JsTransformerTest {
       JsonNode n1 = result1.get();
       JsonNode n2 = result2.get();
 
-      assertThat(n1.get("y").asText()).isEqualTo("1");
-      assertThat(n1.get("foo").get("bar").asText()).isEqualTo("1");
-      assertThat(n2.get("y").asText()).isEqualTo("2");
-      assertThat(n2.get("foo").get("bar").asText()).isEqualTo("2");
+      Assertions.assertThat(n1.get("y").asText()).isEqualTo("1");
+      Assertions.assertThat(n1.get("foo").get("bar").asText()).isEqualTo("1");
+      Assertions.assertThat(n2.get("y").asText()).isEqualTo("2");
+      Assertions.assertThat(n2.get("foo").get("bar").asText()).isEqualTo("2");
     } finally {
       executor.shutdown();
     }
@@ -182,15 +178,15 @@ class JsTransformerTest {
 
     Map<String, Object> d1 = new HashMap<>();
     d1.put("y", "1");
-    assertThatThrownBy(
+    Assertions.assertThatThrownBy(
             () -> {
-              uut.transform(transformation, om.convertValue(d1, JsonNode.class));
+              uut.transform(transformation, JsonString.from(d1));
             })
         .isInstanceOf(TransformationException.class);
 
     Assertions.assertThat(logCaptor.getLogs().size()).isGreaterThan(0);
     Assertions.assertThat(
-            logCaptor.getLogs().stream().anyMatch(f -> f.contains("during engine creation")))
+            logCaptor.getLogs().stream().anyMatch(f -> f.contains("during transformation")))
         .isTrue();
   }
 
@@ -203,9 +199,9 @@ class JsTransformerTest {
 
     Map<String, Object> d1 = new HashMap<>();
     d1.put("y", "1");
-    assertThatThrownBy(
+    Assertions.assertThatThrownBy(
             () -> {
-              uut.transform(transformation, om.convertValue(d1, JsonNode.class));
+              uut.transform(transformation, JsonString.from(d1));
             })
         .isInstanceOf(TransformationException.class);
 

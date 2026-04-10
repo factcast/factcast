@@ -421,7 +421,7 @@ public class GrpcFactStore implements FactStore {
 
   @Override
   @NonNull
-  public StateToken stateFor(@NonNull List<FactSpec> specs) {
+  public StateToken stateFor(@NonNull Collection<FactSpec> specs) {
     return callAndHandle(
         () -> {
           MSG_FactSpecsJson msg = converter.toProtoFactSpecs(specs);
@@ -432,7 +432,7 @@ public class GrpcFactStore implements FactStore {
 
   @Override
   @NonNull
-  public StateToken currentStateFor(List<FactSpec> specs) {
+  public StateToken currentStateFor(Collection<FactSpec> specs) {
     if (!this.fastStateToken) {
       return stateFor(specs);
     } else {

@@ -34,7 +34,7 @@ public class WithOptimisticLock {
 
   @NonNull
   @Getter(AccessLevel.PROTECTED)
-  private final List<FactSpec> factSpecs;
+  private final Collection<FactSpec> factSpecs;
 
   @Setter private int retry = 10;
 

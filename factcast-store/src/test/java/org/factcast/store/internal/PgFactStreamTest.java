@@ -110,6 +110,7 @@ class PgFactStreamTest {
       try (var ignored = uut.createSingleDataSource(reqTo)) {
         verify(connectionSupplier)
             .getPooledAsSingleDataSource(
+                ConnectionModifier.withCustomPlanForced(),
                 ConnectionModifier.withAutoCommitDisabled(),
                 ConnectionModifier.withApplicationName("foo"));
       }

@@ -23,7 +23,6 @@ import com.google.common.collect.Lists;
 import jakarta.annotation.Nullable;
 import java.sql.*;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import lombok.*;
 import org.factcast.core.*;
@@ -76,10 +75,7 @@ public class PgFact implements Fact {
     String jsonHeader = header.toString();
     String jsonPayload = transformedPayload.toString();
 
-    PgFact pgFact = new PgFact(id, ns, type, version, aggIds, jsonHeader, jsonPayload);
-    pgFact.parsedHeader.set(header);
-    pgFact.parsedPayload.set(transformedPayload);
-    return pgFact;
+    return new PgFact(id, ns, type, version, aggIds, jsonHeader, jsonPayload);
   }
 
   public static PgFact of(@NonNull String header, @NonNull String transformedPayload) {
@@ -113,13 +109,7 @@ public class PgFact implements Fact {
   @Override
   public @NonNull FactHeader header() {
     if (header == null) {
-      // prefer preparsed header if avail
-      JsonNode headerNode = parsedHeader.get();
-      if (headerNode != null) {
-        header = FactCastJson.readValue(FactHeader.class, headerNode);
-      } else {
-        header = FactCastJson.readValue(FactHeader.class, jsonHeader);
-      }
+      header = FactCastJson.readValue(FactHeader.class, jsonHeader);
     }
     return header;
   }
@@ -149,33 +139,5 @@ public class PgFact implements Fact {
       }
     }
     return Collections.emptySet();
-  }
-
-  @SuppressWarnings("java:S2065")
-  @JsonIgnore
-  private final transient AtomicReference<JsonNode> parsedPayload = new AtomicReference<>();
-
-  @SuppressWarnings("java:S2065")
-  @JsonIgnore
-  private final transient AtomicReference<JsonNode> parsedHeader = new AtomicReference<>();
-
-  @SneakyThrows
-  public @NonNull JsonNode jsonPayloadParsed() {
-    JsonNode p = parsedPayload.get();
-    if (p == null) {
-      p = FactCastJson.readTree(jsonPayload);
-      parsedPayload.set(p);
-    }
-    return p;
-  }
-
-  @SneakyThrows
-  public @NonNull JsonNode jsonHeaderParsed() {
-    JsonNode p = parsedHeader.get();
-    if (p == null) {
-      p = FactCastJson.readTree(jsonHeader);
-      parsedHeader.set(p);
-    }
-    return p;
   }
 }

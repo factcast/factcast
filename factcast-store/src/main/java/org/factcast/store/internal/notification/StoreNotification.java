@@ -108,6 +108,7 @@ public abstract class StoreNotification {
       case PgConstants.CHANNEL_FACT_INSERT -> FactInsertionNotification.from(n);
       case PgConstants.CHANNEL_FACT_TRUNCATE -> FactTruncationNotification.from(n);
       case PgConstants.CHANNEL_FACT_UPDATE -> FactUpdateNotification.from(n);
+      case PgConstants.CHANNEL_CACHE_CLEAR -> CacheClearNotification.from(n);
       default -> {
         if (!PgConstants.CHANNEL_ROUNDTRIP.equals(n.getName())) {
           log.warn("Ignored notification from unknown channel: {}", name);

@@ -24,6 +24,7 @@ import java.util.concurrent.CountDownLatch;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.subscription.MissingTransformationInformationException;
+import org.factcast.store.internal.notification.TransformationStoreChangeNotification;
 import org.factcast.store.registry.transformation.cache.PgTransformationCache;
 import org.factcast.store.registry.transformation.cache.PgTransformationStoreChangeListener;
 import org.factcast.store.registry.transformation.cache.TransformationCache;
@@ -65,7 +66,7 @@ public class TransformationCacheTest {
                 return null;
               })
           .when(listener)
-          .on(any());
+          .on(any(TransformationStoreChangeNotification.class));
       UUID id = UUID.randomUUID();
       Fact f = createTestFact(id, 1, "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\"}");
       fc.publish(f);
@@ -99,7 +100,7 @@ public class TransformationCacheTest {
                 return null;
               })
           .when(listener)
-          .on(any());
+          .on(any(TransformationStoreChangeNotification.class));
       UUID id = UUID.randomUUID();
       Fact f = createTestFact(id, 1, "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\"}");
       fc.publish(f);

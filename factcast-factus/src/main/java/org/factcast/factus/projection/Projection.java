@@ -15,13 +15,14 @@
  */
 package org.factcast.factus.projection;
 
-import java.util.List;
+import java.util.Collection;
 import lombok.NonNull;
 import org.factcast.core.spec.FactSpec;
 import org.slf4j.LoggerFactory;
 
 public interface Projection extends ProgressAware {
-  default @NonNull List<FactSpec> postprocess(@NonNull List<FactSpec> specsAsDiscovered) {
+  default @NonNull Collection<FactSpec> postprocess(
+      @NonNull Collection<FactSpec> specsAsDiscovered) {
     return specsAsDiscovered;
   }
 

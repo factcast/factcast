@@ -20,6 +20,7 @@ import java.sql.*;
 import java.sql.Date;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.*;
@@ -272,34 +273,31 @@ public class PgFactStore extends AbstractFactStore {
 
   @Override
   @NonNull
-  protected State getStateFor(@NonNull List<FactSpec> specs) {
+  protected State getStateFor(@NonNull Collection<FactSpec> specs) {
     return doGetState(specs, 0);
   }
 
   @Override
   @NonNull
-  protected State getStateFor(@NonNull List<FactSpec> specs, long lastMatchingSerial) {
+  protected State getStateFor(@NonNull Collection<FactSpec> specs, long lastMatchingSerial) {
     return doGetState(specs, lastMatchingSerial);
   }
 
-  private State doGetState(@NotNull List<FactSpec> specs, long lastMatchingSerial) {
+  private State doGetState(@NotNull Collection<FactSpec> specs, long lastMatchingSerial) {
     return metrics.time(
         StoreMetrics.OP.GET_STATE_FOR,
         () -> {
           PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs);
-          String stateSQL = pgQueryBuilder.createStateSQL(lastMatchingSerial);
-          PreparedStatementSetter statementSetter = pgQueryBuilder.createStatementSetter();
+          String stateSQL = pgQueryBuilder.createStateSQL();
+          PreparedStatementSetter statementSetter =
+              pgQueryBuilder.createStatementSetter(new AtomicLong(lastMatchingSerial));
 
           ResultSetExtractor<Long> rch =
-              new ResultSetExtractor<>() {
-                @Override
-                public Long extractData(ResultSet resultSet)
-                    throws SQLException, DataAccessException {
-                  if (!resultSet.next()) {
-                    return 0L;
-                  } else {
-                    return resultSet.getLong(1);
-                  }
+              resultSet -> {
+                if (!resultSet.next()) {
+                  return 0L;
+                } else {
+                  return resultSet.getLong(1);
                 }
               };
           long lastSerial = jdbcTemplate.query(stateSQL, statementSetter, rch);
@@ -309,7 +307,7 @@ public class PgFactStore extends AbstractFactStore {
 
   @Override
   @NonNull
-  protected State getCurrentStateFor(List<FactSpec> specs) {
+  protected State getCurrentStateFor(Collection<FactSpec> specs) {
     return metrics.time(
         StoreMetrics.OP.GET_STATE_FOR,
         () -> {

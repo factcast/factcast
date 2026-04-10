@@ -25,7 +25,6 @@ import org.factcast.core.TestFact;
 import org.factcast.core.spec.*;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.store.internal.filter.*;
-import org.factcast.store.internal.script.graaljs.GraalJSEngineFactory;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -35,13 +34,12 @@ class FactFilterTest {
 
   @Nested
   class WhenTesting {
-    GraalJSEngineFactory ef = new GraalJSEngineFactory();
 
     @Test
     void skipsIfNoFilterScriptAndNoAggregateIdPropertyInvolved() {
       @NonNull FactSpec spec = FactSpec.ns("x").type("y").version(2);
       @NonNull SubscriptionRequest req = SubscriptionRequest.catchup(spec).fromScratch();
-      FactFilter uut = new FactFilter(req, ef);
+      FactFilter uut = new FactFilter(req);
       assertThat(uut.canBeSkipped()).isTrue();
     }
 
@@ -54,7 +52,7 @@ class FactFilterTest {
               .version(2)
               .filterScript(FilterScript.js("function(a,b){return true;};"));
       @NonNull SubscriptionRequest req = SubscriptionRequest.catchup(spec).fromScratch();
-      FactFilter uut = new FactFilter(req, ef);
+      FactFilter uut = new FactFilter(req);
       assertThat(uut.canBeSkipped()).isFalse();
 
       Assertions.assertThat(uut.test(PgFact.from(new TestFact().ns("x").type("y").version(2))))
@@ -70,7 +68,7 @@ class FactFilterTest {
               .version(2)
               .filterScript(FilterScript.js("function(a,b){return false;};"));
       @NonNull SubscriptionRequest req = SubscriptionRequest.catchup(spec).fromScratch();
-      FactFilter uut = new FactFilter(req, ef);
+      FactFilter uut = new FactFilter(req);
       assertThat(uut.canBeSkipped()).isFalse();
 
       Assertions.assertThat(uut.test(PgFact.from(new TestFact().ns("x").type("y").version(2))))
@@ -86,7 +84,7 @@ class FactFilterTest {
               .version(2)
               .filterScript(FilterScript.js("function(a,b){return true;};"));
       @NonNull SubscriptionRequest req = SubscriptionRequest.catchup(spec).fromScratch();
-      FactFilter uut = new FactFilter(req, ef);
+      FactFilter uut = new FactFilter(req);
       assertThat(uut.canBeSkipped()).isFalse();
 
       Assertions.assertThat(uut.test(PgFact.from(new TestFact().ns("a").type("b").version(2))))
@@ -98,7 +96,7 @@ class FactFilterTest {
       @NonNull
       FactSpec spec = FactSpec.ns("x").type("y").version(2).aggIdProperty("a", UUID.randomUUID());
       @NonNull SubscriptionRequest req = SubscriptionRequest.catchup(spec).fromScratch();
-      FactFilter uut = new FactFilter(req, ef);
+      FactFilter uut = new FactFilter(req);
       assertThat(uut.canBeSkipped()).isFalse();
     }
   }

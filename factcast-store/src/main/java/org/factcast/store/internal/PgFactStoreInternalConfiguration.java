@@ -40,13 +40,12 @@ import org.factcast.store.internal.listen.*;
 import org.factcast.store.internal.lock.*;
 import org.factcast.store.internal.pipeline.ServerPipelineFactory;
 import org.factcast.store.internal.query.*;
-import org.factcast.store.internal.script.JSEngineFactory;
 import org.factcast.store.internal.tail.PGTailIndexingConfiguration;
 import org.factcast.store.internal.telemetry.PgStoreTelemetry;
 import org.factcast.store.internal.transformation.FactTransformerService;
 import org.factcast.store.registry.*;
 import org.factcast.store.registry.transformation.cache.*;
-import org.factcast.store.registry.transformation.chains.TransformationChains;
+import org.factcast.store.registry.transformation.chains.*;
 import org.springframework.boot.autoconfigure.condition.*;
 import org.springframework.boot.sql.init.dependency.DependsOnDatabaseInitialization;
 import org.springframework.context.annotation.*;
@@ -147,7 +146,6 @@ public class PgFactStoreInternalConfiguration {
       StoreConfigurationProperties props,
       PgCatchupFactory pgCatchupFactory,
       HighWaterMarkFetcher hwmFetcher,
-      JSEngineFactory ef,
       PgStoreTelemetry telemetry,
       ServerPipelineFactory pipelineFactory,
       PgMetrics metrics) {
@@ -159,7 +157,6 @@ public class PgFactStoreInternalConfiguration {
         pgCatchupFactory,
         hwmFetcher,
         pipelineFactory,
-        ef,
         metrics,
         telemetry);
   }
@@ -309,15 +306,16 @@ public class PgFactStoreInternalConfiguration {
 
   @Bean
   public ServerPipelineFactory factPipelineFactory(
-      JSEngineFactory jsEngineFactory,
-      FactTransformerService transformerService,
-      Blacklist blacklist,
-      PgMetrics metrics) {
+      FactTransformerService transformerService, Blacklist blacklist, PgMetrics metrics) {
     return ServerPipelineFactory.builder()
-        .jsEngineFactory(jsEngineFactory)
         .factTransformerService(transformerService)
         .blacklist(blacklist)
         .metrics(metrics)
         .build();
+  }
+
+  @Bean
+  public Transformer transformer() {
+    return new JsTransformer();
   }
 }

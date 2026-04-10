@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2022 factcast.org
+ * Copyright © 2017-2026 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.internal.script;
+package org.factcast.client.grpc;
 
-import org.factcast.store.internal.script.exception.ScriptEngineException;
-
-public interface JSEngine {
-
-  Object invoke(String functionName, JSArgument<?>... input) throws ScriptEngineException;
+public interface GrpcHealthIndicator {
+  /**
+   * Indicates whether the gRPC conneciton is healthy or not.
+   *
+   * @return true if healthy, false otherwise
+   */
+  boolean isHealthy();
 }

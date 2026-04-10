@@ -29,6 +29,7 @@ import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.factus.serializer.SnapshotSerializer;
 import org.factcast.factus.snapshot.SnapshotData;
 import org.factcast.factus.snapshot.SnapshotIdentifier;
+import org.factcast.factus.snapshot.SnapshotSerializerSelector;
 import org.factcast.test.IntegrationTest;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,6 +37,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
@@ -71,6 +73,8 @@ class RedissonSnapshotCacheTest {
   }
 
   @MockitoSpyBean private RedissonClient redisson;
+
+  @Mock SnapshotSerializerSelector selector;
 
   final SnapshotSerializer serializer = new DefaultSnapshotSerializer();
 

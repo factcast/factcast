@@ -16,8 +16,7 @@
 package org.factcast.store.registry.transformation.chains;
 
 import com.google.common.base.Preconditions;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.ToString;
@@ -53,7 +52,7 @@ public class TransformationChain implements Transformation {
 
   private static String createCompositeJS(List<Transformation> list) {
     StringBuilder sb = new StringBuilder();
-    sb.append("var steps = [");
+    sb.append("function (event) { var steps = [");
 
     List<String> code =
         list.stream()
@@ -63,7 +62,7 @@ public class TransformationChain implements Transformation {
 
     sb.append(String.join(",", code));
     sb.append("]; ");
-    sb.append("function transform(event) { steps.forEach( function(f){f(event)} ); }");
+    sb.append("steps.forEach( function(f){f(event)} ); }");
     return sb.toString();
   }
 }

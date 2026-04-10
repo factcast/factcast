@@ -44,6 +44,7 @@ public class PgTransformationStoreChangeListener
   static final long INFLIGHT_TRANSFORMATIONS_DELAY_SECONDS = 10L;
 
   @VisibleForTesting
+  @SuppressWarnings("unused")
   protected PgTransformationStoreChangeListener(
       EventBus bus,
       TransformationCache cache,

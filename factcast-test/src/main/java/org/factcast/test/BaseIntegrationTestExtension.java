@@ -164,6 +164,7 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
               + "        EXECUTE 'TRUNCATE TABLE ' || quote_ident(r.tablename) || ' cascade';\n"
               + "    END LOOP;\n"
               + "END $$;");
+      st.execute("NOTIFY factcast_cache_clear");
     }
   }
 
