@@ -50,7 +50,6 @@ public abstract class AbstractMongoDbProjection implements MongoDbProjection {
     this.writerTokenAcquirer = MongoDbWriterTokenManager.create(mongoDb, projectionKey);
   }
 
-  // TODO: can I remove this constructor and mock the create call instead?
   // Only for testing purposes.
   protected AbstractMongoDbProjection(
       @NonNull MongoDatabase mongoDb,

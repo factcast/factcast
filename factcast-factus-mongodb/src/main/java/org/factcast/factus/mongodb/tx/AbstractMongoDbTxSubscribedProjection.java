@@ -15,15 +15,27 @@
  */
 package org.factcast.factus.mongodb.tx;
 
+import com.google.common.annotations.VisibleForTesting;
+import org.factcast.factus.mongodb.MongoDbWriterTokenManager;
 import org.factcast.factus.projection.SubscribedProjection;
 import org.jspecify.annotations.NonNull;
 import org.springframework.data.mongodb.MongoTransactionManager;
+import org.springframework.data.mongodb.core.MongoTemplate;
 
 public abstract class AbstractMongoDbTxSubscribedProjection extends AbstractMongoDbTxProjection
     implements SubscribedProjection {
 
   protected AbstractMongoDbTxSubscribedProjection(
-      @NonNull MongoTransactionManager mongoTransactionManager) {
-    super(mongoTransactionManager);
+      @NonNull MongoTransactionManager mongoTransactionManager,
+      @NonNull MongoTemplate mongoTemplate) {
+    super(mongoTransactionManager, mongoTemplate);
+  }
+
+  @VisibleForTesting
+  protected AbstractMongoDbTxSubscribedProjection(
+      @NonNull MongoTransactionManager mongoTransactionManager,
+      @NonNull MongoTemplate mongoTemplate,
+      @NonNull MongoDbWriterTokenManager lockSupport) {
+    super(mongoTransactionManager, mongoTemplate, lockSupport);
   }
 }

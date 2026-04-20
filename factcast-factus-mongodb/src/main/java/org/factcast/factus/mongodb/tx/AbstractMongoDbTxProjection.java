@@ -15,6 +15,7 @@
  */
 package org.factcast.factus.mongodb.tx;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.mongodb.client.MongoDatabase;
 import java.time.Duration;
 import java.util.Optional;
@@ -26,7 +27,6 @@ import org.factcast.factus.mongodb.MongoDbProjection;
 import org.factcast.factus.mongodb.MongoDbWriterTokenManager;
 import org.factcast.factus.projection.WriterToken;
 import org.factcast.factus.spring.tx.*;
-import org.springframework.data.mongodb.MongoDatabaseFactory;
 import org.springframework.data.mongodb.MongoTransactionManager;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -41,12 +41,22 @@ public abstract class AbstractMongoDbTxProjection extends AbstractSpringTxProjec
   private final MongoTemplate template;
   private final MongoDbWriterTokenManager lockSupport;
 
-  protected AbstractMongoDbTxProjection(@NonNull MongoTransactionManager mongoTransactionManager) {
+  protected AbstractMongoDbTxProjection(
+      @NonNull MongoTransactionManager mongoTransactionManager,
+      @NonNull MongoTemplate mongoTemplate) {
     super(mongoTransactionManager);
-    final MongoDatabaseFactory resourceFactory = mongoTransactionManager.getResourceFactory();
-    this.template = new MongoTemplate(resourceFactory);
-    this.lockSupport =
-        MongoDbWriterTokenManager.create(resourceFactory.getMongoDatabase(), projectionKey());
+    this.template = mongoTemplate;
+    this.lockSupport = MongoDbWriterTokenManager.create(mongoTemplate.getDb(), projectionKey());
+  }
+
+  @VisibleForTesting
+  protected AbstractMongoDbTxProjection(
+      @NonNull MongoTransactionManager mongoTransactionManager,
+      @NonNull MongoTemplate mongoTemplate,
+      @NonNull MongoDbWriterTokenManager lockSupport) {
+    super(mongoTransactionManager);
+    this.template = mongoTemplate;
+    this.lockSupport = lockSupport;
   }
 
   @Override
@@ -91,7 +101,7 @@ public abstract class AbstractMongoDbTxProjection extends AbstractSpringTxProjec
   @NoArgsConstructor
   @AllArgsConstructor
   @Document(collection = STATE_COLLECTION_NAME)
-  private static class State {
+  protected static class State {
     String projectionKey;
     UUID lastFactId;
     long lastFactSerial;
