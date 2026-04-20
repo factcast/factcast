@@ -15,12 +15,12 @@
  */
 package org.factcast.factus.mongodb.tx;
 
-import org.factcast.factus.spring.tx.SpringTxManagedProjection;
+import org.factcast.factus.projection.ManagedProjection;
 import org.jspecify.annotations.NonNull;
 import org.springframework.data.mongodb.MongoTransactionManager;
 
 public abstract class AbstractMongoDbTxManagedProjection extends AbstractMongoDbTxProjection
-    implements SpringTxManagedProjection {
+    implements ManagedProjection {
 
   protected AbstractMongoDbTxManagedProjection(
       @NonNull MongoTransactionManager mongoTransactionManager) {

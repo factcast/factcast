@@ -15,34 +15,85 @@
  */
 package org.factcast.factus.mongodb.tx;
 
-import lombok.experimental.Delegate;
+import com.mongodb.client.MongoDatabase;
+import java.time.Duration;
+import java.util.Optional;
+import java.util.UUID;
+import lombok.*;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.FactStreamPosition;
-import org.factcast.factus.mongodb.AbstractMongoDbProjection;
-import org.factcast.factus.projection.tx.TransactionBehavior;
-import org.factcast.factus.spring.tx.SpringTransactional;
-import org.factcast.factus.spring.tx.SpringTxAdapter;
-import org.factcast.factus.spring.tx.SpringTxProjection;
-import org.jspecify.annotations.NonNull;
+import org.factcast.factus.mongodb.MongoDbProjection;
+import org.factcast.factus.mongodb.MongoDbWriterTokenManager;
+import org.factcast.factus.projection.WriterToken;
+import org.factcast.factus.spring.tx.*;
+import org.springframework.data.mongodb.MongoDatabaseFactory;
 import org.springframework.data.mongodb.MongoTransactionManager;
-import org.springframework.transaction.TransactionStatus;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 
-public class AbstractMongoDbTxProjection extends AbstractMongoDbProjection
-    implements SpringTxProjection {
-
-  @Delegate private final TransactionBehavior<TransactionStatus> tx;
+@Slf4j
+@SuppressWarnings("java:S1133")
+public abstract class AbstractMongoDbTxProjection extends AbstractSpringTxProjection
+    implements MongoDbProjection {
+  private final MongoTemplate template;
+  private final MongoDbWriterTokenManager lockSupport;
 
   protected AbstractMongoDbTxProjection(@NonNull MongoTransactionManager mongoTransactionManager) {
-    super(mongoTransactionManager.getResourceFactory().getMongoDatabase());
-
-    this.tx =
-        new TransactionBehavior<>(
-            new SpringTxAdapter(
-                mongoTransactionManager, getClass().getAnnotation(SpringTransactional.class)));
+    super(mongoTransactionManager);
+    final MongoDatabaseFactory resourceFactory = mongoTransactionManager.getResourceFactory();
+    this.template = new MongoTemplate(resourceFactory);
+    this.lockSupport =
+        MongoDbWriterTokenManager.create(resourceFactory.getMongoDatabase(), projectionKey());
   }
 
   @Override
-  public void transactionalFactStreamPosition(@NonNull FactStreamPosition factStreamPosition) {
-    assertInTransaction();
-    factStreamPosition(factStreamPosition);
+  public @NonNull MongoDatabase mongoDb() {
+    return template.getDb();
+  }
+
+  @Override
+  public FactStreamPosition factStreamPosition() {
+    return Optional.ofNullable(template.findOne(projectionStateByKeyQuery(), State.class))
+        .map(state -> FactStreamPosition.of(state.lastFactId, state.lastFactSerial))
+        .orElse(null);
+  }
+
+  private @NonNull Query projectionStateByKeyQuery() {
+    return new Query(Criteria.where(PROJECTION_CLASS_FIELD).is(projectionKey()));
+  }
+
+  @Override
+  public void factStreamPosition(@lombok.NonNull FactStreamPosition position) {
+    UUID factId = position.factId();
+    if (factId != null) {
+      template.upsert(
+          projectionStateByKeyQuery(),
+          new Update()
+              .set(LAST_FACT_ID_FIELD, factId)
+              .set(LAST_FACT_SERIAL_FIELD, position.serial()),
+          State.class);
+    }
+  }
+
+  @Override
+  public WriterToken acquireWriteToken(@NonNull Duration maxWait) {
+    return lockSupport.acquireWriteToken(maxWait);
+  }
+
+  private String projectionKey() {
+    return this.getScopedName().asString();
+  }
+
+  @Data
+  @NoArgsConstructor
+  @AllArgsConstructor
+  @Document(collection = STATE_COLLECTION_NAME)
+  private static class State {
+    String projectionKey;
+    UUID lastFactId;
+    long lastFactSerial;
   }
 }
