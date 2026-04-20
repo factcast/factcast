@@ -44,6 +44,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
 
+// TODO: check replica setup
+
 @Slf4j
 @SpringBootTest
 @ContextConfiguration(

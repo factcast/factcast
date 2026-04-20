@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2020 factcast.org
+ * Copyright © 2017-2026 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,8 @@
  */
 package org.factcast.example.client.mongodb;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-
-/** Requires local mongoDB to run. See README.md */
-@SpringBootApplication
-public class ExampleMongoDbClient {
-  public static void main(String[] args) {
-    SpringApplication.run(ExampleMongoDbClient.class, args);
-  }
+public enum Examples {
+  MANAGED,
+  SUBSCRIBED,
+  TRANSACTIONAL,
 }

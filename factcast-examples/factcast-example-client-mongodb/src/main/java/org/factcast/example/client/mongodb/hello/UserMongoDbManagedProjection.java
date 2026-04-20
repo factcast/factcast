@@ -30,11 +30,11 @@ import org.factcast.factus.serializer.ProjectionMetaData;
 
 @ProjectionMetaData(revision = 1)
 @Slf4j
-public class UsersMongoDbManagedProjection extends AbstractMongoDbManagedProjection {
+public class UserMongoDbManagedProjection extends AbstractMongoDbManagedProjection {
 
   private final MongoCollection<UserSchema> userCollection;
 
-  public UsersMongoDbManagedProjection(@NonNull MongoDatabase mongoDatabase) {
+  public UserMongoDbManagedProjection(@NonNull MongoDatabase mongoDatabase) {
 
     super(mongoDatabase);
 
