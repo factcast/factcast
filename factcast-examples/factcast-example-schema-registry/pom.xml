@@ -25,21 +25,23 @@
           <skip>true</skip>
         </configuration>
       </plugin>
-      <plugin>
-        <groupId>org.factcast</groupId>
-        <artifactId>factcast-schema-registry-maven-plugin</artifactId>
-        <version>${project.version}</version>
-        <executions>
-          <execution>
-            <id>build</id>
-            <goals>
-              <goal>build</goal>
-            </goals>
-            <phase>generate-resources</phase>
-            <configuration></configuration>
-          </execution>
-        </executions>
-      </plugin>
+      <!-- TODO this fails for me when I run mvn verify or similar on the reactor
+        but works fine in module itself -->
+      <!-- <plugin> -->
+      <!-- <groupId>org.factcast</groupId> -->
+      <!-- <artifactId>factcast-schema-registry-maven-plugin</artifactId> -->
+      <!-- <version>${project.version}</version> -->
+      <!-- <executions> -->
+      <!-- <execution> -->
+      <!-- <id>build</id> -->
+      <!-- <goals> -->
+      <!-- <goal>build</goal> -->
+      <!-- </goals> -->
+      <!-- <phase>generate-resources</phase> -->
+      <!-- <configuration></configuration> -->
+      <!-- </execution> -->
+      <!-- </executions> -->
+      <!-- </plugin> -->
     </plugins>
   </build>
 </project>
