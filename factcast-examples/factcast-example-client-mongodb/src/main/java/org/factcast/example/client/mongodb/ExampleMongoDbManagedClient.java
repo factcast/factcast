@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2024 factcast.org
+ * Copyright © 2017-2020 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.mongodb.tx;
+package org.factcast.example.client.mongodb;
 
-import org.factcast.factus.mongodb.MongoDbProjection;
-import org.factcast.factus.projection.tx.TransactionAware;
-import org.factcast.factus.spring.tx.SpringTransactional;
+import static org.factcast.example.client.mongodb.Examples.MANAGED;
 
-@SpringTransactional
-public interface MongoDbTxProjection extends MongoDbProjection, TransactionAware {}
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+/** Requires local mongoDB to run. See README.md */
+@SpringBootApplication
+public class ExampleMongoDbManagedClient {
+  public static void main(String[] args) {
+    SpringApplication.run(ExampleMongoDbManagedClient.class, MANAGED.name());
+  }
+}

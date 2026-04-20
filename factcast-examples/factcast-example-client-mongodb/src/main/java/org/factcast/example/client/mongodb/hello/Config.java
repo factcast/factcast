@@ -30,6 +30,9 @@ import org.bson.codecs.pojo.PojoCodecProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.mongodb.MongoDatabaseFactory;
+import org.springframework.data.mongodb.MongoTransactionManager;
+import org.springframework.data.mongodb.core.MongoTemplate;
 
 @Slf4j
 @Configuration
@@ -54,5 +57,20 @@ public class Config {
   @Bean
   MongoDatabase mongoDatabase(MongoClient mongoDbClient) {
     return mongoDbClient.getDatabase("example-database");
+  }
+
+  @Bean
+  MongoDatabaseFactory mongoDbFactory(MongoClient mongoDbClient) {
+    return MongoDatabaseFactory.create(mongoDbClient, "example-database");
+  }
+
+  @Bean
+  MongoTransactionManager mongoTransactionManager(MongoDatabaseFactory dbFactory) {
+    return new MongoTransactionManager(dbFactory);
+  }
+
+  @Bean
+  MongoTemplate mongoTemplate(MongoDatabaseFactory dbFactory) {
+    return new MongoTemplate(dbFactory);
   }
 }

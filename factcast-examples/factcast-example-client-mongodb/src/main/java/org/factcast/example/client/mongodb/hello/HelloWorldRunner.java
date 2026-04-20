@@ -16,15 +16,15 @@
 package org.factcast.example.client.mongodb.hello;
 
 import com.mongodb.client.MongoDatabase;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
+import java.util.concurrent.TimeUnit;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
+import org.factcast.example.client.mongodb.Examples;
 import org.factcast.factus.Factus;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
@@ -39,47 +39,119 @@ public class HelloWorldRunner implements CommandLineRunner {
 
   @NonNull private MongoDatabase mongoDatabase;
 
-  @NonNull private UsersMongoDbSubscribedProjection subscription;
+  @NonNull private UserMongoDbSubscribedProjection subscribedProjection;
+  @NonNull private UserMongoDbTxManagedProjection txManaged;
 
   @Override
   public void run(String... args) throws Exception {
-
+    List<Fact> facts = new ArrayList<>();
     for (int i = 0; i < 10; i++) {
       val factId1 = UUID.randomUUID();
-      val firstNameUuid = UUID.randomUUID();
-      Fact created =
+      val userId = UUID.randomUUID();
+      facts.add(
           Fact.builder()
               .ns("users")
               .type("UserCreated")
               .version(1)
               .id(factId1)
-              .build("{\"firstName\":\"" + firstNameUuid + "\",\"lastName\":\"Lichter\"}");
-      fc.publish(created);
+              .aggId(userId)
+              .build(
+                  "{\"aggregateId\":\""
+                      + userId
+                      + "\",\"firstName\":\"Lena\",\"lastName\":\"Lichter\"}"));
     }
+    final UUID firstUserId = facts.get(0).aggIds().stream().findFirst().get();
+    fc.publish(facts);
 
-    factus.subscribe(subscription);
+    String scenario = Optional.ofNullable(args[0]).orElse("");
+    log.info("Running scenario: {}", scenario);
+    switch (Examples.valueOf(scenario)) {
+      case MANAGED:
+        managedProjectionSlowProcessing();
+        break;
+      case SUBSCRIBED:
+        subscribedProjection();
+        break;
+      case TRANSACTIONAL:
+        updateTxManagedProjection(firstUserId);
+        transactionalManagedUserChanged(firstUserId);
+        break;
+      default:
+        throw new IllegalArgumentException("Unknown scenario: " + scenario);
+    }
+  }
 
+  private void managedProjectionSlowProcessing() {
     ExecutorService threads = Executors.newFixedThreadPool(2);
     for (int i = 0; i < 2; i++) {
       threads.submit(
           () -> {
             try {
               log.info("Starting thread");
-              final UsersMongoDbManagedProjection projection =
-                  new UsersMongoDbManagedProjection(mongoDatabase);
-              factus.update(projection);
-              log.info("Finished update at position: {}", projection.factStreamPosition());
-              log.info("Total count users: {}", projection.findsAll().size());
-              log.info("Done");
+              // Creating and updating managed projection
+              final UserMongoDbManagedProjection slowProcessingManaged =
+                  new UserMongoDbManagedProjection(mongoDatabase);
+              factus.update(slowProcessingManaged);
+              log.info(
+                  "Managed - Finished update at position: {}",
+                  slowProcessingManaged.factStreamPosition());
+              log.info("Managed - Total count users: {}", slowProcessingManaged.findsAll().size());
             } catch (Exception e) {
               log.error(e.getMessage());
+              throw e;
             }
           });
     }
     threads.shutdown();
+  }
 
-    // Check subscribed projection
+  @SneakyThrows
+  private void subscribedProjection() {
+    factus.subscribe(subscribedProjection);
     Thread.sleep(1000);
-    log.info("Subscription position is {}", subscription.factStreamPosition());
+    log.info("Subscription position is {}", subscribedProjection.factStreamPosition());
+  }
+
+  @SneakyThrows
+  private void updateTxManagedProjection(UUID firstUserId) {
+    ExecutorService threads = Executors.newFixedThreadPool(2);
+    for (int i = 0; i < 2; i++) {
+      threads.submit(
+          () -> {
+            try {
+              log.info("Starting thread");
+              factus.update(txManaged);
+              log.info("TxManaged - Finished at position: {}", txManaged.factStreamPosition());
+              UserSchema user = txManaged.findByAggregateId(firstUserId);
+              log.info("TxManaged - Last User: {}", user.getDisplayName());
+              log.info("Done");
+
+            } catch (Exception e) {
+              log.error(e.getMessage());
+              throw e;
+            }
+          });
+    }
+    threads.shutdown();
+    threads.awaitTermination(2, TimeUnit.SECONDS);
+  }
+
+  private void transactionalManagedUserChanged(UUID firstUserId) {
+    factus.publish(
+        Fact.builder()
+            .ns("users")
+            .type("UserChanged")
+            .version(1)
+            .id(UUID.randomUUID())
+            .aggId(firstUserId)
+            .build(
+                "{\"aggregateId\":\""
+                    + firstUserId
+                    + "\",\"firstName\":\"Lina\""
+                    + "\",\"lastName\":\"Zorro\"}"));
+
+    factus.update(txManaged);
+    UserSchema changedUser = txManaged.findByAggregateId(firstUserId);
+    log.info("TxManaged - Changed User lastName: {}", changedUser.getLastName());
   }
 }
