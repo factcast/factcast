@@ -32,7 +32,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 @Component
 @Slf4j
-public class HelloWorldRunner implements CommandLineRunner {
+public class ExampleUseCaseRunner implements CommandLineRunner {
 
   @NonNull private final FactCast fc;
   @NonNull Factus factus;
@@ -147,8 +147,9 @@ public class HelloWorldRunner implements CommandLineRunner {
             .build(
                 "{\"aggregateId\":\""
                     + firstUserId
-                    + "\",\"firstName\":\"Lina\""
-                    + "\",\"lastName\":\"Zorro\"}"));
+                    + "\""
+                    + ",\"firstName\":\"Lina\""
+                    + ",\"lastName\":\"Zorro\"}"));
 
     factus.update(txManaged);
     UserSchema changedUser = txManaged.findByAggregateId(firstUserId);
