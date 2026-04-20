@@ -29,11 +29,11 @@ import org.factcast.factus.mongodb.MongoDbProjection;
 import org.factcast.factus.mongodb.MongoDbWriterToken;
 import org.factcast.factus.mongodb.MongoDbWriterTokenManager;
 import org.factcast.factus.serializer.ProjectionMetaData;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.mongodb.MongoTransactionManager;
@@ -52,12 +52,7 @@ class AbstractMongoDbTxProjectionTest {
   @Mock MongoDbWriterTokenManager writerTokenManager;
   @Mock MongoDatabase db;
 
-  private TestProjection uut;
-
-  @BeforeEach
-  void setUp() {
-    uut = new TestProjection(transactionManager, template, writerTokenManager);
-  }
+  @InjectMocks private TestProjection uut;
 
   @Nested
   class WhenHandlingFactStreamPosition {
@@ -161,8 +156,16 @@ class AbstractMongoDbTxProjectionTest {
   @ProjectionMetaData(revision = 1)
   static class TestProjection extends AbstractMongoDbTxManagedProjection {
 
+    private final MongoDbWriterTokenManager tokenManager;
+
     TestProjection(MongoTransactionManager tm, MongoTemplate t, MongoDbWriterTokenManager mgr) {
-      super(tm, t, mgr);
+      super(tm, t);
+      this.tokenManager = mgr;
+    }
+
+    @Override
+    protected MongoDbWriterTokenManager lockSupport() {
+      return tokenManager;
     }
   }
 
