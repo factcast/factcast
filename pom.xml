@@ -98,7 +98,7 @@
     <nexus-staging-maven-plugin.version>1.6.8</nexus-staging-maven-plugin.version>
     <directory-maven-plugin.version>0.3.1</directory-maven-plugin.version>
     <jacoco-maven-plugin.version>0.8.14</jacoco-maven-plugin.version>
-    <maven.version>3.9.14</maven.version>
+    <maven.version>3.9.15</maven.version>
     <!-- defaults to 11, client modules will be compiled with/to 8 -->
     <maven.compiler.source>21</maven.compiler.source>
     <maven.compiler.target>21</maven.compiler.target>
@@ -128,12 +128,12 @@
     <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
     <mockk.version>1.14.9</mockk.version>
     <graaljs.version>25.0.2</graaljs.version>
-    <redisson.version>4.2.0</redisson.version>
-    <aws-sdk.version>2.42.32</aws-sdk.version>
+    <redisson.version>3.52.0</redisson.version>
+    <aws-sdk.version>2.42.36</aws-sdk.version>
     <mongodb-driver.version>5.6.5</mongodb-driver.version>
     <shedlock.version>7.7.0</shedlock.version>
     <byte-buddy.version>1.18.8-jdk5</byte-buddy.version>
-    <rewrite-java.version>8.79.1</rewrite-java.version>
+    <rewrite-java.version>8.79.6</rewrite-java.version>
     <skipUnitTests>false</skipUnitTests>
     <postgres.version>15</postgres.version>
     <sonar.exclusions>**/src/test/java/**/*.java</sonar.exclusions>
