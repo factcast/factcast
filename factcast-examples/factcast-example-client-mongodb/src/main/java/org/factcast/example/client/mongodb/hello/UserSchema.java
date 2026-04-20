@@ -15,16 +15,20 @@
  */
 package org.factcast.example.client.mongodb.hello;
 
+import java.util.UUID;
 import lombok.*;
 import lombok.experimental.Accessors;
+import org.bson.codecs.pojo.annotations.BsonProperty;
 
-@ToString
 @Data
 @Builder
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 @Accessors(fluent = false)
 public final class UserSchema {
+
+  @BsonProperty("id")
+  private UUID id;
 
   private String firstName;
 
