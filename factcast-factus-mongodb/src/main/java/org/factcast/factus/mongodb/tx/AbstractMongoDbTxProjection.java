@@ -39,24 +39,15 @@ import org.springframework.data.mongodb.core.query.Update;
 public abstract class AbstractMongoDbTxProjection extends AbstractSpringTxProjection
     implements MongoDbProjection {
   private final MongoTemplate template;
-  private final MongoDbWriterTokenManager lockSupport;
+  private final String projectionKey;
+  private MongoDbWriterTokenManager lockSupport;
 
   protected AbstractMongoDbTxProjection(
       @NonNull MongoTransactionManager mongoTransactionManager,
       @NonNull MongoTemplate mongoTemplate) {
     super(mongoTransactionManager);
     this.template = mongoTemplate;
-    this.lockSupport = MongoDbWriterTokenManager.create(mongoTemplate.getDb(), projectionKey());
-  }
-
-  @VisibleForTesting
-  protected AbstractMongoDbTxProjection(
-      @NonNull MongoTransactionManager mongoTransactionManager,
-      @NonNull MongoTemplate mongoTemplate,
-      @NonNull MongoDbWriterTokenManager lockSupport) {
-    super(mongoTransactionManager);
-    this.template = mongoTemplate;
-    this.lockSupport = lockSupport;
+    this.projectionKey = this.getScopedName().asString();
   }
 
   @Override
@@ -72,7 +63,7 @@ public abstract class AbstractMongoDbTxProjection extends AbstractSpringTxProjec
   }
 
   private @NonNull Query projectionStateByKeyQuery() {
-    return new Query(Criteria.where(PROJECTION_CLASS_FIELD).is(projectionKey()));
+    return new Query(Criteria.where(PROJECTION_CLASS_FIELD).is(projectionKey));
   }
 
   @Override
@@ -90,11 +81,15 @@ public abstract class AbstractMongoDbTxProjection extends AbstractSpringTxProjec
 
   @Override
   public WriterToken acquireWriteToken(@NonNull Duration maxWait) {
-    return lockSupport.acquireWriteToken(maxWait);
+    return lockSupport().acquireWriteToken(maxWait);
   }
 
-  private String projectionKey() {
-    return this.getScopedName().asString();
+  @VisibleForTesting
+  protected MongoDbWriterTokenManager lockSupport() {
+    if (lockSupport == null) {
+      lockSupport = MongoDbWriterTokenManager.create(template.getDb(), projectionKey);
+    }
+    return lockSupport;
   }
 
   @Data
