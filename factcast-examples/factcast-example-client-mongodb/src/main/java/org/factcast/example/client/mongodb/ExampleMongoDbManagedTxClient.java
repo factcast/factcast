@@ -20,8 +20,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 /** Demonstrates publishing a UserChanged event and updating a transactional managed projection. */
 @SpringBootApplication
-public class ExampleMongoDbUserChangeClient {
+public class ExampleMongoDbManagedTxClient {
   public static void main(String[] args) {
-    SpringApplication.run(ExampleMongoDbUserChangeClient.class, Examples.TRANSACTIONAL.name());
+    SpringApplication.run(ExampleMongoDbManagedTxClient.class, Examples.TRANSACTIONAL.name());
   }
 }
