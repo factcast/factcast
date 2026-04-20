@@ -68,6 +68,9 @@
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
+        <configuration>
+          <mainClass>org.factcast.example.client.mongodb.ExampleMongoDbManagedClient</mainClass>
+        </configuration>
         <executions>
           <execution>
             <goals>
