@@ -17,7 +17,6 @@ package org.factcast.core.lock;
 
 import java.io.Serial;
 import java.util.List;
-import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NonNull;
 import org.factcast.core.Fact;
@@ -41,7 +40,6 @@ public final class ExceptionAfterPublish extends IllegalStateException {
   }
 
   private static String render(@NonNull List<Fact> publishedFacts) {
-    return FactCastJson.writeValueAsString(
-        publishedFacts.stream().map(Fact::id).collect(Collectors.toList()));
+    return FactCastJson.writeValueAsString(publishedFacts.stream().map(Fact::id).toList());
   }
 }

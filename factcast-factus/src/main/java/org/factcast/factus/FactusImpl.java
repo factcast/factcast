@@ -26,7 +26,6 @@ import java.time.*;
 import java.util.*;
 import java.util.concurrent.atomic.*;
 import java.util.function.*;
-import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -112,7 +111,7 @@ public class FactusImpl implements Factus {
     assertNotClosed();
     InLockedOperation.assertNotInLockedOperation();
 
-    List<Fact> facts = e.stream().map(eventConverter::toFact).collect(Collectors.toList());
+    List<Fact> facts = e.stream().map(eventConverter::toFact).toList();
     fc.publish(facts);
     return resultFn.apply(facts);
   }

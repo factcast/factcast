@@ -45,7 +45,7 @@ public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
   Logger LOGGER = LoggerFactory.getLogger(Factus.class);
   Cache<UUID, Long> serialCache = CacheBuilder.newBuilder().maximumSize(1000).build();
 
-  //// Publishing
+  // Publishing
 
   /** publishes a single event immediately */
   @Override

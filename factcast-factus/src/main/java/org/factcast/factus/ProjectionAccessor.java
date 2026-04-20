@@ -27,7 +27,7 @@ import org.factcast.factus.projection.ManagedProjection;
 import org.factcast.factus.projection.SnapshotProjection;
 
 public interface ProjectionAccessor {
-  ///// PROJECTIONS
+  // PROJECTIONS
 
   // snapshot projections:
 

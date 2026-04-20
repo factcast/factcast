@@ -63,7 +63,7 @@ public class FactSpec {
       aggIds.addAll(
           Arrays.stream(otherAggIds)
               .filter(Objects::nonNull)
-              .collect(Collectors.toList())); // toSet would potentially flip the order
+              .toList()); // toSet would potentially flip the order
     }
     return this;
   }

@@ -18,8 +18,6 @@ package org.factcast.factus.projector;
 import static java.util.Collections.emptySet;
 
 import com.google.common.annotations.VisibleForTesting;
-import jakarta.annotation.Nullable;
-import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -78,9 +76,7 @@ public class ReflectionUtils {
     }
 
     List<Class<?>> eventPojoTypes =
-        Arrays.stream(m.getParameterTypes())
-            .filter(EventObject.class::isAssignableFrom)
-            .collect(Collectors.toList());
+        Arrays.stream(m.getParameterTypes()).filter(EventObject.class::isAssignableFrom).toList();
 
     if (eventPojoTypes.isEmpty()) {
       throw new InvalidHandlerDefinition(
@@ -281,18 +277,11 @@ public class ReflectionUtils {
       // we have a parameter contributor to add, then
       c =
           generalContributors.withHighestPrio(
-              new HandlerParameterContributor() {
-                @Nullable
-                @Override
-                public HandlerParameterProvider providerFor(
-                    @NonNull Class<?> type,
-                    @Nullable Type genericType,
-                    @NonNull Set<Annotation> annotations) {
-                  if (clazz == type) {
-                    return (s, f, p) -> ((OpenTransactionAware<?>) p).runningTransaction();
-                  } else {
-                    return null;
-                  }
+              (type, genericType, annotations) -> {
+                if (clazz == type) {
+                  return (s, f, p1) -> ((OpenTransactionAware<?>) p1).runningTransaction();
+                } else {
+                  return null;
                 }
               });
     } else {
@@ -327,7 +316,7 @@ public class ReflectionUtils {
                               + before.dispatchMethod());
                     }
 
-                    log.debug("Discovered Event handling method {}", m.toString());
+                    log.debug("Discovered Event handling method {}", m);
 
                     m.setAccessible(true);
                   });
