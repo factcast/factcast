@@ -223,9 +223,6 @@ public class StoreConfigurationProperties implements InitializingBean {
   @Override
   public void afterPropertiesSet() throws Exception {
     if (integrationTestMode) {
-
-      // TODO SB4    adjustLogbackAppender();
-
       log.warn(
           "**** You are running in INTEGRATION TEST MODE. If you see this in production, "
               + "this would be a good time to panic. (See "
@@ -246,20 +243,4 @@ public class StoreConfigurationProperties implements InitializingBean {
       }
     }
   }
-
-  // TODO SB4 check if still needed
-
-  //  private void adjustLogbackAppender() {
-  //    LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
-  //    for (Logger logger : context.getLoggerList()) {
-  //      Iterator<Appender<ILoggingEvent>> iter = logger.iteratorForAppenders();
-  //      while (iter.hasNext()) {
-  //        Appender<ILoggingEvent> appender = iter.next();
-  //        if (appender instanceof ConsoleAppender<?> consoleAppender) {
-  //          log.debug("Setting {} to immediate flush", appender.getClass());
-  //          consoleAppender.setImmediateFlush(true);
-  //        }
-  //      }
-  //    }
-  //  }
 }

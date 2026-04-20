@@ -194,9 +194,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
       // fallback for wildcard usage
 
       List<Map.Entry<FactSpecCoordinates, Dispatcher>> found =
-          dispatchInfo.entrySet().stream()
-              .filter(e -> coords.matches(e.getKey()))
-              .collect(Collectors.toList());
+          dispatchInfo.entrySet().stream().filter(e -> coords.matches(e.getKey())).toList();
 
       if (found.size() > 1) {
         InvalidHandlerDefinition ihd =
@@ -255,8 +253,7 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
   @SneakyThrows
   @NonNull
   public static Object unwrapProxy(@NonNull Object bean) {
-    while (AopUtils.isAopProxy(bean) && bean instanceof Advised) {
-      Advised advised = (Advised) bean;
+    while (AopUtils.isAopProxy(bean) && bean instanceof Advised advised) {
       Object targetBean = Objects.requireNonNull(advised.getTargetSource().getTarget());
       if (targetBean == bean) {
         throw new IllegalStateException(
