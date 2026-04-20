@@ -87,7 +87,8 @@ public class StoreConfigurationProperties implements InitializingBean {
    * transformation result is not read in order to be considered stale. This should free some space
    * in a regular cleanup job
    */
-  @Positive int deleteTransformationsStaleForDays = 14;
+  @Min(-1)
+  int deleteTransformationsStaleForDays = 14;
 
   /**
    * If validation is enabled, this controls if transformed facts are persistently cached in
