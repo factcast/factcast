@@ -20,9 +20,8 @@ import static org.mockito.Mockito.*;
 
 import java.util.Timer;
 import java.util.function.Supplier;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.factcast.store.StoreConfigurationProperties;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -30,11 +29,20 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class AutoFlushingServerPipelineTest {
   @Mock private ServerPipeline parent;
-  @Mock private Supplier<Long> stopwatch;
+
+  @Spy
+  private Supplier<Long> stopwatch =
+      new Supplier<Long>() {
+        @Override
+        public Long get() {
+          return System.currentTimeMillis();
+        }
+      };
+
   @Spy private Timer timer = new java.util.Timer();
   private AutoFlushingServerPipeline underTest;
 
-  private static final long DELAY = AutoFlushingServerPipeline.AUTOFLUSH_CHECK_INTERVAL;
+  private static final long DELAY = new StoreConfigurationProperties().getAutoFLushDelay();
 
   @BeforeEach
   void setup() {
@@ -43,9 +51,14 @@ class AutoFlushingServerPipelineTest {
     underTest = new AutoFlushingServerPipeline(parent, DELAY, stopwatch, timer);
   }
 
+  @AfterEach
+  void tearDown() {
+    timer.cancel();
+  }
+
   @Test
   void testConstructorValidation() {
-    assertThatThrownBy(() -> new AutoFlushingServerPipeline(parent, DELAY - 1))
+    assertThatThrownBy(() -> new AutoFlushingServerPipeline(parent, 10))
         .isInstanceOf(IllegalArgumentException.class);
   }
 
@@ -60,13 +73,14 @@ class AutoFlushingServerPipelineTest {
   class AutoFlush {
     @Test
     void testAutoFlushTriggersWhenDelayExceeded() {
-      when(stopwatch.get()).thenReturn(0L, 5000L);
+      timer.cancel(); // cancel immediately to get a deterministic behavior
+      when(stopwatch.get()).thenReturn(0L, (long) (DELAY * 1.5));
 
       // first flush to set lastFlush
       underTest.process(Signal.flush());
       verify(parent).process(any(Signal.FlushSignal.class));
 
-      // now call autoFlush
+      // now call autoFlush (manually)
       underTest.autoFlush();
 
       // should have triggered another flush
@@ -96,10 +110,9 @@ class AutoFlushingServerPipelineTest {
 
       // Verify that process was called with a Signal.FlushSignal
       ArgumentCaptor<Signal> captor = ArgumentCaptor.forClass(Signal.class);
-      // It might have been called twice if the background timer triggered it too,
-      // but in this test environment it's unlikely. However, let's just check AT LEAST once.
+
       verify(parent, atLeastOnce()).process(captor.capture());
-      assertThat(captor.getAllValues()).anyMatch(s -> s instanceof Signal.FlushSignal);
+      assertThat(captor.getAllValues()).allMatch(s -> s instanceof Signal.FlushSignal);
     }
   }
 

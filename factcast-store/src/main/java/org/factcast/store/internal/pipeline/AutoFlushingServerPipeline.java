@@ -45,7 +45,7 @@ public class AutoFlushingServerPipeline extends AbstractServerPipeline {
     this.autoflushDelayMs = autoFlushDelayMs;
     this.stopwatch = stopwatch;
     this.timer = timer;
-    timer.scheduleAtFixedRate(new FlushTask(), 0, AUTOFLUSH_CHECK_INTERVAL);
+    timer.scheduleAtFixedRate(new FlushTask(), AUTOFLUSH_CHECK_INTERVAL, AUTOFLUSH_CHECK_INTERVAL);
   }
 
   @Synchronized
