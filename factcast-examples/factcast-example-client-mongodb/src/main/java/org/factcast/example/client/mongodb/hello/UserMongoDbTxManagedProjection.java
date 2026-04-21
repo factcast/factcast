@@ -40,7 +40,7 @@ public class UserMongoDbTxManagedProjection extends AbstractMongoDbTxManagedProj
 
   protected UserMongoDbTxManagedProjection(
       @NonNull MongoTransactionManager mongoTransactionManager, @NonNull MongoTemplate template) {
-    super(mongoTransactionManager);
+    super(mongoTransactionManager, template);
 
     mongoTemplate = template;
   }
