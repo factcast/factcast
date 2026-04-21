@@ -27,7 +27,10 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.Scroller;
 import com.vaadin.flow.component.sidenav.SideNav;
 import com.vaadin.flow.component.sidenav.SideNavItem;
+import com.vaadin.flow.router.AfterNavigationEvent;
+import com.vaadin.flow.router.AfterNavigationObserver;
 import com.vaadin.flow.router.PageTitle;
+import com.vaadin.flow.server.auth.AnonymousAllowed;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import java.util.*;
 import org.factcast.core.util.NoCoverageReportToBeGenerated;
@@ -39,9 +42,10 @@ import org.factcast.server.ui.utils.Notifications;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /** The main view is a top-level placeholder for other views. */
+@AnonymousAllowed
 @NoCoverageReportToBeGenerated
 @SuppressWarnings({"java:S1948", "java:S6813"}) // vaadin prescribed
-public class MainLayout extends AppLayout {
+public class MainLayout extends AppLayout implements AfterNavigationObserver {
 
   @Autowired JsonViewPluginService service;
 
@@ -102,8 +106,7 @@ public class MainLayout extends AppLayout {
   }
 
   @Override
-  protected void afterNavigation() {
-    super.afterNavigation();
+  public void afterNavigation(AfterNavigationEvent afterNavigationEvent) {
     viewTitle.setText(getCurrentPageTitle());
   }
 

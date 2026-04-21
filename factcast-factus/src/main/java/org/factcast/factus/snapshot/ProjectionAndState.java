@@ -15,8 +15,8 @@
  */
 package org.factcast.factus.snapshot;
 
+import jakarta.annotation.Nullable;
 import java.util.UUID;
-import javax.annotation.Nullable;
 import lombok.NonNull;
 import lombok.Value;
 import org.factcast.factus.projection.SnapshotProjection;

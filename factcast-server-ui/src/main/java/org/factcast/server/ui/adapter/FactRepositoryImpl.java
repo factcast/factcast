@@ -16,14 +16,16 @@
 package org.factcast.server.ui.adapter;
 
 import io.micrometer.core.annotation.Timed;
+import jakarta.annotation.Nullable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
-import javax.annotation.Nullable;
-import lombok.*;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpec;
@@ -39,7 +41,7 @@ import org.factcast.server.ui.security.SecurityService;
 import org.factcast.server.ui.views.filter.FilterBean;
 
 @Slf4j
-@Timed(value = UiMetrics.TIMER_METRIC_NAME)
+@Timed(UiMetrics.TIMER_METRIC_NAME)
 @RequiredArgsConstructor
 public class FactRepositoryImpl implements FactRepository {
 

@@ -76,9 +76,7 @@ class SchemaStoreChangeNotificationTest {
 
     @Test
     void internalIsNotDistributed() {
-      org.assertj.core.api.Assertions.assertThat(
-              SchemaStoreChangeNotification.internal().distributed())
-          .isFalse();
+      Assertions.assertThat(SchemaStoreChangeNotification.internal().distributed()).isFalse();
     }
 
     @Test

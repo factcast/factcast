@@ -15,6 +15,7 @@
  */
 package org.factcast.store.internal.filter.blacklist;
 
+import jakarta.validation.Valid;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
@@ -30,7 +31,7 @@ import org.springframework.validation.annotation.Validated;
 @Accessors(fluent = false)
 public final class BlacklistConfigurationProperties implements InitializingBean {
 
-  BlacklistType type = BlacklistType.POSTGRES;
+  @Valid BlacklistType type = BlacklistType.POSTGRES;
 
   String location = "classpath:blacklist.json";
 

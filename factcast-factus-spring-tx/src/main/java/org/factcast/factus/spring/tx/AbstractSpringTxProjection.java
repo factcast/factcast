@@ -15,7 +15,7 @@
  */
 package org.factcast.factus.spring.tx;
 
-import javax.annotation.*;
+import jakarta.annotation.*;
 import lombok.NonNull;
 import lombok.experimental.Delegate;
 import org.factcast.core.*;

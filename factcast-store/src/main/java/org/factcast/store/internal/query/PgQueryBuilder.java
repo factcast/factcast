@@ -21,7 +21,8 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
-import lombok.*;
+import lombok.NonNull;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.store.internal.PgConstants;
@@ -194,7 +195,7 @@ public class PgQueryBuilder {
 
           if (filterByAggregateIdProperty(spec)) {
             sb.append(AND).append("(");
-            sb.append("(header ->> 'version')::int != ? " + OR);
+            sb.append("(header ->> 'version')::int != ? ").append(OR);
             sb.append("(true ");
 
             for (Entry<String, UUID> entry : spec.aggIdProperties().entrySet()) {
@@ -208,7 +209,8 @@ public class PgQueryBuilder {
               (key, value) ->
                   sb.append(AND + "(")
                       .append(PgConstants.COLUMN_HEADER)
-                      .append(CONTAINS_JSONB + OR) // single
+                      .append(CONTAINS_JSONB)
+                      .append(OR) // single
                       .append(PgConstants.COLUMN_HEADER)
                       .append(CONTAINS_JSONB + ")")); // array
 

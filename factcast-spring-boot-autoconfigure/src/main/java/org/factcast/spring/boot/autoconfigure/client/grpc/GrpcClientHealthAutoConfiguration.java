@@ -19,12 +19,12 @@ import static org.factcast.client.grpc.FactCastGrpcClientProperties.FACTCAST_GRP
 
 import org.factcast.client.grpc.GrpcFactStore;
 import org.factcast.client.grpc.GrpcHealthIndicator;
-import org.springframework.boot.actuate.health.Health;
-import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.health.contributor.Health;
+import org.springframework.boot.health.contributor.HealthIndicator;
 import org.springframework.context.annotation.Bean;
 
 @AutoConfiguration

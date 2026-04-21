@@ -16,7 +16,6 @@
 package org.factcast.server.security.auth;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.*;

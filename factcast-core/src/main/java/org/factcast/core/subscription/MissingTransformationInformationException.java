@@ -15,8 +15,10 @@
  */
 package org.factcast.core.subscription;
 
+import java.io.Serial;
+
 public class MissingTransformationInformationException extends TransformationException {
-  private static final long serialVersionUID = 1L;
+  @Serial private static final long serialVersionUID = 1L;
 
   public MissingTransformationInformationException(String string) {
     super(string);

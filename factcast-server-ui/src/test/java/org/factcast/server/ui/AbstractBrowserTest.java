@@ -191,8 +191,11 @@ public abstract class AbstractBrowserTest {
 
   protected Locator openSerialSelector() {
     page.locator("#starting-serial > input").click();
-    final var dialog = page.getByRole(AriaRole.DIALOG);
-    dialog.waitFor();
+    final var dialog = page.locator("#toSerialOverlay");
+    dialog.waitFor(
+        new Locator.WaitForOptions()
+            .setState(
+                WaitForSelectorState.ATTACHED)); // needed because playwright thinks its hidden
     return dialog;
   }
 

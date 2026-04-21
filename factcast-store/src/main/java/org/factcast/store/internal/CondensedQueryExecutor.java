@@ -74,7 +74,7 @@ class CondensedQueryExecutor {
     HashSet<String> set = new HashSet<>();
     specs.forEach(
         s -> {
-          if (s.type() == null || s.type().equals("*")) {
+          if (s.type() == null || "*".equals(s.type())) {
             set.add(s.ns());
           } else {
             set.add(s.ns() + ":" + s.type());

@@ -15,17 +15,19 @@
  */
 package org.factcast.server.ui.adapter;
 
-import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.vaadin.flow.server.*;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.*;
 import java.net.*;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.NonNull;
+import lombok.Setter;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.util.ExceptionHelper;
 import org.factcast.server.ui.port.FileReportUploadStream;
@@ -37,14 +39,12 @@ public class FileSystemReportStore implements ReportStore {
 
   public final String persistenceDir;
 
-  @Setter(value = AccessLevel.PACKAGE)
+  @Setter(AccessLevel.PACKAGE)
   private ObjectMapper objectMapper;
 
   public FileSystemReportStore(@NonNull String persistenceDir) {
     this.persistenceDir = persistenceDir;
     final var om = new ObjectMapper();
-    om.registerModule(new JavaTimeModule());
-    om.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     this.objectMapper = om;
   }
 
@@ -52,7 +52,7 @@ public class FileSystemReportStore implements ReportStore {
   @SneakyThrows
   public FileReportUploadStream createBatchUpload(
       @NonNull String userName, @NonNull String reportName, @NonNull ReportFilterBean query) {
-    final var reportFilePath = Paths.get(persistenceDir, userName, reportName);
+    final var reportFilePath = Path.of(persistenceDir, userName, reportName);
     log.info("Saving report to {}", reportFilePath);
     log.info("Usable space in partition: {} MB", getUsableSpaceInMb(persistenceDir));
 
@@ -78,7 +78,7 @@ public class FileSystemReportStore implements ReportStore {
 
   @Override
   public List<ReportEntry> listAllForUser(@NonNull String userName) {
-    final var reportDir = Paths.get(persistenceDir, userName);
+    final var reportDir = Path.of(persistenceDir, userName);
     if (!Files.exists(reportDir)) {
       return List.of();
     }
@@ -105,7 +105,7 @@ public class FileSystemReportStore implements ReportStore {
 
   @Override
   public void delete(@NonNull String userName, @NonNull String reportName) {
-    final var reportFilePath = Paths.get(persistenceDir, userName, reportName);
+    final var reportFilePath = Path.of(persistenceDir, userName, reportName);
     log.info("Deleting report: {}", reportFilePath);
     if (Files.exists(reportFilePath)) {
       try {
@@ -116,7 +116,7 @@ public class FileSystemReportStore implements ReportStore {
       }
     } else {
       throw new IllegalArgumentException(
-          String.format("No report exists with name %s for user %s", reportName, userName));
+          "No report exists with name %s for user %s".formatted(reportName, userName));
     }
   }
 
