@@ -15,8 +15,10 @@
  */
 package org.factcast.store.internal.pipeline;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import java.util.*;
+import java.util.function.Supplier;
 import lombok.*;
 
 public class AutoFlushingServerPipeline extends AbstractServerPipeline {
@@ -24,13 +26,21 @@ public class AutoFlushingServerPipeline extends AbstractServerPipeline {
   private final long autoflushDelayMs;
   private final Timer timer = new Timer();
   private long lastFlush = 0;
+  private final Supplier<Long> stopwatch;
 
   public AutoFlushingServerPipeline(@NonNull ServerPipeline parent, long autoFlushDelayMs) {
+    this(parent, autoFlushDelayMs, System::currentTimeMillis);
+  }
+
+  @VisibleForTesting
+  AutoFlushingServerPipeline(
+      @NonNull ServerPipeline parent, long autoFlushDelayMs, Supplier<Long> stopwatch) {
     super(parent);
     Preconditions.checkArgument(
         autoFlushDelayMs >= AUTOFLUSH_CHECK_INTERVAL,
         "autoFlushDelayMs must be >=" + AUTOFLUSH_CHECK_INTERVAL);
     this.autoflushDelayMs = autoFlushDelayMs;
+    this.stopwatch = stopwatch;
     timer.scheduleAtFixedRate(new FlushTask(), 0, AUTOFLUSH_CHECK_INTERVAL);
   }
 
@@ -45,7 +55,7 @@ public class AutoFlushingServerPipeline extends AbstractServerPipeline {
   }
 
   private long now() {
-    return System.currentTimeMillis();
+    return stopwatch.get();
   }
 
   class FlushTask extends TimerTask {
