@@ -116,7 +116,7 @@ class PgFactStoreLogSuppressionIntegrationTest {
       // 2) enable the property, register the TurboFilter, subscribe again — TRACE logs
       //    should be suppressed
       LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
-      var filter = new FromScratchCatchupLogSuppressingTurboFilter(Level.DEBUG, 0);
+      var filter = new FromScratchCatchupLogSuppressingTurboFilter(Level.DEBUG, 0, 0);
       filter.setName("test-catchup-trace-suppressor");
 
       storeProps.setFromScratchCatchupMinLogLevel("DEBUG");

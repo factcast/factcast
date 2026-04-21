@@ -233,6 +233,13 @@ public class StoreConfigurationProperties implements InitializingBean {
    */
   int fromScratchCatchupLogSuppressionThreshold = 0;
 
+  /**
+   * After the threshold is exceeded, allow 1 out of every N suppressed log events through instead
+   * of suppressing all. 0 disables sampling (full suppression after threshold). Only effective when
+   * {@link #fromScratchCatchupMinLogLevel} is set.
+   */
+  int fromScratchCatchupLogSuppressionSampleRate = 0;
+
   public boolean isSchemaRegistryConfigured() {
     return schemaRegistryUrl != null;
   }
@@ -260,14 +267,18 @@ public class StoreConfigurationProperties implements InitializingBean {
     if (fromScratchCatchupMinLogLevel != null) {
       Level parsedLevel = Level.toLevel(fromScratchCatchupMinLogLevel, null);
       if (parsedLevel != null) {
-        registerCatchupTraceTurboFilter(parsedLevel, fromScratchCatchupLogSuppressionThreshold);
+        registerCatchupTraceTurboFilter(
+            parsedLevel,
+            fromScratchCatchupLogSuppressionThreshold,
+            fromScratchCatchupLogSuppressionSampleRate);
         log.info(
-            "Log suppression below {} during from-scratch catchup is enabled (threshold={})"
-                + " (see "
+            "Log suppression below {} during from-scratch catchup is enabled (threshold={},"
+                + " sampleRate={}) (see "
                 + PROPERTIES_PREFIX
                 + ".fromScratchCatchupMinLogLevel)",
             parsedLevel,
-            fromScratchCatchupLogSuppressionThreshold);
+            fromScratchCatchupLogSuppressionThreshold,
+            fromScratchCatchupLogSuppressionSampleRate);
       } else {
         log.warn(
             "Invalid log level '{}' for "
@@ -291,9 +302,9 @@ public class StoreConfigurationProperties implements InitializingBean {
     }
   }
 
-  private void registerCatchupTraceTurboFilter(Level minLevel, int threshold) {
+  private void registerCatchupTraceTurboFilter(Level minLevel, int threshold, int sampleRate) {
     LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
-    var filter = new FromScratchCatchupLogSuppressingTurboFilter(minLevel, threshold);
+    var filter = new FromScratchCatchupLogSuppressingTurboFilter(minLevel, threshold, sampleRate);
     filter.setName("factcast-catchup-trace-suppressor");
     filter.start();
     context.addTurboFilter(filter);

@@ -32,6 +32,10 @@ import org.slf4j.Marker;
  * threshold). This allows initial debugging context to be logged while protecting downstream log
  * aggregators (e.g. Grafana) from being overwhelmed during large catchups.
  *
+ * <p>Once the threshold is exceeded, an optional sampling mode can let 1 out of every {@code
+ * sampleRate} suppressed events through, providing a steady trickle of diagnostic logs throughout
+ * the entire catchup instead of complete silence.
+ *
  * <p>The catchup thread calls {@link #beginCatchup(String)} before starting and {@link
  * #endCatchup()} when done. These methods manage the MDC attribute and a per-catchup event counter.
  * The counter is shared across all threads that inherit the same MDC (e.g. ForkJoinPool workers that
@@ -46,10 +50,13 @@ public class FromScratchCatchupLogSuppressingTurboFilter extends TurboFilter {
 
   private final Level minLevel;
   private final int threshold;
+  private final int sampleRate;
 
-  public FromScratchCatchupLogSuppressingTurboFilter(@NonNull Level minLevel, int threshold) {
+  public FromScratchCatchupLogSuppressingTurboFilter(
+      @NonNull Level minLevel, int threshold, int sampleRate) {
     this.minLevel = minLevel;
     this.threshold = threshold;
+    this.sampleRate = sampleRate;
   }
 
   /**
@@ -88,7 +95,14 @@ public class FromScratchCatchupLogSuppressingTurboFilter extends TurboFilter {
     }
     if (level.toInt() < minLevel.toInt()) {
       AtomicInteger counter = counters.get(catchupId);
-      if (counter == null || counter.get() > threshold || counter.incrementAndGet() > threshold) {
+      if (counter == null) {
+        return FilterReply.DENY;
+      }
+      int count = counter.incrementAndGet();
+      if (count > threshold) {
+        if (sampleRate > 0 && count % sampleRate == 0) {
+          return FilterReply.NEUTRAL;
+        }
         return FilterReply.DENY;
       }
     }

@@ -35,7 +35,7 @@ class FromScratchCatchupTraceSuppressingTurboFilterTest {
   class WithMinLevelDebugAndNoThreshold {
 
     final FromScratchCatchupLogSuppressingTurboFilter uut =
-        new FromScratchCatchupLogSuppressingTurboFilter(Level.DEBUG, 0);
+        new FromScratchCatchupLogSuppressingTurboFilter(Level.DEBUG, 0, 0);
 
     @Nested
     class WhenMdcIsSet {
@@ -86,7 +86,7 @@ class FromScratchCatchupTraceSuppressingTurboFilterTest {
   class WithMinLevelInfoAndNoThreshold {
 
     final FromScratchCatchupLogSuppressingTurboFilter uut =
-        new FromScratchCatchupLogSuppressingTurboFilter(Level.INFO, 0);
+        new FromScratchCatchupLogSuppressingTurboFilter(Level.INFO, 0, 0);
 
     @Nested
     class WhenMdcIsSet {
@@ -129,7 +129,7 @@ class FromScratchCatchupTraceSuppressingTurboFilterTest {
   class WithThreshold {
 
     final FromScratchCatchupLogSuppressingTurboFilter uut =
-        new FromScratchCatchupLogSuppressingTurboFilter(Level.DEBUG, 3);
+        new FromScratchCatchupLogSuppressingTurboFilter(Level.DEBUG, 3, 0);
 
     @Test
     void allowsEventsUpToThreshold() {
@@ -168,6 +168,64 @@ class FromScratchCatchupTraceSuppressingTurboFilterTest {
           .isEqualTo(FilterReply.NEUTRAL);
       assertThat(uut.decide(null, null, Level.TRACE, null, null, null))
           .isEqualTo(FilterReply.DENY);
+
+      FromScratchCatchupLogSuppressingTurboFilter.endCatchup();
+    }
+  }
+
+  @Nested
+  class WithSampling {
+
+    // threshold=2, sampleRate=5: allow first 2 events, then every 5th
+    final FromScratchCatchupLogSuppressingTurboFilter uut =
+        new FromScratchCatchupLogSuppressingTurboFilter(Level.DEBUG, 2, 5);
+
+    @Test
+    void allowsEveryNthEventAfterThreshold() {
+      FromScratchCatchupLogSuppressingTurboFilter.beginCatchup("sample-test");
+
+      // events 1 and 2 pass (within threshold)
+      assertThat(uut.decide(null, null, Level.TRACE, null, null, null))
+          .isEqualTo(FilterReply.NEUTRAL);
+      assertThat(uut.decide(null, null, Level.TRACE, null, null, null))
+          .isEqualTo(FilterReply.NEUTRAL);
+
+      // events 3, 4 denied (past threshold, not on sampleRate boundary)
+      assertThat(uut.decide(null, null, Level.TRACE, null, null, null))
+          .isEqualTo(FilterReply.DENY);
+      assertThat(uut.decide(null, null, Level.TRACE, null, null, null))
+          .isEqualTo(FilterReply.DENY);
+
+      // event 5 allowed (5 % 5 == 0)
+      assertThat(uut.decide(null, null, Level.TRACE, null, null, null))
+          .isEqualTo(FilterReply.NEUTRAL);
+
+      // events 6-9 denied
+      for (int i = 6; i <= 9; i++) {
+        assertThat(uut.decide(null, null, Level.TRACE, null, null, null))
+            .isEqualTo(FilterReply.DENY);
+      }
+
+      // event 10 allowed (10 % 5 == 0)
+      assertThat(uut.decide(null, null, Level.TRACE, null, null, null))
+          .isEqualTo(FilterReply.NEUTRAL);
+
+      FromScratchCatchupLogSuppressingTurboFilter.endCatchup();
+    }
+
+    @Test
+    void eventsAtOrAboveMinLevelAreUnaffectedBySampling() {
+      FromScratchCatchupLogSuppressingTurboFilter.beginCatchup("sample-test-2");
+
+      // exhaust threshold
+      uut.decide(null, null, Level.TRACE, null, null, null);
+      uut.decide(null, null, Level.TRACE, null, null, null);
+
+      // DEBUG and above always pass regardless of sampling
+      assertThat(uut.decide(null, null, Level.DEBUG, null, null, null))
+          .isEqualTo(FilterReply.NEUTRAL);
+      assertThat(uut.decide(null, null, Level.INFO, null, null, null))
+          .isEqualTo(FilterReply.NEUTRAL);
 
       FromScratchCatchupLogSuppressingTurboFilter.endCatchup();
     }
