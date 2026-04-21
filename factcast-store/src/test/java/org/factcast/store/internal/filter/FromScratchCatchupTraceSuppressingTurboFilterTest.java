@@ -32,17 +32,17 @@ class FromScratchCatchupTraceSuppressingTurboFilterTest {
   }
 
   @Nested
-  class WithMinLevelDebug {
+  class WithMinLevelDebugAndNoThreshold {
 
     final FromScratchCatchupLogSuppressingTurboFilter uut =
-        new FromScratchCatchupLogSuppressingTurboFilter(Level.DEBUG);
+        new FromScratchCatchupLogSuppressingTurboFilter(Level.DEBUG, 0);
 
     @Nested
     class WhenMdcIsSet {
 
       @Test
       void deniesTrace() {
-        MDC.put(FromScratchCatchupLogSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH, "true");
+        MDC.put(FromScratchCatchupLogSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH, "catchup-1");
 
         assertThat(uut.decide(null, null, Level.TRACE, null, null, null))
             .isEqualTo(FilterReply.DENY);
@@ -50,7 +50,7 @@ class FromScratchCatchupTraceSuppressingTurboFilterTest {
 
       @Test
       void allowsDebug() {
-        MDC.put(FromScratchCatchupLogSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH, "true");
+        MDC.put(FromScratchCatchupLogSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH, "catchup-1");
 
         assertThat(uut.decide(null, null, Level.DEBUG, null, null, null))
             .isEqualTo(FilterReply.NEUTRAL);
@@ -58,7 +58,7 @@ class FromScratchCatchupTraceSuppressingTurboFilterTest {
 
       @Test
       void allowsInfo() {
-        MDC.put(FromScratchCatchupLogSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH, "true");
+        MDC.put(FromScratchCatchupLogSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH, "catchup-1");
 
         assertThat(uut.decide(null, null, Level.INFO, null, null, null))
             .isEqualTo(FilterReply.NEUTRAL);
@@ -83,17 +83,17 @@ class FromScratchCatchupTraceSuppressingTurboFilterTest {
   }
 
   @Nested
-  class WithMinLevelInfo {
+  class WithMinLevelInfoAndNoThreshold {
 
     final FromScratchCatchupLogSuppressingTurboFilter uut =
-        new FromScratchCatchupLogSuppressingTurboFilter(Level.INFO);
+        new FromScratchCatchupLogSuppressingTurboFilter(Level.INFO, 0);
 
     @Nested
     class WhenMdcIsSet {
 
       @Test
       void deniesTrace() {
-        MDC.put(FromScratchCatchupLogSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH, "true");
+        MDC.put(FromScratchCatchupLogSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH, "catchup-1");
 
         assertThat(uut.decide(null, null, Level.TRACE, null, null, null))
             .isEqualTo(FilterReply.DENY);
@@ -101,7 +101,7 @@ class FromScratchCatchupTraceSuppressingTurboFilterTest {
 
       @Test
       void deniesDebug() {
-        MDC.put(FromScratchCatchupLogSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH, "true");
+        MDC.put(FromScratchCatchupLogSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH, "catchup-1");
 
         assertThat(uut.decide(null, null, Level.DEBUG, null, null, null))
             .isEqualTo(FilterReply.DENY);
@@ -109,7 +109,7 @@ class FromScratchCatchupTraceSuppressingTurboFilterTest {
 
       @Test
       void allowsInfo() {
-        MDC.put(FromScratchCatchupLogSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH, "true");
+        MDC.put(FromScratchCatchupLogSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH, "catchup-1");
 
         assertThat(uut.decide(null, null, Level.INFO, null, null, null))
             .isEqualTo(FilterReply.NEUTRAL);
@@ -117,11 +117,101 @@ class FromScratchCatchupTraceSuppressingTurboFilterTest {
 
       @Test
       void allowsWarn() {
-        MDC.put(FromScratchCatchupLogSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH, "true");
+        MDC.put(FromScratchCatchupLogSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH, "catchup-1");
 
         assertThat(uut.decide(null, null, Level.WARN, null, null, null))
             .isEqualTo(FilterReply.NEUTRAL);
       }
+    }
+  }
+
+  @Nested
+  class WithThreshold {
+
+    final FromScratchCatchupLogSuppressingTurboFilter uut =
+        new FromScratchCatchupLogSuppressingTurboFilter(Level.DEBUG, 3);
+
+    @Test
+    void allowsEventsUpToThreshold() {
+      FromScratchCatchupLogSuppressingTurboFilter.beginCatchup("threshold-test");
+
+      // first 3 events should pass
+      assertThat(uut.decide(null, null, Level.TRACE, null, null, null))
+          .isEqualTo(FilterReply.NEUTRAL);
+      assertThat(uut.decide(null, null, Level.TRACE, null, null, null))
+          .isEqualTo(FilterReply.NEUTRAL);
+      assertThat(uut.decide(null, null, Level.TRACE, null, null, null))
+          .isEqualTo(FilterReply.NEUTRAL);
+
+      // 4th event should be denied
+      assertThat(uut.decide(null, null, Level.TRACE, null, null, null))
+          .isEqualTo(FilterReply.DENY);
+
+      FromScratchCatchupLogSuppressingTurboFilter.endCatchup();
+    }
+
+    @Test
+    void eventsAtOrAboveMinLevelAreNotCounted() {
+      FromScratchCatchupLogSuppressingTurboFilter.beginCatchup("threshold-test-2");
+
+      // DEBUG and above should always pass and not count toward threshold
+      uut.decide(null, null, Level.DEBUG, null, null, null);
+      uut.decide(null, null, Level.INFO, null, null, null);
+      uut.decide(null, null, Level.WARN, null, null, null);
+
+      // TRACE events should still have full threshold budget
+      assertThat(uut.decide(null, null, Level.TRACE, null, null, null))
+          .isEqualTo(FilterReply.NEUTRAL);
+      assertThat(uut.decide(null, null, Level.TRACE, null, null, null))
+          .isEqualTo(FilterReply.NEUTRAL);
+      assertThat(uut.decide(null, null, Level.TRACE, null, null, null))
+          .isEqualTo(FilterReply.NEUTRAL);
+      assertThat(uut.decide(null, null, Level.TRACE, null, null, null))
+          .isEqualTo(FilterReply.DENY);
+
+      FromScratchCatchupLogSuppressingTurboFilter.endCatchup();
+    }
+  }
+
+  @Nested
+  class Lifecycle {
+
+    @Test
+    void beginCatchupSetsMdc() {
+      FromScratchCatchupLogSuppressingTurboFilter.beginCatchup("lifecycle-test");
+
+      assertThat(MDC.get(FromScratchCatchupLogSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH))
+          .isEqualTo("lifecycle-test");
+
+      FromScratchCatchupLogSuppressingTurboFilter.endCatchup();
+    }
+
+    @Test
+    void beginCatchupGeneratesFallbackIdWhenCatchupIdIsNull() {
+      // null catchupId should generate a fallback UUID, not throw
+      FromScratchCatchupLogSuppressingTurboFilter.beginCatchup(null);
+
+      assertThat(MDC.get(FromScratchCatchupLogSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH))
+          .isNotNull();
+
+      FromScratchCatchupLogSuppressingTurboFilter.endCatchup();
+    }
+
+    @Test
+    void endCatchupRemovesMdcAndCounter() {
+      FromScratchCatchupLogSuppressingTurboFilter.beginCatchup("cleanup-test");
+      assertThat(MDC.get(FromScratchCatchupLogSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH))
+          .isNotNull();
+
+      FromScratchCatchupLogSuppressingTurboFilter.endCatchup();
+      assertThat(MDC.get(FromScratchCatchupLogSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH))
+          .isNull();
+    }
+
+    @Test
+    void endCatchupIsNoOpWhenMdcNotSet() {
+      // should not throw
+      FromScratchCatchupLogSuppressingTurboFilter.endCatchup();
     }
   }
 }

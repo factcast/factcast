@@ -225,6 +225,14 @@ public class StoreConfigurationProperties implements InitializingBean {
    */
   String fromScratchCatchupMinLogLevel;
 
+  /**
+   * Number of log events (below the configured min level) to allow through before suppression kicks
+   * in during a from-scratch catchup. This gives developers initial debugging context while still
+   * protecting downstream log aggregators from being overwhelmed. Defaults to 0 (suppress
+   * immediately). Only effective when {@link #fromScratchCatchupMinLogLevel} is set.
+   */
+  int fromScratchCatchupLogSuppressionThreshold = 0;
+
   public boolean isSchemaRegistryConfigured() {
     return schemaRegistryUrl != null;
   }
@@ -252,13 +260,14 @@ public class StoreConfigurationProperties implements InitializingBean {
     if (fromScratchCatchupMinLogLevel != null) {
       Level parsedLevel = Level.toLevel(fromScratchCatchupMinLogLevel, null);
       if (parsedLevel != null) {
-        registerCatchupTraceTurboFilter(parsedLevel);
+        registerCatchupTraceTurboFilter(parsedLevel, fromScratchCatchupLogSuppressionThreshold);
         log.info(
-            "Log suppression below {} during from-scratch catchup is enabled"
+            "Log suppression below {} during from-scratch catchup is enabled (threshold={})"
                 + " (see "
                 + PROPERTIES_PREFIX
                 + ".fromScratchCatchupMinLogLevel)",
-            parsedLevel);
+            parsedLevel,
+            fromScratchCatchupLogSuppressionThreshold);
       } else {
         log.warn(
             "Invalid log level '{}' for "
@@ -282,9 +291,9 @@ public class StoreConfigurationProperties implements InitializingBean {
     }
   }
 
-  private void registerCatchupTraceTurboFilter(Level minLevel) {
+  private void registerCatchupTraceTurboFilter(Level minLevel, int threshold) {
     LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
-    var filter = new FromScratchCatchupLogSuppressingTurboFilter(minLevel);
+    var filter = new FromScratchCatchupLogSuppressingTurboFilter(minLevel, threshold);
     filter.setName("factcast-catchup-trace-suppressor");
     filter.start();
     context.addTurboFilter(filter);

@@ -21,7 +21,6 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import java.util.*;
 import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
 import nl.altindag.log.LogCaptor;
 import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpec;
@@ -55,7 +54,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
       "factcast.store.schemaRegistryUrl=classpath:example-registry",
       "factcast.store.persistentRegistry=false"
     })
-@Slf4j
 class PgFactStoreLogSuppressionIntegrationTest {
 
   @Autowired FactStore store;
@@ -118,7 +116,7 @@ class PgFactStoreLogSuppressionIntegrationTest {
       // 2) enable the property, register the TurboFilter, subscribe again — TRACE logs
       //    should be suppressed
       LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
-      var filter = new FromScratchCatchupLogSuppressingTurboFilter(Level.DEBUG);
+      var filter = new FromScratchCatchupLogSuppressingTurboFilter(Level.DEBUG, 0);
       filter.setName("test-catchup-trace-suppressor");
 
       storeProps.setFromScratchCatchupMinLogLevel("DEBUG");
@@ -143,8 +141,11 @@ class PgFactStoreLogSuppressionIntegrationTest {
 
         // PgFactStream traces all happen outside the catchup() MDC window
         // ("setting starting point", "created query SQL", "disconnecting")
-        // so they remain unchanged — confirming the filter only affects the catchup scope
-        assertThat(pgFactStreamLogs.getTraceLogs()).hasSameSizeAs(baselineStreamTrace);
+        // so they are NOT suppressed — confirming the filter only affects the catchup scope.
+        // We use hasSizeGreaterThanOrEqualTo because the async "disconnecting" trace from
+        // phase 1 may arrive after clearLogs(), inflating the count slightly.
+        assertThat(pgFactStreamLogs.getTraceLogs())
+            .hasSizeGreaterThanOrEqualTo(baselineStreamTrace.size());
       } finally {
         storeProps.setFromScratchCatchupMinLogLevel(null);
         context.getTurboFilterList().remove(filter);
