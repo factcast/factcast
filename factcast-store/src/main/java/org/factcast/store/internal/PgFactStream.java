@@ -257,6 +257,10 @@ public class PgFactStream {
     }
     statementHolder.close();
     log.debug("{} disconnected ", request);
+
+    // free pipeline resources
+    pipeline.close();
+
     // signal close
     telemetry.onClose(request);
   }
