@@ -228,17 +228,17 @@ public class StoreConfigurationProperties implements InitializingBean {
   /**
    * Number of log events (below the configured min level) to allow through before suppression kicks
    * in during a from-scratch catchup. This gives developers initial debugging context while still
-   * protecting downstream log aggregators from being overwhelmed. Defaults to 0 (suppress
-   * immediately). Only effective when {@link #fromScratchCatchupMinLogLevel} is set.
+   * protecting downstream log aggregators from being overwhelmed. Defaults to 1000. Only effective
+   * when {@link #fromScratchCatchupMinLogLevel} is set.
    */
-  int fromScratchCatchupLogSuppressionThreshold = 0;
+  int fromScratchCatchupLogSuppressionThreshold = 1000;
 
   /**
    * After the threshold is exceeded, allow 1 out of every N suppressed log events through instead
-   * of suppressing all. 0 disables sampling (full suppression after threshold). Only effective when
-   * {@link #fromScratchCatchupMinLogLevel} is set.
+   * of suppressing all. 0 disables sampling (full suppression after threshold). Defaults to 50.
+   * Only effective when {@link #fromScratchCatchupMinLogLevel} is set.
    */
-  int fromScratchCatchupLogSuppressionSampleRate = 0;
+  int fromScratchCatchupLogSuppressionSampleRate = 50;
 
   public boolean isSchemaRegistryConfigured() {
     return schemaRegistryUrl != null;
