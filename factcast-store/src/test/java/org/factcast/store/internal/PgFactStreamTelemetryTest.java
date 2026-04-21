@@ -22,6 +22,7 @@ import lombok.SneakyThrows;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.*;
+import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.filter.blacklist.Blacklist;
@@ -51,6 +52,7 @@ class PgFactStreamTelemetryTest {
   @Mock ServerPipeline serverPipeline;
   @Mock PgStoreTelemetry telemetry;
   @Mock SubscriptionRequestTO req;
+  @Mock StoreConfigurationProperties props;
 
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   PgConnectionSupplier connectionSupplier;

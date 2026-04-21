@@ -15,11 +15,13 @@
  */
 package org.factcast.store;
 
+import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.ConsoleAppender;
+import org.factcast.store.internal.filter.FromScratchCatchupTraceSuppressingTurboFilter;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
@@ -215,6 +217,14 @@ public class StoreConfigurationProperties implements InitializingBean {
    */
   boolean enumerationDirectModeEnabled;
 
+  /**
+   * If set to a log level (e.g. "DEBUG", "INFO"), log events below that level are suppressed on
+   * threads performing a "from scratch" catchup. For example, setting this to "DEBUG" suppresses
+   * TRACE logs; "INFO" suppresses both TRACE and DEBUG. Uses MDC + a Logback TurboFilter to
+   * selectively suppress only the affected threads. If unset (null), no filtering is applied.
+   */
+  String fromScratchCatchupMinLogLevel;
+
   public boolean isSchemaRegistryConfigured() {
     return schemaRegistryUrl != null;
   }
@@ -239,6 +249,26 @@ public class StoreConfigurationProperties implements InitializingBean {
               + ".integrationTestMode) ****");
     }
 
+    if (fromScratchCatchupMinLogLevel != null) {
+      Level parsedLevel =
+          Level.toLevel(fromScratchCatchupMinLogLevel, null);
+      if (parsedLevel != null) {
+        registerCatchupTraceTurboFilter(parsedLevel);
+        log.info(
+            "Log suppression below {} during from-scratch catchup is enabled"
+                + " (see "
+                + PROPERTIES_PREFIX
+                + ".fromScratchCatchupMinLogLevel)",
+            parsedLevel);
+      } else {
+        log.warn(
+            "Invalid log level '{}' for "
+                + PROPERTIES_PREFIX
+                + ".fromScratchCatchupMinLogLevel — ignoring",
+            fromScratchCatchupMinLogLevel);
+      }
+    }
+
     if (!isSchemaRegistryConfigured()) {
       log.warn(
           "**** SchemaRegistry-mode is disabled. Fact validation will not happen. This is"
@@ -251,6 +281,14 @@ public class StoreConfigurationProperties implements InitializingBean {
                 + " discouraged for production environments. You have been warned. ****");
       }
     }
+  }
+
+  private void registerCatchupTraceTurboFilter(Level minLevel) {
+    LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
+    var filter = new FromScratchCatchupTraceSuppressingTurboFilter(minLevel);
+    filter.setName("factcast-catchup-trace-suppressor");
+    filter.start();
+    context.addTurboFilter(filter);
   }
 
   private void adjustLogbackAppender() {
