@@ -15,6 +15,7 @@
  */
 package org.factcast.store;
 
+import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -28,6 +29,7 @@ import java.util.*;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.store.internal.filter.FromScratchCatchupLogSuppressingTurboFilter;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -215,6 +217,29 @@ public class StoreConfigurationProperties implements InitializingBean {
    */
   boolean enumerationDirectModeEnabled;
 
+  /**
+   * If set to a log level (e.g. "DEBUG", "INFO"), log events below that level are suppressed on
+   * threads performing a "from scratch" catchup. For example, setting this to "DEBUG" suppresses
+   * TRACE logs; "INFO" suppresses both TRACE and DEBUG. Uses MDC + a Logback TurboFilter to
+   * selectively suppress only the affected threads. If unset (null), no filtering is applied.
+   */
+  String fromScratchCatchupMinLogLevel;
+
+  /**
+   * Number of log events (below the configured min level) to allow through before suppression kicks
+   * in during a from-scratch catchup. This gives developers initial debugging context while still
+   * protecting downstream log aggregators from being overwhelmed. Defaults to 1000. Only effective
+   * when {@link #fromScratchCatchupMinLogLevel} is set.
+   */
+  int fromScratchCatchupLogSuppressionThreshold = 1000;
+
+  /**
+   * After the threshold is exceeded, allow 1 out of every N suppressed log events through instead
+   * of suppressing all. 0 disables sampling (full suppression after threshold). Defaults to 50.
+   * Only effective when {@link #fromScratchCatchupMinLogLevel} is set.
+   */
+  int fromScratchCatchupLogSuppressionSampleRate = 50;
+
   public boolean isSchemaRegistryConfigured() {
     return schemaRegistryUrl != null;
   }
@@ -239,6 +264,30 @@ public class StoreConfigurationProperties implements InitializingBean {
               + ".integrationTestMode) ****");
     }
 
+    if (fromScratchCatchupMinLogLevel != null) {
+      Level parsedLevel = Level.toLevel(fromScratchCatchupMinLogLevel, null);
+      if (parsedLevel != null) {
+        registerCatchupTraceTurboFilter(
+            parsedLevel,
+            fromScratchCatchupLogSuppressionThreshold,
+            fromScratchCatchupLogSuppressionSampleRate);
+        log.info(
+            "Log suppression below {} during from-scratch catchup is enabled (threshold={},"
+                + " sampleRate={}) (see "
+                + PROPERTIES_PREFIX
+                + ".fromScratchCatchupMinLogLevel)",
+            parsedLevel,
+            fromScratchCatchupLogSuppressionThreshold,
+            fromScratchCatchupLogSuppressionSampleRate);
+      } else {
+        log.warn(
+            "Invalid log level '{}' for "
+                + PROPERTIES_PREFIX
+                + ".fromScratchCatchupMinLogLevel — ignoring",
+            fromScratchCatchupMinLogLevel);
+      }
+    }
+
     if (!isSchemaRegistryConfigured()) {
       log.warn(
           "**** SchemaRegistry-mode is disabled. Fact validation will not happen. This is"
@@ -251,6 +300,14 @@ public class StoreConfigurationProperties implements InitializingBean {
                 + " discouraged for production environments. You have been warned. ****");
       }
     }
+  }
+
+  private void registerCatchupTraceTurboFilter(Level minLevel, int threshold, int sampleRate) {
+    LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
+    var filter = new FromScratchCatchupLogSuppressingTurboFilter(minLevel, threshold, sampleRate);
+    filter.setName("factcast-catchup-trace-suppressor");
+    filter.start();
+    context.addTurboFilter(filter);
   }
 
   private void adjustLogbackAppender() {
