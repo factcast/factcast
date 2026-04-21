@@ -43,8 +43,8 @@ import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgQueryBuilder;
 import org.factcast.store.internal.telemetry.PgStoreTelemetry;
-import org.slf4j.MDC;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.MDC;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
@@ -229,8 +229,7 @@ public class PgFactStream {
 
   @VisibleForTesting
   void catchup(long highWaterMarkSerial, DataSource ds) {
-    boolean markMdc =
-        serial.get() <= 0 && props.getFromScratchCatchupMinLogLevel() != null;
+    boolean markMdc = serial.get() <= 0 && props.getFromScratchCatchupMinLogLevel() != null;
     if (markMdc) {
       MDC.put(FromScratchCatchupLogSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH, "true");
     }
