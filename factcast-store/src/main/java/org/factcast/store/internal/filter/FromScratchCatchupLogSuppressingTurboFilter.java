@@ -38,8 +38,8 @@ import org.slf4j.Marker;
  *
  * <p>The catchup thread calls {@link #beginCatchup(String)} before starting and {@link
  * #endCatchup()} when done. These methods manage the MDC attribute and a per-catchup event counter.
- * The counter is shared across all threads that inherit the same MDC (e.g. ForkJoinPool workers that
- * propagate MDC from the catchup thread).
+ * The counter is shared across all threads that inherit the same MDC (e.g. ForkJoinPool workers
+ * that propagate MDC from the catchup thread).
  */
 public class FromScratchCatchupLogSuppressingTurboFilter extends TurboFilter {
 

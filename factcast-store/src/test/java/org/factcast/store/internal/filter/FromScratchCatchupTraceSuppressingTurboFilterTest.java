@@ -144,8 +144,7 @@ class FromScratchCatchupTraceSuppressingTurboFilterTest {
           .isEqualTo(FilterReply.NEUTRAL);
 
       // 4th event should be denied
-      assertThat(uut.decide(null, null, Level.TRACE, null, null, null))
-          .isEqualTo(FilterReply.DENY);
+      assertThat(uut.decide(null, null, Level.TRACE, null, null, null)).isEqualTo(FilterReply.DENY);
 
       FromScratchCatchupLogSuppressingTurboFilter.endCatchup();
     }
@@ -166,8 +165,7 @@ class FromScratchCatchupTraceSuppressingTurboFilterTest {
           .isEqualTo(FilterReply.NEUTRAL);
       assertThat(uut.decide(null, null, Level.TRACE, null, null, null))
           .isEqualTo(FilterReply.NEUTRAL);
-      assertThat(uut.decide(null, null, Level.TRACE, null, null, null))
-          .isEqualTo(FilterReply.DENY);
+      assertThat(uut.decide(null, null, Level.TRACE, null, null, null)).isEqualTo(FilterReply.DENY);
 
       FromScratchCatchupLogSuppressingTurboFilter.endCatchup();
     }
@@ -191,10 +189,8 @@ class FromScratchCatchupTraceSuppressingTurboFilterTest {
           .isEqualTo(FilterReply.NEUTRAL);
 
       // events 3, 4 denied (past threshold, not on sampleRate boundary)
-      assertThat(uut.decide(null, null, Level.TRACE, null, null, null))
-          .isEqualTo(FilterReply.DENY);
-      assertThat(uut.decide(null, null, Level.TRACE, null, null, null))
-          .isEqualTo(FilterReply.DENY);
+      assertThat(uut.decide(null, null, Level.TRACE, null, null, null)).isEqualTo(FilterReply.DENY);
+      assertThat(uut.decide(null, null, Level.TRACE, null, null, null)).isEqualTo(FilterReply.DENY);
 
       // event 5 allowed (5 % 5 == 0)
       assertThat(uut.decide(null, null, Level.TRACE, null, null, null))
