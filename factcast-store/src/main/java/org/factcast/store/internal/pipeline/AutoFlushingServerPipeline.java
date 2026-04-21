@@ -24,23 +24,27 @@ import lombok.*;
 public class AutoFlushingServerPipeline extends AbstractServerPipeline {
   public static final long AUTOFLUSH_CHECK_INTERVAL = 2000;
   private final long autoflushDelayMs;
-  private final Timer timer = new Timer();
+  private final Timer timer;
   private long lastFlush = 0;
   private final Supplier<Long> stopwatch;
 
   public AutoFlushingServerPipeline(@NonNull ServerPipeline parent, long autoFlushDelayMs) {
-    this(parent, autoFlushDelayMs, System::currentTimeMillis);
+    this(parent, autoFlushDelayMs, System::currentTimeMillis, new Timer());
   }
 
   @VisibleForTesting
   AutoFlushingServerPipeline(
-      @NonNull ServerPipeline parent, long autoFlushDelayMs, Supplier<Long> stopwatch) {
+      @NonNull ServerPipeline parent,
+      long autoFlushDelayMs,
+      @NonNull Supplier<Long> stopwatch,
+      @NonNull Timer timer) {
     super(parent);
     Preconditions.checkArgument(
         autoFlushDelayMs >= AUTOFLUSH_CHECK_INTERVAL,
         "autoFlushDelayMs must be >=" + AUTOFLUSH_CHECK_INTERVAL);
     this.autoflushDelayMs = autoFlushDelayMs;
     this.stopwatch = stopwatch;
+    this.timer = timer;
     timer.scheduleAtFixedRate(new FlushTask(), 0, AUTOFLUSH_CHECK_INTERVAL);
   }
 

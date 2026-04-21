@@ -18,19 +18,20 @@ package org.factcast.store.internal.pipeline;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import java.util.Timer;
 import java.util.function.Supplier;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class AutoFlushingServerPipelineTest {
   @Mock private ServerPipeline parent;
   @Mock private Supplier<Long> stopwatch;
+  @Spy private Timer timer = new java.util.Timer();
   private AutoFlushingServerPipeline underTest;
 
   private static final long DELAY = AutoFlushingServerPipeline.AUTOFLUSH_CHECK_INTERVAL;
@@ -39,7 +40,7 @@ class AutoFlushingServerPipelineTest {
   void setup() {
     // we use a long delay to avoid interference from the background timer if possible,
     // though we mostly test via manual calls to autoFlush() or by controlling the stopwatch.
-    underTest = new AutoFlushingServerPipeline(parent, DELAY, stopwatch);
+    underTest = new AutoFlushingServerPipeline(parent, DELAY, stopwatch, timer);
   }
 
   @Test
@@ -59,7 +60,7 @@ class AutoFlushingServerPipelineTest {
   class AutoFlush {
     @Test
     void testAutoFlushTriggersWhenDelayExceeded() {
-      when(stopwatch.get()).thenReturn(1000L, 5000L);
+      when(stopwatch.get()).thenReturn(0L, 5000L);
 
       // first flush to set lastFlush
       underTest.process(Signal.flush());
@@ -106,7 +107,6 @@ class AutoFlushingServerPipelineTest {
   void testClose() {
     underTest.close();
     verify(parent).close();
-    // timer is cancelled, hard to verify without reflection or mocking timer,
-    // but we can verify it doesn't throw.
+    verify(timer).cancel();
   }
 }
