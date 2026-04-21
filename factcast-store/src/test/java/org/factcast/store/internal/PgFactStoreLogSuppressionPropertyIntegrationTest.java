@@ -18,7 +18,7 @@ package org.factcast.store.internal;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import ch.qos.logback.classic.LoggerContext;
-import org.factcast.store.internal.filter.FromScratchCatchupTraceSuppressingTurboFilter;
+import org.factcast.store.internal.filter.FromScratchCatchupLogSuppressingTurboFilter;
 import org.factcast.test.IntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -46,7 +46,7 @@ class PgFactStoreLogSuppressionPropertyIntegrationTest {
     LoggerContext ctx = (LoggerContext) LoggerFactory.getILoggerFactory();
     boolean found =
         ctx.getTurboFilterList().stream()
-            .anyMatch(f -> f instanceof FromScratchCatchupTraceSuppressingTurboFilter);
+            .anyMatch(f -> f instanceof FromScratchCatchupLogSuppressingTurboFilter);
     assertThat(found).isTrue();
   }
 }

@@ -29,13 +29,13 @@ import org.slf4j.Marker;
  * starting and removes it when done. This filter checks for that attribute and denies events below
  * the configured minimum level when present.
  */
-public class FromScratchCatchupTraceSuppressingTurboFilter extends TurboFilter {
+public class FromScratchCatchupLogSuppressingTurboFilter extends TurboFilter {
 
   public static final String MDC_KEY_FROM_SCRATCH = "factcast.catchup.fromscratch";
 
   private final Level minLevel;
 
-  public FromScratchCatchupTraceSuppressingTurboFilter(@NonNull Level minLevel) {
+  public FromScratchCatchupLogSuppressingTurboFilter(@NonNull Level minLevel) {
     this.minLevel = minLevel;
   }
 

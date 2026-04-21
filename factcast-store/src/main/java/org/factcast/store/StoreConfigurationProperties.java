@@ -21,7 +21,7 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.ConsoleAppender;
-import org.factcast.store.internal.filter.FromScratchCatchupTraceSuppressingTurboFilter;
+import org.factcast.store.internal.filter.FromScratchCatchupLogSuppressingTurboFilter;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
@@ -285,7 +285,7 @@ public class StoreConfigurationProperties implements InitializingBean {
 
   private void registerCatchupTraceTurboFilter(Level minLevel) {
     LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
-    var filter = new FromScratchCatchupTraceSuppressingTurboFilter(minLevel);
+    var filter = new FromScratchCatchupLogSuppressingTurboFilter(minLevel);
     filter.setName("factcast-catchup-trace-suppressor");
     filter.start();
     context.addTurboFilter(filter);

@@ -34,15 +34,15 @@ class FromScratchCatchupTraceSuppressingTurboFilterTest {
   @Nested
   class WithMinLevelDebug {
 
-    final FromScratchCatchupTraceSuppressingTurboFilter uut =
-        new FromScratchCatchupTraceSuppressingTurboFilter(Level.DEBUG);
+    final FromScratchCatchupLogSuppressingTurboFilter uut =
+        new FromScratchCatchupLogSuppressingTurboFilter(Level.DEBUG);
 
     @Nested
     class WhenMdcIsSet {
 
       @Test
       void deniesTrace() {
-        MDC.put(FromScratchCatchupTraceSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH, "true");
+        MDC.put(FromScratchCatchupLogSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH, "true");
 
         assertThat(uut.decide(null, null, Level.TRACE, null, null, null))
             .isEqualTo(FilterReply.DENY);
@@ -50,7 +50,7 @@ class FromScratchCatchupTraceSuppressingTurboFilterTest {
 
       @Test
       void allowsDebug() {
-        MDC.put(FromScratchCatchupTraceSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH, "true");
+        MDC.put(FromScratchCatchupLogSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH, "true");
 
         assertThat(uut.decide(null, null, Level.DEBUG, null, null, null))
             .isEqualTo(FilterReply.NEUTRAL);
@@ -58,7 +58,7 @@ class FromScratchCatchupTraceSuppressingTurboFilterTest {
 
       @Test
       void allowsInfo() {
-        MDC.put(FromScratchCatchupTraceSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH, "true");
+        MDC.put(FromScratchCatchupLogSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH, "true");
 
         assertThat(uut.decide(null, null, Level.INFO, null, null, null))
             .isEqualTo(FilterReply.NEUTRAL);
@@ -85,15 +85,15 @@ class FromScratchCatchupTraceSuppressingTurboFilterTest {
   @Nested
   class WithMinLevelInfo {
 
-    final FromScratchCatchupTraceSuppressingTurboFilter uut =
-        new FromScratchCatchupTraceSuppressingTurboFilter(Level.INFO);
+    final FromScratchCatchupLogSuppressingTurboFilter uut =
+        new FromScratchCatchupLogSuppressingTurboFilter(Level.INFO);
 
     @Nested
     class WhenMdcIsSet {
 
       @Test
       void deniesTrace() {
-        MDC.put(FromScratchCatchupTraceSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH, "true");
+        MDC.put(FromScratchCatchupLogSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH, "true");
 
         assertThat(uut.decide(null, null, Level.TRACE, null, null, null))
             .isEqualTo(FilterReply.DENY);
@@ -101,7 +101,7 @@ class FromScratchCatchupTraceSuppressingTurboFilterTest {
 
       @Test
       void deniesDebug() {
-        MDC.put(FromScratchCatchupTraceSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH, "true");
+        MDC.put(FromScratchCatchupLogSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH, "true");
 
         assertThat(uut.decide(null, null, Level.DEBUG, null, null, null))
             .isEqualTo(FilterReply.DENY);
@@ -109,7 +109,7 @@ class FromScratchCatchupTraceSuppressingTurboFilterTest {
 
       @Test
       void allowsInfo() {
-        MDC.put(FromScratchCatchupTraceSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH, "true");
+        MDC.put(FromScratchCatchupLogSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH, "true");
 
         assertThat(uut.decide(null, null, Level.INFO, null, null, null))
             .isEqualTo(FilterReply.NEUTRAL);
@@ -117,7 +117,7 @@ class FromScratchCatchupTraceSuppressingTurboFilterTest {
 
       @Test
       void allowsWarn() {
-        MDC.put(FromScratchCatchupTraceSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH, "true");
+        MDC.put(FromScratchCatchupLogSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH, "true");
 
         assertThat(uut.decide(null, null, Level.WARN, null, null, null))
             .isEqualTo(FilterReply.NEUTRAL);

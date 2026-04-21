@@ -34,7 +34,7 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.*;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.catchup.*;
-import org.factcast.store.internal.filter.FromScratchCatchupTraceSuppressingTurboFilter;
+import org.factcast.store.internal.filter.FromScratchCatchupLogSuppressingTurboFilter;
 import org.factcast.store.internal.listen.ConnectionModifier;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.pipeline.ServerPipeline;
@@ -232,7 +232,7 @@ public class PgFactStream {
     boolean markMdc =
         serial.get() <= 0 && props.getFromScratchCatchupMinLogLevel() != null;
     if (markMdc) {
-      MDC.put(FromScratchCatchupTraceSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH, "true");
+      MDC.put(FromScratchCatchupLogSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH, "true");
     }
     try {
       if (isConnected()) {
@@ -252,7 +252,7 @@ public class PgFactStream {
       }
     } finally {
       if (markMdc) {
-        MDC.remove(FromScratchCatchupTraceSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH);
+        MDC.remove(FromScratchCatchupLogSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH);
       }
     }
   }

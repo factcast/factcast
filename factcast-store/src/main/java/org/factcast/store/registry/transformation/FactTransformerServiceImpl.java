@@ -101,8 +101,6 @@ public class FactTransformerServiceImpl implements FactTransformerService, AutoC
 
     try {
       // Capture caller's MDC so it propagates to pool threads.
-      // This propagation can be rolled back if pool threads turn out not to emit
-      // problematic TRACE logs — currently only 2 summary-level trace calls here.
       Map<String, String> callerMdc = MDC.getCopyOfContextMap();
 
       return CompletableFuture.supplyAsync(

@@ -31,7 +31,7 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.catchup.cursor.PgCursorCatchup;
-import org.factcast.store.internal.filter.FromScratchCatchupTraceSuppressingTurboFilter;
+import org.factcast.store.internal.filter.FromScratchCatchupLogSuppressingTurboFilter;
 import org.factcast.store.internal.pipeline.BufferedTransformingServerPipeline;
 import org.factcast.store.registry.transformation.FactTransformerServiceImpl;
 import org.factcast.test.IntegrationTest;
@@ -119,7 +119,7 @@ class PgFactStoreLogSuppressionIntegrationTest {
       // 2) enable the property, register the TurboFilter, subscribe again — TRACE logs
       //    should be suppressed
       LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
-      var filter = new FromScratchCatchupTraceSuppressingTurboFilter(Level.DEBUG);
+      var filter = new FromScratchCatchupLogSuppressingTurboFilter(Level.DEBUG);
       filter.setName("test-catchup-trace-suppressor");
 
       storeProps.setFromScratchCatchupMinLogLevel("DEBUG");

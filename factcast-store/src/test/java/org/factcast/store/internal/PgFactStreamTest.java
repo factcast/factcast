@@ -35,7 +35,7 @@ import org.factcast.core.subscription.observer.*;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
-import org.factcast.store.internal.filter.FromScratchCatchupTraceSuppressingTurboFilter;
+import org.factcast.store.internal.filter.FromScratchCatchupLogSuppressingTurboFilter;
 import org.factcast.store.internal.listen.ConnectionModifier;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.pipeline.ServerPipeline;
@@ -451,7 +451,7 @@ class PgFactStreamTest {
               invocation -> {
                 assertThat(
                         MDC.get(
-                            FromScratchCatchupTraceSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH))
+                            FromScratchCatchupLogSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH))
                     .isEqualTo("true");
                 return null;
               })
@@ -460,7 +460,7 @@ class PgFactStreamTest {
 
       uut.catchup(100L, ds);
 
-      assertThat(MDC.get(FromScratchCatchupTraceSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH))
+      assertThat(MDC.get(FromScratchCatchupLogSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH))
           .isNull();
     }
 
@@ -476,7 +476,7 @@ class PgFactStreamTest {
               invocation -> {
                 assertThat(
                         MDC.get(
-                            FromScratchCatchupTraceSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH))
+                            FromScratchCatchupLogSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH))
                     .isNull();
                 return null;
               })
@@ -499,7 +499,7 @@ class PgFactStreamTest {
               invocation -> {
                 assertThat(
                         MDC.get(
-                            FromScratchCatchupTraceSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH))
+                            FromScratchCatchupLogSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH))
                     .isNull();
                 return null;
               })
@@ -524,7 +524,7 @@ class PgFactStreamTest {
         // expected
       }
 
-      assertThat(MDC.get(FromScratchCatchupTraceSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH))
+      assertThat(MDC.get(FromScratchCatchupLogSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH))
           .isNull();
     }
   }
