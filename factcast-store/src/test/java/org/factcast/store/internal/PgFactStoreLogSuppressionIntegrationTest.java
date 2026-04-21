@@ -99,8 +99,7 @@ class PgFactStoreLogSuppressionIntegrationTest {
     try (LogCaptor pgFactStreamLogs = LogCaptor.forClass(PgFactStream.class);
         LogCaptor catchupLogs = LogCaptor.forClass(PgCursorCatchup.class);
         LogCaptor transformerLogs = LogCaptor.forClass(FactTransformerServiceImpl.class);
-        LogCaptor pipelineLogs =
-            LogCaptor.forClass(BufferedTransformingServerPipeline.class)) {
+        LogCaptor pipelineLogs = LogCaptor.forClass(BufferedTransformingServerPipeline.class)) {
 
       // 1) baseline: subscribe from scratch WITHOUT filter — TRACE logs should be present
       SubscriptionRequest scratch = SubscriptionRequest.catchup(spec).fromScratch();

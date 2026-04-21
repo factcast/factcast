@@ -450,8 +450,7 @@ class PgFactStreamTest {
       doAnswer(
               invocation -> {
                 assertThat(
-                        MDC.get(
-                            FromScratchCatchupTraceSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH))
+                        MDC.get(FromScratchCatchupTraceSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH))
                     .isEqualTo("true");
                 return null;
               })
@@ -475,8 +474,7 @@ class PgFactStreamTest {
       doAnswer(
               invocation -> {
                 assertThat(
-                        MDC.get(
-                            FromScratchCatchupTraceSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH))
+                        MDC.get(FromScratchCatchupTraceSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH))
                     .isNull();
                 return null;
               })
@@ -498,8 +496,7 @@ class PgFactStreamTest {
       doAnswer(
               invocation -> {
                 assertThat(
-                        MDC.get(
-                            FromScratchCatchupTraceSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH))
+                        MDC.get(FromScratchCatchupTraceSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH))
                     .isNull();
                 return null;
               })

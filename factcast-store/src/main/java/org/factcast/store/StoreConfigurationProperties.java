@@ -21,7 +21,6 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.ConsoleAppender;
-import org.factcast.store.internal.filter.FromScratchCatchupTraceSuppressingTurboFilter;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
@@ -30,6 +29,7 @@ import java.util.*;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.store.internal.filter.FromScratchCatchupTraceSuppressingTurboFilter;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -250,8 +250,7 @@ public class StoreConfigurationProperties implements InitializingBean {
     }
 
     if (fromScratchCatchupMinLogLevel != null) {
-      Level parsedLevel =
-          Level.toLevel(fromScratchCatchupMinLogLevel, null);
+      Level parsedLevel = Level.toLevel(fromScratchCatchupMinLogLevel, null);
       if (parsedLevel != null) {
         registerCatchupTraceTurboFilter(parsedLevel);
         log.info(
