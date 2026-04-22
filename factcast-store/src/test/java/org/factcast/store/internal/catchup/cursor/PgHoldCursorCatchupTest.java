@@ -41,6 +41,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.postgresql.util.PSQLException;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 
 @ExtendWith(MockitoExtension.class)
@@ -200,6 +201,59 @@ class PgHoldCursorCatchupTest {
       verify(fetch).setFetchSize(23);
       verify(statementHolder).statement(fetch, false);
       verify(sample).stop(timer);
+      verify(pipeline).process(any());
+    }
+
+    @Test
+    @SneakyThrows
+    void fetchChunkSwallowsCancellationDuringExecuteQuery() {
+      when(props.getPageSize()).thenReturn(23);
+      when(connection.createStatement()).thenReturn(fetch);
+      PSQLException cancelled = mock(PSQLException.class);
+      when(fetch.executeQuery(anyString())).thenThrow(cancelled);
+      when(statementHolder.wasCanceled()).thenReturn(true);
+
+      int rows =
+          underTest.fetchChunk(
+              connection,
+              "FETCH FORWARD 23 FROM cursor_1",
+              new org.factcast.store.internal.rowmapper.PgFactExtractor(serial),
+              sample,
+              timer,
+              new AtomicBoolean(false));
+
+      assertThat(rows).isEqualTo(0);
+      verify(statementHolder).statement(fetch, false);
+    }
+
+    @Test
+    @SneakyThrows
+    void fetchChunkSwallowsCancellationDuringRsNextAndReturnsProcessedRows() {
+      when(props.getPageSize()).thenReturn(23);
+      when(connection.createStatement()).thenReturn(fetch);
+      when(fetch.executeQuery(anyString())).thenReturn(rs);
+      PSQLException cancelled = mock(PSQLException.class);
+      when(rs.next()).thenReturn(true).thenThrow(cancelled);
+      when(rs.getString(PgConstants.ALIAS_ID)).thenReturn(java.util.UUID.randomUUID().toString());
+      when(rs.getString(PgConstants.ALIAS_AGGID)).thenReturn("[]");
+      when(rs.getString(PgConstants.ALIAS_TYPE)).thenReturn("t");
+      when(rs.getString(PgConstants.ALIAS_NS)).thenReturn("ns");
+      when(rs.getString(PgConstants.COLUMN_HEADER)).thenReturn("{}");
+      when(rs.getString(PgConstants.COLUMN_PAYLOAD)).thenReturn("{}");
+      when(rs.getInt(PgConstants.COLUMN_VERSION)).thenReturn(1);
+      when(rs.getLong(PgConstants.COLUMN_SER)).thenReturn(7L);
+      when(statementHolder.wasCanceled()).thenReturn(false, true);
+
+      int rows =
+          underTest.fetchChunk(
+              connection,
+              "FETCH FORWARD 23 FROM cursor_1",
+              new org.factcast.store.internal.rowmapper.PgFactExtractor(serial),
+              sample,
+              timer,
+              new AtomicBoolean(false));
+
+      assertThat(rows).isEqualTo(1);
       verify(pipeline).process(any());
     }
   }

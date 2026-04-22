@@ -132,11 +132,11 @@ public class PgHoldCursorCatchup extends AbstractPgCatchup {
       @NonNull Timer timer,
       @NonNull AtomicBoolean firstRowSeen)
       throws SQLException {
+    int rows = 0;
     try (Statement fetch = connection.createStatement()) {
       fetch.setFetchSize(props.getPageSize());
       statementHolder.statement(fetch, false);
       try (ResultSet rs = fetch.executeQuery(fetchSQL)) {
-        int rows = 0;
         while (rs.next()) {
           if (statementHolder.wasCanceled() || rs.isClosed()) {
             return rows;
@@ -160,6 +160,13 @@ public class PgHoldCursorCatchup extends AbstractPgCatchup {
           }
         }
         return rows;
+      }
+    } catch (PSQLException e) {
+      if (statementHolder.wasCanceled()) {
+        log.trace("fetch chunk statement was cancelled", e);
+        return rows;
+      } else {
+        throw e;
       }
     }
   }
