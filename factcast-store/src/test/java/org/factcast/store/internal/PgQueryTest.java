@@ -27,6 +27,7 @@ import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.*;
+import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.test.IntegrationTest;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -87,11 +88,24 @@ class PgQueryTest {
   @Autowired PgSubscriptionFactory pq;
 
   @Autowired JdbcTemplate tpl;
+  @Autowired StoreConfigurationProperties props;
+
+  StoreConfigurationProperties.CatchupStrategy originalCatchupStrategy;
 
   @Bean
   @Primary
   public EventBus eventBus() {
     return new EventBus(this.getClass().getSimpleName());
+  }
+
+  @BeforeEach
+  void saveStrategy() {
+    originalCatchupStrategy = props.getCatchupStrategy();
+  }
+
+  @AfterEach
+  void restoreStrategy() {
+    props.setCatchupStrategy(originalCatchupStrategy);
   }
 
   @Test
@@ -116,6 +130,26 @@ class PgQueryTest {
         SubscriptionRequestTO.from(SubscriptionRequest.catchup(defaultSpec).fromScratch());
     FactObserver c = mock(FactObserver.class);
     pq.subscribe(req, c).awaitComplete();
+    verify(c).onCatchup();
+    verify(c).onComplete();
+    verify(c, times(2)).onNext(any());
+  }
+
+  @Test
+  void testRoundtripInsertBeforeWithHoldCursor() {
+    props.setCatchupStrategy(StoreConfigurationProperties.CatchupStrategy.HOLD_CURSOR);
+    insertTestFact(TestHeader.create());
+    insertTestFact(TestHeader.create());
+    insertTestFact(TestHeader.create().ns("other-ns"));
+    insertTestFact(TestHeader.create().type("type2"));
+    insertTestFact(TestHeader.create().ns("other-ns").type("type2"));
+
+    SubscriptionRequestTO req =
+        SubscriptionRequestTO.from(SubscriptionRequest.catchup(defaultSpec).fromScratch());
+    FactObserver c = mock(FactObserver.class);
+
+    pq.subscribe(req, c).awaitComplete();
+
     verify(c).onCatchup();
     verify(c).onComplete();
     verify(c, times(2)).onNext(any());

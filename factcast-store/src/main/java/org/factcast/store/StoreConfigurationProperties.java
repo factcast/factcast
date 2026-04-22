@@ -221,7 +221,8 @@ public class StoreConfigurationProperties implements InitializingBean {
 
   public enum CatchupStrategy {
     CURSOR,
-    CHUNKED
+    CHUNKED,
+    HOLD_CURSOR
   }
 
   CatchupStrategy catchupStrategy = CatchupStrategy.CURSOR;
