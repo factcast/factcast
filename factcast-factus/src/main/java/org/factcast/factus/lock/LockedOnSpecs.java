@@ -15,7 +15,7 @@
  */
 package org.factcast.factus.lock;
 
-import java.util.Collection;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
