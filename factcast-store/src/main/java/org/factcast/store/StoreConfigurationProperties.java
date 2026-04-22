@@ -227,11 +227,16 @@ public class StoreConfigurationProperties implements InitializingBean {
 
   CatchupStrategy catchupStrategy = CatchupStrategy.CURSOR;
 
-  /** defines the max number of Facts being scheduled for transformation */
+  /**
+   * When catching up, if production of a full notification of facts takes longer than this (10
+   * seconds default, 2 seconds minimum), an additional flush is inserted into the pipelin in order
+   * to send the notification as is to the client. This is done in order to balance parallelization
+   * vs. network/compression efficiency
+   */
   @Positive
   @Max(60000)
   @Min(AutoFlushingServerPipeline.AUTOFLUSH_CHECK_INTERVAL)
-  int autoFLushDelay = 10000; // 10 seconds default
+  int autoFlushDelay = 10000; // 10 seconds default
 
   @Override
   public void afterPropertiesSet() throws Exception {
