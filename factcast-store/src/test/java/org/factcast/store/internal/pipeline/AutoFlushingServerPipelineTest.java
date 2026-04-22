@@ -42,7 +42,7 @@ class AutoFlushingServerPipelineTest {
   @Spy private Timer timer = new java.util.Timer();
   private AutoFlushingServerPipeline underTest;
 
-  private static final long DELAY = new StoreConfigurationProperties().getAutoFLushDelay();
+  private static final long DELAY = new StoreConfigurationProperties().getAutoFlushDelay();
 
   @BeforeEach
   void setup() {

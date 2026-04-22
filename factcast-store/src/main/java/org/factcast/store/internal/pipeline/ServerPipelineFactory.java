@@ -49,7 +49,7 @@ public class ServerPipelineFactory {
             chain, factTransformerService, FactTransformers.createFor(subreq), maxBufferSize);
 
     chain = new BlacklistFilterServerPipeline(chain, blacklist);
-    chain = new AutoFlushingServerPipeline(chain, properties.getAutoFLushDelay());
+    chain = new AutoFlushingServerPipeline(chain, properties.getAutoFlushDelay());
     return chain;
   }
 }
