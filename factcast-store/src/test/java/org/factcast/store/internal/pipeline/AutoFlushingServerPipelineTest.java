@@ -53,7 +53,7 @@ class AutoFlushingServerPipelineTest {
 
   @AfterEach
   void tearDown() {
-    timer.cancel();
+    underTest.close();
   }
 
   @Test

@@ -69,7 +69,7 @@ public class Locked<I extends Projection> {
 
   @SuppressWarnings("UnusedReturnValue")
   public <R> R attempt(
-      BiConsumer<I, RetryableTransaction> bodyToExecute, Function<Collection<Fact>, R> resultFn) {
+      BiConsumer<I, RetryableTransaction> bodyToExecute, Function<List<Fact>, R> resultFn) {
     try {
       PublishingResult result =
           fc.lock(specs)
