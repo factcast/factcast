@@ -120,24 +120,24 @@ class PgQueryTest {
   }
 
   @Test
-  void testRoundtripInsertBefore() {
-    insertTestFact(TestHeader.create());
-    insertTestFact(TestHeader.create());
-    insertTestFact(TestHeader.create().ns("other-ns"));
-    insertTestFact(TestHeader.create().type("type2"));
-    insertTestFact(TestHeader.create().ns("other-ns").type("type2"));
-    SubscriptionRequestTO req =
-        SubscriptionRequestTO.from(SubscriptionRequest.catchup(defaultSpec).fromScratch());
-    FactObserver c = mock(FactObserver.class);
-    pq.subscribe(req, c).awaitComplete();
-    verify(c).onCatchup();
-    verify(c).onComplete();
-    verify(c, times(2)).onNext(any());
+  void testRoundtripInsertBeforeWithCursor() {
+    assertRoundtripInsertBeforeWithStrategy(StoreConfigurationProperties.CatchupStrategy.CURSOR);
+  }
+
+  @Test
+  void testRoundtripInsertBeforeWithChunked() {
+    assertRoundtripInsertBeforeWithStrategy(StoreConfigurationProperties.CatchupStrategy.CHUNKED);
   }
 
   @Test
   void testRoundtripInsertBeforeWithHoldCursor() {
-    props.setCatchupStrategy(StoreConfigurationProperties.CatchupStrategy.HOLD_CURSOR);
+    assertRoundtripInsertBeforeWithStrategy(
+        StoreConfigurationProperties.CatchupStrategy.HOLD_CURSOR);
+  }
+
+  private void assertRoundtripInsertBeforeWithStrategy(
+      StoreConfigurationProperties.CatchupStrategy catchupStrategy) {
+    props.setCatchupStrategy(catchupStrategy);
     insertTestFact(TestHeader.create());
     insertTestFact(TestHeader.create());
     insertTestFact(TestHeader.create().ns("other-ns"));
