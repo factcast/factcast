@@ -92,17 +92,21 @@ public class PgHoldCursorCatchup extends AbstractPgCatchup {
     declareCursor(connection, declareCursorSQL, queryBuilder.createStatementSetter(fromSerial));
     connection.commit();
     connection.setAutoCommit(true);
+    try {
+      while (!statementHolder.wasCanceled()) {
+        int fetchedRows =
+            fetchChunk(connection, fetchSQL, extractor, timerSample, timer, isFirstRow);
 
-    while (!statementHolder.wasCanceled()) {
-      int fetchedRows = fetchChunk(connection, fetchSQL, extractor, timerSample, timer, isFirstRow);
-
-      if (fetchedRows == 0) {
-        if (!isFirstRow.get()) {
-          logIfAboveThreshold(Duration.ofNanos(timerSample.stop(timer)));
+        if (fetchedRows == 0) {
+          if (!isFirstRow.get()) {
+            logIfAboveThreshold(Duration.ofNanos(timerSample.stop(timer)));
+          }
+          log.trace("{} catchup {}, no more rows in held cursor", req, phase);
+          return;
         }
-        log.trace("{} catchup {}, no more rows in held cursor", req, phase);
-        return;
       }
+    } finally {
+      connection.setAutoCommit(false);
     }
   }
 

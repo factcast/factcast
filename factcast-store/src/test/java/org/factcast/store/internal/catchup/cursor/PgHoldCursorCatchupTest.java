@@ -130,6 +130,7 @@ class PgHoldCursorCatchupTest {
               any(PreparedStatementSetter.class));
       verify(connection).commit();
       verify(connection).setAutoCommit(true);
+      verify(connection).setAutoCommit(false);
       verify(underTest, times(3))
           .fetchChunk(
               same(connection), eq("FETCH FORWARD 47 FROM cursor_1"), any(), any(), any(), any());
