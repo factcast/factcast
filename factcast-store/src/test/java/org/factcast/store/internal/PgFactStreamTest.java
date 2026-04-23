@@ -227,7 +227,7 @@ class PgFactStreamTest {
       uut.close();
       uut.fastForward(HighWaterMark.of(UUID.randomUUID(), 1000));
 
-      verifyNoInteractions(pipeline);
+      verify(pipeline, never()).process(any(Signal.class));
     }
 
     @Test

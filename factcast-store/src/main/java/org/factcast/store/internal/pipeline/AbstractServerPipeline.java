@@ -21,4 +21,9 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public abstract class AbstractServerPipeline implements ServerPipeline {
   @NonNull protected final ServerPipeline parent;
+
+  @Override
+  public void close() {
+    parent.close();
+  }
 }

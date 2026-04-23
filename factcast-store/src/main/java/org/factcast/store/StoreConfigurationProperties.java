@@ -28,6 +28,7 @@ import java.util.*;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.store.internal.pipeline.AutoFlushingServerPipeline;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -225,6 +226,17 @@ public class StoreConfigurationProperties implements InitializingBean {
   }
 
   CatchupStrategy catchupStrategy = CatchupStrategy.CURSOR;
+
+  /**
+   * When catching up, if production of a full notification of facts takes longer than this (10
+   * seconds default, 2 seconds minimum), an additional flush is inserted into the pipelin in order
+   * to send the notification as is to the client. This is done in order to balance parallelization
+   * vs. network/compression efficiency
+   */
+  @Positive
+  @Max(60000)
+  @Min(AutoFlushingServerPipeline.AUTOFLUSH_CHECK_INTERVAL)
+  int autoFlushDelay = 10000; // 10 seconds default
 
   @Override
   public void afterPropertiesSet() throws Exception {
