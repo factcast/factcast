@@ -83,11 +83,12 @@ public class StoreConfigurationProperties implements InitializingBean {
   boolean persistentRegistry = true;
 
   /**
-   * when using the persistent impl of the transformation cache, this is the min number of days a
+   * When using the persistent impl of the transformation cache, this is the min number of days a
    * transformation result is not read in order to be considered stale. This should free some space
-   * in a regular cleanup job
+   * in a regular cleanup job. If set to -1, no cleanup is performed.
    */
-  @Positive int deleteTransformationsStaleForDays = 14;
+  @Min(-1)
+  int deleteTransformationsStaleForDays = -1;
 
   /**
    * If validation is enabled, this controls if transformed facts are persistently cached in
