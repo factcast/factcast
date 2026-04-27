@@ -30,13 +30,13 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @ProjectionMetaData(revision = 1)
-public class UsersMongoDbSubscribedProjection extends AbstractMongoDbSubscribedProjection {
+public class UserMongoDbSubscribedProjection extends AbstractMongoDbSubscribedProjection {
 
   private final MongoCollection<UserSchema> userCollection;
 
-  public UsersMongoDbSubscribedProjection(@NonNull MongoDatabase mongoDatabase) {
-
+  public UserMongoDbSubscribedProjection(@NonNull MongoDatabase mongoDatabase) {
     super(mongoDatabase);
+
     String scopedName = getScopedName().with("subscribedUsers").asString();
     userCollection = mongoDatabase.getCollection(scopedName, UserSchema.class);
   }
