@@ -119,7 +119,7 @@
     <spring-grpc.version>0.12.0</spring-grpc.version>
     <grpc.version>1.76.0</grpc.version>
     <!-- lter versions seem to break toxi -->
-    <!-- 2.0.3 refers to unpublioshed artifacts, so that it is not usable right
+    <!-- 2.0.3 refers to unpublished artifacts, so that it is not usable right
       now -->
     <testcontainers.version>2.0.5</testcontainers.version>
     <arrow.version>2.1.1</arrow.version>
