@@ -17,7 +17,6 @@ package org.factcast.store.internal;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 import java.util.UUID;
 import lombok.NonNull;
@@ -28,7 +27,6 @@ import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.store.internal.filter.*;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)

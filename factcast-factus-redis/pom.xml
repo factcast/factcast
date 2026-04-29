@@ -6,15 +6,12 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.10.4-SNAPSHOT</version>
+    <version>0.11.0-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-factus-redis</artifactId>
   <name>${project.groupId}:${project.artifactId}</name>
-  <properties>
-    <maven.compiler.source>1.8</maven.compiler.source>
-    <maven.compiler.target>1.8</maven.compiler.target>
-  </properties>
+  <properties></properties>
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -64,6 +61,11 @@
       <artifactId>redisson</artifactId>
       <version>${redisson.version}</version>
     </dependency>
+    <dependency>
+      <groupId>jakarta.annotation</groupId>
+      <artifactId>jakarta.annotation-api</artifactId>
+      <scope>provided</scope>
+    </dependency>
 
     <dependency>
       <groupId>org.factcast</groupId>
@@ -81,8 +83,7 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>${maven.compiler.version}</version>
         <configuration>
-          <source>1.8</source>
-          <target>1.8</target>
+          <release>17</release>
         </configuration>
       </plugin>
     </plugins>

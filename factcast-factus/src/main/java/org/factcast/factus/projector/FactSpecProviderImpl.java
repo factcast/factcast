@@ -16,7 +16,8 @@
 package org.factcast.factus.projector;
 
 import java.util.*;
-import lombok.*;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.factus.projection.*;
 

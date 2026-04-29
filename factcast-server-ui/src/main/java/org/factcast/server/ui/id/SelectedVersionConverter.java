@@ -29,11 +29,11 @@ public class SelectedVersionConverter implements Converter<String, Integer> {
 
   @Override
   public Result<Integer> convertToModel(String s, ValueContext valueContext) {
-    if (s != null && !s.equals(AS_PUBLISHED)) {
+    if (s != null && !AS_PUBLISHED.equals(s)) {
       try {
         return Result.ok(Integer.parseInt(s));
       } catch (Exception e) {
-        return Result.error(String.format("Failed to convert String %s to selected version", s));
+        return Result.error("Failed to convert String %s to selected version".formatted(s));
       }
     }
     return Result.ok(0);

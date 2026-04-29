@@ -69,22 +69,26 @@ public class SpringJdbcTransactionalProjectionExampleITest extends AbstractFactC
   protected void createTables() {
     jdbcTemplate.execute("DROP TABLE IF EXISTS fact_stream_positions;");
     jdbcTemplate.execute(
-        "CREATE TABLE fact_stream_positions (\n"
-            + "\n"
-            + "    projection_name TEXT,\n"
-            + "    fact_stream_position UUID,\n"
-            + "\n"
-            + "    PRIMARY KEY (projection_name)\n"
-            + ");");
+        """
+        CREATE TABLE fact_stream_positions (
+
+            projection_name TEXT,
+            fact_stream_position UUID,
+
+            PRIMARY KEY (projection_name)
+        );\
+        """);
 
     jdbcTemplate.execute("DROP TABLE IF EXISTS users;");
     jdbcTemplate.execute(
-        "CREATE TABLE users (\n"
-            + "\n"
-            + "    name  TEXT,\n"
-            + "    id UUID,\n"
-            + "\n"
-            + "    PRIMARY KEY (id)\n"
-            + ");");
+        """
+        CREATE TABLE users (
+
+            name  TEXT,
+            id UUID,
+
+            PRIMARY KEY (id)
+        );\
+        """);
   }
 }

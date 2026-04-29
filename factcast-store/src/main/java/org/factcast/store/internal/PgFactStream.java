@@ -19,6 +19,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.EventBus;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.sql.DataSource;
@@ -165,7 +166,10 @@ public class PgFactStream {
           //
           // ok, that is unlikely to be necessary, but easy to do, so...
           // distributes delay between 75% and 100% of the maxDelay
-          delayInMs = Math.round(request.maxBatchDelayInMs() * (0.75 + Math.random() * 0.25));
+          delayInMs =
+              Math.round(
+                  request.maxBatchDelayInMs()
+                      * (0.75 + ThreadLocalRandom.current().nextDouble() * 0.25));
           log.trace(
               "{} setting delay to {}, maxDelay was {}",
               request,

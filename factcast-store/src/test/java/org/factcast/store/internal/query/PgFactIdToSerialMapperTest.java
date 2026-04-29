@@ -57,7 +57,7 @@ public class PgFactIdToSerialMapperTest {
         .when(metrics)
         .time(any(StoreMetrics.OP.class), any(Supplier.class));
 
-    when(jdbc.queryForObject(anyString(), any(), eq(Long.class))).thenReturn(42L);
+    when(jdbc.queryForObject(anyString(), eq(Long.class), any())).thenReturn(42L);
     var ret = uut.retrieve(UUID.randomUUID());
     assertThat(ret).isEqualTo(42L);
   }
@@ -68,7 +68,7 @@ public class PgFactIdToSerialMapperTest {
         .when(metrics)
         .time(any(StoreMetrics.OP.class), any(Supplier.class));
 
-    when(jdbc.queryForObject(anyString(), any(), eq(Long.class)))
+    when(jdbc.queryForObject(anyString(), eq(Long.class), any()))
         .thenThrow(EmptyResultDataAccessException.class);
     var ret = uut.retrieve(UUID.randomUUID());
     assertThat(ret).isEqualTo(0);

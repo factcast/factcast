@@ -27,7 +27,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import software.amazon.awssdk.core.async.AsyncRequestBody;
 import software.amazon.awssdk.core.exception.SdkClientException;
@@ -160,9 +161,7 @@ class S3MultipartOutputStreamTest {
     void abortUploadOnFailure() {
       final var abortUploadCaptor = ArgumentCaptor.forClass(AbortMultipartUploadRequest.class);
       final var exception = SdkClientException.create("failed");
-      when(s3.uploadPart(
-              any(UploadPartRequest.class),
-              any(software.amazon.awssdk.core.async.AsyncRequestBody.class)))
+      when(s3.uploadPart(any(UploadPartRequest.class), any(AsyncRequestBody.class)))
           .thenThrow(exception);
 
       byte[] data = new byte[6 * MB];

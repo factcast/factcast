@@ -16,7 +16,8 @@
 package org.factcast.factus.serializer.fury;
 
 import java.io.*;
-import lombok.*;
+import lombok.NonNull;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.fury.Fury;
 import org.apache.fury.config.Language;

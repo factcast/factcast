@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
 
 import io.micrometer.core.instrument.Tags;
 import java.util.*;
@@ -32,8 +32,11 @@ import org.factcast.store.registry.validation.schema.SchemaSource;
 import org.factcast.store.registry.validation.schema.SchemaStore;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 public abstract class AbstractSchemaStoreTest {
 
   @Spy protected RegistryMetrics registryMetrics = new NOPRegistryMetrics();

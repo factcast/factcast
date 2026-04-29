@@ -16,7 +16,8 @@
 package org.factcast.factus.projector;
 
 import java.lang.reflect.*;
-import lombok.*;
+import lombok.NonNull;
+import lombok.Value;
 import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.util.ExceptionHelper;

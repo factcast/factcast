@@ -17,20 +17,15 @@ package org.factcast.spring.boot.autoconfigure.server.grpc;
 
 import io.grpc.Codec;
 import org.factcast.server.grpc.*;
-import org.factcast.spring.boot.autoconfigure.core.FixedCodecConfiguration;
 import org.springframework.boot.autoconfigure.*;
 import org.springframework.boot.autoconfigure.condition.*;
+import org.springframework.boot.grpc.server.autoconfigure.GrpcServerAutoConfiguration;
+import org.springframework.boot.grpc.server.autoconfigure.GrpcServerFactoryAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
-import org.springframework.grpc.autoconfigure.server.GrpcServerAutoConfiguration;
-import org.springframework.grpc.autoconfigure.server.GrpcServerFactoryAutoConfiguration;
 
 @AutoConfiguration
-@Import({
-  FactCastGrpcServerConfiguration.class,
-  FactCastSecurityConfiguration.class,
-  FixedCodecConfiguration.class
-})
+@Import({FactCastGrpcServerConfiguration.class, FactCastSecurityConfiguration.class})
 @ConditionalOnClass(FactStoreGrpcService.class)
 @ConditionalOnMissingBean(FactStoreGrpcService.class)
 @AutoConfigureBefore({GrpcServerAutoConfiguration.class, GrpcServerFactoryAutoConfiguration.class})

@@ -24,18 +24,15 @@ import org.factcast.core.store.FactStore;
 import org.factcast.core.store.StateToken;
 import org.factcast.test.IntegrationTest;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
-@ContextConfiguration(
+@SpringJUnitConfig(
     classes = {PgTestConfiguration.class, LiquibaseConfigurationForReadOnlyMode.class})
 @Sql(scripts = "/wipe.sql", config = @SqlConfig(separator = "#"))
-@ExtendWith(SpringExtension.class)
 @IntegrationTest
 @TestPropertySource(properties = {"factcast.store.readOnlyModeEnabled=true"})
 class PgFactStoreReadOnlyIntegrationTest {

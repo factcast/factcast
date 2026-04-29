@@ -16,8 +16,8 @@
 package org.factcast.core;
 
 import com.fasterxml.jackson.databind.node.*;
+import jakarta.annotation.Nullable;
 import java.util.*;
-import javax.annotation.Nullable;
 import lombok.*;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.factus.event.MetaMap;
