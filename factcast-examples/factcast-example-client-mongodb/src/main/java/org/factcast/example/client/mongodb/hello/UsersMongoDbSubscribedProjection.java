@@ -30,25 +30,26 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @ProjectionMetaData(revision = 1)
-public class MongoDbSubscribedProjection extends AbstractMongoDbSubscribedProjection {
+public class UsersMongoDbSubscribedProjection extends AbstractMongoDbSubscribedProjection {
 
-  private final MongoCollection<UserSchema> userTable;
+  private final MongoCollection<UserSchema> userCollection;
 
-  public MongoDbSubscribedProjection(@NonNull MongoDatabase mongoDatabase) {
+  public UsersMongoDbSubscribedProjection(@NonNull MongoDatabase mongoDatabase) {
 
     super(mongoDatabase);
-
-    userTable = mongoDatabase.getCollection("usersSubscribed", UserSchema.class);
+    String scopedName = getScopedName().with("subscribedUsers").asString();
+    userCollection = mongoDatabase.getCollection(scopedName, UserSchema.class);
   }
 
   public UserSchema findByFirstName(@NonNull String firstName) {
-    return userTable.find(new Document("firstName", firstName), UserSchema.class).first();
+    return userCollection.find(new Document("firstName", firstName), UserSchema.class).first();
   }
 
   @Handler
   void apply(UserCreatedV1 e) {
-    userTable.insertOne(
+    userCollection.insertOne(
         UserSchema.builder()
+            .id(e.aggregateId())
             .displayName(e.lastName() + e.firstName())
             .firstName(e.firstName())
             .lastName(e.lastName())
@@ -60,13 +61,9 @@ public class MongoDbSubscribedProjection extends AbstractMongoDbSubscribedProjec
   @Handler
   void apply(UserChangedV1 e) {
     // Only the last name can be changed.
-    userTable.replaceOne(
-        new Document("firstName", e.firstName()),
-        UserSchema.builder()
-            .firstName(e.firstName())
-            .displayName(e.lastName() + e.firstName())
-            .lastName(e.lastName())
-            .build());
+    userCollection.updateOne(
+        new Document("id", e.aggregateId()),
+        new Document("lastName", e.lastName()).append("displayName", e.lastName() + e.firstName()));
 
     log.info("Subscribed: UserChanged processed");
   }
