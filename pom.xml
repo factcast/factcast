@@ -133,7 +133,7 @@
     <mongodb-driver.version>5.7.0</mongodb-driver.version>
     <shedlock.version>7.7.0</shedlock.version>
     <byte-buddy.version>1.18.8-jdk5</byte-buddy.version>
-    <rewrite-java.version>8.81.3</rewrite-java.version>
+    <rewrite-java.version>8.81.4</rewrite-java.version>
     <skipUnitTests>false</skipUnitTests>
     <postgres.version>15</postgres.version>
     <sonar.exclusions>**/src/test/java/**/*.java</sonar.exclusions>
