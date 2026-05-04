@@ -26,6 +26,8 @@ public class CurrentStatementHolder implements Closeable {
   private final Object mutex = new Object();
   private Statement statement;
   private boolean wasCanceled;
+  // for post-commit fetches in HOLD_CURSOR mode, rolling-back makes no sense
+  private boolean rollbackOnCancel = true;
 
   @Override
   public void close() {
@@ -35,10 +37,12 @@ public class CurrentStatementHolder implements Closeable {
         try {
           statement.cancel();
 
-          // we have to roll back the tx on the underlying connection
-          // if we do not end the transaction, statements are cancelled but still "idle in
-          // transaction" and so block further actions like wiping between tests
-          statement.getConnection().rollback();
+          if (rollbackOnCancel) {
+            // we have to roll back the tx on the underlying connection
+            // if we do not end the transaction, statements are cancelled but still "idle in
+            // transaction" and so block further actions like wiping between tests
+            statement.getConnection().rollback();
+          }
         } catch (SQLException e) {
           log.debug("Exception while closing statement {}:", statement, e);
         } finally {
@@ -49,9 +53,14 @@ public class CurrentStatementHolder implements Closeable {
   }
 
   public CurrentStatementHolder statement(@NonNull Statement statement) {
+    return statement(statement, true);
+  }
+
+  public CurrentStatementHolder statement(@NonNull Statement statement, boolean rollbackOnCancel) {
     synchronized (mutex) {
       this.statement = statement;
       this.wasCanceled = false;
+      this.rollbackOnCancel = rollbackOnCancel;
       return this;
     }
   }
@@ -60,6 +69,7 @@ public class CurrentStatementHolder implements Closeable {
     synchronized (mutex) {
       statement = null;
       wasCanceled = false;
+      rollbackOnCancel = true;
     }
   }
 
