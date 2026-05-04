@@ -239,7 +239,7 @@
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
-      <scope>test</scope>
+      <scope>provided</scope>
     </dependency>
 
   </dependencies>
