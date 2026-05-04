@@ -19,10 +19,10 @@ import java.util.*;
 import lombok.NonNull;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.TransformationException;
+import org.factcast.store.internal.PgFact;
 
 public interface FactTransformerService {
   Fact transform(@NonNull TransformationRequest req) throws TransformationException;
 
-  List<org.factcast.store.internal.PgFact> transform(@NonNull List<TransformationRequest> req)
-      throws TransformationException;
+  List<PgFact> transform(@NonNull List<TransformationRequest> req) throws TransformationException;
 }

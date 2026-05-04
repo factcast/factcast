@@ -15,8 +15,10 @@
  */
 package org.factcast.store.registry;
 
+import java.io.Serial;
+
 public class InitialRegistryFetchFailed extends RuntimeException {
-  private static final long serialVersionUID = -6235018310953511630L;
+  @Serial private static final long serialVersionUID = -6235018310953511630L;
 
   public InitialRegistryFetchFailed(String s, Throwable e) {}
 }

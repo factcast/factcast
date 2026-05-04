@@ -17,6 +17,8 @@ package org.factcast.store.registry.transformation;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Stopwatch;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import java.util.*;
@@ -27,6 +29,7 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.NonNull;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.TransformationException;
@@ -58,6 +61,8 @@ public class FactTransformerServiceImpl implements FactTransformerService, AutoC
 
   private final ExecutorService pool;
 
+  private final long transformationThresholdMs;
+
   public FactTransformerServiceImpl(
       @NonNull TransformationChains chains,
       @NonNull Transformer trans,
@@ -72,6 +77,26 @@ public class FactTransformerServiceImpl implements FactTransformerService, AutoC
         registryMetrics.monitor(
             new ForkJoinPool(props.getSizeOfThreadPoolForBufferedTransformations()),
             "parallel-transformation");
+    this.transformationThresholdMs = 5000; // 5s
+  }
+
+  @VisibleForTesting
+  protected FactTransformerServiceImpl(
+      @NonNull TransformationChains chains,
+      @NonNull Transformer trans,
+      @NonNull TransformationCache cache,
+      @NonNull RegistryMetrics registryMetrics,
+      @NonNull StoreConfigurationProperties props,
+      long transformationThresholdMs) {
+    this.chains = chains;
+    this.trans = trans;
+    this.cache = cache;
+    this.registryMetrics = registryMetrics;
+    this.pool =
+        registryMetrics.monitor(
+            new ForkJoinPool(props.getSizeOfThreadPoolForBufferedTransformations()),
+            "parallel-transformation");
+    this.transformationThresholdMs = transformationThresholdMs;
   }
 
   @Override
@@ -175,27 +200,12 @@ public class FactTransformerServiceImpl implements FactTransformerService, AutoC
 
   @NonNull
   public PgFact doTransform(@NonNull PgFact e, @NonNull TransformationChain chain) {
-
     return registryMetrics.timed(
         RegistryMetrics.OP.TRANSFORMATION,
         () -> {
+          Stopwatch stopwatch = Stopwatch.createStarted();
           try {
-
-            // patch new version to header
-            JsonNode header = FactCastJson.readTree(e.jsonHeader());
-            ((ObjectNode) header).put("version", chain.toVersion());
-
-            JsonString input = JsonString.of(e.jsonPayload());
-            JsonString transformedPayload = trans.transform(chain, input);
-
-            // we're intentionally using string here, keeping the jsonNodes around consumes more
-            // memory
-            PgFact transformed = PgFact.of(header.toString(), transformedPayload.json());
-            cache.put(
-                TransformationCache.Key.of(transformed.id(), transformed.version(), chain.id()),
-                transformed);
-
-            return transformed;
+            return performTransformation(e, chain);
           } catch (Exception e1) {
             registryMetrics.count(
                 RegistryMetrics.EVENT.TRANSFORMATION_FAILED,
@@ -203,8 +213,38 @@ public class FactTransformerServiceImpl implements FactTransformerService, AutoC
                     Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, String.valueOf(chain.key())),
                     Tag.of("version", String.valueOf(chain.toVersion()))));
             throw new TransformationException("Failed to transform " + chain, e1);
+          } finally {
+            stopwatch.stop();
+            long elapsed = stopwatch.elapsed().toMillis();
+            if (elapsed > transformationThresholdMs) {
+              log.warn(
+                  "Transformation exceeded threshold: {}ms for fact {} with chain {}",
+                  elapsed,
+                  e.id(),
+                  chain);
+            }
           }
         });
+  }
+
+  @NonNull
+  @SneakyThrows
+  private PgFact performTransformation(@NonNull PgFact e, @NonNull TransformationChain chain) {
+    // patch new version to header
+    JsonNode header = FactCastJson.readTree(e.jsonHeader());
+    ((ObjectNode) header).put("version", chain.toVersion());
+
+    JsonString input = JsonString.of(e.jsonPayload());
+    JsonString transformedPayload = trans.transform(chain, input);
+
+    // we're intentionally using string here, keeping the jsonNodes around consumes more
+    // memory
+    PgFact transformed = PgFact.of(header.toString(), transformedPayload.json());
+    cache.put(
+        TransformationCache.Key.of(transformed.id(), transformed.version(), chain.id()),
+        transformed);
+
+    return transformed;
   }
 
   private static void setMdc(Map<String, String> mdc) {

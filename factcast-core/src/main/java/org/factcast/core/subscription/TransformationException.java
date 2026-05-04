@@ -15,11 +15,12 @@
  */
 package org.factcast.core.subscription;
 
+import java.io.Serial;
 import lombok.NonNull;
 
 public class TransformationException extends RuntimeException {
 
-  private static final long serialVersionUID = 1L;
+  @Serial private static final long serialVersionUID = 1L;
 
   public TransformationException(@NonNull Throwable e) {
     super(e);

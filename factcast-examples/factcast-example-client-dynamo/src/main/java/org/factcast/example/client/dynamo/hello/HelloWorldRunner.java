@@ -20,7 +20,6 @@ import java.util.UUID;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.factus.Factus;
@@ -41,8 +40,8 @@ public class HelloWorldRunner implements CommandLineRunner {
   @Override
   public void run(String... args) throws Exception {
 
-    val factId1 = UUID.randomUUID();
-    val firstNameUuid = UUID.randomUUID();
+    UUID factId1 = UUID.randomUUID();
+    UUID firstNameUuid = UUID.randomUUID();
     Fact created =
         Fact.builder()
             .ns("users")
@@ -51,7 +50,7 @@ public class HelloWorldRunner implements CommandLineRunner {
             .id(factId1)
             .build("{\"firstName\":\"" + firstNameUuid + "\",\"lastName\":\"Lichter\"}");
 
-    val factId2 = UUID.randomUUID();
+    UUID factId2 = UUID.randomUUID();
     Fact changed =
         Fact.builder()
             .ns("users")
@@ -60,8 +59,8 @@ public class HelloWorldRunner implements CommandLineRunner {
             .id(factId2)
             .build("{\"firstName\":\"" + firstNameUuid + "\",\"lastName\":\"Lauch\"}");
 
-    val factId3 = UUID.randomUUID();
-    val firstNameUuid2 = UUID.randomUUID();
+    UUID factId3 = UUID.randomUUID();
+    UUID firstNameUuid2 = UUID.randomUUID();
     Fact created2 =
         Fact.builder()
             .ns("users")

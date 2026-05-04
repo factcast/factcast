@@ -19,9 +19,9 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.google.common.collect.*;
+import jakarta.annotation.Nullable;
 import java.lang.reflect.Method;
 import java.util.*;
-import javax.annotation.Nullable;
 import lombok.*;
 import lombok.experimental.*;
 import lombok.experimental.Delegate;

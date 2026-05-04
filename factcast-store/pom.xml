@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.10.4-SNAPSHOT</version>
+    <version>0.11.0-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-store</artifactId>
@@ -89,12 +89,16 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.liquibase</groupId>
-      <artifactId>liquibase-core</artifactId>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-liquibase</artifactId>
       <exclusions>
         <exclusion>
           <groupId>ch.qos.logback</groupId>
           <artifactId>logback-classic</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.zaxxer</groupId>
+          <artifactId>HikariCP</artifactId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -179,7 +183,6 @@
       <version>7.2.0</version>
       <scope>test</scope>
     </dependency>
-    <!-- end javalin -->
 
     <dependency>
       <groupId>es.usc.citius.hipster</groupId>
@@ -221,6 +224,8 @@
     <dependency>
       <groupId>org.springframework.retry</groupId>
       <artifactId>spring-retry</artifactId>
+      <!-- deprecated! -->
+      <version>2.0.12</version>
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -231,6 +236,12 @@
       <artifactId>awaitility</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <scope>test</scope>
+    </dependency>
+
   </dependencies>
   <build>
     <plugins>
@@ -239,8 +250,6 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.15.0</version>
         <configuration>
-          <source>17</source>
-          <target>17</target>
           <annotationProcessorPaths>
 
             <path>
@@ -254,6 +263,7 @@
               <version>${lombok.version}</version>
             </path>
           </annotationProcessorPaths>
+          <release>17</release>
         </configuration>
       </plugin>
       <plugin>

@@ -16,7 +16,7 @@
 package org.factcast.client.grpc;
 
 import io.grpc.Deadline;
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 import org.factcast.grpc.api.gen.RemoteFactStoreGrpc;
 
 public interface GrpcStubs {

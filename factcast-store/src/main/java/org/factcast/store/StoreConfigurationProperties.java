@@ -85,11 +85,12 @@ public class StoreConfigurationProperties implements InitializingBean {
   boolean persistentRegistry = true;
 
   /**
-   * when using the persistent impl of the transformation cache, this is the min number of days a
+   * When using the persistent impl of the transformation cache, this is the min number of days a
    * transformation result is not read in order to be considered stale. This should free some space
-   * in a regular cleanup job
+   * in a regular cleanup job. If set to -1, no cleanup is performed.
    */
-  @Positive int deleteTransformationsStaleForDays = 14;
+  @Min(-1)
+  int deleteTransformationsStaleForDays = -1;
 
   /**
    * If validation is enabled, this controls if transformed facts are persistently cached in
@@ -155,7 +156,7 @@ public class StoreConfigurationProperties implements InitializingBean {
   boolean tailIndexingEnabled = true;
 
   /** defines, if tail indexes should enable the fastUpdate feature */
-  boolean tailIndexingFastUpdateEnabled = false;
+  boolean tailIndexingFastUpdateEnabled;
 
   /** parameter will only be used, if fastUpdate is enabled */
   int tailIndexingPendingListLimit = 4096;
@@ -254,9 +255,6 @@ public class StoreConfigurationProperties implements InitializingBean {
   @Override
   public void afterPropertiesSet() throws Exception {
     if (integrationTestMode) {
-
-      adjustLogbackAppender();
-
       log.warn(
           "**** You are running in INTEGRATION TEST MODE. If you see this in production, "
               + "this would be a good time to panic. (See "

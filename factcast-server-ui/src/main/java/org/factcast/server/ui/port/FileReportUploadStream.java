@@ -15,7 +15,7 @@
  */
 package org.factcast.server.ui.port;
 
-import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.TokenStreamFactory;
 import java.io.FileOutputStream;
 import java.nio.file.Path;
 import lombok.NonNull;
@@ -25,7 +25,7 @@ import org.factcast.server.ui.report.ReportFilterBean;
 public class FileReportUploadStream extends ReportUploadStream {
 
   public FileReportUploadStream(
-      @NonNull JsonFactory jsonFactory,
+      @NonNull TokenStreamFactory jsonFactory,
       @NonNull Path filePath,
       @NonNull String reportName,
       @NonNull ReportFilterBean query) {

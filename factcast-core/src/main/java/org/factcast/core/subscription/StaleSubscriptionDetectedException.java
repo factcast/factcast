@@ -15,11 +15,12 @@
  */
 package org.factcast.core.subscription;
 
+import java.io.Serial;
 import lombok.NoArgsConstructor;
 
 @NoArgsConstructor
 public class StaleSubscriptionDetectedException extends RuntimeException {
-  private static final long serialVersionUID = 5303452267477397256L;
+  @Serial private static final long serialVersionUID = 5303452267477397256L;
 
   public StaleSubscriptionDetectedException(long last, long gracePeriod) {
     super(createMessage(last, gracePeriod));

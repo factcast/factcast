@@ -16,7 +16,6 @@
 package org.factcast.client.grpc.cli.cmd;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.util.ArrayList;

@@ -72,8 +72,7 @@ public class PgFactIdToSerialMapper implements InitializingBean {
             () -> {
               try {
                 Long res =
-                    jdbcTemplate.queryForObject(
-                        PgConstants.SELECT_SER_BY_ID, new Object[] {id}, Long.class);
+                    jdbcTemplate.queryForObject(PgConstants.SELECT_SER_BY_ID, Long.class, id);
                 if (res != null && res > 0) {
                   cache.put(id, res);
                   return res;

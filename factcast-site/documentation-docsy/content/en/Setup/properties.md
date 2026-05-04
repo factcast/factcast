@@ -20,12 +20,12 @@ description: Properties you can use to configure FactCast
 
 ### Transformation-Registry
 
-| Property                                         | Description                                                                                                                                                                                                                                      | Default                     |
-| ------------------------------------------------ | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------- |
-| factcast.store.persistentTransformationCache     | if Transformed Fact payloads are persistently cached into Postgres                                                                                                                                                                               | false                       |
-| factcast.store.inMemTransformationCacheCapacity  | when using the inmem impl of the transformation cache, this is the max number of entries cached. The minimum value here is 100.                                                                                                                  | 100                         |
-| factcast.store.deleteTransformationsStaleForDays | when using the persistent impl of the transformation cache, this is the min number of days a transformation result is not read in order to be considered stale. This should free some space in a regular cleanup job. Must be a positive number. | 14                          |
-| factcast.store.transformationCacheCompactCron    | defines the cron schedule for compacting the transformation result cache                                                                                                                                                                         | `0 0 0 * * *` (at midnight) |
+| Property                                         | Description                                                                                                                                                                                                                                                                                                        | Default                     |
+| ------------------------------------------------ | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------- |
+| factcast.store.persistentTransformationCache     | if Transformed Fact payloads are persistently cached into Postgres.                                                                                                                                                                                                                                                | false                       |
+| factcast.store.inMemTransformationCacheCapacity  | when using the inmem impl of the transformation cache, this is the max number of entries cached. The minimum value here is 100.                                                                                                                                                                                    | 100                         |
+| factcast.store.deleteTransformationsStaleForDays | when using the persistent impl of the transformation cache, this is the min number of days a transformation result is not read in order to be considered stale. This should free some space in a regular cleanup job. Setting this to `-1` allows to disable the cleanup of transformation results from the cache. | -1 (disabled)               |
+| factcast.store.transformationCacheCompactCron    | defines the cron schedule for compacting the transformation result cache.                                                                                                                                                                                                                                          | `0 0 0 * * *` (at midnight) |
 
 ---
 
@@ -51,7 +51,14 @@ description: Properties you can use to configure FactCast
 | factcast.store.sizeOfThreadPoolForBufferedTransformations    | This is the number of threads we create for handling buffered transformations. It's implemented via work stealing thread pool. In early versions we used the common FJP which limits the parallelism to the number of cores - 1.                                                                                                                                                                                                                    | <nobr>25</nobr>                          |
 | factcast.store.readOnlyModeEnabled                           | Configures FactCast to work in read-only mode. You cannot publish any events in this mode and certain functionality like tail index generation or state token generation is disabled. You can still use a persistent schema store or transformation cache, however they will work in read-only mode. Additionally, liquibase is disabled.                                                                                                           | false                                    |
 | factcast.store.enumerationDirectModeEnabled                  | Despite of a Schema-Registry being defined or not, if set to true, enumeration of types or namespace will examine the data in the store directly, so that you only see data from already published facts.                                                                                                                                                                                                                                           | false                                    |
-| factcast.store.catchupStrategy                               | Available: CURSOR and CHUNKED. Cursor does the catchup query in one go and keeps the cursor open until the facts are sent to the client. Chunked runs queries limited to page-size rows instead.                                                                                                                                                                                                                                                    | CURSOR                                   |
+| factcast.store.catchupStrategy                               | Available: CURSOR and CHUNKED. Cursor does the catchup query in one go and keeps the cursor open until the facts are sent to the client. Chunked runs queries limited to page-size rows instead.{{< alert severity="warning" size="small" >}}                                                                                                                                                                                                       |
+
+Warning: When using the CHUNKED strategy, make sure to also adapt the **page-size** property to a reasonable value
+(10000 seems to be a good choice in early experiments), so that postgres is not overwhelmed with too many queries with
+tiny resultsets. This is an obvious trade-off between the maximum time the fact table has a read-lock and the efficiency
+of fact retrieval. The current default of page-size:50 is problematic for CHUNKED strategy.
+
+{{< /alert >}} | CURSOR |
 
 ---
 
@@ -72,10 +79,9 @@ description: Properties you can use to configure FactCast
 
 #### RedisSnapshots
 
-| Property                                           | Description                                                                                                                                                                                              | Default          |
-| -------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------- |
-| factcast.snapshot.redis.deleteSnapshotStaleForDays | min number of days a snapshot is kept even though it is not read anymore. Must be a positive number.                                                                                                     | 90               |
-| factcast.snapshot.redis.snapshotCacheRedissonCodec | optional configuration of the codec used for serializing objects from and into the snapshot. When set to <nobr>`RedissonDefault`</nobr> no codec is specified and Redisson will use its current default. | MarshallingCodec |
+| Property                                           | Description                                                                                          | Default |
+| -------------------------------------------------- | :--------------------------------------------------------------------------------------------------- | :------ |
+| factcast.snapshot.redis.deleteSnapshotStaleForDays | min number of days a snapshot is kept even though it is not read anymore. Must be a positive number. | 90      |
 
 #### JDBC-Snapshots
 

@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast-itests</artifactId>
-    <version>0.10.4-SNAPSHOT</version>
+    <version>0.11.0-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-itests-security</artifactId>
@@ -58,10 +58,6 @@
         <exclusion>
           <groupId>com.vaadin.external.google</groupId>
           <artifactId>android-json</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>junit</groupId>
-          <artifactId>junit</artifactId>
         </exclusion>
       </exclusions>
     </dependency>

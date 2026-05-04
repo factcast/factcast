@@ -15,7 +15,7 @@
  */
 package org.factcast.factus.spring.tx;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 import lombok.NonNull;
 import org.factcast.factus.projection.tx.TransactionAdapter;
 import org.springframework.transaction.PlatformTransactionManager;

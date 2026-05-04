@@ -76,8 +76,8 @@ public class TransformationCacheTest {
       ((PgTransformationCache) transformationCache).flush();
 
       jdbcTemplate.update(
-          String.format(
-              "DELETE FROM transformationstore WHERE type='%s' AND from_version=%d", f.type(), 2));
+          "DELETE FROM transformationstore WHERE type='%s' AND from_version=%d"
+              .formatted(f.type(), 2));
       wasOned.await();
 
       assertDoesNotThrow(() -> fc.fetchByIdAndVersion(id, 1));
@@ -111,9 +111,8 @@ public class TransformationCacheTest {
 
       String randomUUID = UUID.randomUUID().toString();
       jdbcTemplate.update(
-          String.format(
-              "UPDATE transformationstore SET transformation='function transform(event){event.displayName=\"%s\"}' WHERE type='%s' AND from_version=%d AND to_version=%d",
-              randomUUID, f.type(), 2, 3));
+          "UPDATE transformationstore SET transformation='function transform(event){event.displayName=\"%s\"}' WHERE type='%s' AND from_version=%d AND to_version=%d"
+              .formatted(randomUUID, f.type(), 2, 3));
       wasOned.await();
 
       assertDoesNotThrow(() -> fc.fetchByIdAndVersion(id, 1));

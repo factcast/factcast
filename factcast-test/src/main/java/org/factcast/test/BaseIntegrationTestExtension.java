@@ -24,15 +24,15 @@ import java.util.concurrent.*;
 import javax.sql.DataSource;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.test.FactCastIntegrationTestExecutionListener.ProxiedEndpoint;
 import org.factcast.test.toxi.FactCastProxy;
 import org.factcast.test.toxi.PostgresqlProxy;
 import org.slf4j.LoggerFactory;
 import org.springframework.test.context.TestContext;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.containers.ToxiproxyContainer;
+import org.testcontainers.containers.*;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 
 @Slf4j
 public class BaseIntegrationTestExtension implements FactCastIntegrationTestExtension {
@@ -88,8 +88,8 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
             key -> {
               String dbName = "db" + config.hashCode();
 
-              PostgreSQLContainer<?> db =
-                  new PostgreSQLContainer<>("postgres:" + config.postgresVersion())
+              PostgreSQLContainer db =
+                  new PostgreSQLContainer("postgres:" + config.postgresVersion())
                       .withDatabaseName("fc")
                       .withUsername("fc")
                       // changed to static pwd, so that we could easily access the DB during
@@ -98,14 +98,14 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
                       .withNetworkAliases(dbName)
                       .withNetwork(FactCastIntegrationTestExecutionListener._docker_network);
               db.start();
-              ToxiproxyContainer.ContainerProxy pgProxy =
-                  FactCastIntegrationTestExecutionListener.createProxy(db, PG_PORT);
+              ProxiedEndpoint pgProxy =
+                  FactCastIntegrationTestExecutionListener.createProxy("postgres", db, PG_PORT);
 
               String jdbcUrl =
                   "jdbc:postgresql://"
-                      + FactCastIntegrationTestExecutionListener.TOXIPROXY_NETWORK_ALIAS
+                      + pgProxy.toxiProxyHost()
                       + ":"
-                      + pgProxy.getOriginalProxyPort()
+                      + pgProxy.toxiProxyPort()
                       + "/"
                       + db.getDatabaseName();
               GenericContainer<?> fc =
@@ -128,8 +128,8 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
                       .waitingFor(
                           new HostPortWaitStrategy().withStartupTimeout(Duration.ofSeconds(180)));
               fc.start();
-              ToxiproxyContainer.ContainerProxy fcProxy =
-                  FactCastIntegrationTestExecutionListener.createProxy(fc, FC_PORT);
+              ProxiedEndpoint fcProxy =
+                  FactCastIntegrationTestExecutionListener.createProxy("factcast", fc, FC_PORT);
 
               return new FactCastIntegrationTestExecutionListener.Containers(
                   db,
@@ -139,8 +139,8 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
                   jdbcUrl);
             });
 
-    ToxiproxyContainer.ContainerProxy fcProxy = containers.fcProxy().get();
-    String address = "static://" + fcProxy.getContainerIpAddress() + ":" + fcProxy.getProxyPort();
+    ProxiedEndpoint fcProxy = containers.fcProxy().get();
+    String address = "static://" + fcProxy.host() + ":" + fcProxy.port();
     System.setProperty("spring.grpc.client.channels.factstore.address", address);
 
     System.setProperty("spring.datasource.url", containers.db().getJdbcUrl());
