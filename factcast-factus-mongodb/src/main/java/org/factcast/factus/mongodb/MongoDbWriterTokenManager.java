@@ -35,7 +35,7 @@ import org.jspecify.annotations.Nullable;
 @RequiredArgsConstructor(onConstructor_ = @VisibleForTesting)
 public class MongoDbWriterTokenManager {
 
-  public static final String LOCK_COLLECTION_NAME = "locks";
+  public static final String LOCK_COLLECTION_NAME = "factcast_locks";
 
   protected static final Duration MIN_LEASE_DURATION_SECONDS = Duration.ofSeconds(1);
   protected static final Duration MAX_LEASE_DURATION_SECONDS = Duration.ofSeconds(60);
