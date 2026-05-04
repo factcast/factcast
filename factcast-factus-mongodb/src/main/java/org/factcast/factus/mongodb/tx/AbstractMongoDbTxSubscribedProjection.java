@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2024 factcast.org
+ * Copyright © 2017-2026 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,15 @@
  */
 package org.factcast.factus.mongodb.tx;
 
-import com.mongodb.client.MongoDatabase;
-import lombok.NonNull;
-import org.factcast.factus.projection.ManagedProjection;
-import org.factcast.factus.spring.tx.SpringTransactional;
+import org.factcast.factus.projection.SubscribedProjection;
+import org.jspecify.annotations.NonNull;
+import org.springframework.data.mongodb.MongoTransactionManager;
 
-// FIXME Might be obsolete
+public abstract class AbstractMongoDbTxSubscribedProjection extends AbstractMongoDbTxProjection
+    implements SubscribedProjection {
 
-@SpringTransactional
-public interface MongoDbTxManagedProjection extends MongoDbTxProjection, ManagedProjection {
-  @NonNull
-  MongoDatabase mongoDb();
+  protected AbstractMongoDbTxSubscribedProjection(
+      @NonNull MongoTransactionManager mongoTransactionManager) {
+    super(mongoTransactionManager);
+  }
 }
