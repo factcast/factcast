@@ -46,8 +46,8 @@ public class ExampleUseCaseRunner implements CommandLineRunner {
   public void run(String... args) throws Exception {
     List<Fact> facts = new ArrayList<>();
     for (int i = 0; i < 10; i++) {
-      val factId1 = UUID.randomUUID();
-      val userId = UUID.randomUUID();
+      var factId1 = UUID.randomUUID();
+      var userId = UUID.randomUUID();
       facts.add(
           Fact.builder()
               .ns("users")
