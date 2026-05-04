@@ -47,6 +47,7 @@ public class PgSubscriptionFactory implements AutoCloseable {
   final ServerPipelineFactory pipelineFactory;
   final ExecutorService es;
   final PgStoreTelemetry telemetry;
+  final StoreConfigurationProperties props;
   private final int maxPipelineBufferSize;
 
   public PgSubscriptionFactory(
@@ -66,6 +67,7 @@ public class PgSubscriptionFactory implements AutoCloseable {
     this.hwmFetcher = hwmFetcher;
     this.pipelineFactory = pipelineFactory;
     this.telemetry = telemetry;
+    this.props = props;
 
     this.maxPipelineBufferSize = props.getTransformationCachePageSize();
 
@@ -89,6 +91,7 @@ public class PgSubscriptionFactory implements AutoCloseable {
             hwmFetcher,
             pipe,
             telemetry,
+            props,
             req);
 
     // when closing the subscription, also close the PgFactStream

@@ -33,7 +33,9 @@ import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.*;
+import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.catchup.*;
+import org.factcast.store.internal.filter.FromScratchCatchupLogSuppressingTurboFilter;
 import org.factcast.store.internal.listen.ConnectionModifier;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.pipeline.ServerPipeline;
@@ -62,6 +64,7 @@ public class PgFactStream {
   final HighWaterMarkFetcher hwmFetcher;
   final ServerPipeline pipeline;
   final PgStoreTelemetry telemetry;
+  final StoreConfigurationProperties props;
 
   @Getter(AccessLevel.PROTECTED)
   final SubscriptionRequestTO request;
@@ -229,20 +232,27 @@ public class PgFactStream {
 
   @VisibleForTesting
   void catchup(long highWaterMarkSerial, DataSource ds) {
-    if (isConnected()) {
-      pgCatchupFactory
-          .create(request, pipeline, serial, statementHolder, ds, PgCatchupFactory.Phase.PHASE_1)
-          .run();
+    if (serial.get() <= 0 && props.getFromScratchCatchupMinLogLevel() != null) {
+      FromScratchCatchupLogSuppressingTurboFilter.beginCatchup(request.debugInfo());
     }
-    if (isConnected()) {
-      // if we did not find anything in phase1,
-      // in order to prevent us from scanning the whole bunch again, we rather start at
-      // the highwatermark BEFORE phase1 started
-      PgCatchup pgCatchup =
-          pgCatchupFactory.create(
-              request, pipeline, serial, statementHolder, ds, PgCatchupFactory.Phase.PHASE_2);
-      pgCatchup.fastForward(highWaterMarkSerial);
-      pgCatchup.run();
+    try {
+      if (isConnected()) {
+        pgCatchupFactory
+            .create(request, pipeline, serial, statementHolder, ds, PgCatchupFactory.Phase.PHASE_1)
+            .run();
+      }
+      if (isConnected()) {
+        // if we did not find anything in phase1,
+        // in order to prevent us from scanning the whole bunch again, we rather start at
+        // the highwatermark BEFORE phase1 started
+        PgCatchup pgCatchup =
+            pgCatchupFactory.create(
+                request, pipeline, serial, statementHolder, ds, PgCatchupFactory.Phase.PHASE_2);
+        pgCatchup.fastForward(highWaterMarkSerial);
+        pgCatchup.run();
+      }
+    } finally {
+      FromScratchCatchupLogSuppressingTurboFilter.endCatchup();
     }
   }
 
