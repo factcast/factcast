@@ -36,7 +36,7 @@
     <dependency>
       <groupId>org.apache.fory</groupId>
       <artifactId>fory-core</artifactId>
-      <version>0.16.0</version>
+      <version>0.17.0</version>
     </dependency>
     <dependency>
       <groupId>org.dom4j</groupId>
