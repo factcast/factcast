@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2024 factcast.org
+ * Copyright © 2017-2026 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.mongodb;
+package org.factcast.example.client.mongodb.hello;
 
-import com.mongodb.client.MongoDatabase;
-import lombok.NonNull;
-import org.factcast.factus.projection.ExternalizedProjection;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
-public interface MongoDbProjection extends ExternalizedProjection {
-  String STATE_COLLECTION_NAME = "factcast_states";
-  String PROJECTION_CLASS_FIELD = "projectionKey";
-  String LAST_FACT_ID_FIELD = "lastFactId";
-  String LAST_FACT_SERIAL_FIELD = "lastFactSerial";
+@Document(collection = "users")
+public class TransactionalUserSchema {
 
-  @NonNull
-  MongoDatabase mongoDb();
+  @Id private String id;
+
+  private String name;
+
+  private String displayName;
 }

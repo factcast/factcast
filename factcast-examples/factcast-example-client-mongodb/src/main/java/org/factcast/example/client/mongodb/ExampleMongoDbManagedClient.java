@@ -15,13 +15,15 @@
  */
 package org.factcast.example.client.mongodb;
 
+import static org.factcast.example.client.mongodb.Examples.MANAGED;
+
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 /** Requires local mongoDB to run. See README.md */
 @SpringBootApplication
-public class ExampleMongoDbClient {
+public class ExampleMongoDbManagedClient {
   public static void main(String[] args) {
-    SpringApplication.run(ExampleMongoDbClient.class, args);
+    SpringApplication.run(ExampleMongoDbManagedClient.class, MANAGED.name());
   }
 }

@@ -16,23 +16,15 @@
 package org.factcast.factus.mongodb;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.factcast.factus.mongodb.AbstractMongoDbProjection.MAX_LEASE_DURATION_SECONDS;
-import static org.factcast.factus.mongodb.AbstractMongoDbProjection.MIN_LEASE_DURATION_SECONDS;
 import static org.mockito.Mockito.*;
 
 import com.mongodb.client.*;
 import com.mongodb.client.model.ReplaceOptions;
-import java.time.Duration;
-import java.util.Optional;
 import java.util.UUID;
 import lombok.NonNull;
-import lombok.SneakyThrows;
-import net.javacrumbs.shedlock.core.LockConfiguration;
 import net.javacrumbs.shedlock.core.LockProvider;
-import net.javacrumbs.shedlock.core.SimpleLock;
 import org.bson.Document;
 import org.factcast.core.FactStreamPosition;
-import org.factcast.factus.projection.WriterToken;
 import org.factcast.factus.serializer.ProjectionMetaData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -54,9 +46,9 @@ class AbstractMongoDbManagedProjectionTest {
 
   @BeforeEach
   void setUp() {
-    when(mongoDatabase.getCollection(AbstractMongoDbManagedProjection.STATE_COLLECTION))
+    when(mongoDatabase.getCollection(MongoDbProjection.STATE_COLLECTION_NAME))
         .thenReturn(stateTable);
-    when(mongoDatabase.getCollection(AbstractMongoDbManagedProjection.LOCK_COLLECTION))
+    when(mongoDatabase.getCollection(MongoDbWriterTokenManager.LOCK_COLLECTION_NAME))
         .thenReturn(lockTable);
     uut = new TestProjection(mongoDatabase);
   }
@@ -119,70 +111,6 @@ class AbstractMongoDbManagedProjectionTest {
       assertThat(update.get("lastFactSerial")).isEqualTo(2L);
 
       assertThat(optionsCaptor.getValue().isUpsert()).isTrue();
-    }
-  }
-
-  @Nested
-  class WhenAquiringWriteToken {
-
-    @Captor private ArgumentCaptor<LockConfiguration> captor;
-    @Mock LockProvider lockProvider;
-
-    @BeforeEach
-    void setUp() {
-      uut = new TestProjection(mongoDatabase, stateTable, lockProvider);
-    }
-
-    @Test
-    @SneakyThrows
-    void returnsTokenWhenLockingSuccessful() {
-      Duration maxWaitDuration = Duration.ofSeconds(60L);
-      SimpleLock lock = mock(SimpleLock.class);
-      when(lockProvider.lock(any(LockConfiguration.class))).thenReturn(Optional.of(lock));
-
-      final WriterToken res = uut.acquireWriteToken(maxWaitDuration);
-
-      verify(lockProvider).lock(captor.capture());
-      final LockConfiguration lockConfig = captor.getValue();
-      assertThat(lockConfig.getName()).isEqualTo(SCOPED_NAME + "_lock");
-      assertThat(lockConfig.getLockAtLeastFor()).isEqualTo(Duration.ofSeconds(1L));
-      assertThat(lockConfig.getLockAtMostFor()).isEqualTo(maxWaitDuration);
-
-      assertThat(res).isNotNull();
-    }
-
-    @Test
-    @SneakyThrows
-    void returnsLockWhenSuccessfulAfterMultipleAttempts() {
-      Duration maxWaitDuration = Duration.ofSeconds(7);
-      SimpleLock lock = mock(SimpleLock.class);
-      when(lockProvider.lock(any(LockConfiguration.class)))
-          .thenReturn(Optional.empty())
-          .thenReturn(Optional.empty())
-          .thenReturn(Optional.of(lock));
-
-      final WriterToken res = uut.acquireWriteToken(maxWaitDuration);
-
-      verify(lockProvider, times(3)).lock(captor.capture());
-      final LockConfiguration lockConfig = captor.getValue();
-      assertThat(lockConfig.getName()).isEqualTo(SCOPED_NAME + "_lock");
-      assertThat(lockConfig.getLockAtLeastFor()).isEqualTo(MIN_LEASE_DURATION_SECONDS);
-      assertThat(lockConfig.getLockAtMostFor()).isEqualTo(MAX_LEASE_DURATION_SECONDS);
-
-      assertThat(res).isNotNull();
-    }
-
-    @Test
-    @SneakyThrows
-    void returnsNullIfLockCouldNotBeObtainedAfterMultipleAttempts() {
-      Duration maxWaitDuration = Duration.ofSeconds(1);
-      when(lockProvider.lock(any(LockConfiguration.class))).thenReturn(Optional.empty());
-
-      final WriterToken res = uut.acquireWriteToken(maxWaitDuration);
-
-      // After 3. attempt, we waited 1,5 seconds and abort.
-      verify(lockProvider, times(2)).lock(captor.capture());
-      assertThat(res).isNull();
     }
   }
 

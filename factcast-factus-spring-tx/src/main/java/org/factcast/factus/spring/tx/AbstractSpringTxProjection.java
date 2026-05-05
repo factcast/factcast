@@ -22,9 +22,8 @@ import org.factcast.core.*;
 import org.factcast.factus.projection.tx.*;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.support.*;
 
-abstract class AbstractSpringTxProjection implements SpringTxProjection {
+public abstract class AbstractSpringTxProjection implements SpringTxProjection {
 
   @Delegate private final TransactionBehavior<TransactionStatus> tx;
 

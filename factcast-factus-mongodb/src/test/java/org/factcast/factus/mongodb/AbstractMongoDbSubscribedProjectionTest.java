@@ -44,9 +44,9 @@ class AbstractMongoDbSubscribedProjectionTest {
 
   @BeforeEach
   void setUp() {
-    when(mongoDatabase.getCollection(AbstractMongoDbManagedProjection.STATE_COLLECTION))
+    when(mongoDatabase.getCollection(AbstractMongoDbManagedProjection.STATE_COLLECTION_NAME))
         .thenReturn(stateTable);
-    when(mongoDatabase.getCollection(AbstractMongoDbManagedProjection.LOCK_COLLECTION))
+    when(mongoDatabase.getCollection(MongoDbWriterTokenManager.LOCK_COLLECTION_NAME))
         .thenReturn(lockTable);
     uut = new TestProjection(mongoDatabase);
   }
