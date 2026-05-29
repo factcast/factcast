@@ -126,7 +126,7 @@
     <micronaut.version>4.7.5</micronaut.version>
     <kotlin.version>2.3.21</kotlin.version>
     <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
-    <mockk.version>1.14.9</mockk.version>
+    <mockk.version>1.14.11</mockk.version>
     <graaljs.version>25.0.3</graaljs.version>
     <redisson.version>4.4.0</redisson.version>
     <aws-sdk.version>2.45.0</aws-sdk.version>
