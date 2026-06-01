@@ -132,7 +132,7 @@
     <aws-sdk.version>2.45.1</aws-sdk.version>
     <mongodb-driver.version>5.8.0</mongodb-driver.version>
     <shedlock.version>7.7.0</shedlock.version>
-    <byte-buddy.version>1.18.8-jdk5</byte-buddy.version>
+    <byte-buddy.version>1.18.9-jdk5</byte-buddy.version>
     <rewrite-java.version>8.83.5</rewrite-java.version>
     <skipUnitTests>false</skipUnitTests>
     <postgres.version>15</postgres.version>
