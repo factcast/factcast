@@ -1,3 +1,18 @@
+/*
+ * Copyright © 2017-2026 factcast.org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.factcast.example.smilepoc.bench;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -14,8 +29,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 /**
- * End-to-end aggId-property-style filter: random key → DB fetch → parse → walk → compare.
- * Mirrors the work done by {@code AggIdPropertyMatcher} in factcast-store, but local to the PoC.
+ * End-to-end aggId-property-style filter: random key → DB fetch → parse → walk → compare. Mirrors
+ * the work done by {@code AggIdPropertyMatcher} in factcast-store, but local to the PoC.
  */
 @Slf4j
 @Component
@@ -155,15 +170,7 @@ public class AggIdFilterBenchmark {
     String note = String.format("matches=%d", matches);
     Measurement m =
         new Measurement(
-            variant,
-            "aggid_filter",
-            s.size(),
-            s.p50(),
-            s.p95(),
-            s.p99(),
-            s.max(),
-            s.total(),
-            note);
+            variant, "aggid_filter", s.size(), s.p50(), s.p95(), s.p99(), s.max(), s.total(), note);
     report.add(m);
     log.info(
         "[{}] aggid_filter n={} matches={} p50={}us p95={}us total={}ms",

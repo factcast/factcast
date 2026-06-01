@@ -1,3 +1,18 @@
+/*
+ * Copyright © 2017-2026 factcast.org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.factcast.example.smilepoc.bench;
 
 import java.util.List;
@@ -24,8 +39,7 @@ public class SingleReadBenchmark {
     List<KeySample> sample = keys.sample(total);
 
     if (sample.size() < total) {
-      log.warn(
-          "Only {} keys available; reducing iteration count from {}", sample.size(), total);
+      log.warn("Only {} keys available; reducing iteration count from {}", sample.size(), total);
       total = sample.size();
     }
     int warmup = Math.min(props.bench().warmup(), total / 10);
@@ -40,7 +54,8 @@ public class SingleReadBenchmark {
       KeySample k = sample.get(i);
       long t0 = System.nanoTime();
       jdbc.queryForList(
-          "SELECT header, payload FROM transformationcache_jsonb WHERE cache_key = ?", k.cacheKey());
+          "SELECT header, payload FROM transformationcache_jsonb WHERE cache_key = ?",
+          k.cacheKey());
       long jsonbDt = System.nanoTime() - t0;
 
       long t1 = System.nanoTime();
