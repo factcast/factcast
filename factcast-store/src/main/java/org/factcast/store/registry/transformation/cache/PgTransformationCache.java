@@ -215,9 +215,7 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
     if (!storeConfigurationProperties.isReadOnlyModeEnabled()) {
       // it is fine if flush worked in another transaction, it just has to be serialized
       inTransactionWithLock(
-          () ->
-              jdbcTemplate.update(
-                  "DELETE FROM transformationcache WHERE fact_id = ?", factId));
+          () -> jdbcTemplate.update("DELETE FROM transformationcache WHERE fact_id = ?", factId));
     }
   }
 

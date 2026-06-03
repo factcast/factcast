@@ -87,9 +87,7 @@ public class InMemTransformationCache implements TransformationCache {
       Set<Key> toBeInvalidated =
           cache.entrySet().stream()
               .filter(
-                  e ->
-                      e.getValue().ns().equals(ns)
-                          && Objects.equals(e.getValue().type(), type))
+                  e -> e.getValue().ns().equals(ns) && Objects.equals(e.getValue().type(), type))
               .map(Entry::getKey)
               .collect(Collectors.toSet());
       if (!toBeInvalidated.isEmpty()) {
