@@ -15,12 +15,9 @@
  */
 package org.factcast.store.registry.transformation.cache;
 
-import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
-import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.map.LRUMap;
@@ -34,7 +31,7 @@ public class InMemTransformationCache implements TransformationCache {
   // very low, but ok for tests
   private static final int DEFAULT_CAPACITY = 100;
 
-  private final Map<Key, FactAndAccessTime> cache;
+  private final Map<Key, PgFact> cache;
 
   public InMemTransformationCache(RegistryMetrics registryMetrics) {
     this(DEFAULT_CAPACITY, registryMetrics);
@@ -47,19 +44,17 @@ public class InMemTransformationCache implements TransformationCache {
 
   @Override
   public void put(@NonNull TransformationCache.Key key, @NonNull PgFact f) {
-    cache.put(key, new FactAndAccessTime(f, System.currentTimeMillis()));
+    cache.put(key, f);
   }
 
   @Override
   public Optional<PgFact> find(@NonNull TransformationCache.Key key) {
-    Optional<FactAndAccessTime> cached;
-    cached = Optional.ofNullable(cache.get(key));
-    cached.ifPresent(faat -> faat.accessTimeInMillis(System.currentTimeMillis()));
+    Optional<PgFact> cached = Optional.ofNullable(cache.get(key));
     registryMetrics.count(
         cached.isPresent()
             ? RegistryMetrics.EVENT.TRANSFORMATION_CACHE_HIT
             : RegistryMetrics.EVENT.TRANSFORMATION_CACHE_MISS);
-    return cached.map(FactAndAccessTime::fact);
+    return cached;
   }
 
   @Override
@@ -67,9 +62,9 @@ public class InMemTransformationCache implements TransformationCache {
     Set<PgFact> found = new HashSet<>(keys.size());
     keys.forEach(
         k -> {
-          FactAndAccessTime factAndAccessTime = cache.get(k);
-          if (factAndAccessTime != null) {
-            found.add(factAndAccessTime.fact);
+          PgFact fact = cache.get(k);
+          if (fact != null) {
+            found.add(fact);
           }
         });
 
@@ -87,36 +82,14 @@ public class InMemTransformationCache implements TransformationCache {
   }
 
   @Override
-  public void compact(@NonNull ZonedDateTime thresholdDate) {
-    registryMetrics.timed(
-        RegistryMetrics.OP.COMPACT_TRANSFORMATION_CACHE,
-        () -> {
-          HashSet<Entry<Key, FactAndAccessTime>> copyOfEntries;
-          synchronized (cache) {
-            copyOfEntries = new HashSet<>(cache.entrySet());
-          }
-
-          var thresholdMillis = thresholdDate.toInstant().toEpochMilli();
-
-          copyOfEntries.forEach(
-              e -> {
-                FactAndAccessTime faat = e.getValue();
-                if (thresholdMillis > faat.accessTimeInMillis) {
-                  cache.remove(e.getKey());
-                }
-              });
-        });
-  }
-
-  @Override
   public void invalidateTransformationFor(String ns, String type) {
     synchronized (cache) {
       Set<Key> toBeInvalidated =
           cache.entrySet().stream()
               .filter(
                   e ->
-                      e.getValue().fact().ns().equals(ns)
-                          && Objects.equals(e.getValue().fact().type(), type))
+                      e.getValue().ns().equals(ns)
+                          && Objects.equals(e.getValue().type(), type))
               .map(Entry::getKey)
               .collect(Collectors.toSet());
       if (!toBeInvalidated.isEmpty()) {
@@ -130,7 +103,7 @@ public class InMemTransformationCache implements TransformationCache {
     synchronized (cache) {
       Set<Key> toBeInvalidated =
           cache.keySet().stream()
-              .filter(e -> e.id().contains(factId.toString()))
+              .filter(k -> factId.equals(k.factId()))
               .collect(Collectors.toSet());
       if (!toBeInvalidated.isEmpty()) {
         toBeInvalidated.forEach(cache::remove);
@@ -141,13 +114,5 @@ public class InMemTransformationCache implements TransformationCache {
   @Override
   public void flush() {
     // NOP
-  }
-
-  @Data
-  @AllArgsConstructor
-  private static class FactAndAccessTime {
-    PgFact fact;
-
-    long accessTimeInMillis;
   }
 }

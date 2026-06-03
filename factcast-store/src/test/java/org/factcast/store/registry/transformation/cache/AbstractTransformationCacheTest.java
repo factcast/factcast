@@ -20,11 +20,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.verify;
 
 import com.google.common.collect.Lists;
-import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.UUID;
-import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
 import org.factcast.store.internal.PgFact;
 import org.factcast.store.registry.NOPRegistryMetrics;
@@ -98,27 +96,6 @@ public abstract class AbstractTransformationCacheTest {
     assertThat(found.isPresent()).isTrue();
     assertEquals(fact, found.get());
     verify(registryMetrics).count(RegistryMetrics.EVENT.TRANSFORMATION_CACHE_HIT);
-  }
-
-  @Test
-  void testCompact() {
-    PgFact fact =
-        PgFact.from(
-            Fact.builder().ns("ns").type("type").id(UUID.randomUUID()).version(1).build("{}"));
-    String chainId = "1-2-3";
-
-    TransformationCache.Key key = TransformationCache.Key.of(fact.id(), 1, chainId);
-    uut.put(key, fact);
-    uut.flush();
-
-    // create last access stamp
-    Assertions.assertThat(uut.find(key)).isPresent();
-
-    uut.compact(ZonedDateTime.now().plusDays(30));
-
-    Optional<PgFact> found = uut.find(key);
-
-    assertThat(found.isPresent()).isFalse();
   }
 
   @Test
