@@ -36,8 +36,10 @@ import org.factcast.factus.snapshot.SnapshotIdentifier;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.mockito.Captor;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 class SnapshotDiskRepositoryImplTest {
 
   private SnapshotDiskRepositoryImpl uut;
@@ -55,7 +57,7 @@ class SnapshotDiskRepositoryImplTest {
 
   @Nested
   class WhenCrud {
-    @Captor private LogCaptor logCaptor = LogCaptor.forClass(SnapshotDiskRepositoryImpl.class);
+    private LogCaptor logCaptor = LogCaptor.forClass(SnapshotDiskRepositoryImpl.class);
 
     @BeforeEach
     void setup() {
@@ -206,7 +208,7 @@ class SnapshotDiskRepositoryImplTest {
       uut.save(id3, snap).get();
 
       // After saving snap3 the cleanup should be triggered and snap1 (the oldest) should be deleted
-      Awaitility.await().until(() -> !uut.findById(id1).isPresent());
+      Awaitility.await().until(() -> uut.findById(id1).isEmpty());
     }
 
     @Test
@@ -246,7 +248,7 @@ class SnapshotDiskRepositoryImplTest {
       uut.save(id3, snap).get();
 
       // After saving snap3 the cleanup should be triggered and snap1 (the oldest) should be deleted
-      Awaitility.await().until(() -> !uut.findById(id1).isPresent());
+      Awaitility.await().until(() -> uut.findById(id1).isEmpty());
 
       // update the modified date of snap2
       uut.findById(id2);
@@ -257,7 +259,7 @@ class SnapshotDiskRepositoryImplTest {
 
       // Should Trigger cleanup again and delete snap3 because 2 is now not the oldest
       uut.save(id4, snap).get();
-      Awaitility.await().until(() -> !uut.findById(id3).isPresent());
+      Awaitility.await().until(() -> uut.findById(id3).isEmpty());
       assertThat(uut.findById(id2)).isPresent();
       assertThat(uut.findById(id4)).isPresent();
     }

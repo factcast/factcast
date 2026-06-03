@@ -356,23 +356,27 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
   private void createTables() {
     jdbcTemplate.execute("DROP TABLE IF EXISTS managed_projection;");
     jdbcTemplate.execute(
-        "CREATE TABLE managed_projection (\n"
-            + "\n"
-            + "    name  varchar(255),\n"
-            + "    fact_stream_position UUID,\n"
-            + "\n"
-            + "    PRIMARY KEY (name)\n"
-            + ");");
+        """
+        CREATE TABLE managed_projection (
+
+            name  varchar(255),
+            fact_stream_position UUID,
+
+            PRIMARY KEY (name)
+        );\
+        """);
 
     jdbcTemplate.execute("DROP TABLE IF EXISTS users;");
     jdbcTemplate.execute(
-        "CREATE TABLE users (\n"
-            + "\n"
-            + "    name  varchar(255),\n"
-            + "    id UUID,\n"
-            + "\n"
-            + "    PRIMARY KEY (id)\n"
-            + ");");
+        """
+        CREATE TABLE users (
+
+            name  varchar(255),
+            id UUID,
+
+            PRIMARY KEY (id)
+        );\
+        """);
   }
 
   @Slf4j

@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 import java.net.*;
+import org.openjdk.jmh.Main;
 
 public class JMH {
   public static void main(String[] args) throws Exception {
-    org.openjdk.jmh.Main.main(args);
+    Main.main(args);
   }
 }

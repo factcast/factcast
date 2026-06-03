@@ -20,8 +20,8 @@ import org.factcast.client.grpc.GrpcFactStore;
 import org.factcast.grpc.lz4.Lz4GrpcCodec;
 import org.springframework.boot.autoconfigure.*;
 import org.springframework.boot.autoconfigure.condition.*;
+import org.springframework.boot.grpc.client.autoconfigure.GrpcClientAutoConfiguration;
 import org.springframework.context.annotation.Bean;
-import org.springframework.grpc.autoconfigure.client.GrpcClientAutoConfiguration;
 import org.springframework.grpc.client.GrpcChannelFactory;
 
 /**

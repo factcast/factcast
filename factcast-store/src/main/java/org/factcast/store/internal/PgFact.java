@@ -20,10 +20,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
+import jakarta.annotation.Nullable;
 import java.sql.*;
 import java.util.*;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 import lombok.*;
 import org.factcast.core.*;
 import org.factcast.core.util.FactCastJson;
@@ -68,7 +68,8 @@ public class PgFact implements Fact {
     ArrayNode aggIdsNode = (ArrayNode) header.path("aggIds");
     Set<UUID> aggIds =
         Lists.newArrayList(aggIdsNode).stream()
-            .map(n -> UUID.fromString(n.asText()))
+            .map(JsonNode::asText)
+            .map(UUID::fromString)
             .collect(Collectors.toSet());
     // this might be reasonable to turn to lazy, some day
     String jsonHeader = header.toString();

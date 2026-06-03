@@ -16,6 +16,7 @@
 package org.factcast.store.registry;
 
 import java.io.IOException;
+import java.io.Serial;
 import java.net.URL;
 import lombok.NonNull;
 
@@ -26,7 +27,7 @@ import lombok.NonNull;
  */
 public class RegistryFileFetchException extends IOException {
 
-  private static final long serialVersionUID = 1L;
+  @Serial private static final long serialVersionUID = 1L;
 
   public RegistryFileFetchException(@NonNull URL url, int code, @NonNull String message) {
     super("Status code " + code + ": " + message + " while fetching " + url);

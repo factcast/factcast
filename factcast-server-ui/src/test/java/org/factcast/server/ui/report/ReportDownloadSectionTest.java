@@ -95,7 +95,7 @@ class ReportDownloadSectionTest {
     try (var securityContextHolder = Mockito.mockStatic(SecurityContextHolder.class)) {
       securityContextHolder.when(SecurityContextHolder::getContext).thenReturn(ctx);
       final var uut = new ReportDownloadSection(reportStore, dataProvider);
-      uut.uiSupplier((() -> Optional.of(ui)));
+      uut.uiSupplier(() -> Optional.of(ui));
       uut.refreshForFile(FILENAME);
 
       // ACT

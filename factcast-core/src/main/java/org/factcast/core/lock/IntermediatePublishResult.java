@@ -16,7 +16,9 @@
 package org.factcast.core.lock;
 
 import java.util.*;
-import lombok.*;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.Setter;
 import org.factcast.core.Fact;
 
 public final class IntermediatePublishResult {

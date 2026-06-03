@@ -19,6 +19,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.EventBus;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.sql.DataSource;
@@ -32,7 +33,9 @@ import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.*;
+import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.catchup.*;
+import org.factcast.store.internal.filter.FromScratchCatchupLogSuppressingTurboFilter;
 import org.factcast.store.internal.listen.ConnectionModifier;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.pipeline.ServerPipeline;
@@ -61,6 +64,7 @@ public class PgFactStream {
   final HighWaterMarkFetcher hwmFetcher;
   final ServerPipeline pipeline;
   final PgStoreTelemetry telemetry;
+  final StoreConfigurationProperties props;
 
   @Getter(AccessLevel.PROTECTED)
   final SubscriptionRequestTO request;
@@ -165,7 +169,10 @@ public class PgFactStream {
           //
           // ok, that is unlikely to be necessary, but easy to do, so...
           // distributes delay between 75% and 100% of the maxDelay
-          delayInMs = Math.round(request.maxBatchDelayInMs() * (0.75 + Math.random() * 0.25));
+          delayInMs =
+              Math.round(
+                  request.maxBatchDelayInMs()
+                      * (0.75 + ThreadLocalRandom.current().nextDouble() * 0.25));
           log.trace(
               "{} setting delay to {}, maxDelay was {}",
               request,
@@ -225,20 +232,27 @@ public class PgFactStream {
 
   @VisibleForTesting
   void catchup(long highWaterMarkSerial, DataSource ds) {
-    if (isConnected()) {
-      pgCatchupFactory
-          .create(request, pipeline, serial, statementHolder, ds, PgCatchupFactory.Phase.PHASE_1)
-          .run();
+    if (serial.get() <= 0 && props.getFromScratchCatchupMinLogLevel() != null) {
+      FromScratchCatchupLogSuppressingTurboFilter.beginCatchup(request.debugInfo());
     }
-    if (isConnected()) {
-      // if we did not find anything in phase1,
-      // in order to prevent us from scanning the whole bunch again, we rather start at
-      // the highwatermark BEFORE phase1 started
-      PgCatchup pgCatchup =
-          pgCatchupFactory.create(
-              request, pipeline, serial, statementHolder, ds, PgCatchupFactory.Phase.PHASE_2);
-      pgCatchup.fastForward(highWaterMarkSerial);
-      pgCatchup.run();
+    try {
+      if (isConnected()) {
+        pgCatchupFactory
+            .create(request, pipeline, serial, statementHolder, ds, PgCatchupFactory.Phase.PHASE_1)
+            .run();
+      }
+      if (isConnected()) {
+        // if we did not find anything in phase1,
+        // in order to prevent us from scanning the whole bunch again, we rather start at
+        // the highwatermark BEFORE phase1 started
+        PgCatchup pgCatchup =
+            pgCatchupFactory.create(
+                request, pipeline, serial, statementHolder, ds, PgCatchupFactory.Phase.PHASE_2);
+        pgCatchup.fastForward(highWaterMarkSerial);
+        pgCatchup.run();
+      }
+    } finally {
+      FromScratchCatchupLogSuppressingTurboFilter.endCatchup();
     }
   }
 

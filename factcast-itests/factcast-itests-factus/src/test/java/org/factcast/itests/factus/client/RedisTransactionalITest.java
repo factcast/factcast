@@ -140,11 +140,10 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
 
     @Test
     void testTokenReleaseAfterTooManyFailures_redis() throws Exception {
-      org.factcast.itests.factus.client.RedisTransactionalITest
-              .TxRedissonSubscribedUserNamesTokenExposedAndThrowsError
+      RedisTransactionalITest.TxRedissonSubscribedUserNamesTokenExposedAndThrowsError
           subscribedUserNames =
-              new org.factcast.itests.factus.client.RedisTransactionalITest
-                  .TxRedissonSubscribedUserNamesTokenExposedAndThrowsError(redissonClient);
+              new RedisTransactionalITest.TxRedissonSubscribedUserNamesTokenExposedAndThrowsError(
+                  redissonClient);
 
       factus.publish(new UserDeleted(UUID.randomUUID()));
 

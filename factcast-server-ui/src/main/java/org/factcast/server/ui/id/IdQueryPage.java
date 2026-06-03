@@ -154,7 +154,7 @@ public class IdQueryPage extends VerticalLayout implements HasUrlParameter<Strin
         // Only query again if a specific version was selected or there somehow is no fact saved
         // from the version query
         var fact =
-            selectedVersion.equals(AS_PUBLISHED) && cachedFact != null
+            AS_PUBLISHED.equals(selectedVersion) && cachedFact != null
                 ? Optional.of(cachedFact)
                 : fc.findBy(formBean);
 

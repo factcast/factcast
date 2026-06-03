@@ -30,7 +30,7 @@ class UserEmailsLowLevelProjectionTest {
   void whenHandlingUserAddedFactEmailIsAdded() {
     // arrange
     String jsonPayload =
-        String.format("{\"id\":\"%s\", \"email\": \"%s\"}", UUID.randomUUID(), "user@bar.com");
+        "{\"id\":\"%s\", \"email\": \"%s\"}".formatted(UUID.randomUUID(), "user@bar.com");
     Fact userAdded =
         Fact.builder()
             .id(UUID.randomUUID())
@@ -57,7 +57,7 @@ class UserEmailsLowLevelProjectionTest {
             .ns("user")
             .type("UserAdded")
             .version(1)
-            .build(String.format("{\"id\":\"%s\", \"email\": \"%s\"}", userId, "user@bar.com"));
+            .build("{\"id\":\"%s\", \"email\": \"%s\"}".formatted(userId, "user@bar.com"));
 
     Fact userRemoved =
         Fact.builder()
@@ -65,7 +65,7 @@ class UserEmailsLowLevelProjectionTest {
             .ns("user")
             .type("UserRemoved")
             .version(1)
-            .build(String.format("{\"id\":\"%s\"}", userId));
+            .build("{\"id\":\"%s\"}".formatted(userId));
 
     uut.handleUserAdded(userAdded);
     uut.handleUserRemoved(userRemoved);
@@ -78,7 +78,7 @@ class UserEmailsLowLevelProjectionTest {
   void userAddedFactIsApplied() {
     UserEmailsLowLevelProjection projection = spy(new UserEmailsLowLevelProjection());
     String jsonPayload =
-        String.format("{\"id\":\"%s\", \"email\": \"%s\"}", UUID.randomUUID(), "user@bar.com");
+        "{\"id\":\"%s\", \"email\": \"%s\"}".formatted(UUID.randomUUID(), "user@bar.com");
     Fact userAdded =
         Fact.builder()
             .id(UUID.randomUUID())
@@ -101,7 +101,7 @@ class UserEmailsLowLevelProjectionTest {
             .ns("user")
             .type("UserRemoved")
             .version(1)
-            .build(String.format("{\"id\":\"%s\"}", UUID.randomUUID()));
+            .build("{\"id\":\"%s\"}".formatted(UUID.randomUUID()));
 
     projection.apply(userRemoved);
 

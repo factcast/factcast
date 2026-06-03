@@ -22,7 +22,9 @@ import io.micrometer.core.instrument.Tags;
 import java.util.*;
 import java.util.function.*;
 import java.util.stream.*;
-import lombok.*;
+import lombok.Data;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
@@ -52,7 +54,7 @@ public class Locked<I extends Projection> {
 
   int retries = 10;
 
-  long intervalMillis = 0;
+  long intervalMillis;
 
   public void attempt(BiConsumer<I, RetryableTransaction> tx) {
     attempt(tx, result -> null);
@@ -139,18 +141,18 @@ public class Locked<I extends Projection> {
       return null;
     }
 
-    if (projection instanceof Aggregate) {
+    if (projection instanceof Aggregate aggregate) {
       Class<? extends Aggregate> projectionClass =
           (Class<? extends Aggregate>) projection.getClass();
-      return (I) factus.fetch(projectionClass, AggregateUtil.aggregateId((Aggregate) projection));
+      return (I) factus.fetch(projectionClass, AggregateUtil.aggregateId(aggregate));
     }
     if (projection instanceof SnapshotProjection) {
       Class<? extends SnapshotProjection> projectionClass =
           (Class<? extends SnapshotProjection>) projection.getClass();
       return (I) factus.fetch(projectionClass);
     }
-    if (projection instanceof ManagedProjection) {
-      factus.update((ManagedProjection) projection);
+    if (projection instanceof ManagedProjection managedProjection) {
+      factus.update(managedProjection);
       return projection;
     }
     throw new IllegalStateException("Don't know how to update " + projection);

@@ -22,7 +22,10 @@ import com.google.common.base.Stopwatch;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ForkJoinPool;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.NonNull;
@@ -33,7 +36,8 @@ import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.util.ExceptionHelper;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.store.StoreConfigurationProperties;
-import org.factcast.store.internal.*;
+import org.factcast.store.internal.Pair;
+import org.factcast.store.internal.PgFact;
 import org.factcast.store.internal.script.JsonString;
 import org.factcast.store.internal.transformation.FactTransformerService;
 import org.factcast.store.internal.transformation.TransformationRequest;
@@ -42,6 +46,7 @@ import org.factcast.store.registry.transformation.cache.TransformationCache;
 import org.factcast.store.registry.transformation.chains.TransformationChain;
 import org.factcast.store.registry.transformation.chains.TransformationChains;
 import org.factcast.store.registry.transformation.chains.Transformer;
+import org.slf4j.MDC;
 
 @Slf4j
 public class FactTransformerServiceImpl implements FactTransformerService, AutoCloseable {
@@ -120,58 +125,66 @@ public class FactTransformerServiceImpl implements FactTransformerService, AutoC
     }
 
     try {
+      // Capture caller's MDC so it propagates to pool threads.
+      Map<String, String> callerMdc = MDC.getCopyOfContextMap();
+
       return CompletableFuture.supplyAsync(
               () -> {
-                log.trace("batch processing {} transformation requests", req.size());
-
-                List<Pair<TransformationRequest, TransformationChain>> pairs =
-                    req.stream().map(r -> Pair.of(r, toChain(r))).toList();
-
-                Set<TransformationCache.Key> keys =
-                    pairs.parallelStream()
-                        .map(
-                            p ->
-                                TransformationCache.Key.of(
-                                    p.left().toTransform().id(),
-                                    p.right().toVersion(),
-                                    p.right().id()))
-                        .collect(Collectors.toSet());
-
-                // ConcurrentHashMap needed because remove is used from a potentially
-                // parallel stream below
-                Map<UUID, PgFact> found =
-                    cache.findAll(keys).stream()
-                        .collect(Collectors.toConcurrentMap(PgFact::id, f -> f));
-                log.trace(
-                    "batch lookup found {} out of {} pre transformed facts",
-                    found.size(),
-                    req.size());
-
-                Stream<Pair<TransformationRequest, TransformationChain>> pairStream =
-                    pairs.parallelStream();
-
+                setMdc(callerMdc);
                 try {
+                  log.trace("batch processing {} transformation requests", req.size());
 
-                  // trying to avoid default FJP
-                  // https://blog.krecan.net/2014/03/18/how-to-specify-thread-pool-for-java-8-parallel-streams/
+                  List<Pair<TransformationRequest, TransformationChain>> pairs =
+                      req.stream().map(r -> Pair.of(r, toChain(r))).toList();
 
-                  return pool.submit(
-                          () ->
-                              pairStream
-                                  .map(
-                                      c -> {
-                                        PgFact e = c.left().pop();
-                                        PgFact cached = found.remove(e.id());
-                                        return Objects.requireNonNullElseGet(
-                                            cached, () -> doTransform(e, c.right()));
-                                      })
-                                  .toList())
-                      .get();
-                } catch (InterruptedException e) {
-                  Thread.currentThread().interrupt();
-                  throw ExceptionHelper.toRuntime(e);
-                } catch (Exception e) {
-                  throw ExceptionHelper.toRuntime(e.getCause());
+                  Set<TransformationCache.Key> keys =
+                      pairs.parallelStream()
+                          .map(
+                              p ->
+                                  TransformationCache.Key.of(
+                                      p.left().toTransform().id(),
+                                      p.right().toVersion(),
+                                      p.right().id()))
+                          .collect(Collectors.toSet());
+
+                  // ConcurrentHashMap needed because remove is used from a potentially
+                  // parallel stream below
+                  Map<UUID, PgFact> found =
+                      cache.findAll(keys).stream()
+                          .collect(Collectors.toConcurrentMap(PgFact::id, f -> f));
+                  log.trace(
+                      "batch lookup found {} out of {} pre transformed facts",
+                      found.size(),
+                      req.size());
+
+                  Stream<Pair<TransformationRequest, TransformationChain>> pairStream =
+                      pairs.parallelStream();
+
+                  try {
+
+                    // trying to avoid default FJP
+                    // https://blog.krecan.net/2014/03/18/how-to-specify-thread-pool-for-java-8-parallel-streams/
+
+                    return pool.submit(
+                            () ->
+                                pairStream
+                                    .map(
+                                        c -> {
+                                          PgFact e = c.left().pop();
+                                          PgFact cached = found.remove(e.id());
+                                          return Objects.requireNonNullElseGet(
+                                              cached, () -> doTransform(e, c.right()));
+                                        })
+                                    .toList())
+                        .get();
+                  } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw ExceptionHelper.toRuntime(e);
+                  } catch (Exception e) {
+                    throw ExceptionHelper.toRuntime(e.getCause());
+                  }
+                } finally {
+                  MDC.clear();
                 }
               },
               pool)
@@ -232,6 +245,14 @@ public class FactTransformerServiceImpl implements FactTransformerService, AutoC
         transformed);
 
     return transformed;
+  }
+
+  private static void setMdc(Map<String, String> mdc) {
+    if (mdc != null) {
+      MDC.setContextMap(mdc);
+    } else {
+      MDC.clear();
+    }
   }
 
   private TransformationChain toChain(TransformationRequest req) {

@@ -68,9 +68,8 @@ class ResourceBasedBlacklistDataProviderTest {
     private final UUID blockedFactId1 = UUID.randomUUID();
     private final UUID blockedFactId2 = UUID.randomUUID();
     private final String blacklistContent =
-        String.format(
-            "[{\"id\":\"%s\", \"reason\":\"reason\"},{\"id\":\"%s\", \"reason\":\"otherReason\"}]",
-            blockedFactId1, blockedFactId2);
+        "[{\"id\":\"%s\", \"reason\":\"reason\"},{\"id\":\"%s\", \"reason\":\"otherReason\"}]"
+            .formatted(blockedFactId1, blockedFactId2);
     private final InputStream is = new ByteArrayInputStream(blacklistContent.getBytes());
     private final Resource resource = mock(Resource.class);
 

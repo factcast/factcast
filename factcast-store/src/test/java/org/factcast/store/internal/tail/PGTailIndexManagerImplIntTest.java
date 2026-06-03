@@ -32,17 +32,14 @@ import org.factcast.store.internal.*;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.test.IntegrationTest;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.*;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.*;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
-@ContextConfiguration(
+@SpringJUnitConfig(
     classes = {PGTailIndexManagerImplIntTest.TestConfig.class, PgTestConfiguration.class})
-@ExtendWith(SpringExtension.class)
 @IntegrationTest
 @Sql(scripts = "/wipe.sql", config = @SqlConfig(separator = "#"))
 class PGTailIndexManagerImplIntTest {
@@ -159,7 +156,7 @@ class PGTailIndexManagerImplIntTest {
   private boolean allIndicesInvalid(long epoc) {
     return jdbcTemplate.queryForList(LIST_FACT_INDEXES_WITH_VALIDATION).stream()
         .filter(m -> m.get(INDEX_NAME_COLUMN).toString().compareTo(tailIndexName(epoc)) > 0)
-        .allMatch(r -> r.get(VALID_COLUMN).equals(IS_INVALID));
+        .allMatch(r -> IS_INVALID.equals(r.get(VALID_COLUMN)));
   }
 
   private boolean indexFound(long before) {

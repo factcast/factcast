@@ -16,6 +16,7 @@
 package org.factcast.test;
 
 import com.google.common.collect.Lists;
+import eu.rekawek.toxiproxy.Proxy;
 import eu.rekawek.toxiproxy.ToxiproxyClient;
 import java.sql.SQLException;
 import java.util.*;
@@ -33,8 +34,8 @@ import org.springframework.test.context.TestExecutionListener;
 import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.containers.ToxiproxyContainer;
+import org.testcontainers.postgresql.PostgreSQLContainer;
+import org.testcontainers.toxiproxy.ToxiproxyContainer;
 import org.testcontainers.utility.DockerImageName;
 
 @Slf4j
@@ -42,6 +43,10 @@ public class FactCastIntegrationTestExecutionListener implements TestExecutionLi
 
   public static final Network _docker_network = Network.newNetwork();
   public static final String TOXIPROXY_NETWORK_ALIAS = "toxiproxy";
+
+  // Testcontainers docs: toxiproxy reserves 31 ports starting at 8666
+  private static final int BASE_PROXY_PORT = 8666;
+  private static final AtomicInteger NEXT = new AtomicInteger(0);
 
   private static List<FactCastIntegrationTestExtension> extensions = new LinkedList<>();
   private static List<FactCastIntegrationTestExtension> reverseExtensions;
@@ -115,7 +120,7 @@ public class FactCastIntegrationTestExecutionListener implements TestExecutionLi
 
   @Value
   static class Containers {
-    PostgreSQLContainer<?> db;
+    PostgreSQLContainer db;
     GenericContainer<?> fc;
     PostgresqlProxy pgProxy;
     FactCastProxy fcProxy;
@@ -166,10 +171,48 @@ public class FactCastIntegrationTestExecutionListener implements TestExecutionLi
     toxiClient = new ToxiproxyClient(host, controlPort);
   }
 
-  public static ToxiproxyContainer.ContainerProxy createProxy(
-      GenericContainer<?> container, int port) {
-    return toxiProxy.getProxy(container, port);
+  @SneakyThrows
+  public static ProxiedEndpoint createProxy(
+      String proxyName, GenericContainer<?> container, int port) {
+    String toxiProxyHost = toxiProxy.getHost();
+    ToxiproxyClient client = new ToxiproxyClient(toxiProxyHost, toxiProxy.getControlPort());
+
+    String alias =
+        container.getNetworkAliases().stream()
+            .findFirst()
+            .orElseThrow(
+                () ->
+                    new IllegalStateException(
+                        "Target container must have a network alias: .withNetworkAliases(\"some-name\")"));
+
+    int listenPort = BASE_PROXY_PORT + NEXT.getAndIncrement();
+
+    Proxy proxy =
+        client.createProxy(
+            proxyName, // arbitrary name
+            "0.0.0.0:" + listenPort, // toxiproxy listens here (inside toxiproxy container)
+            alias + ":" + port // target address (inside docker network)
+            );
+
+    return new ProxiedEndpoint(
+        proxy,
+        toxiProxyHost,
+        toxiProxy.getMappedPort(listenPort),
+        TOXIPROXY_NETWORK_ALIAS,
+        listenPort);
   }
+
+  public record ProxiedEndpoint(
+      Proxy proxy,
+      /* Use this host and port if you want to connect from outside the docker network to the container. */
+      String host,
+      int port,
+      /*
+       * Use this host and port if you want to connect from inside the docker network to the
+       * container.
+       */
+      String toxiProxyHost,
+      int toxiProxyPort) {}
 
   public static ToxiproxyClient client() {
     return toxiClient;

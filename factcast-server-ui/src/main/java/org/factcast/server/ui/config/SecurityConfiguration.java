@@ -15,13 +15,11 @@
  */
 package org.factcast.server.ui.config;
 
-import com.vaadin.flow.spring.security.VaadinAwareSecurityContextHolderStrategyConfiguration;
 import com.vaadin.flow.spring.security.VaadinSecurityConfigurer;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.server.ui.views.LoginView;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
@@ -29,11 +27,11 @@ import org.springframework.security.web.SecurityFilterChain;
 @Slf4j
 @Configuration
 @EnableWebSecurity
-@Import(VaadinAwareSecurityContextHolderStrategyConfiguration.class)
 public class SecurityConfiguration {
   @Bean
-  SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-    return http.with(
+  SecurityFilterChain securityFilterChain(HttpSecurity http) {
+    return http.authorizeHttpRequests(registry -> registry.requestMatchers("/files/**").permitAll())
+        .with(
             VaadinSecurityConfigurer.vaadin(), configurer -> configurer.loginView(LoginView.class))
         .build();
   }

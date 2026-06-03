@@ -15,7 +15,7 @@
  */
 package org.factcast.server.ui.s3reportstore;
 
-import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.TokenStreamFactory;
 import lombok.NonNull;
 import org.factcast.server.ui.port.ReportUploadStream;
 import org.factcast.server.ui.report.ReportFilterBean;
@@ -29,7 +29,7 @@ public class S3BatchedReportUploadStream extends ReportUploadStream {
   public S3BatchedReportUploadStream(
       @NonNull S3AsyncClient s3Client,
       @NonNull String bucketName,
-      @NonNull JsonFactory jsonFactory,
+      @NonNull TokenStreamFactory jsonFactory,
       @NonNull String reportKey,
       @NonNull String reportName,
       @NonNull ReportFilterBean query) {

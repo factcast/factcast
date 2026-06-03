@@ -18,20 +18,19 @@ package org.factcast.spring.boot.autoconfigure.client.grpc;
 import io.grpc.Codec;
 import io.grpc.CompressorRegistry;
 import io.grpc.ManagedChannelBuilder;
+import jakarta.annotation.Nullable;
 import java.util.Optional;
-import javax.annotation.Nullable;
 import lombok.NonNull;
 import org.factcast.client.grpc.*;
 import org.factcast.core.store.FactStore;
 import org.factcast.grpc.api.CompressionCodecs;
-import org.factcast.spring.boot.autoconfigure.core.FixedCodecConfiguration;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.*;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.grpc.client.autoconfigure.GrpcClientAutoConfiguration;
 import org.springframework.context.annotation.*;
-import org.springframework.grpc.autoconfigure.client.GrpcClientAutoConfiguration;
 import org.springframework.grpc.client.GrpcChannelBuilderCustomizer;
 import org.springframework.grpc.client.GrpcChannelFactory;
 import org.springframework.util.StringUtils;
@@ -44,7 +43,7 @@ import org.springframework.util.StringUtils;
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 @AutoConfiguration
 @ConditionalOnClass({GrpcFactStore.class, GrpcChannelFactory.class})
-@Import({FactCastGrpcClientProperties.class, FixedCodecConfiguration.class})
+@Import({FactCastGrpcClientProperties.class})
 @EnableConfigurationProperties
 @AutoConfigureBefore(GrpcClientAutoConfiguration.class)
 public class GrpcFactStoreAutoConfiguration {

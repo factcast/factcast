@@ -36,11 +36,13 @@ public class FactRendererTest {
   void testRender() throws Exception {
     FactRenderer uut = new FactRenderer(new Options());
     assertEquals(
-        "Fact: id=00000000-0000-0000-0000-000000000000\n"
-            + "	header:"
-            + " {\"id\":\"00000000-0000-0000-0000-000000000000\",\"ns\":\"ns\",\"type\":\"type\",\"version\":0,\"aggIds\":[\"00000000-0000-0000-0000-000000000001\"],\"meta\":{\"foo\":\"bar\"}}\n"
-            + "	payload: {\"some\":\"json\"}\n"
-            + "\n",
+        """
+        Fact: id=00000000-0000-0000-0000-000000000000
+        	header:\
+         {"id":"00000000-0000-0000-0000-000000000000","ns":"ns","type":"type","version":0,"aggIds":["00000000-0000-0000-0000-000000000001"],"meta":{"foo":"bar"}}
+        	payload: {"some":"json"}
+
+        """,
         uut.render(f));
   }
 
@@ -51,22 +53,23 @@ public class FactRendererTest {
 
     FactRenderer uut = new FactRenderer(options);
     assertEquals(
-        "Fact: id=00000000-0000-0000-0000-000000000000\n"
-            + "	header: {\n"
-            + "		  \"id\" : \"00000000-0000-0000-0000-000000000000\",\n"
-            + "		  \"ns\" : \"ns\",\n"
-            + "		  \"type\" : \"type\",\n"
-            + "		  \"version\" : 0,\n"
-            + "		  \"aggIds\" : [ \"00000000-0000-0000-0000-000000000001\" ],\n"
-            + "		  \"meta\" : {\n"
-            + "		    \"foo\" : \"bar\"\n"
-            + "		  }\n"
-            + "		}\n"
-            + "	payload: {\n"
-            + "		  \"some\" : \"json\"\n"
-            + "		}\n"
-            + "\n"
-            + "",
+        """
+        Fact: id=00000000-0000-0000-0000-000000000000
+        	header: {
+        		  "id" : "00000000-0000-0000-0000-000000000000",
+        		  "ns" : "ns",
+        		  "type" : "type",
+        		  "version" : 0,
+        		  "aggIds" : [ "00000000-0000-0000-0000-000000000001" ],
+        		  "meta" : {
+        		    "foo" : "bar"
+        		  }
+        		}
+        	payload: {
+        		  "some" : "json"
+        		}
+
+        """,
         uut.render(f));
   }
 }

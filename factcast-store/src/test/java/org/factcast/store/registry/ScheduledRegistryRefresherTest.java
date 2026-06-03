@@ -15,7 +15,7 @@
  */
 package org.factcast.store.registry;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
 
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;

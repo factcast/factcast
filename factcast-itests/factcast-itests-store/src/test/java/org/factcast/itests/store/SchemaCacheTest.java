@@ -80,7 +80,7 @@ public class SchemaCacheTest {
       assertTrue(fc.fetchByIdAndVersion(idv3, 3).isPresent());
 
       jdbcTemplate.update(
-          String.format("DELETE FROM schemastore WHERE type='%s' AND version=%d", v3.type(), 3));
+          "DELETE FROM schemastore WHERE type='%s' AND version=%d".formatted(v3.type(), 3));
       // on-call then invalidates schemaNearCache
       assertTrue(
           wasOned.await(TIMEOUT, TimeUnit.SECONDS),
@@ -143,9 +143,8 @@ public class SchemaCacheTest {
               List.of("firstName", "lastName", "salutation", "displayName", "newProperty")));
 
       jdbcTemplate.update(
-          String.format(
-              "UPDATE schemastore SET jsonschema='%s' WHERE type='%s' AND version=%d",
-              newSchemaV3, v3.type(), 3));
+          "UPDATE schemastore SET jsonschema='%s' WHERE type='%s' AND version=%d"
+              .formatted(newSchemaV3, v3.type(), 3));
       // on-call then invalidates schemaNearCache
       assertTrue(
           wasOned.await(TIMEOUT, TimeUnit.SECONDS),
@@ -202,17 +201,16 @@ public class SchemaCacheTest {
               "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\",\"salutation\":\"Mr\",\"displayName\":\"v3\"}");
       // this will cause one callback
       jdbcTemplate.update(
-          String.format(
-              "DELETE FROM schemastore WHERE type='%s' AND version=%d", v3.type(), v3.version()));
+          "DELETE FROM schemastore WHERE type='%s' AND version=%d"
+              .formatted(v3.type(), v3.version()));
 
       // just making sure... there is no schema in there
       assertThrows(FactValidationException.class, () -> fc.publish(v3));
 
       // ACT
       jdbcTemplate.update(
-          String.format(
-              "INSERT INTO schemastore (id,hash,ns,type,version,jsonschema) VALUES ('%s','%s','%s','%s',%s,'%s' :: JSONB)",
-              "id", "hash", v3.ns(), v3.type(), v3.version(), schemaV3));
+          "INSERT INTO schemastore (id,hash,ns,type,version,jsonschema) VALUES ('%s','%s','%s','%s',%s,'%s' :: JSONB)"
+              .formatted("id", "hash", v3.ns(), v3.type(), v3.version(), schemaV3));
 
       // ASSERT
       // on-call then invalidates schemaNearCache

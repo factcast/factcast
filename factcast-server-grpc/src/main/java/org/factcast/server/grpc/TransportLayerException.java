@@ -15,6 +15,8 @@
  */
 package org.factcast.server.grpc;
 
+import java.io.Serial;
+
 /**
  * Signals an uncatched Exception in the Transport layer, normally leading to a subscription being
  * cancelled.
@@ -23,7 +25,7 @@ package org.factcast.server.grpc;
  */
 public class TransportLayerException extends RuntimeException {
 
-  private static final long serialVersionUID = 1L;
+  @Serial private static final long serialVersionUID = 1L;
 
   public TransportLayerException(@SuppressWarnings("SameParameterValue") String msg) {
     super(msg);

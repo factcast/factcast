@@ -21,13 +21,15 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.data.provider.DataProvider;
 import java.util.Optional;
 import java.util.function.Supplier;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.server.ui.port.ReportStore;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 @Slf4j
-@Getter(value = AccessLevel.PACKAGE)
+@Getter(AccessLevel.PACKAGE)
 public class ReportDownloadSection extends HorizontalLayout {
 
   private final transient ReportStore reportStore;
@@ -38,7 +40,7 @@ public class ReportDownloadSection extends HorizontalLayout {
   private final String userName = SecurityContextHolder.getContext().getAuthentication().getName();
   private String fileName;
 
-  @Setter(value = AccessLevel.PACKAGE)
+  @Setter(AccessLevel.PACKAGE)
   private transient Supplier<Optional<UI>> uiSupplier = this::getUI;
 
   public ReportDownloadSection(

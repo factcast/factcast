@@ -16,12 +16,13 @@
 package org.factcast.client.grpc.cli.conv;
 
 import java.io.File;
+import java.io.Serial;
 import lombok.SneakyThrows;
 import org.factcast.core.util.FactCastJson;
 
 public class ExistingJsonFile extends File {
 
-  private static final long serialVersionUID = 1L;
+  @Serial private static final long serialVersionUID = 1L;
 
   public ExistingJsonFile(String pathname) {
     super(pathname);

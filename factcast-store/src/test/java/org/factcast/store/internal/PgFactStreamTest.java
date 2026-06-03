@@ -32,8 +32,10 @@ import org.factcast.core.FactStreamPosition;
 import org.factcast.core.TestFactStreamPosition;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.*;
+import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
+import org.factcast.store.internal.filter.FromScratchCatchupLogSuppressingTurboFilter;
 import org.factcast.store.internal.listen.ConnectionModifier;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.pipeline.ServerPipeline;
@@ -45,11 +47,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.quality.Strictness;
 import org.postgresql.util.PSQLException;
 import org.postgresql.util.ServerErrorMessage;
+import org.slf4j.MDC;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
 @ExtendWith(MockitoExtension.class)
@@ -62,6 +66,7 @@ class PgFactStreamTest {
   @Mock HighWaterMarkFetcher hwmFetcher;
   @Mock ServerPipeline pipeline;
   @Mock PgStoreTelemetry telemetry;
+  @Mock StoreConfigurationProperties props;
   @Mock SubscriptionRequestTO reqTo;
 
   @InjectMocks @Spy PgFactStream uut;
@@ -331,7 +336,9 @@ class PgFactStreamTest {
       when(rs.isClosed()).thenReturn(false);
       // until
       PSQLException mockException =
-          mock(PSQLException.class, withSettings().strictness(Strictness.LENIENT));
+          mock(
+              PSQLException.class,
+              withSettings().strictness(org.mockito.quality.Strictness.LENIENT));
       when(rs.getString(anyString())).thenThrow(mockException);
 
       uut.processRow(rs);
@@ -411,6 +418,11 @@ class PgFactStreamTest {
   class WhenCatchingUp {
     @Mock DataSource ds;
 
+    @BeforeEach
+    void setup() {
+      lenient().when(reqTo.debugInfo()).thenReturn("test-debug-info");
+    }
+
     @Test
     void ifDisconnected_doNothing() {
       when(uut.isConnected()).thenReturn(false);
@@ -432,6 +444,93 @@ class PgFactStreamTest {
 
       verify(catchup1, times(1)).run();
       verify(catchup2, times(1)).run();
+    }
+
+    @Test
+    void setsMdcDuringFromScratchCatchup() {
+      // serial is 0 by default → from scratch
+      when(props.getFromScratchCatchupMinLogLevel()).thenReturn("DEBUG");
+      PgCatchup catchup = mock(PgCatchup.class);
+      when(uut.isConnected()).thenReturn(true);
+      when(pgCatchupFactory.create(any(), any(), any(), any(), any(), any()))
+          .thenReturn(catchup, catchup);
+
+      doAnswer(
+              invocation -> {
+                assertThat(
+                        MDC.get(FromScratchCatchupLogSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH))
+                    .isEqualTo("test-debug-info");
+                return null;
+              })
+          .when(catchup)
+          .run();
+
+      uut.catchup(100L, ds);
+
+      assertThat(MDC.get(FromScratchCatchupLogSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH))
+          .isNull();
+    }
+
+    @Test
+    void doesNotSetMdcWhenNotFromScratch() {
+      uut.serial().set(42L);
+      PgCatchup catchup = mock(PgCatchup.class);
+      when(uut.isConnected()).thenReturn(true);
+      when(pgCatchupFactory.create(any(), any(), any(), any(), any(), any()))
+          .thenReturn(catchup, catchup);
+
+      doAnswer(
+              invocation -> {
+                assertThat(
+                        MDC.get(FromScratchCatchupLogSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH))
+                    .isNull();
+                return null;
+              })
+          .when(catchup)
+          .run();
+
+      uut.catchup(100L, ds);
+    }
+
+    @Test
+    void doesNotSetMdcWhenPropertyIsUnset() {
+      // serial is 0 → from scratch, but property is null → no MDC marking
+      when(props.getFromScratchCatchupMinLogLevel()).thenReturn(null);
+      PgCatchup catchup = mock(PgCatchup.class);
+      when(uut.isConnected()).thenReturn(true);
+      when(pgCatchupFactory.create(any(), any(), any(), any(), any(), any()))
+          .thenReturn(catchup, catchup);
+
+      doAnswer(
+              invocation -> {
+                assertThat(
+                        MDC.get(FromScratchCatchupLogSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH))
+                    .isNull();
+                return null;
+              })
+          .when(catchup)
+          .run();
+
+      uut.catchup(100L, ds);
+    }
+
+    @Test
+    void clearsMdcEvenOnException() {
+      // serial is 0 by default → from scratch
+      when(props.getFromScratchCatchupMinLogLevel()).thenReturn("DEBUG");
+      PgCatchup catchup = mock(PgCatchup.class);
+      when(uut.isConnected()).thenReturn(true);
+      when(pgCatchupFactory.create(any(), any(), any(), any(), any(), any())).thenReturn(catchup);
+      doThrow(new RuntimeException("boom")).when(catchup).run();
+
+      try {
+        uut.catchup(100L, ds);
+      } catch (RuntimeException e) {
+        // expected
+      }
+
+      assertThat(MDC.get(FromScratchCatchupLogSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH))
+          .isNull();
     }
   }
 
