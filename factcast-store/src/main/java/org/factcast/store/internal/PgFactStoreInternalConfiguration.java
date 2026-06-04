@@ -309,11 +309,15 @@ public class PgFactStoreInternalConfiguration {
 
   @Bean
   public ServerPipelineFactory factPipelineFactory(
-      FactTransformerService transformerService, Blacklist blacklist, PgMetrics metrics) {
+      FactTransformerService transformerService,
+      Blacklist blacklist,
+      PgMetrics metrics,
+      StoreConfigurationProperties properties) {
     return ServerPipelineFactory.builder()
         .factTransformerService(transformerService)
         .blacklist(blacklist)
         .metrics(metrics)
+        .properties(properties)
         .build();
   }
 
