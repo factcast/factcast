@@ -35,6 +35,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.transaction.PlatformTransactionManager;
 
 @ExtendWith(MockitoExtension.class)
 class PgCatchUpFactoryImplTest {
@@ -49,6 +50,7 @@ class PgCatchUpFactoryImplTest {
   @Mock AtomicLong serial;
   @Mock CurrentStatementHolder holder;
   @Mock DataSource ds;
+  @Mock PlatformTransactionManager txMgr;
 
   @InjectMocks PgCatchUpFactoryImpl underTest;
 
@@ -58,7 +60,7 @@ class PgCatchUpFactoryImplTest {
     @Test
     void returnsFetchingInPhase2RegardlessOfStrategy() {
       when(props.getCatchupStrategy()).thenReturn(CatchupStrategy.CURSOR);
-      underTest = new PgCatchUpFactoryImpl(props, metrics);
+      underTest = new PgCatchUpFactoryImpl(props, metrics, txMgr);
 
       // even if CHUNKED is configured, PHASE_2 must use cursor
       var result =

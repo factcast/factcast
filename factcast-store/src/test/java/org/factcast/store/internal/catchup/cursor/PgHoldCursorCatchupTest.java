@@ -34,7 +34,7 @@ import org.factcast.store.internal.StoreMetrics;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.pipeline.Signal;
-import org.factcast.store.internal.query.CurrentStatementHolder;
+import org.factcast.store.internal.query.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -42,13 +42,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.postgresql.util.PSQLException;
-import org.springframework.jdbc.core.PreparedStatementSetter;
+import org.springframework.transaction.PlatformTransactionManager;
 
 @ExtendWith(MockitoExtension.class)
 class PgHoldCursorCatchupTest {
 
   @Mock(strictness = Mock.Strictness.LENIENT)
-  @NonNull
   StoreConfigurationProperties props;
 
   @Mock(strictness = Mock.Strictness.LENIENT)
@@ -60,6 +59,10 @@ class PgHoldCursorCatchupTest {
   @Mock(strictness = Mock.Strictness.LENIENT)
   @NonNull
   PgMetrics metrics;
+
+  @Mock(strictness = Mock.Strictness.LENIENT)
+  @NonNull
+  PlatformTransactionManager txMgr;
 
   @Mock @NonNull AtomicLong serial;
   @Mock DataSource ds;
@@ -78,6 +81,7 @@ class PgHoldCursorCatchupTest {
                 serial,
                 statementHolder,
                 ds,
+                txMgr,
                 PgCatchupFactory.Phase.PHASE_1));
   }
 
@@ -87,15 +91,14 @@ class PgHoldCursorCatchupTest {
     @SneakyThrows
     @Test
     void flushesClearsAndClosesCursor() {
-      Connection connection = mock(Connection.class);
+      Connection connection = mock(Connection.class, RETURNS_DEEP_STUBS);
       doReturn(connection).when(ds).getConnection();
-      doNothing().when(underTest).fetch(connection, "cursor_1");
       doReturn("cursor_1").when(underTest).createCursorName();
-      doNothing().when(underTest).closeCursorQuietly(connection, "cursor_1");
+      // Use any() for connection to ensure it matches, even if wrapped
+      doReturn(true).when(underTest).fetch(any(), anyString());
 
       underTest.run();
 
-      verify(underTest).closeCursorQuietly(connection, "cursor_1");
       verify(statementHolder).clear();
       verify(pipeline).process(argThat(Signal::indicatesFlush));
     }
@@ -110,6 +113,7 @@ class PgHoldCursorCatchupTest {
     @BeforeEach
     void setup() {
       when(props.getPageSize()).thenReturn(47);
+      when(props.getChunkSize()).thenReturn(500);
       when(req.specs()).thenReturn(java.util.Collections.emptyList());
       when(serial.get()).thenReturn(0L);
       when(metrics.timer(StoreMetrics.OP.RESULT_STREAM_START, true)).thenReturn(timer);
@@ -118,33 +122,47 @@ class PgHoldCursorCatchupTest {
 
     @Test
     @SneakyThrows
-    void declaresCursorCommitsAndFetchesUntilEmpty() {
-      doNothing().when(underTest).declareCursor(any(), anyString(), any());
-      doReturn(2, 1, 0).when(underTest).fetchChunk(any(), anyString(), any(), any(), any(), any());
+    void noTransactionIfOnlyOneRowToFetch() {
+      doNothing().when(underTest).declareCursor(any(), anyString(), any(), any());
+      doNothing().when(underTest).closeCursor(any(), anyString());
+      doReturn(12).when(underTest).fetchChunk(any(), anyString(), any(), any(), any(), any());
 
       underTest.fetch(connection, "cursor_1");
 
-      verify(underTest)
-          .declareCursor(
-              same(connection),
-              contains("DECLARE cursor_1 NO SCROLL CURSOR WITH HOLD FOR"),
-              any(PreparedStatementSetter.class));
-      verify(connection).commit();
-      verify(connection).setAutoCommit(true);
-      verify(connection).setAutoCommit(false);
+      // declares
+      verify(underTest).declareCursor(same(connection), anyString(), any(), any());
+      verify(txMgr, never()).getTransaction(any());
+      verify(underTest, times(1))
+          .fetchChunk(same(connection), anyString(), any(), any(), any(), any());
+    }
+
+    @Test
+    @SneakyThrows
+    void declaresCursorCommitsAndFetchesUntilEmpty() {
+      doNothing().when(underTest).declareCursor(any(), anyString(), any(), any());
+      doNothing().when(underTest).closeCursor(any(), anyString());
+      doReturn(props.getChunkSize(), props.getChunkSize(), 0)
+          .when(underTest)
+          .fetchChunk(any(), anyString(), any(), any(), any(), any());
+      verify(txMgr, never()).getTransaction(any());
+
+      underTest.fetch(connection, "cursor_1");
+
+      // declares
+      verify(underTest).declareCursor(same(connection), anyString(), any(), any());
+      verify(txMgr, times(1)).commit(any());
       verify(underTest, times(3))
-          .fetchChunk(
-              same(connection), eq("FETCH FORWARD 47 FROM cursor_1"), any(), any(), any(), any());
+          .fetchChunk(same(connection), anyString(), any(), any(), any(), any());
     }
 
     @Test
     @SneakyThrows
     void returnsImmediatelyWhenCancelled() {
-      doNothing().when(underTest).declareCursor(any(), anyString(), any());
       when(statementHolder.wasCanceled()).thenReturn(true);
 
       underTest.fetch(connection, "cursor_1");
 
+      verify(underTest, never()).declareCursor(any(), anyString(), any(), any());
       verify(underTest, never()).fetchChunk(any(), anyString(), any(), any(), any(), any());
     }
   }
@@ -162,13 +180,14 @@ class PgHoldCursorCatchupTest {
     @SneakyThrows
     void declareCursorBindsAndExecutes() {
       when(connection.prepareStatement(anyString())).thenReturn(declare);
-      PreparedStatementSetter setter = p -> p.setLong(1, 1L);
+      var queryBuilder = mock(PgQueryBuilder.class);
+      AtomicLong fromSerial = new AtomicLong();
+      when(queryBuilder.createStatementSetter(fromSerial)).thenReturn(p -> p.setLong(1, 3L));
 
-      underTest.declareCursor(
-          connection, "DECLARE foo NO SCROLL CURSOR WITH HOLD FOR SELECT 1", setter);
+      underTest.declareCursor(connection, "foo", queryBuilder, fromSerial);
 
       verify(statementHolder).statement(declare, true);
-      verify(declare).setLong(1, 1L);
+      verify(declare).setLong(1, 3L);
       verify(declare).execute();
     }
 
@@ -262,9 +281,9 @@ class PgHoldCursorCatchupTest {
   void testSqlHelpers() {
     when(props.getPageSize()).thenReturn(17);
 
-    assertThat(underTest.createDeclareCursorWithHoldSql("cursor_1", "select 1"))
-        .isEqualTo("DECLARE cursor_1 NO SCROLL CURSOR WITH HOLD FOR select 1");
-    assertThat(underTest.createFetchSql("cursor_1")).isEqualTo("FETCH FORWARD 17 FROM cursor_1");
+    assertThat(underTest.createFetchSql("cursor_1"))
+        .startsWith("SELECT ")
+        .endsWith(" FROM fetchFactsFrom('cursor_1')");
     assertThat(underTest.createCloseCursorSql("cursor_1")).isEqualTo("CLOSE cursor_1");
     assertThat(underTest.createCursorName()).startsWith("catchup_");
   }

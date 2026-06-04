@@ -28,9 +28,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
-import org.factcast.store.internal.PgFact;
-import org.factcast.store.internal.PgMetrics;
-import org.factcast.store.internal.StoreMetrics;
+import org.factcast.store.internal.*;
 import org.factcast.store.internal.catchup.AbstractPgCatchup;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.pipeline.ServerPipeline;
@@ -39,10 +37,14 @@ import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.query.PgQueryBuilder;
 import org.factcast.store.internal.rowmapper.PgFactExtractor;
 import org.postgresql.util.PSQLException;
-import org.springframework.jdbc.core.PreparedStatementSetter;
+import org.springframework.jdbc.datasource.SingleConnectionDataSource;
+import org.springframework.transaction.*;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @Slf4j
 public class PgHoldCursorCatchup extends AbstractPgCatchup {
+
+  private final @NonNull PlatformTransactionManager txMgr;
 
   @SuppressWarnings("java:S107")
   public PgHoldCursorCatchup(
@@ -53,73 +55,138 @@ public class PgHoldCursorCatchup extends AbstractPgCatchup {
       @NonNull AtomicLong serial,
       @NonNull CurrentStatementHolder statementHolder,
       @NonNull DataSource ds,
-      PgCatchupFactory.@NonNull Phase phase) {
+      @NonNull PlatformTransactionManager txMgr,
+      @NonNull PgCatchupFactory.Phase phase) {
     super(props, metrics, req, pipeline, serial, statementHolder, ds, phase);
+    this.txMgr = txMgr;
   }
 
   @SneakyThrows
   @Override
   public void run() {
-    final var connection = ds.getConnection();
     final var cursorName = createCursorName();
-    try {
-      fetch(connection, cursorName);
+    try (SingleConnectionDataSource sds =
+        new SingleConnectionDataSource(ds.getConnection(), true); ) {
+      if (fetch(sds.getConnection(), cursorName)) {
+        log.trace("Done fetching, flushing.");
+        pipeline.process(Signal.flush());
+      }
     } finally {
-      closeCursorQuietly(connection, cursorName);
       statementHolder.clear();
-
-      log.trace("Done fetching, flushing.");
-      pipeline.process(Signal.flush());
     }
   }
 
   @VisibleForTesting
-  void fetch(Connection connection, String cursorName) throws SQLException {
+  /** returns true if fetch was not completely empty */
+  boolean fetch(Connection connection, String cursorName) throws SQLException {
     final var queryBuilder = new PgQueryBuilder(req.specs(), statementHolder);
+    queryBuilder.serialsOnly();
+
     final var extractor = new PgFactExtractor(serial);
     final var fromSerial = new AtomicLong(Math.max(serial.get(), fastForward));
-    final var catchupSQL = queryBuilder.createSQL();
-    final var declareCursorSQL = createDeclareCursorWithHoldSql(cursorName, catchupSQL);
     final var fetchSQL = createFetchSql(cursorName);
     final var isFromScratch = (fromSerial.get() <= 0);
     final var timer = metrics.timer(StoreMetrics.OP.RESULT_STREAM_START, isFromScratch);
     final var timerSample = metrics.startSample();
     final var isFirstRow = new AtomicBoolean(false);
 
-    log.trace(
-        "{} catchup {}, declaring cursor-with-hold after SER={}", req, phase, fromSerial.get());
+    if (statementHolder.wasCanceled()) return false;
 
-    declareCursor(connection, declareCursorSQL, queryBuilder.createStatementSetter(fromSerial));
-    connection.commit();
-    connection.setAutoCommit(true);
+    declareCursor(connection, cursorName, queryBuilder, fromSerial);
+
     try {
-      while (!statementHolder.wasCanceled()) {
-        int fetchedRows =
-            fetchChunk(connection, fetchSQL, extractor, timerSample, timer, isFirstRow);
+      // as declaring the cursor could have taken some time, we'll check again
+      if (statementHolder.wasCanceled()) return false;
 
-        if (fetchedRows == 0) {
-          if (!isFirstRow.get()) {
-            logIfAboveThreshold(Duration.ofNanos(timerSample.stop(timer)));
-          }
-          log.trace("{} catchup {}, no more rows in held cursor", req, phase);
-          return;
-        }
+      // the first can go without a transaction, so that the cursor is not persisted (yet)
+      int fetchedRows = fetchChunk(connection, fetchSQL, extractor, timerSample, timer, isFirstRow);
+      if (fetchedRows == 0) {
+        log.trace("{} catchup {}, no more rows in cursor", req, phase);
+        return false;
+      }
+
+      // we had rows, but less than allowed, indicating we're done
+      if (fetchedRows < props.getChunkSize()) {
+        log.trace("{} catchup {}, quick catchup: no need to hold the cursor", req, phase);
+        return true;
+      }
+
+      // lets be nice and check again
+      if (statementHolder.wasCanceled()) return true;
+
+      // otherwise, we have to hold the cursor
+      try {
+        new TransactionTemplate(txMgr)
+            .execute(
+                tx -> {
+                  while (!statementHolder.wasCanceled()) {
+                    try {
+                      if (fetchChunk(
+                              connection, fetchSQL, extractor, timerSample, timer, isFirstRow)
+                          < props.getChunkSize())
+                        // early exit, as there are no more rows to fetch
+                        return null;
+                    } catch (SQLException e) {
+                      // matrushka exception
+                      throw new TransactionException("While fetching: ", e) {};
+                    }
+                  }
+                  return null;
+                });
+        return true; // we had at least one row
+      } catch (TransactionException e) {
+        if (e.getCause() instanceof SQLException s) {
+          throw s;
+        } else throw e;
       }
     } finally {
-      connection.setAutoCommit(false);
+      closeCursor(connection, cursorName);
+    }
+  }
+
+  @VisibleForTesting
+  void closeCursor(Connection connection, String cursorName) {
+    try {
+      connection.prepareStatement(createCloseCursorSql(cursorName)).execute();
+    } catch (Exception e) {
+      // swallow as unimportant to not break the control flow
+      log.warn("{} catchup {}, While closing held cursor", req, phase, e);
     }
   }
 
   @VisibleForTesting
   void declareCursor(
       @NonNull Connection connection,
-      @NonNull String declareSQL,
-      @NonNull PreparedStatementSetter statementSetter)
+      String cursorName,
+      PgQueryBuilder queryBuilder,
+      AtomicLong fromSerial)
       throws SQLException {
-    try (PreparedStatement declare = connection.prepareStatement(declareSQL)) {
+
+    log.trace(
+        "{} catchup {}, declaring cursor-with-hold after SER={}", req, phase, fromSerial.get());
+
+    // ok, this is messy, but the only way i can think of to still use the preparedQuerySetter,
+    // which is impossible to do, if we pass a string to a function...
+
+    String sql =
+        String.format(
+            """
+    DECLARE %s CURSOR WITH HOLD FOR WITH numbered AS materialized
+    (
+    SELECT ser,
+           ((row_number() OVER (ORDER BY ser ASC) - 1) / %s ) AS grp,
+           row_number() OVER (ORDER BY ser ASC) AS rn
+           FROM ( %s ) AS sub
+    )
+    SELECT array_agg(ser ORDER BY rn) FROM numbered GROUP BY grp ORDER BY grp ASC
+""",
+            cursorName, props.getChunkSize(), queryBuilder.createSQL());
+
+    try (PreparedStatement declare = connection.prepareStatement(sql)) {
       statementHolder.statement(declare, true);
-      statementSetter.setValues(declare);
+      queryBuilder.createStatementSetter(fromSerial).setValues(declare);
       declare.execute();
+      log.trace("{} catchup {}, cursor-with-hold declared", req, phase);
     }
   }
 
@@ -137,13 +204,12 @@ public class PgHoldCursorCatchup extends AbstractPgCatchup {
       fetch.setFetchSize(props.getPageSize());
       statementHolder.statement(fetch, false);
       try (ResultSet rs = fetch.executeQuery(fetchSQL)) {
+        if (firstRowSeen.compareAndSet(false, true)) {
+          logIfAboveThreshold(Duration.ofNanos(timerSample.stop(timer)));
+        }
         while (rs.next()) {
           if (statementHolder.wasCanceled() || rs.isClosed()) {
             return rows;
-          }
-
-          if (firstRowSeen.compareAndSet(false, true)) {
-            logIfAboveThreshold(Duration.ofNanos(timerSample.stop(timer)));
           }
 
           try {
@@ -172,32 +238,20 @@ public class PgHoldCursorCatchup extends AbstractPgCatchup {
   }
 
   @VisibleForTesting
-  String createDeclareCursorWithHoldSql(@NonNull String cursorName, @NonNull String query) {
-    return "DECLARE " + cursorName + " NO SCROLL CURSOR WITH HOLD FOR " + query;
-  }
-
-  @VisibleForTesting
   String createFetchSql(@NonNull String cursorName) {
-    return "FETCH FORWARD " + props.getPageSize() + " FROM " + cursorName;
+    return "SELECT " + PgConstants.PROJECTION_FACT + " FROM fetchFactsFrom('" + cursorName + "')";
   }
 
   @VisibleForTesting
+  @NonNull
   String createCloseCursorSql(@NonNull String cursorName) {
     return "CLOSE " + cursorName;
   }
 
   @VisibleForTesting
+  @NonNull
   String createCursorName() {
     return "catchup_" + UUID.randomUUID().toString().replace("-", "");
-  }
-
-  @VisibleForTesting
-  void closeCursorQuietly(@NonNull Connection connection, @NonNull String cursorName) {
-    try (Statement close = connection.createStatement()) {
-      close.execute(createCloseCursorSql(cursorName));
-    } catch (Exception e) {
-      log.trace("{} catchup {} while closing held cursor {}", req, phase, cursorName, e);
-    }
   }
 
   void logIfAboveThreshold(Duration elapsed) {

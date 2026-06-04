@@ -46,6 +46,7 @@ public class PgQueryBuilder {
   private final @NonNull Collection<FactSpec> factSpecs;
   private final CurrentStatementHolder statementHolder;
   private String tempTableName = null;
+  private boolean serialsOnly = false;
 
   public PgQueryBuilder(@NonNull Collection<FactSpec> specs) {
     factSpecs = specs;
@@ -243,7 +244,7 @@ public class PgQueryBuilder {
 
     } else
       return "SELECT "
-          + PgConstants.PROJECTION_FACT
+          + (serialsOnly ? PgConstants.COLUMN_SER : PgConstants.PROJECTION_FACT)
           + FROM
           + PgConstants.TABLE_FACT
           + WHERE
@@ -275,5 +276,9 @@ public class PgQueryBuilder {
 
   public void useTempTable(@NonNull String tempTableName) {
     this.tempTableName = tempTableName;
+  }
+
+  public void serialsOnly() {
+    serialsOnly = true;
   }
 }

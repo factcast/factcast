@@ -28,7 +28,7 @@ import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.*;
 import org.factcast.store.StoreConfigurationProperties;
-import org.factcast.test.IntegrationTest;
+import org.factcast.test.*;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
