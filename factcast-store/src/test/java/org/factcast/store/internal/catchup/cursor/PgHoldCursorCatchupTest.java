@@ -43,6 +43,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.postgresql.util.PSQLException;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionException;
 
 @ExtendWith(MockitoExtension.class)
 class PgHoldCursorCatchupTest {
@@ -101,6 +102,19 @@ class PgHoldCursorCatchupTest {
 
       verify(statementHolder).clear();
       verify(pipeline).process(argThat(Signal::indicatesFlush));
+    }
+
+    @SneakyThrows
+    @Test
+    void doesNotFlushIfFetchReturnsFalse() {
+      Connection connection = mock(Connection.class, RETURNS_DEEP_STUBS);
+      doReturn(connection).when(ds).getConnection();
+      doReturn(false).when(underTest).fetch(any(), anyString());
+
+      underTest.run();
+
+      verify(statementHolder).clear();
+      verify(pipeline, never()).process(argThat(Signal::indicatesFlush));
     }
   }
 
@@ -164,6 +178,99 @@ class PgHoldCursorCatchupTest {
 
       verify(underTest, never()).declareCursor(any(), anyString(), any(), any());
       verify(underTest, never()).fetchChunk(any(), anyString(), any(), any(), any(), any());
+    }
+
+    @Test
+    @SneakyThrows
+    void returnsImmediatelyWhenCancelledAfterDeclaring() {
+      doNothing().when(underTest).declareCursor(any(), anyString(), any(), any());
+      when(statementHolder.wasCanceled()).thenReturn(false, true);
+
+      underTest.fetch(connection, "cursor_1");
+
+      verify(underTest).declareCursor(any(), anyString(), any(), any());
+      verify(underTest, never()).fetchChunk(any(), anyString(), any(), any(), any(), any());
+    }
+
+    @Test
+    @SneakyThrows
+    void returnsFalseWhenEmpty() {
+      doNothing().when(underTest).declareCursor(any(), anyString(), any(), any());
+      doNothing().when(underTest).closeCursor(any(), anyString());
+      doReturn(0).when(underTest).fetchChunk(any(), anyString(), any(), any(), any(), any());
+
+      boolean result = underTest.fetch(connection, "cursor_1");
+
+      assertThat(result).isFalse();
+    }
+
+    @Test
+    @SneakyThrows
+    void returnsTrueWhenUnderChunkSize() {
+      doNothing().when(underTest).declareCursor(any(), anyString(), any(), any());
+      doNothing().when(underTest).closeCursor(any(), anyString());
+      doReturn(10).when(underTest).fetchChunk(any(), anyString(), any(), any(), any(), any());
+
+      boolean result = underTest.fetch(connection, "cursor_1");
+
+      assertThat(result).isTrue();
+    }
+
+    @Test
+    @SneakyThrows
+    void returnsTrueWhenCancelledAfterFirstChunk() {
+      doNothing().when(underTest).declareCursor(any(), anyString(), any(), any());
+      doNothing().when(underTest).closeCursor(any(), anyString());
+      doReturn(props.getChunkSize())
+          .when(underTest)
+          .fetchChunk(any(), anyString(), any(), any(), any(), any());
+      when(statementHolder.wasCanceled()).thenReturn(false, false, true);
+
+      boolean result = underTest.fetch(connection, "cursor_1");
+
+      assertThat(result).isTrue();
+      verify(txMgr, never()).getTransaction(any());
+    }
+
+    @Test
+    @SneakyThrows
+    void handlesTransactionExceptionWithSqlCause() {
+      doNothing().when(underTest).declareCursor(any(), anyString(), any(), any());
+      doNothing().when(underTest).closeCursor(any(), anyString());
+      doReturn(props.getChunkSize())
+          .when(underTest)
+          .fetchChunk(any(), anyString(), any(), any(), any(), any());
+
+      SQLException sqlEx = new SQLException("foo");
+      TransactionException txEx =
+          new TransactionException("bar", sqlEx) {
+            private static final long serialVersionUID = 1L;
+          };
+      when(txMgr.getTransaction(any())).thenThrow(txEx);
+
+      org.assertj.core.api.Assertions.assertThatThrownBy(
+              () -> underTest.fetch(connection, "cursor_1"))
+          .isSameAs(sqlEx);
+    }
+
+    @Test
+    @SneakyThrows
+    void handlesTransactionExceptionWithoutSqlCause() {
+      doNothing().when(underTest).declareCursor(any(), anyString(), any(), any());
+      doNothing().when(underTest).closeCursor(any(), anyString());
+      doReturn(props.getChunkSize())
+          .when(underTest)
+          .fetchChunk(any(), anyString(), any(), any(), any(), any());
+
+      TransactionException txEx =
+          new TransactionException("bar") {
+            private static final long serialVersionUID = 1L;
+          };
+      when(txMgr.getTransaction(any())).thenThrow(txEx);
+
+      org.assertj.core.api.Assertions.assertThatThrownBy(
+              () -> underTest.fetch(connection, "cursor_1"))
+          .isSameAs(txEx);
     }
   }
 
@@ -275,6 +382,69 @@ class PgHoldCursorCatchupTest {
       assertThat(rows).isEqualTo(1);
       verify(pipeline).process(any());
     }
+
+    @Test
+    @SneakyThrows
+    void fetchChunkStopsIfRsIsClosed() {
+      when(connection.createStatement()).thenReturn(fetch);
+      when(fetch.executeQuery(anyString())).thenReturn(rs);
+      when(rs.next()).thenReturn(true);
+      when(rs.isClosed()).thenReturn(true);
+
+      int rows =
+          underTest.fetchChunk(
+              connection,
+              "FETCH FORWARD 23 FROM cursor_1",
+              new org.factcast.store.internal.rowmapper.PgFactExtractor(serial),
+              sample,
+              timer,
+              new AtomicBoolean(false));
+
+      assertThat(rows).isEqualTo(0);
+    }
+
+    @Test
+    @SneakyThrows
+    void fetchChunkThrowsIfNonCancellationPsqlException() {
+      when(connection.createStatement()).thenReturn(fetch);
+      PSQLException ex = new PSQLException("foo", org.postgresql.util.PSQLState.UNKNOWN_STATE);
+      when(fetch.executeQuery(anyString())).thenThrow(ex);
+      when(statementHolder.wasCanceled()).thenReturn(false);
+
+      org.assertj.core.api.Assertions.assertThatThrownBy(
+              () ->
+                  underTest.fetchChunk(
+                      connection,
+                      "FETCH FORWARD 23 FROM cursor_1",
+                      new org.factcast.store.internal.rowmapper.PgFactExtractor(serial),
+                      sample,
+                      timer,
+                      new AtomicBoolean(false)))
+          .isSameAs(ex);
+    }
+
+    @Test
+    @SneakyThrows
+    void fetchChunkThrowsIfNonCancellationPsqlExceptionDuringRowMapping() {
+      when(connection.createStatement()).thenReturn(fetch);
+      when(fetch.executeQuery(anyString())).thenReturn(rs);
+      when(rs.next()).thenReturn(true);
+      PSQLException ex = new PSQLException("foo", org.postgresql.util.PSQLState.UNKNOWN_STATE);
+      // Row mapping uses rs.getString etc.
+      when(rs.getString(anyString())).thenThrow(ex);
+      when(statementHolder.wasCanceled()).thenReturn(false);
+
+      org.assertj.core.api.Assertions.assertThatThrownBy(
+              () ->
+                  underTest.fetchChunk(
+                      connection,
+                      "FETCH FORWARD 23 FROM cursor_1",
+                      new org.factcast.store.internal.rowmapper.PgFactExtractor(serial),
+                      sample,
+                      timer,
+                      new AtomicBoolean(false)))
+          .isSameAs(ex);
+    }
   }
 
   @Test
@@ -299,6 +469,32 @@ class PgHoldCursorCatchupTest {
       assertThat(logCaptor.getInfoLogs().get(0))
           .contains(
               "took " + elapsed.toMillis() + "ms until the held cursor returned the first result");
+    }
+  }
+
+  @Test
+  void logIfBelowThresholdDoesNotEmitInfo() {
+    try (LogCaptor logCaptor = LogCaptor.forClass(PgHoldCursorCatchup.class)) {
+      var elapsed = PgHoldCursorCatchup.FIRST_ROW_FETCHING_THRESHOLD.minusSeconds(1);
+
+      underTest.logIfAboveThreshold(elapsed);
+
+      assertThat(logCaptor.getInfoLogs()).isEmpty();
+    }
+  }
+
+  @Test
+  @SneakyThrows
+  void closeCursorSwallowsException() {
+    Connection connection = mock(Connection.class);
+    PreparedStatement ps = mock(PreparedStatement.class);
+    when(connection.prepareStatement(anyString())).thenReturn(ps);
+    when(ps.execute()).thenThrow(new SQLException("boom"));
+
+    try (LogCaptor logCaptor = LogCaptor.forClass(PgHoldCursorCatchup.class)) {
+      underTest.closeCursor(connection, "foo");
+      assertThat(logCaptor.getWarnLogs()).isNotEmpty();
+      assertThat(logCaptor.getWarnLogs().get(0)).contains("While closing held cursor");
     }
   }
 }
