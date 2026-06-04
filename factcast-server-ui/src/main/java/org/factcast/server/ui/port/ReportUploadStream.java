@@ -15,8 +15,8 @@
  */
 package org.factcast.server.ui.port;
 
-import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.TokenStreamFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.OutputStream;
 import java.time.OffsetDateTime;
@@ -31,7 +31,7 @@ public abstract class ReportUploadStream {
 
   @SneakyThrows
   protected ReportUploadStream(
-      @NonNull JsonFactory jsonFactory,
+      @NonNull TokenStreamFactory jsonFactory,
       @NonNull String reportName,
       @NonNull ReportFilterBean query,
       @NonNull OutputStream outputStream) {
@@ -41,7 +41,7 @@ public abstract class ReportUploadStream {
     jsonGenerator.writeStringField("name", reportName);
     jsonGenerator.writeStringField("generatedAt", OffsetDateTime.now().toString());
     jsonGenerator.writeFieldName("query");
-    jsonGenerator.writeObject(query);
+    jsonGenerator.writePOJO(query);
     // Open Array for events
     jsonGenerator.writeFieldName("events");
     jsonGenerator.writeStartArray();
@@ -50,7 +50,7 @@ public abstract class ReportUploadStream {
   @SneakyThrows
   public void writeToBatch(ObjectNode obj) {
     // passes on to outputStream
-    jsonGenerator.writeObject(obj);
+    jsonGenerator.writePOJO(obj);
   }
 
   @SneakyThrows

@@ -211,7 +211,7 @@ class PgCursorCatchupTest {
       PSQLException mockException = mock(PSQLException.class);
       when(rs.getString(anyString())).thenThrow(mockException);
 
-      org.junit.jupiter.api.Assertions.assertDoesNotThrow(() -> cbh.processRow(rs));
+      Assertions.assertDoesNotThrow(() -> cbh.processRow(rs));
     }
 
     @Test

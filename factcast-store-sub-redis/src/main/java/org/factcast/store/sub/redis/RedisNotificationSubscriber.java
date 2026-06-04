@@ -16,7 +16,8 @@
 package org.factcast.store.sub.redis;
 
 import com.google.common.eventbus.EventBus;
-import lombok.*;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.store.internal.notification.*;
 import org.factcast.store.redis.RedisPubSubConstants;

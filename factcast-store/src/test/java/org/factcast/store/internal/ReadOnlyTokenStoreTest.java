@@ -16,7 +16,6 @@
 package org.factcast.store.internal;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 import lombok.NonNull;
 import org.factcast.core.store.State;

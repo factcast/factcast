@@ -16,7 +16,7 @@
 package org.factcast.factus.redis.tx;
 
 import com.google.common.annotations.VisibleForTesting;
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.factcast.factus.projection.tx.TransactionAdapter;

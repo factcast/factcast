@@ -15,11 +15,13 @@
  */
 package org.factcast.store.registry.validation.schema;
 
+import java.io.Serial;
+
 public class SchemaConflictException extends IllegalStateException {
 
   public SchemaConflictException(String string) {
     super(string);
   }
 
-  private static final long serialVersionUID = 1L;
+  @Serial private static final long serialVersionUID = 1L;
 }

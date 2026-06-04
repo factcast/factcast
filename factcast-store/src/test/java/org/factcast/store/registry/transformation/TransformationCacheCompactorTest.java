@@ -15,7 +15,7 @@
  */
 package org.factcast.store.registry.transformation;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -50,5 +50,14 @@ class TransformationCacheCompactorTest {
     Assertions.assertThat(cap.getValue().truncatedTo(ChronoUnit.DAYS))
         .isNotNull()
         .isEqualTo(ZonedDateTime.now().minusDays(RETENTION_DAYS).truncatedTo(ChronoUnit.DAYS));
+  }
+
+  @Test
+  void skipsCompact() {
+    uut = new TransformationCacheCompactor(cache, -1);
+
+    uut.compact();
+
+    verifyNoInteractions(cache);
   }
 }

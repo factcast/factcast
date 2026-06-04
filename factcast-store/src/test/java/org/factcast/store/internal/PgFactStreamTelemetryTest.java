@@ -22,6 +22,7 @@ import lombok.SneakyThrows;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.*;
+import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.filter.blacklist.Blacklist;
@@ -32,7 +33,10 @@ import org.factcast.store.internal.telemetry.PgStoreTelemetry;
 import org.factcast.store.internal.transformation.FactTransformerService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
+import org.mockito.Answers;
+import org.mockito.InOrder;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -51,6 +55,7 @@ class PgFactStreamTelemetryTest {
   @Mock ServerPipeline serverPipeline;
   @Mock PgStoreTelemetry telemetry;
   @Mock SubscriptionRequestTO req;
+  @Mock StoreConfigurationProperties props;
 
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   PgConnectionSupplier connectionSupplier;

@@ -15,8 +15,10 @@
  */
 package org.factcast.store.registry.transformation;
 
+import java.io.Serial;
+
 public class TransformationConflictException extends IllegalStateException {
-  private static final long serialVersionUID = 1L;
+  @Serial private static final long serialVersionUID = 1L;
 
   public TransformationConflictException(String s) {
     super(s);

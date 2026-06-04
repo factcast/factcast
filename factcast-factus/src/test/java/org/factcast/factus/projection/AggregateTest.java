@@ -16,7 +16,7 @@
 package org.factcast.factus.projection;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.spy;
 
 import java.util.Objects;
 import java.util.UUID;

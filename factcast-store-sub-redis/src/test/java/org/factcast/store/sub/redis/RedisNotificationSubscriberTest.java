@@ -15,14 +15,17 @@
  */
 package org.factcast.store.sub.redis;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.google.common.eventbus.EventBus;
 import org.factcast.store.internal.notification.*;
 import org.factcast.store.redis.RedisPubSubConstants;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.redisson.api.*;
 

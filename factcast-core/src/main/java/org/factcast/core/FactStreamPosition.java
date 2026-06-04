@@ -15,9 +15,9 @@
  */
 package org.factcast.core;
 
+import jakarta.annotation.Nullable;
 import java.util.Optional;
 import java.util.UUID;
-import javax.annotation.Nullable;
 import lombok.NonNull;
 import lombok.Value;
 
@@ -40,8 +40,11 @@ public class FactStreamPosition {
   @Deprecated
   // for compatibility only
   public static FactStreamPosition withoutSerial(@Nullable UUID uuid) {
-    if (uuid == null) return null;
-    else return FactStreamPosition.of(uuid, -1L);
+    if (uuid == null) {
+      return null;
+    } else {
+      return FactStreamPosition.of(uuid, -1L);
+    }
   }
 
   /**

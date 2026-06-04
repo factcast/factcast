@@ -30,7 +30,6 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.test.context.TestContext;
 import org.testcontainers.containers.Container;
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.ToxiproxyContainer.ContainerProxy;
 
 @SuppressWarnings({"rawtypes", "resource"})
 @Slf4j
@@ -43,14 +42,12 @@ public class MongoDbIntegrationTestExtension implements FactCastIntegrationTestE
     final Containers container =
         executions.computeIfAbsent(config, key -> configureContainers(config));
 
-    ContainerProxy mongoProxy = container.mongoProxy().get();
-    log.info(
-        "Exposing Proxy for MongoDB on {}:{}",
-        mongoProxy.getContainerIpAddress(),
-        mongoProxy.getProxyPort());
+    FactCastIntegrationTestExecutionListener.ProxiedEndpoint mongoProxy =
+        container.mongoProxy().get();
+    log.info("Exposing Proxy for MongoDB on {}:{}", mongoProxy.host(), mongoProxy.port());
 
-    System.setProperty("mongodb.local.host", mongoProxy.getContainerIpAddress());
-    System.setProperty("mongodb.local.port", String.valueOf(mongoProxy.getProxyPort()));
+    System.setProperty("mongodb.local.host", mongoProxy.host());
+    System.setProperty("mongodb.local.port", String.valueOf(mongoProxy.port()));
   }
 
   @SneakyThrows
@@ -84,7 +81,7 @@ public class MongoDbIntegrationTestExtension implements FactCastIntegrationTestE
 
     MongoDbProxy mongoProxy =
         new MongoDbProxy(
-            FactCastIntegrationTestExecutionListener.createProxy(mongo, MONGO_PORT),
+            FactCastIntegrationTestExecutionListener.createProxy("mongo", mongo, MONGO_PORT),
             FactCastIntegrationTestExecutionListener.client());
 
     return new Containers(
@@ -92,9 +89,9 @@ public class MongoDbIntegrationTestExtension implements FactCastIntegrationTestE
         mongoProxy,
         MongoClients.create(
             "mongodb://"
-                + mongoProxy.get().getContainerIpAddress()
+                + mongoProxy.get().host()
                 + ":"
-                + mongoProxy.get().getProxyPort()
+                + mongoProxy.get().port()
                 + "/?replicaSet=rs0&directConnection=true"));
   }
 

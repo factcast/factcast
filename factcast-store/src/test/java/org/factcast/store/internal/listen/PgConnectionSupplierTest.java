@@ -18,17 +18,18 @@ package org.factcast.store.internal.listen;
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
-import static org.mockito.MockitoAnnotations.*;
 
 import com.google.common.base.Splitter;
 import java.sql.*;
 import java.util.*;
 import javax.sql.DataSource;
-import lombok.*;
+import lombok.SneakyThrows;
 import org.apache.tomcat.jdbc.pool.*;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.postgresql.jdbc.PgConnection;
 

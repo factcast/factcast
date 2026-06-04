@@ -34,6 +34,10 @@ public class TransformationCacheCompactor {
   @Scheduled(cron = "${factcast.store.transformationCacheCompactCron:0 0 0 * * *}")
   @SchedulerLock(name = "transformationCacheCompact", lockAtMostFor = "PT1h")
   public void compact() {
+    if (days < 0) {
+      log.debug("Skipping compact");
+      return;
+    }
 
     // yes, i know the time is recorded via micrometer already, but
     // as a user, i'd like to see the overall time in the logs as well.

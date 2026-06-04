@@ -30,12 +30,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 import org.springframework.transaction.support.TransactionTemplate;
 
-@ContextConfiguration(classes = {PgTestConfiguration.class})
-@ExtendWith(SpringExtension.class)
+@SpringJUnitConfig(classes = {PgTestConfiguration.class})
 @ExtendWith(MockitoExtension.class)
 @IntegrationTest
 class PgTransformationStoreImplTest extends AbstractTransformationStoreTest {

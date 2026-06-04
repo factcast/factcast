@@ -77,7 +77,7 @@ class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
   void testRetryBehaviorWithoutResponse() {
 
     // break upstream call
-    proxy.toxics().limitData("break upstream", ToxicDirection.UPSTREAM, 1024);
+    proxy.proxy().toxics().limitData("break upstream", ToxicDirection.UPSTREAM, 1024);
 
     new Timer()
         .schedule(
@@ -106,7 +106,7 @@ class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
     LogCaptor logCaptor = LogCaptor.forClass(GrpcFactStore.class);
 
     // break upstream call, timeout of 0 will make sure no communication takes place until reset.
-    proxy.toxics().resetPeer("immediate reset", ToxicDirection.UPSTREAM, 0);
+    proxy.proxy().toxics().resetPeer("immediate reset", ToxicDirection.UPSTREAM, 0);
 
     List<Fact> facts = new ArrayList<>(MAX_FACTS);
     for (int i = 0; i < MAX_FACTS; i++) {
@@ -149,7 +149,7 @@ class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
     fc.publish(Fact.builder().ns("ns").type("type").buildWithoutPayload());
 
     // break upstream call
-    proxy.toxics().resetPeer("immediate reset", ToxicDirection.UPSTREAM, 1);
+    proxy.proxy().toxics().resetPeer("immediate reset", ToxicDirection.UPSTREAM, 1);
 
     new Timer()
         .schedule(
@@ -175,7 +175,7 @@ class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
     fc.publish(Fact.builder().ns("ns").type("type").buildWithoutPayload());
 
     // break upstream call
-    proxy.toxics().limitData("break every byte", ToxicDirection.DOWNSTREAM, 1);
+    proxy.proxy().toxics().limitData("break every byte", ToxicDirection.DOWNSTREAM, 1);
 
     new Timer()
         .schedule(
@@ -202,7 +202,7 @@ class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
     fc.publish(Fact.builder().ns("ns").type("type").buildWithoutPayload());
 
     // break upstream call
-    proxy.toxics().resetPeer("immediate reset", ToxicDirection.UPSTREAM, 1);
+    proxy.proxy().toxics().resetPeer("immediate reset", ToxicDirection.UPSTREAM, 1);
 
     new Timer()
         .schedule(
@@ -239,7 +239,7 @@ class GrpcStoreResilienceITest extends AbstractFactCastIntegrationTest {
     // assuming two attempts on each iteration using blockingStub.withWaitForReady
     for (int i = 1; i < 100 / 2; i++) {
       // break upstream call
-      proxy.toxics().resetPeer("immediate reset", ToxicDirection.UPSTREAM, 1);
+      proxy.proxy().toxics().resetPeer("immediate reset", ToxicDirection.UPSTREAM, 1);
       new Timer()
           .schedule(
               new TimerTask() {

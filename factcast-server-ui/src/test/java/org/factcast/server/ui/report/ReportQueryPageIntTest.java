@@ -20,8 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 import java.time.OffsetDateTime;
@@ -36,13 +34,11 @@ import org.junitpioneer.jupiter.RetryingTest;
 @Slf4j
 class ReportQueryPageIntTest extends AbstractBrowserTest {
 
-  final ObjectMapper om = new ObjectMapper();
+  final ObjectMapper om = new ObjectMapper().findAndRegisterModules();
 
   @RetryingTest(maxAttempts = 3)
   @SneakyThrows
   void createReportHappyPath() {
-    om.registerModule(new JavaTimeModule());
-    om.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     // ARRANGE
     loginFor("/ui/report");
     assertThat(page.getByLabel("Types")).isDisabled();

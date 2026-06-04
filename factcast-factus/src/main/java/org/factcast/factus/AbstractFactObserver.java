@@ -53,8 +53,8 @@ abstract class AbstractFactObserver extends BatchingFactObserver {
   }
 
   private static int discoverMaxSize(ProgressAware target) {
-    if (target instanceof TransactionAware) {
-      return ((TransactionAware) target).maxBatchSizePerTransaction();
+    if (target instanceof TransactionAware aware) {
+      return aware.maxBatchSizePerTransaction();
     }
     return MAX_DEFAULT;
   }

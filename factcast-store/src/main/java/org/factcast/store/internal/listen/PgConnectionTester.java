@@ -16,12 +16,12 @@
 package org.factcast.store.internal.listen;
 
 import com.google.common.annotations.VisibleForTesting;
+import jakarta.annotation.Nonnull;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.function.Predicate;
-import javax.annotation.Nonnull;
 import lombok.extern.slf4j.Slf4j;
 import org.postgresql.PGNotification;
 import org.postgresql.jdbc.PgConnection;

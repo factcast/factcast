@@ -16,8 +16,8 @@
 package org.factcast.store.internal.transformation;
 
 import com.google.common.annotations.VisibleForTesting;
+import jakarta.annotation.Nullable;
 import java.util.*;
-import javax.annotation.Nullable;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;

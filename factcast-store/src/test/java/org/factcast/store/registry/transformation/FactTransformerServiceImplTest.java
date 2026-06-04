@@ -24,6 +24,7 @@ import com.google.common.collect.Sets;
 import java.util.*;
 import lombok.NonNull;
 import lombok.SneakyThrows;
+import nl.altindag.log.LogCaptor;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.store.StoreConfigurationProperties;
@@ -114,10 +115,14 @@ class FactTransformerServiceImplTest {
     @Mock private @NonNull TransformationChain chain;
     @Mock private @NonNull TransformationRequest req;
 
+    private final long transformationThresholdMs = 10L;
+
     @BeforeEach
     void setup() {
       when(props.getSizeOfThreadPoolForBufferedTransformations()).thenReturn(5);
-      underTest = new FactTransformerServiceImpl(chains, trans, cache, registryMetrics, props);
+      underTest =
+          new FactTransformerServiceImpl(
+              chains, trans, cache, registryMetrics, props, transformationThresholdMs);
     }
 
     @SneakyThrows
@@ -269,6 +274,37 @@ class FactTransformerServiceImplTest {
       assertThat(transformed.get(1).jsonPayload()).isEqualTo("{\"a\":3}");
 
       assertThat(transformed).hasSize(2);
+    }
+
+    @SneakyThrows
+    @Test
+    void logsWarningIfThresholdExceeded() {
+      try (LogCaptor logCaptor = LogCaptor.forClass(FactTransformerServiceImpl.class)) {
+        fact =
+            PgFact.from(
+                Fact.builder()
+                    .version(4)
+                    .ns("ns")
+                    .type("type1")
+                    .id(UUID.randomUUID())
+                    .build("{\"a\":1}"));
+        TransformationKey key1 = TransformationKey.from(fact);
+        var req1 = new TransformationRequest(fact, Collections.singleton(5));
+        when(chain.id()).thenReturn("chain1");
+        when(chains.get(eq(key1), eq(4), eq(Collections.singleton(5)))).thenReturn(chain);
+        when(trans.transform(same(chain), eq(JsonString.of(fact.jsonPayload()))))
+            .thenAnswer(
+                i -> {
+                  Thread.sleep(transformationThresholdMs + 1);
+                  return JsonString.of("{\"a\":2}");
+                });
+
+        List<PgFact> transformed = underTest.transform(Lists.newArrayList(req1));
+
+        assertThat(transformed.get(0).type()).isEqualTo("type1");
+        assertThat(transformed.get(0).jsonPayload()).isEqualTo("{\"a\":2}");
+        assertThat(logCaptor.getWarnLogs().get(0)).contains("Transformation exceeded threshold");
+      }
     }
   }
 }

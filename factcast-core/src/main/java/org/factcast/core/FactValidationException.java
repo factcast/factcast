@@ -15,11 +15,12 @@
  */
 package org.factcast.core;
 
+import java.io.Serial;
 import java.util.List;
 
 public class FactValidationException extends IllegalArgumentException {
 
-  private static final long serialVersionUID = 1L;
+  @Serial private static final long serialVersionUID = 1L;
 
   public FactValidationException(String msg) {
     super(msg);

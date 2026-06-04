@@ -30,18 +30,15 @@ import org.factcast.core.subscription.observer.*;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.test.*;
 import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
-@ContextConfiguration(classes = {PgTestConfiguration.class})
-@ExtendWith(SpringExtension.class)
+@SpringJUnitConfig(classes = {PgTestConfiguration.class})
 @IntegrationTest
 @Sql(scripts = "/wipe.sql", config = @SqlConfig(separator = "#"))
 class PgQueryTest {
@@ -70,9 +67,8 @@ class PgQueryTest {
             sb.append("\"").append(k).append("\":");
             sb.append("\"").append(v).append("\"");
           });
-      return String.format(
-          "{\"id\":\"%s\",\"ns\":\"%s\",\"type\":\"%s\",\"meta\":{%s}}",
-          id, ns, type, sb.toString());
+      return "{\"id\":\"%s\",\"ns\":\"%s\",\"type\":\"%s\",\"meta\":{%s}}"
+          .formatted(id, ns, type, sb.toString());
     }
 
     public static TestHeader create() {

@@ -15,9 +15,9 @@
  */
 package org.factcast.test;
 
+import jakarta.annotation.Nullable;
 import java.lang.reflect.Field;
 import java.util.*;
-import javax.annotation.Nullable;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.junit.platform.commons.util.ReflectionUtils;

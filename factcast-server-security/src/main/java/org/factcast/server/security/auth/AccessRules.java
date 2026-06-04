@@ -30,11 +30,11 @@ public class AccessRules implements Serializable {
   @Serial private static final long serialVersionUID = 42;
 
   @VisibleForTesting
-  @Getter(value = AccessLevel.PROTECTED)
+  @Getter(AccessLevel.PROTECTED)
   private List<String> include = new LinkedList<>();
 
   @VisibleForTesting
-  @Getter(value = AccessLevel.PROTECTED)
+  @Getter(AccessLevel.PROTECTED)
   private List<String> exclude = new LinkedList<>();
 
   @Nullable

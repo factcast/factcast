@@ -6,16 +6,13 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.10.4-SNAPSHOT</version>
+    <version>0.11.1-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <!-- deprecated, kept for compatibility -->
   <artifactId>factcast-factus-bin-snapser</artifactId>
   <name>${project.groupId}:${project.artifactId}</name>
-  <properties>
-    <maven.compiler.source>1.8</maven.compiler.source>
-    <maven.compiler.target>1.8</maven.compiler.target>
-  </properties>
+  <properties></properties>
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -33,7 +30,7 @@
       <artifactId>factcast-factus-serializer-binary</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.lz4</groupId>
+      <groupId>at.yawk.lz4</groupId>
       <artifactId>lz4-java</artifactId>
     </dependency>
   </dependencies>
@@ -44,8 +41,7 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>${maven.compiler.version}</version>
         <configuration>
-          <source>1.8</source>
-          <target>1.8</target>
+          <release>17</release>
         </configuration>
       </plugin>
     </plugins>

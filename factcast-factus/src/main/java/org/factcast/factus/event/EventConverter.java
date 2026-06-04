@@ -16,7 +16,8 @@
 package org.factcast.factus.event;
 
 import java.util.*;
-import lombok.*;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import org.factcast.core.Fact;
 
 @RequiredArgsConstructor

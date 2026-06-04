@@ -22,8 +22,6 @@ import static org.mockito.Mockito.*;
 import java.time.Duration;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import lombok.*;
-import org.factcast.core.snap.Snapshot;
 import org.factcast.factus.projection.Aggregate;
 import org.factcast.factus.projection.SnapshotProjection;
 import org.factcast.factus.serializer.DefaultSnapshotSerializer;
@@ -40,23 +38,22 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
 import org.redisson.client.codec.ByteArrayCodec;
 import org.redisson.client.codec.Codec;
-import org.redisson.spring.starter.RedissonAutoConfigurationV2;
-import org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration;
+import org.redisson.spring.starter.RedissonAutoConfigurationV4;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 @SpringBootTest
-@ContextConfiguration(classes = {RedissonAutoConfigurationV2.class, RedisAutoConfiguration.class})
-@ExtendWith(SpringExtension.class)
+@SpringJUnitConfig(classes = {RedissonAutoConfigurationV4.class})
+@ExtendWith(MockitoExtension.class)
 @Testcontainers
 @IntegrationTest
 class RedissonSnapshotCacheTest {
@@ -67,9 +64,7 @@ class RedissonSnapshotCacheTest {
       new GenericContainer<>("redis:5.0.3-alpine").withExposedPorts(6379);
 
   private final RedissonSnapshotProperties props =
-      new RedissonSnapshotProperties()
-          .setSnapshotCacheRedissonCodec(RedissonSnapshotProperties.RedissonCodec.RedissonDefault)
-          .setDeleteSnapshotStaleForDays(90);
+      new RedissonSnapshotProperties().setDeleteSnapshotStaleForDays(90);
 
   @BeforeAll
   public static void startContainers() throws InterruptedException {
@@ -89,8 +84,7 @@ class RedissonSnapshotCacheTest {
   class WhenGettingSnapshot {
     @BeforeEach
     void setup() {
-      when(selector.selectSeralizerFor(any())).thenReturn(serializer);
-      underTest = new RedissonSnapshotCache(redisson, selector, props);
+      underTest = new RedissonSnapshotCache(redisson, props);
       redisson.getKeys().flushdb();
     }
 
@@ -128,8 +122,7 @@ class RedissonSnapshotCacheTest {
   class WhenClearingSnapshot {
     @BeforeEach
     void setup() {
-      when(selector.selectSeralizerFor(any())).thenReturn(serializer);
-      underTest = new RedissonSnapshotCache(redisson, selector, props);
+      underTest = new RedissonSnapshotCache(redisson, props);
     }
 
     @Test
@@ -165,13 +158,9 @@ class RedissonSnapshotCacheTest {
 
     @BeforeEach
     void setup() {
-      when(selector.selectSeralizerFor(any())).thenReturn(serializer);
       RedissonSnapshotProperties props =
-          new RedissonSnapshotProperties()
-              .setSnapshotCacheRedissonCodec(
-                  RedissonSnapshotProperties.RedissonCodec.RedissonDefault)
-              .setDeleteSnapshotStaleForDays(RETENTION_TIME_IN_DAYS);
-      underTest = new RedissonSnapshotCache(redisson, selector, props);
+          new RedissonSnapshotProperties().setDeleteSnapshotStaleForDays(RETENTION_TIME_IN_DAYS);
+      underTest = new RedissonSnapshotCache(redisson, props);
     }
 
     @Test
@@ -207,31 +196,6 @@ class RedissonSnapshotCacheTest {
           .isEqualTo(
               "sc_org.factcast.core.snap.redisson.RedissonSnapshotCacheTest$TestSnapshotProjection_1_snapshot");
     }
-
-    @Test
-    @SuppressWarnings("deprecation")
-    void testTTLOnLegacy() {
-      SnapshotIdentifier id = SnapshotIdentifier.of(TestAggregate.class, randomUUID());
-      RBucket mockEmptyBucket = mock(RBucket.class);
-      when(redisson.getBucket(underTest.createKeyFor(id), ByteArrayCodec.INSTANCE))
-          .thenReturn(mockEmptyBucket);
-      when(mockEmptyBucket.get()).thenReturn(null);
-      RBucket mockLegacyBucket = mock(RBucket.class);
-      when(redisson.getBucket(underTest.createLegacyKeyFor(id))).thenReturn(mockLegacyBucket);
-      Snapshot snapshot = mock(Snapshot.class);
-      when(mockLegacyBucket.get()).thenReturn(snapshot);
-      when(snapshot.bytes()).thenReturn(new byte[] {1, 2, 3});
-      when(snapshot.lastFact()).thenReturn(randomUUID());
-
-      underTest.find(id); // touches it
-
-      verify(mockLegacyBucket).expireAsync(Duration.ofDays(RETENTION_TIME_IN_DAYS));
-    }
-
-    @SneakyThrows
-    private void sleep(long millis) {
-      Thread.sleep(millis);
-    }
   }
 
   @Nested
@@ -241,15 +205,9 @@ class RedissonSnapshotCacheTest {
 
     @BeforeEach
     void setup() {
-      when(selector.selectSeralizerFor(any())).thenReturn(serializer);
       underTest =
           new RedissonSnapshotCache(
-              redisson,
-              selector,
-              new RedissonSnapshotProperties()
-                  .setSnapshotCacheRedissonCodec(
-                      RedissonSnapshotProperties.RedissonCodec.Kryo5Codec)
-                  .setDeleteSnapshotStaleForDays(90));
+              redisson, new RedissonSnapshotProperties().setDeleteSnapshotStaleForDays(90));
     }
 
     @Test
