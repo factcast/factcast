@@ -109,8 +109,6 @@ public class PgHoldCursorCatchup extends AbstractPgCatchup {
                           fetchChunk(
                               connection, fetchSQL, extractor, timerSample, timer, isFirstRow);
 
-                      // TODO check if committing here with an exhausted cursor is as efficient as a
-                      // rollback
                       if (fetchedRows < props.getChunkSize()) {
                         // we had rows, but less than allowed, indicating we're done
 
@@ -124,6 +122,35 @@ public class PgHoldCursorCatchup extends AbstractPgCatchup {
                               phase);
                           return false;
                         }
+
+                        /**
+                         * There is no need to rollback the transaction if the cursor is exhausted:
+                         *
+                         * <pre>
+                         * postgres=# begin; declare x cursor with hold for select generate_series(1,100000000);
+                         * postgres=*# commit ;
+                         * Time: 5810.979 ms (00:05.811)
+                         *
+                         * postgres=# close x;
+                         * Time: 67.996 ms
+                         * </pre>
+                         *
+                         * compared to
+                         *
+                         * <pre>
+                         * postgres=# begin; declare x cursor with hold for select generate_series(1,100000000);
+                         * Time: 0.428 ms
+                         *
+                         * postgres=*# fetch absolute 99999999 x;
+                         * Time: 1957.552 ms (00:01.958)
+                         *
+                         * postgres=*# commit ;
+                         * Time: 0.375 ms
+                         *
+                         * postgres=# close x;
+                         * Time: 0.165 ms
+                         * </pre>
+                         */
                       }
 
                       return true;
