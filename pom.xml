@@ -129,7 +129,7 @@
     <mockk.version>1.14.11</mockk.version>
     <graaljs.version>25.0.3</graaljs.version>
     <redisson.version>4.5.0</redisson.version>
-    <aws-sdk.version>2.46.5</aws-sdk.version>
+    <aws-sdk.version>2.46.6</aws-sdk.version>
     <mongodb-driver.version>5.8.0</mongodb-driver.version>
     <shedlock.version>7.7.0</shedlock.version>
     <byte-buddy.version>1.18.10-jdk5</byte-buddy.version>
