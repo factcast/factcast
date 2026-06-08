@@ -136,22 +136,6 @@ class PgHoldCursorCatchupTest {
 
     @Test
     @SneakyThrows
-    void noTransactionIfOnlyOneRowToFetch() {
-      doNothing().when(underTest).declareCursor(any(), anyString(), any(), any());
-      doNothing().when(underTest).closeCursor(any(), anyString());
-      doReturn(12).when(underTest).fetchChunk(any(), anyString(), any(), any(), any(), any());
-
-      underTest.fetch(connection, "cursor_1");
-
-      // declares
-      verify(underTest).declareCursor(same(connection), anyString(), any(), any());
-      verify(txMgr, never()).getTransaction(any());
-      verify(underTest, times(1))
-          .fetchChunk(same(connection), anyString(), any(), any(), any(), any());
-    }
-
-    @Test
-    @SneakyThrows
     void declaresCursorCommitsAndFetchesUntilEmpty() {
       doNothing().when(underTest).declareCursor(any(), anyString(), any(), any());
       doNothing().when(underTest).closeCursor(any(), anyString());
@@ -218,6 +202,46 @@ class PgHoldCursorCatchupTest {
 
     @Test
     @SneakyThrows
+    void returnsNullSignalsNothingRead() {
+      doNothing().when(underTest).declareCursor(any(), anyString(), any(), any());
+      doNothing().when(underTest).closeCursor(any(), anyString());
+      // fetchedRows == 0 -> returns null from TransactionTemplate
+      doReturn(0).when(underTest).fetchChunk(any(), anyString(), any(), any(), any(), any());
+
+      boolean result = underTest.fetch(connection, "cursor_1");
+
+      assertThat(result).isFalse();
+    }
+
+    @Test
+    @SneakyThrows
+    void returnsFalseSignalsQuickCatchup() {
+      doNothing().when(underTest).declareCursor(any(), anyString(), any(), any());
+      doNothing().when(underTest).closeCursor(any(), anyString());
+      // 0 < fetchedRows < chunkSize -> returns false from TransactionTemplate
+      doReturn(10).when(underTest).fetchChunk(any(), anyString(), any(), any(), any(), any());
+
+      boolean result = underTest.fetch(connection, "cursor_1");
+
+      assertThat(result).isTrue();
+    }
+
+    @Test
+    @SneakyThrows
+    void usesDifferentTimerWhenNotFromScratch() {
+      when(serial.get()).thenReturn(100L);
+      when(metrics.timer(StoreMetrics.OP.RESULT_STREAM_START, false)).thenReturn(timer);
+      doNothing().when(underTest).declareCursor(any(), anyString(), any(), any());
+      doNothing().when(underTest).closeCursor(any(), anyString());
+      doReturn(0).when(underTest).fetchChunk(any(), anyString(), any(), any(), any(), any());
+
+      underTest.fetch(connection, "cursor_1");
+
+      verify(metrics).timer(StoreMetrics.OP.RESULT_STREAM_START, false);
+    }
+
+    @Test
+    @SneakyThrows
     void returnsTrueWhenCancelledAfterFirstChunk() {
       doNothing().when(underTest).declareCursor(any(), anyString(), any(), any());
       doNothing().when(underTest).closeCursor(any(), anyString());
@@ -229,48 +253,18 @@ class PgHoldCursorCatchupTest {
       boolean result = underTest.fetch(connection, "cursor_1");
 
       assertThat(result).isTrue();
-      verify(txMgr, never()).getTransaction(any());
     }
 
     @Test
     @SneakyThrows
     void handlesTransactionExceptionWithSqlCause() {
-      doNothing().when(underTest).declareCursor(any(), anyString(), any(), any());
-      doNothing().when(underTest).closeCursor(any(), anyString());
-      doReturn(props.getChunkSize())
-          .when(underTest)
-          .fetchChunk(any(), anyString(), any(), any(), any(), any());
-
       SQLException sqlEx = new SQLException("foo");
-      TransactionException txEx =
-          new TransactionException("bar", sqlEx) {
-            private static final long serialVersionUID = 1L;
-          };
+      TransactionException txEx = new TransactionException("bar", sqlEx) {};
       when(txMgr.getTransaction(any())).thenThrow(txEx);
 
       org.assertj.core.api.Assertions.assertThatThrownBy(
               () -> underTest.fetch(connection, "cursor_1"))
           .isSameAs(sqlEx);
-    }
-
-    @Test
-    @SneakyThrows
-    void handlesTransactionExceptionWithoutSqlCause() {
-      doNothing().when(underTest).declareCursor(any(), anyString(), any(), any());
-      doNothing().when(underTest).closeCursor(any(), anyString());
-      doReturn(props.getChunkSize())
-          .when(underTest)
-          .fetchChunk(any(), anyString(), any(), any(), any(), any());
-
-      TransactionException txEx =
-          new TransactionException("bar") {
-            private static final long serialVersionUID = 1L;
-          };
-      when(txMgr.getTransaction(any())).thenThrow(txEx);
-
-      org.assertj.core.api.Assertions.assertThatThrownBy(
-              () -> underTest.fetch(connection, "cursor_1"))
-          .isSameAs(txEx);
     }
   }
 

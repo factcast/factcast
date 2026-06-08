@@ -92,55 +92,83 @@ public class PgHoldCursorCatchup extends AbstractPgCatchup {
 
     if (statementHolder.wasCanceled()) return false;
 
-    declareCursor(connection, cursorName, queryBuilder, fromSerial);
-
     try {
-      // as declaring the cursor could have taken some time, we'll check again
-      if (statementHolder.wasCanceled()) return false;
-
-      // the first can go without a transaction, so that the cursor is not persisted (yet)
-      int fetchedRows = fetchChunk(connection, fetchSQL, extractor, timerSample, timer, isFirstRow);
-      if (fetchedRows == 0) {
-        log.trace("{} catchup {}, no more rows in cursor", req, phase);
-        return false;
-      }
-
-      // we had rows, but less than allowed, indicating we're done
-      if (fetchedRows < props.getChunkSize()) {
-        log.trace("{} catchup {}, quick catchup: no need to hold the cursor", req, phase);
-        return true;
-      }
-
-      // lets be nice and check again
-      if (statementHolder.wasCanceled()) return true;
-
-      // otherwise, we have to hold the cursor
-      try {
-        new TransactionTemplate(txMgr)
-            .execute(
-                tx -> {
-                  while (!statementHolder.wasCanceled()) {
+      Boolean continueFetching =
+          new TransactionTemplate(txMgr)
+              .execute(
+                  tx -> {
                     try {
-                      if (fetchChunk(
-                              connection, fetchSQL, extractor, timerSample, timer, isFirstRow)
-                          < props.getChunkSize())
-                        // early exit, as there are no more rows to fetch
-                        return null;
-                    } catch (SQLException e) {
-                      // matrushka exception
-                      throw new TransactionException("While fetching: ", e) {};
+                      declareCursor(connection, cursorName, queryBuilder, fromSerial);
+
+                      // as declaring the cursor could have taken some time, we'll check again
+                      if (statementHolder.wasCanceled()) return false;
+
+                      // the first fetch is part of the transaction, so that the cursor is not
+                      // persisted (yet)
+                      int fetchedRows =
+                          fetchChunk(
+                              connection, fetchSQL, extractor, timerSample, timer, isFirstRow);
+
+                      // TODO check if committing here with an exhausted cursor is as efficient as a
+                      // rollback
+                      if (fetchedRows < props.getChunkSize()) {
+                        // we had rows, but less than allowed, indicating we're done
+
+                        if (fetchedRows == 0) {
+                          log.trace("{} catchup {}, empty cursor", req, phase);
+                          return null; // signal, nothing was read
+                        } else {
+                          log.trace(
+                              "{} catchup {}, quick catchup: no need to hold the cursor",
+                              req,
+                              phase);
+                          return false;
+                        }
+                      }
+
+                      return true;
+                    } catch (SQLException sql) {
+                      throw new TransactionException("While catching up:", sql) {};
                     }
-                  }
-                  return null;
-                });
-        return true; // we had at least one row
-      } catch (TransactionException e) {
-        if (e.getCause() instanceof SQLException s) {
-          throw s;
-        } else throw e;
+                  });
+
+      if (Boolean.TRUE.equals(continueFetching)) {
+        continueFetchingUntilExhausted(
+            connection, fetchSQL, extractor, timerSample, timer, isFirstRow);
+        return true;
+      } else {
+        // null indicates there were no rows at all
+        return (continueFetching != null);
+      }
+    } catch (TransactionException e) {
+      if (e.getCause() instanceof SQLException sql) {
+        // unwrap
+        throw sql;
+      } else {
+        throw e;
       }
     } finally {
       closeCursor(connection, cursorName);
+    }
+  }
+
+  private void continueFetchingUntilExhausted(
+      Connection connection,
+      String fetchSQL,
+      PgFactExtractor extractor,
+      Timer.Sample timerSample,
+      Timer timer,
+      AtomicBoolean isFirstRow) {
+    while (!statementHolder.wasCanceled()) {
+      try {
+        if (fetchChunk(connection, fetchSQL, extractor, timerSample, timer, isFirstRow)
+            < props.getChunkSize())
+          // early exit, as there are no more rows to fetch
+          return;
+      } catch (SQLException e) {
+        // matrushka exception
+        throw new TransactionException("While fetching: ", e) {};
+      }
     }
   }
 

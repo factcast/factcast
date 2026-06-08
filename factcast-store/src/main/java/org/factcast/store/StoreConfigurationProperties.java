@@ -261,7 +261,7 @@ public class StoreConfigurationProperties implements InitializingBean {
     HOLD_CURSOR
   }
 
-  CatchupStrategy catchupStrategy = CatchupStrategy.CURSOR;
+  CatchupStrategy catchupStrategy = CatchupStrategy.HOLD_CURSOR;
 
   /**
    * When catching up, if production of a full notification of facts takes longer than this (10
