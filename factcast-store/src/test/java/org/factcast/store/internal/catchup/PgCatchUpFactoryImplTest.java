@@ -25,7 +25,7 @@ import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.StoreConfigurationProperties.CatchupStrategy;
 import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.catchup.chunked.PgChunkedCatchup;
-import org.factcast.store.internal.catchup.chunkedwithhold.PgCHunkedWithHoldCursorCatchup;
+import org.factcast.store.internal.catchup.chunkedwithhold.PgChunkedWithHoldCursorCatchup;
 import org.factcast.store.internal.catchup.cursor.PgCursorCatchup;
 import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.query.CurrentStatementHolder;
@@ -91,12 +91,12 @@ class PgCatchUpFactoryImplTest {
 
     @Test
     void returnsHoldCursorInPhase1WhenStrategyIsHoldCursor() {
-      when(props.getCatchupStrategy()).thenReturn(CatchupStrategy.HOLD_CURSOR);
+      when(props.getCatchupStrategy()).thenReturn(CatchupStrategy.CHUNKED_WITH_HOLD);
 
       var result =
           underTest.create(request, pipeline, serial, holder, ds, PgCatchupFactory.Phase.PHASE_1);
 
-      assertThat(result).isInstanceOf(PgCHunkedWithHoldCursorCatchup.class);
+      assertThat(result).isInstanceOf(PgChunkedWithHoldCursorCatchup.class);
     }
   }
 }

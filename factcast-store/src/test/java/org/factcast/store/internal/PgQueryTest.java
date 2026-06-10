@@ -128,7 +128,7 @@ class PgQueryTest {
   @Test
   void testRoundtripInsertBeforeWithHoldCursor() {
     assertRoundtripInsertBeforeWithStrategy(
-        StoreConfigurationProperties.CatchupStrategy.HOLD_CURSOR);
+        StoreConfigurationProperties.CatchupStrategy.CHUNKED_WITH_HOLD);
   }
 
   private void assertRoundtripInsertBeforeWithStrategy(
