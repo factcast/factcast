@@ -37,6 +37,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
 @Slf4j
+@Deprecated
 public class PgChunkedCatchup extends AbstractPgCatchup {
   @SuppressWarnings("java:S107")
   public PgChunkedCatchup(

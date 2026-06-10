@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.internal.catchup.cursor;
+package org.factcast.store.internal.catchup.chunkedwithhold;
 
 import com.google.common.annotations.VisibleForTesting;
 import io.micrometer.core.instrument.Timer;
@@ -42,12 +42,12 @@ import org.springframework.transaction.*;
 import org.springframework.transaction.support.TransactionTemplate;
 
 @Slf4j
-public class PgHoldCursorCatchup extends AbstractPgCatchup {
+public class PgCHunkedWithHoldCursorCatchup extends AbstractPgCatchup {
 
   private final @NonNull PlatformTransactionManager txMgr;
 
   @SuppressWarnings("java:S107")
-  public PgHoldCursorCatchup(
+  public PgCHunkedWithHoldCursorCatchup(
       @NonNull StoreConfigurationProperties props,
       @NonNull PgMetrics metrics,
       @NonNull SubscriptionRequestTO req,

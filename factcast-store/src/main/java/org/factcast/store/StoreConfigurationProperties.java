@@ -258,10 +258,12 @@ public class StoreConfigurationProperties implements InitializingBean {
   public enum CatchupStrategy {
     CURSOR,
     CHUNKED,
-    HOLD_CURSOR
+    CHUNKED_WITH_HOLD
   }
 
   CatchupStrategy catchupStrategy = CatchupStrategy.CURSOR;
+
+  boolean catchupAsyncFetch = false; // might default to true in the future
 
   /**
    * When catching up, if production of a full notification of facts takes longer than this (10

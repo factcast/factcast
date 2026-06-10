@@ -32,6 +32,7 @@ import org.factcast.store.internal.PgConstants;
 import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.StoreMetrics;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
+import org.factcast.store.internal.catchup.chunkedwithhold.PgCHunkedWithHoldCursorCatchup;
 import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.pipeline.Signal;
 import org.factcast.store.internal.query.*;
@@ -68,13 +69,13 @@ class PgHoldCursorCatchupTest {
   @Mock @NonNull AtomicLong serial;
   @Mock DataSource ds;
 
-  PgHoldCursorCatchup underTest;
+  PgCHunkedWithHoldCursorCatchup underTest;
 
   @BeforeEach
   void setup() {
     underTest =
         spy(
-            new PgHoldCursorCatchup(
+            new PgCHunkedWithHoldCursorCatchup(
                 props,
                 metrics,
                 req,
@@ -454,8 +455,8 @@ class PgHoldCursorCatchupTest {
 
   @Test
   void logIfAboveThresholdEmitsInfo() {
-    try (LogCaptor logCaptor = LogCaptor.forClass(PgHoldCursorCatchup.class)) {
-      var elapsed = PgHoldCursorCatchup.FIRST_ROW_FETCHING_THRESHOLD.plusSeconds(2);
+    try (LogCaptor logCaptor = LogCaptor.forClass(PgCHunkedWithHoldCursorCatchup.class)) {
+      var elapsed = PgCHunkedWithHoldCursorCatchup.FIRST_ROW_FETCHING_THRESHOLD.plusSeconds(2);
 
       underTest.logIfAboveThreshold(elapsed);
 
@@ -468,8 +469,8 @@ class PgHoldCursorCatchupTest {
 
   @Test
   void logIfBelowThresholdDoesNotEmitInfo() {
-    try (LogCaptor logCaptor = LogCaptor.forClass(PgHoldCursorCatchup.class)) {
-      var elapsed = PgHoldCursorCatchup.FIRST_ROW_FETCHING_THRESHOLD.minusSeconds(1);
+    try (LogCaptor logCaptor = LogCaptor.forClass(PgCHunkedWithHoldCursorCatchup.class)) {
+      var elapsed = PgCHunkedWithHoldCursorCatchup.FIRST_ROW_FETCHING_THRESHOLD.minusSeconds(1);
 
       underTest.logIfAboveThreshold(elapsed);
 
@@ -485,7 +486,7 @@ class PgHoldCursorCatchupTest {
     when(connection.prepareStatement(anyString())).thenReturn(ps);
     when(ps.execute()).thenThrow(new SQLException("boom"));
 
-    try (LogCaptor logCaptor = LogCaptor.forClass(PgHoldCursorCatchup.class)) {
+    try (LogCaptor logCaptor = LogCaptor.forClass(PgCHunkedWithHoldCursorCatchup.class)) {
       underTest.closeCursor(connection, "foo");
       assertThat(logCaptor.getWarnLogs()).isNotEmpty();
       assertThat(logCaptor.getWarnLogs().get(0)).contains("While closing held cursor");

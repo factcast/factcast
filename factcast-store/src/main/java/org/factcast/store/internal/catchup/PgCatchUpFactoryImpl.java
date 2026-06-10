@@ -22,8 +22,8 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.catchup.chunked.PgChunkedCatchup;
+import org.factcast.store.internal.catchup.chunkedwithhold.PgCHunkedWithHoldCursorCatchup;
 import org.factcast.store.internal.catchup.cursor.PgCursorCatchup;
-import org.factcast.store.internal.catchup.cursor.PgHoldCursorCatchup;
 import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -61,7 +61,7 @@ public class PgCatchUpFactoryImpl implements PgCatchupFactory {
       case CHUNKED ->
           new PgChunkedCatchup(props, metrics, request, pipeline, serial, holder, ds, phase);
       case HOLD_CURSOR ->
-          new PgHoldCursorCatchup(
+          new PgCHunkedWithHoldCursorCatchup(
               props, metrics, request, pipeline, serial, holder, ds, txMgr, phase);
       case CURSOR ->
           new PgCursorCatchup(props, metrics, request, pipeline, serial, holder, ds, phase);
