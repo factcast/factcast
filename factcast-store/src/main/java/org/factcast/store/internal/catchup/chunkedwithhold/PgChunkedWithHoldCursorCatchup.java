@@ -42,12 +42,12 @@ import org.springframework.transaction.*;
 import org.springframework.transaction.support.TransactionTemplate;
 
 @Slf4j
-public class PgCHunkedWithHoldCursorCatchup extends AbstractPgCatchup {
+public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
 
   private final @NonNull PlatformTransactionManager txMgr;
 
   @SuppressWarnings("java:S107")
-  public PgCHunkedWithHoldCursorCatchup(
+  public PgChunkedWithHoldCursorCatchup(
       @NonNull StoreConfigurationProperties props,
       @NonNull PgMetrics metrics,
       @NonNull SubscriptionRequestTO req,
