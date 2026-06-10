@@ -87,10 +87,4 @@ public class TransformationConfiguration {
       StoreConfigurationProperties props) {
     return new FactTransformerServiceImpl(chains, trans, cache, registryMetrics, props);
   }
-
-  @Bean
-  public TransformationCacheCompactor transformationCacheCompactor(
-      TransformationCache cache, StoreConfigurationProperties props) {
-    return new TransformationCacheCompactor(cache, props.getDeleteTransformationsStaleForDays());
-  }
 }
