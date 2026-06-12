@@ -25,6 +25,7 @@ import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.StoreConfigurationProperties.CatchupStrategy;
 import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.catchup.chunked.PgChunkedCatchup;
+import org.factcast.store.internal.catchup.chunkedwithhold.PgChunkedWithHoldCursorCatchup;
 import org.factcast.store.internal.catchup.cursor.PgCursorCatchup;
 import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.query.CurrentStatementHolder;
@@ -34,6 +35,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.transaction.PlatformTransactionManager;
 
 @ExtendWith(MockitoExtension.class)
 class PgCatchUpFactoryImplTest {
@@ -48,6 +50,7 @@ class PgCatchUpFactoryImplTest {
   @Mock AtomicLong serial;
   @Mock CurrentStatementHolder holder;
   @Mock DataSource ds;
+  @Mock PlatformTransactionManager txMgr;
 
   @InjectMocks PgCatchUpFactoryImpl underTest;
 
@@ -57,7 +60,7 @@ class PgCatchUpFactoryImplTest {
     @Test
     void returnsFetchingInPhase2RegardlessOfStrategy() {
       when(props.getCatchupStrategy()).thenReturn(CatchupStrategy.CURSOR);
-      underTest = new PgCatchUpFactoryImpl(props, metrics);
+      underTest = new PgCatchUpFactoryImpl(props, metrics, txMgr);
 
       // even if CHUNKED is configured, PHASE_2 must use cursor
       var result =
@@ -84,6 +87,16 @@ class PgCatchUpFactoryImplTest {
           underTest.create(request, pipeline, serial, holder, ds, PgCatchupFactory.Phase.PHASE_1);
 
       assertThat(result).isInstanceOf(PgCursorCatchup.class);
+    }
+
+    @Test
+    void returnsHoldCursorInPhase1WhenStrategyIsHoldCursor() {
+      when(props.getCatchupStrategy()).thenReturn(CatchupStrategy.CHUNKED_WITH_HOLD);
+
+      var result =
+          underTest.create(request, pipeline, serial, holder, ds, PgCatchupFactory.Phase.PHASE_1);
+
+      assertThat(result).isInstanceOf(PgChunkedWithHoldCursorCatchup.class);
     }
   }
 }

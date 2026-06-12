@@ -61,6 +61,17 @@ class CurrentStatementHolderTest {
 
     @SneakyThrows
     @Test
+    void cancelsStatementWithoutRollback() {
+      underTest.statement(statement, false);
+
+      underTest.close();
+
+      verify(statement).cancel();
+      verifyNoInteractions(connection);
+    }
+
+    @SneakyThrows
+    @Test
     void cancelsStatementAndCatchesException() {
       underTest.statement(statement);
       doThrow(SQLException.class).when(statement).cancel();
