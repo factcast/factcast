@@ -117,6 +117,7 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
     @NonNull final UUID id2 = UUID.randomUUID();
     @NonNull final UUID id3 = UUID.randomUUID();
     final AtomicReference<FactStreamPosition> fwd = new AtomicReference<>();
+    Set<UUID> processedFacts;
 
     @NonNull
     final FactObserver obs =
@@ -124,7 +125,7 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
 
           @Override
           public void onNext(@NonNull Fact element) {
-            //
+            processedFacts.add(element.id());
           }
 
           @Override
@@ -148,6 +149,7 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
       // have some more facts in the database
       store.publish(
           Collections.singletonList(Fact.builder().ns("unrelated").buildWithoutPayload()));
+      processedFacts = new HashSet<>();
     }
 
     @Test
@@ -212,6 +214,25 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
 
       // now it should ffwd again to the last unrelated one
       assertThat(fwd.get()).isNotNull().isNotEqualTo(first);
+    }
+
+    @Test
+    void doesForwardOverExcludedFacts() {
+      store.publish(
+          Collections.singletonList(Fact.builder().id(id2).ns("ns1").buildWithoutPayload()));
+      store.publish(
+          Collections.singletonList(Fact.builder().id(id3).ns("ns1").buildWithoutPayload()));
+      // Mark fact as excluded
+      jdbcTemplate.execute(
+          String.format(
+              "UPDATE fact f SET exclusion_reason = 'test' WHERE (f.header ->> 'id') = '%s';",
+              id3));
+
+      SubscriptionRequest scratch = SubscriptionRequest.catchup(spec).fromScratch();
+      store.subscribe(SubscriptionRequestTO.from(scratch), obs).awaitCatchup();
+
+      assertThat(fwd.get().factId()).isEqualTo(id3);
+      assertThat(processedFacts).contains(id2).doesNotContain(id3);
     }
   }
 
