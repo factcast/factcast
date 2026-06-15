@@ -605,3 +605,42 @@ databaseChangeLog:
            relativeToChangelogFile: true
            splitStatements: false
            stripComments: true
+
+  - changeSet:
+      id: issue3609_add_exclusion_reason_to_facts
+      author: benediktkaiser
+      runInTransaction: false
+      comment: add nullable exclusion_reason column to fact, replacing the blacklist table
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue3609/add_exclusion_reason_to_facts.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+  - changeSet:
+      id: issue3609_create_blacklist_migration_procedure
+      author: benediktkaiser
+      runInTransaction: false
+      comment: create the batched, non-blocking procedure that migrates the blacklist into fact.exclusion_reason
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue3609/migrate_blacklist_to_exclusion_reason_procedure.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+  - changeSet:
+      id: issue3609_migrate_blacklist_to_exclusion_reason
+      author: benediktkaiser
+      runInTransaction: false
+      comment: execute procedure that migrates existing blacklist entries into fact.exclusion_reason in batches.
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue3609/call_migrate_blacklist_to_exclusion_reason_procedure.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
