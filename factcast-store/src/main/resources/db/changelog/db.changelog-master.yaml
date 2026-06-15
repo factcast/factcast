@@ -620,6 +620,19 @@ databaseChangeLog:
             stripComments: true
 
   - changeSet:
+      id: issue3609_create_partial_gin_index
+      author: benediktkaiser
+      runInTransaction: false
+      comment: create new partial index on fact header and exlusion_reason
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue3609/create_partial_idx_fact_header_active.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+  - changeSet:
       id: issue3609_create_blacklist_migration_procedure
       author: benediktkaiser
       runInTransaction: false
