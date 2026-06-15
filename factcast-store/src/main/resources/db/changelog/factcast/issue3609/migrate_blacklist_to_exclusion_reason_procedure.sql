@@ -1,11 +1,11 @@
 -- Migrates the existing blacklist into the new fact.exclusion_reason column.
 --
 -- Runs in batches over the (PK-indexed) blacklist table and updates the matching
--- facts via the unique functional index idx_fact_unique_uuid on ((header ->> 'id')::uuid).
+-- facts via the fact id.
 -- Each batch commits in its own transaction and the loop throttles with pg_sleep, so the
 -- migration never holds a long-running transaction or a table-level lock on fact.
--- The reason is copied per fact from blacklist.reason; entries without a reason fall back
--- to 'none' so that exclusion_reason IS NOT NULL reliably marks an excluded fact.
+-- The exclusion_reason is copied per fact from blacklist.reason; entries without a reason fall back
+-- to 'excluded without reason' so that exclusion_reason IS NOT NULL reliably marks an excluded fact.
 -- The update is idempotent/resumable (only touches rows still NULL), so re-running is safe.
 CREATE OR REPLACE PROCEDURE migrate_blacklist_to_exclusion_reason(batch_size integer DEFAULT 10000)
 LANGUAGE plpgsql
