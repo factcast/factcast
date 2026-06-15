@@ -35,7 +35,6 @@ import org.factcast.store.*;
 import org.factcast.store.internal.catchup.PgCatchUpFactoryImpl;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.check.IndexCheck;
-import org.factcast.store.internal.filter.blacklist.*;
 import org.factcast.store.internal.listen.*;
 import org.factcast.store.internal.lock.*;
 import org.factcast.store.internal.pipeline.ServerPipelineFactory;
@@ -49,7 +48,6 @@ import org.factcast.store.registry.transformation.chains.*;
 import org.springframework.boot.autoconfigure.condition.*;
 import org.springframework.boot.sql.init.dependency.DependsOnDatabaseInitialization;
 import org.springframework.context.annotation.*;
-import org.springframework.core.io.ResourceLoader;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.retry.annotation.EnableRetry;
@@ -249,33 +247,6 @@ public class PgFactStoreInternalConfiguration {
   }
 
   @Bean
-  public Blacklist blacklist() {
-    return new Blacklist();
-  }
-
-  @Bean
-  @ConditionalOnProperty(value = "factcast.type", matchIfMissing = true)
-  public BlacklistDataProvider blacklistProvider(
-      ResourceLoader resourceLoader,
-      Blacklist blacklist,
-      EventBus eventBus,
-      JdbcTemplate jdbc,
-      BlacklistConfigurationProperties blacklistConfiguration) {
-    switch (blacklistConfiguration.getType()) {
-      case POSTGRES:
-        return new PgBlacklistDataProvider(eventBus, jdbc, blacklist);
-      case RESOURCE:
-        return new ResourceBasedBlacklistDataProvider(
-            resourceLoader, blacklistConfiguration, blacklist);
-      default:
-        log.warn(
-            "No Provider found for blacklist type {}. Using default postgres provider.",
-            blacklistConfiguration.getType());
-        return new PgBlacklistDataProvider(eventBus, jdbc, blacklist);
-    }
-  }
-
-  @Bean
   public PgSchemaStoreChangeListener pgSchemaStoreChangeListener(
       EventBus bus, SchemaRegistry registry) {
     return new PgSchemaStoreChangeListener(bus, registry);
@@ -307,12 +278,10 @@ public class PgFactStoreInternalConfiguration {
   @Bean
   public ServerPipelineFactory factPipelineFactory(
       FactTransformerService transformerService,
-      Blacklist blacklist,
       PgMetrics metrics,
       StoreConfigurationProperties properties) {
     return ServerPipelineFactory.builder()
         .factTransformerService(transformerService)
-        .blacklist(blacklist)
         .metrics(metrics)
         .properties(properties)
         .build();

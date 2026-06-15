@@ -101,7 +101,6 @@ public abstract class StoreNotification {
     log.trace("Received notification on channel: {}.", name);
 
     return switch (name) {
-      case PgConstants.CHANNEL_BLACKLIST_CHANGE -> BlacklistChangeNotification.from(n);
       case PgConstants.CHANNEL_SCHEMASTORE_CHANGE -> SchemaStoreChangeNotification.from(n);
       case PgConstants.CHANNEL_TRANSFORMATIONSTORE_CHANGE ->
           TransformationStoreChangeNotification.from(n);

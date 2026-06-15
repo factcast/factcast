@@ -74,7 +74,6 @@ public class PgConstants {
   private static final String TABLE_TOKENSTORE = "tokenstore";
 
   public static final String CHANNEL_FACT_INSERT = "fact_insert";
-  public static final String CHANNEL_BLACKLIST_CHANGE = "blacklist_change";
   public static final String CHANNEL_SCHEMASTORE_CHANGE = "schemastore_change";
   public static final String CHANNEL_TRANSFORMATIONSTORE_CHANGE = "transformationstore_change";
   public static final String CHANNEL_CACHE_CLEAR = "factcast_cache_clear";
@@ -208,8 +207,6 @@ public class PgConstants {
   public static final String LISTEN_TRUNCATION_CHANNEL_SQL = LISTEN + CHANNEL_FACT_TRUNCATE;
   public static final String LISTEN_UPDATE_CHANNEL_SQL = LISTEN + CHANNEL_FACT_UPDATE;
   public static final String LISTEN_ROUNDTRIP_CHANNEL_SQL = LISTEN + CHANNEL_ROUNDTRIP;
-  public static final String LISTEN_BLACKLIST_CHANGE_CHANNEL_SQL =
-      LISTEN + CHANNEL_BLACKLIST_CHANGE;
   public static final String LISTEN_SCHEMASTORE_CHANGE_CHANNEL_SQL =
       LISTEN + CHANNEL_SCHEMASTORE_CHANGE;
   public static final String LISTEN_TRANSFORMATIONSTORE_CHANGE_CHANNEL_SQL =

@@ -25,7 +25,6 @@ import org.factcast.core.subscription.observer.*;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
-import org.factcast.store.internal.filter.blacklist.Blacklist;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
@@ -50,7 +49,6 @@ class PgFactStreamTelemetryTest {
   @Mock PgCatchupFactory pgCatchupFactory;
   @Mock HighWaterMarkFetcher ffwdTarget;
   @Mock FactTransformerService transformationService;
-  @Mock Blacklist blacklist;
   @Mock PgMetrics metrics;
   @Mock ServerPipeline serverPipeline;
   @Mock PgStoreTelemetry telemetry;
