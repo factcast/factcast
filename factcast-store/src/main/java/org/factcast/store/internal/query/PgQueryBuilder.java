@@ -224,7 +224,17 @@ public class PgQueryBuilder {
           predicates.add(sb.toString());
         });
     String predicatesAsString = String.join(OR, predicates);
-    return "( " + predicatesAsString + " ) " + AND + PgConstants.COLUMN_SER + ">?";
+    // only ever match non-excluded facts; matches the partial GIN index
+    // idx_fact_header_active WHERE exclusion_reason IS NULL
+    return "( "
+        + predicatesAsString
+        + " ) "
+        + AND
+        + PgConstants.COLUMN_EXCLUSION_REASON
+        + " IS NULL "
+        + AND
+        + PgConstants.COLUMN_SER
+        + ">?";
   }
 
   public String createSQL() {

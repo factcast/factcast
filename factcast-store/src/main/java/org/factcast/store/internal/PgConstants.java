@@ -96,6 +96,8 @@ public class PgConstants {
 
   public static final String COLUMN_SER = "ser";
 
+  public static final String COLUMN_EXCLUSION_REASON = "exclusion_reason";
+
   public static final String COLUMN_CID = "cid";
 
   private static final String COLUMN_STATE = "state";

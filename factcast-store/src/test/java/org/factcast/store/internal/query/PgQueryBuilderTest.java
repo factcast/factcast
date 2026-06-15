@@ -131,7 +131,7 @@ SELECT ser, header, payload,
   WHERE (
   (true AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)) OR
   (true AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)))
-  AND ser>?
+  AND exclusion_reason IS NULL AND ser>?
   ORDER BY ser ASC
 """;
       assertThat(normalized(sql)).isEqualTo(normalized(expected));
@@ -169,7 +169,7 @@ WHERE (
     AND (header @> ?::jsonb OR header @> ?::jsonb)
     )
   )
-  AND ser>? ORDER BY ser ASC
+  AND exclusion_reason IS NULL AND ser>? ORDER BY ser ASC
 """;
 
       assertThat(normalized(sql)).isEqualTo(normalized(expected));
@@ -217,7 +217,7 @@ WHERE
       )
     )
   )
-  AND ser > ?
+  AND exclusion_reason IS NULL AND ser > ?
 ORDER BY
   ser ASC
 
@@ -281,7 +281,7 @@ WHERE
       )
     )
   )
-  AND ser > ?
+  AND exclusion_reason IS NULL AND ser > ?
 ORDER BY
   ser ASC
                     """;
@@ -313,7 +313,7 @@ SELECT ser, header, payload,
  WHERE (
  (true AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb) AND jsonb_path_exists(header, ?::jsonpath) AND NOT jsonb_path_exists(header, ?::jsonpath)) OR
  (true AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)) )
- AND ser>?
+ AND exclusion_reason IS NULL AND ser>?
  ORDER BY ser ASC
 """;
 
@@ -341,7 +341,7 @@ SELECT ser, header, payload,
  (true AND header @> ?::jsonb AND header @> ?::jsonb) OR
  (true AND header @> ?::jsonb) OR
  (true) )
- AND ser>?
+ AND exclusion_reason IS NULL AND ser>?
  ORDER BY ser ASC
 """;
 
@@ -368,7 +368,7 @@ WHERE (
 (true AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)) OR
 (true AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)) OR
 (true AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb))
-AND ser > ? ORDER BY ser DESC LIMIT 1
+AND exclusion_reason IS NULL AND ser > ? ORDER BY ser DESC LIMIT 1
 """;
 
       assertThat(normalized(sql)).isEqualTo(normalized(expected));
