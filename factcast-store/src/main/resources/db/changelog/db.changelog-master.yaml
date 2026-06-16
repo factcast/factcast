@@ -620,19 +620,6 @@ databaseChangeLog:
             stripComments: true
 
   - changeSet:
-      id: issue3609_create_partial_gin_index
-      author: benediktkaiser
-      runInTransaction: false
-      comment: create new partial index on fact header and exlusion_reason
-      changes:
-        - sqlFile:
-            encoding: utf8
-            path: factcast/issue3609/create_partial_idx_fact_header_active.sql
-            relativeToChangelogFile: true
-            splitStatements: false
-            stripComments: true
-
-  - changeSet:
       id: issue3609_create_blacklist_migration_procedure
       author: benediktkaiser
       runInTransaction: false
@@ -649,11 +636,22 @@ databaseChangeLog:
       id: issue3609_migrate_blacklist_to_exclusion_reason
       author: benediktkaiser
       runInTransaction: false
-      comment: execute procedure that migrates existing blacklist entries into fact.exclusion_reason in batches.
+      comment: execute procedure that migrates existing blacklist entries into fact.exclusion_reason in batches and create index.
+      preConditions:
+        - onFail: MARK_RAN
+        - sqlCheck:
+            expectedResult: t
+            sql: SELECT count_estimate('SELECT * FROM facts') < 10000000;
       changes:
         - sqlFile:
             encoding: utf8
             path: factcast/issue3609/call_migrate_blacklist_to_exclusion_reason_procedure.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue3609/create_partial_idx_fact_header_active.sql
             relativeToChangelogFile: true
             splitStatements: false
             stripComments: true
