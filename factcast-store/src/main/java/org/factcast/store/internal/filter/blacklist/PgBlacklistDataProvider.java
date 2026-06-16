@@ -31,24 +31,34 @@ public final class PgBlacklistDataProvider
   private final EventBus bus;
   private final JdbcTemplate jdbc;
   private final Blacklist blacklist;
+  private final BlacklistConfigurationProperties props;
 
   public PgBlacklistDataProvider(
       @NonNull EventBus eventBus,
       @NonNull JdbcTemplate jdbcTemplate,
-      @NonNull Blacklist blacklist) {
+      @NonNull Blacklist blacklist,
+      @NonNull BlacklistConfigurationProperties properties) {
     this.bus = eventBus;
     this.jdbc = jdbcTemplate;
     this.blacklist = blacklist;
+    this.props = properties;
   }
 
   @Override
   public void afterSingletonsInstantiated() {
     bus.register(this);
-    updateBlacklist(); // initially necessary
+    if (!props.isUseInternalExclusion()) updateBlacklist(); // initially necessary
   }
 
   @Subscribe
   public void on(BlacklistChangeNotification signal) {
+    if (props.isUseInternalExclusion()) {
+      log.warn(
+          "A change to the blacklist table was detected, but filtering uses the "
+              + "internal exclusion column (factcast.blacklist.useInternalExclusion=true). "
+              + "This blacklist entry will have NO effect; exclude facts via the exclusion column instead.");
+      return;
+    }
     log.debug("A potential change on blacklist table was triggered.");
     updateBlacklist();
   }

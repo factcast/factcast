@@ -17,5 +17,5 @@ package org.factcast.store.internal.filter.blacklist;
 
 public enum BlacklistType {
   POSTGRES,
-  RESOURCE
+  RESOURCE,
 }

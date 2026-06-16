@@ -35,6 +35,12 @@ public final class BlacklistConfigurationProperties implements InitializingBean 
 
   String location = "classpath:blacklist.json";
 
+  /**
+   * When enabled filtering is done while querying facts using the migrated exclusion column in the
+   * fact table, instead of filtering based on the separate blacklist table.
+   */
+  boolean useInternalExclusion = false;
+
   @Override
   public void afterPropertiesSet() throws Exception {
     log.info("Blacklist is retrieved from " + type.toString());

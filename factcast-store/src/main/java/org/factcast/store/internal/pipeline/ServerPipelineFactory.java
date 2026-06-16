@@ -23,6 +23,7 @@ import org.factcast.core.util.NoCoverageReportToBeGenerated;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.*;
 import org.factcast.store.internal.filter.blacklist.Blacklist;
+import org.factcast.store.internal.filter.blacklist.BlacklistConfigurationProperties;
 import org.factcast.store.internal.transformation.FactTransformerService;
 import org.factcast.store.internal.transformation.FactTransformers;
 
@@ -34,6 +35,7 @@ public class ServerPipelineFactory {
   @NonNull final Blacklist blacklist;
   @NonNull final FactTransformerService factTransformerService;
   @NonNull final StoreConfigurationProperties properties;
+  @NonNull final BlacklistConfigurationProperties blacklistProperties;
 
   public ServerPipeline create(
       @NonNull SubscriptionRequest subreq, @NonNull SubscriptionImpl sub, int maxBufferSize) {
@@ -48,7 +50,10 @@ public class ServerPipelineFactory {
         new BufferedTransformingServerPipeline(
             chain, factTransformerService, FactTransformers.createFor(subreq), maxBufferSize);
 
-    chain = new BlacklistFilterServerPipeline(chain, blacklist);
+    if (!blacklistProperties.isUseInternalExclusion()) {
+      chain = new BlacklistFilterServerPipeline(chain, blacklist);
+    }
+
     chain = new AutoFlushingServerPipeline(chain, properties.getAutoFlushDelay());
     return chain;
   }
