@@ -21,6 +21,7 @@ import com.google.common.eventbus.*;
 import java.util.*;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.notification.BlacklistChangeNotification;
 import org.springframework.beans.factory.*;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -31,13 +32,13 @@ public final class PgBlacklistDataProvider
   private final EventBus bus;
   private final JdbcTemplate jdbc;
   private final Blacklist blacklist;
-  private final BlacklistConfigurationProperties props;
+  private final StoreConfigurationProperties props;
 
   public PgBlacklistDataProvider(
       @NonNull EventBus eventBus,
       @NonNull JdbcTemplate jdbcTemplate,
       @NonNull Blacklist blacklist,
-      @NonNull BlacklistConfigurationProperties properties) {
+      @NonNull StoreConfigurationProperties properties) {
     this.bus = eventBus;
     this.jdbc = jdbcTemplate;
     this.blacklist = blacklist;
@@ -55,8 +56,8 @@ public final class PgBlacklistDataProvider
     if (props.isUseInternalExclusion()) {
       log.warn(
           "A change to the blacklist table was detected, but filtering uses the "
-              + "internal exclusion column (factcast.blacklist.useInternalExclusion=true). "
-              + "This blacklist entry will have NO effect; exclude facts via the exclusion column instead.");
+              + "internal exclusion column (factcast.store.useInternalExclusion=true). "
+              + "While an automated sync is in place for now, exclusion only is possible via the fact table in the future.");
       return;
     }
     log.debug("A potential change on blacklist table was triggered.");

@@ -618,6 +618,12 @@ databaseChangeLog:
             relativeToChangelogFile: true
             splitStatements: false
             stripComments: true
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue3609/sync_blacklist_change_to_exclusion_reason.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
 
   - changeSet:
       id: issue3609_create_blacklist_migration_procedure
@@ -641,7 +647,7 @@ databaseChangeLog:
         - onFail: MARK_RAN
         - sqlCheck:
             expectedResult: t
-            sql: SELECT count_estimate('SELECT * FROM facts') < 10000000;
+            sql: SELECT count_estimate('SELECT * FROM fact') < 10000000;
       changes:
         - sqlFile:
             encoding: utf8

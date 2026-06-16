@@ -97,6 +97,8 @@ public class PgConstants {
 
   public static final String COLUMN_SER = "ser";
 
+  public static final String COLUMN_EXCLUSION_REASON = "exclusion_reason";
+
   public static final String COLUMN_CID = "cid";
 
   private static final String COLUMN_STATE = "state";
@@ -320,6 +322,14 @@ public class PgConstants {
   public static final String FIRST_SERIAL_AFTER_DATE =
       "SELECT MIN(firstser) FROM " + TABLE_DATE2SERIAL + " WHERE factDate >= ?";
 
+  public static String notExcludedAnd(StoreConfigurationProperties props) {
+    if (props.isUseInternalExclusion()) {
+      return COLUMN_EXCLUSION_REASON + " IS NULL AND ";
+    } else {
+      return "";
+    }
+  }
+
   private static String fromHeader(String attributeName) {
     return PgConstants.COLUMN_HEADER + "->>'" + attributeName + "' AS " + attributeName;
   }
@@ -338,6 +348,8 @@ public class PgConstants {
       with.append(" WITH (fastupdate = false) ");
     }
 
+    final String notExcludedAnd = notExcludedAnd(props);
+
     return "create index concurrently "
         + indexName
         + " on "
@@ -347,6 +359,7 @@ public class PgConstants {
         + " jsonb_path_ops) "
         + with.toString()
         + " WHERE "
+        + notExcludedAnd
         + COLUMN_SER
         + ">"
         + ser;

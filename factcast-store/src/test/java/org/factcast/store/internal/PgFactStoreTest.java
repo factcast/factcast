@@ -424,7 +424,7 @@ class PgFactStoreTest {
       FactSpec spec1 = FactSpec.ns("ns1").type("type1");
       List<FactSpec> specs = Lists.newArrayList(spec1);
 
-      PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs);
+      PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs, false);
       String stateSQL = pgQueryBuilder.createStateSQL();
       PreparedStatementSetter statementSetter =
           pgQueryBuilder.createStatementSetter(new AtomicLong(0));
@@ -457,7 +457,7 @@ class PgFactStoreTest {
       FactSpec spec1 = FactSpec.ns("ns1").type("type1");
       List<FactSpec> specs = Lists.newArrayList(spec1);
 
-      PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs);
+      PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs, false);
       String stateSQL = pgQueryBuilder.createStateSQL();
       PreparedStatementSetter statementSetter =
           pgQueryBuilder.createStatementSetter(new AtomicLong(12));
@@ -488,7 +488,7 @@ class PgFactStoreTest {
       FactSpec spec1 = FactSpec.ns("ns1").type("type1");
       List<FactSpec> specs = Lists.newArrayList(spec1);
 
-      PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs);
+      PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs, false);
       String stateSQL = pgQueryBuilder.createStateSQL();
       when(jdbcTemplate.queryForObject(PgConstants.LAST_SERIAL_IN_LOG, Long.class)).thenReturn(32L);
       assertThat(underTest.getCurrentStateFor(specs).serialOfLastMatchingFact()).isEqualTo(32L);
