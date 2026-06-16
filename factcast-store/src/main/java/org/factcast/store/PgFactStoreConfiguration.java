@@ -15,8 +15,14 @@
  */
 package org.factcast.store;
 
+import static org.factcast.store.internal.PgFactStoreInternalConfiguration.P1_CATCHUP_DATASOURCE_BEAN_NAME;
+
+import javax.sql.DataSource;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.store.internal.PgFactStoreInternalConfiguration;
 import org.factcast.store.internal.filter.blacklist.BlacklistConfigurationProperties;
+import org.springframework.boot.autoconfigure.condition.*;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -33,6 +39,7 @@ import org.springframework.context.annotation.Import;
 @Configuration
 @EnableConfigurationProperties
 @Import(PgFactStoreInternalConfiguration.class)
+@Slf4j
 public class PgFactStoreConfiguration {
   @Bean
   StoreConfigurationProperties storeConfigurationProperties() {
@@ -42,5 +49,21 @@ public class PgFactStoreConfiguration {
   @Bean
   BlacklistConfigurationProperties blacklistConfigurationProperties() {
     return new BlacklistConfigurationProperties();
+  }
+
+  @Bean
+  P1CatchupDataSourceProperties p1CatchupDataSourceProperties() {
+    return new P1CatchupDataSourceProperties();
+  }
+
+  @Bean(value = P1_CATCHUP_DATASOURCE_BEAN_NAME, destroyMethod = "close", autowireCandidate = false)
+  @ConfigurationProperties(P1CatchupDataSourceProperties.PROPERTIES_PREFIX)
+  @ConditionalOnMissingBean(name = P1_CATCHUP_DATASOURCE_BEAN_NAME)
+  @ConditionalOnProperty(prefix = P1CatchupDataSourceProperties.PROPERTIES_PREFIX, name = "url")
+  DataSource p1CatchupDataSource(P1CatchupDataSourceProperties properties) {
+    log.info(
+        "Configuring P1 catchup datasource from {}",
+        P1CatchupDataSourceProperties.PROPERTIES_PREFIX);
+    return properties.initializeDataSourceBuilder().build();
   }
 }

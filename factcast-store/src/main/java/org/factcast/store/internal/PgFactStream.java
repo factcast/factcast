@@ -26,7 +26,6 @@ import javax.sql.DataSource;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.FactStreamPosition;
 import org.factcast.core.subscription.FactStreamInfo;
@@ -45,6 +44,7 @@ import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgQueryBuilder;
 import org.factcast.store.internal.telemetry.PgStoreTelemetry;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
@@ -54,7 +54,6 @@ import org.springframework.jdbc.datasource.SingleConnectionDataSource;
  * @author <uwe.schaefer@prisma-capacity.eu>
  */
 @Slf4j
-@RequiredArgsConstructor
 public class PgFactStream {
 
   final PgConnectionSupplier connectionSupplier;
@@ -65,6 +64,7 @@ public class PgFactStream {
   final ServerPipeline pipeline;
   final PgStoreTelemetry telemetry;
   final StoreConfigurationProperties props;
+  @Nullable final DataSource p1CatchupDataSource;
 
   @Getter(AccessLevel.PROTECTED)
   final SubscriptionRequestTO request;
@@ -78,6 +78,54 @@ public class PgFactStream {
   final AtomicBoolean disconnected = new AtomicBoolean(false);
 
   final CurrentStatementHolder statementHolder = new CurrentStatementHolder();
+
+  @SuppressWarnings("java:S107")
+  public PgFactStream(
+      PgConnectionSupplier connectionSupplier,
+      EventBus eventBus,
+      PgFactIdToSerialMapper idToSerMapper,
+      PgCatchupFactory pgCatchupFactory,
+      HighWaterMarkFetcher hwmFetcher,
+      ServerPipeline pipeline,
+      PgStoreTelemetry telemetry,
+      StoreConfigurationProperties props,
+      SubscriptionRequestTO request) {
+    this(
+        connectionSupplier,
+        eventBus,
+        idToSerMapper,
+        pgCatchupFactory,
+        hwmFetcher,
+        pipeline,
+        telemetry,
+        props,
+        null,
+        request);
+  }
+
+  @SuppressWarnings("java:S107")
+  public PgFactStream(
+      PgConnectionSupplier connectionSupplier,
+      EventBus eventBus,
+      PgFactIdToSerialMapper idToSerMapper,
+      PgCatchupFactory pgCatchupFactory,
+      HighWaterMarkFetcher hwmFetcher,
+      ServerPipeline pipeline,
+      PgStoreTelemetry telemetry,
+      StoreConfigurationProperties props,
+      @Nullable DataSource p1CatchupDataSource,
+      SubscriptionRequestTO request) {
+    this.connectionSupplier = connectionSupplier;
+    this.eventBus = eventBus;
+    this.idToSerMapper = idToSerMapper;
+    this.pgCatchupFactory = pgCatchupFactory;
+    this.hwmFetcher = hwmFetcher;
+    this.pipeline = pipeline;
+    this.telemetry = telemetry;
+    this.props = props;
+    this.p1CatchupDataSource = p1CatchupDataSource;
+    this.request = request;
+  }
 
   void connect() {
     log.debug("{} connect subscription {}", request, request.dump());
@@ -238,7 +286,13 @@ public class PgFactStream {
     try {
       if (isConnected()) {
         pgCatchupFactory
-            .create(request, pipeline, serial, statementHolder, ds, PgCatchupFactory.Phase.PHASE_1)
+            .create(
+                request,
+                pipeline,
+                serial,
+                statementHolder,
+                phase1CatchupDataSourceOr(ds),
+                PgCatchupFactory.Phase.PHASE_1)
             .run();
       }
       if (isConnected()) {
@@ -254,6 +308,16 @@ public class PgFactStream {
     } finally {
       FromScratchCatchupLogSuppressingTurboFilter.endCatchup();
     }
+  }
+
+  @VisibleForTesting
+  @NonNull
+  DataSource phase1CatchupDataSourceOr(@NonNull DataSource primaryDataSource) {
+    if (p1CatchupDataSource != null) {
+      log.info("{} using configured P1 catchup datasource", request);
+      return p1CatchupDataSource;
+    }
+    return primaryDataSource;
   }
 
   @VisibleForTesting

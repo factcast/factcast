@@ -417,6 +417,7 @@ class PgFactStreamTest {
   @Nested
   class WhenCatchingUp {
     @Mock DataSource ds;
+    @Mock DataSource p1Ds;
 
     @BeforeEach
     void setup() {
@@ -444,6 +445,77 @@ class PgFactStreamTest {
 
       verify(catchup1, times(1)).run();
       verify(catchup2, times(1)).run();
+    }
+
+    @Test
+    void usesPrimaryDataSourceForBothPhasesByDefault() {
+      PgCatchup catchup1 = mock(PgCatchup.class);
+      PgCatchup catchup2 = mock(PgCatchup.class);
+      when(uut.isConnected()).thenReturn(true);
+      when(pgCatchupFactory.create(any(), any(), any(), any(), any(), any()))
+          .thenReturn(catchup1, catchup2);
+
+      uut.catchup(42L, ds);
+
+      AtomicLong serial = uut.serial();
+      verify(pgCatchupFactory)
+          .create(
+              same(reqTo),
+              same(pipeline),
+              same(serial),
+              any(CurrentStatementHolder.class),
+              same(ds),
+              eq(PgCatchupFactory.Phase.PHASE_1));
+      verify(pgCatchupFactory)
+          .create(
+              same(reqTo),
+              same(pipeline),
+              same(serial),
+              any(CurrentStatementHolder.class),
+              same(ds),
+              eq(PgCatchupFactory.Phase.PHASE_2));
+    }
+
+    @Test
+    void usesConfiguredDataSourceOnlyForPhase1() {
+      PgFactStream withP1DataSource =
+          spy(
+              new PgFactStream(
+                  connectionSupplier,
+                  eventBus,
+                  id2ser,
+                  pgCatchupFactory,
+                  hwmFetcher,
+                  pipeline,
+                  telemetry,
+                  props,
+                  p1Ds,
+                  reqTo));
+      PgCatchup catchup1 = mock(PgCatchup.class);
+      PgCatchup catchup2 = mock(PgCatchup.class);
+      when(withP1DataSource.isConnected()).thenReturn(true);
+      when(pgCatchupFactory.create(any(), any(), any(), any(), any(), any()))
+          .thenReturn(catchup1, catchup2);
+
+      withP1DataSource.catchup(42L, ds);
+
+      AtomicLong serial = withP1DataSource.serial();
+      verify(pgCatchupFactory)
+          .create(
+              same(reqTo),
+              same(pipeline),
+              same(serial),
+              any(CurrentStatementHolder.class),
+              same(p1Ds),
+              eq(PgCatchupFactory.Phase.PHASE_1));
+      verify(pgCatchupFactory)
+          .create(
+              same(reqTo),
+              same(pipeline),
+              same(serial),
+              any(CurrentStatementHolder.class),
+              same(ds),
+              eq(PgCatchupFactory.Phase.PHASE_2));
     }
 
     @Test
