@@ -93,8 +93,9 @@ class PgFactStoreP1OffloadIntegrationTest {
   @Test
   @SneakyThrows
   void phase1UsesSeparateReadOnlyDataSourceAndPhase2CatchesUpOnPrimary() {
-    CountingDataSource p1CatchupDataSource =
-        beanFactory.getBean(P1_CATCHUP_DATASOURCE_BEAN_NAME, CountingDataSource.class);
+    ConnectionCountingAndBlockingDataSource p1CatchupDataSource =
+        beanFactory.getBean(
+            P1_CATCHUP_DATASOURCE_BEAN_NAME, ConnectionCountingAndBlockingDataSource.class);
     DataSourceRecordingPgCatchupFactory catchupFactory =
         (DataSourceRecordingPgCatchupFactory) beanFactory.getBean(PgCatchupFactory.class);
 
@@ -152,8 +153,8 @@ class PgFactStoreP1OffloadIntegrationTest {
             @NonNull Object bean, @NonNull String beanName) {
           if (P1_CATCHUP_DATASOURCE_BEAN_NAME.equals(beanName)
               && bean instanceof DataSource dataSource
-              && !(bean instanceof CountingDataSource)) {
-            return new CountingDataSource(dataSource);
+              && !(bean instanceof ConnectionCountingAndBlockingDataSource)) {
+            return new ConnectionCountingAndBlockingDataSource(dataSource);
           }
           if (PG_CATCHUP_FACTORY_BEAN_NAME.equals(beanName)
               && bean instanceof PgCatchupFactory catchupFactory
@@ -196,7 +197,7 @@ class PgFactStoreP1OffloadIntegrationTest {
     }
   }
 
-  static class CountingDataSource extends DelegatingDataSource {
+  static class ConnectionCountingAndBlockingDataSource extends DelegatingDataSource {
 
     @Getter private final DataSource target;
     @Getter private final AtomicInteger connections = new AtomicInteger();
@@ -205,7 +206,7 @@ class PgFactStoreP1OffloadIntegrationTest {
     private final CountDownLatch releasePhase1Query = new CountDownLatch(1);
     private final AtomicBoolean holdNextCatchupQuery = new AtomicBoolean();
 
-    CountingDataSource(DataSource dataSource) {
+    ConnectionCountingAndBlockingDataSource(DataSource dataSource) {
       super(dataSource);
       target = dataSource;
     }
