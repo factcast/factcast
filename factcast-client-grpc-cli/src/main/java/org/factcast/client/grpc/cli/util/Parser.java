@@ -24,14 +24,9 @@ import org.factcast.client.grpc.cli.conv.Converters;
 
 @SuppressWarnings("ALL")
 public class Parser {
-
-  private static final String NEGOTIATION_SYSPROP_NAME =
-      "spring.grpc.client.channels.factstore.negotiation-type";
-
   private static final String BASICAUTH_SYSPROP_NAME = "grpc.client.factstore.credentials";
 
-  private static final String ADDRESS_SYSPROP_NAME =
-      "spring.grpc.client.channels.factstore.address";
+  private static final String ADDRESS_SYSPROP_NAME = "spring.grpc.client.channel.factstore.address";
 
   private final JCommander jc;
 
@@ -63,9 +58,6 @@ public class Parser {
 
     if (options.debug) {
       System.setProperty("debug", Boolean.TRUE.toString());
-    }
-    if (options.notls) {
-      System.setProperty(NEGOTIATION_SYSPROP_NAME, "plaintext");
     }
     if (options.basicAuthCredentials != null) {
       System.setProperty(BASICAUTH_SYSPROP_NAME, options.basicAuthCredentials);
