@@ -17,43 +17,46 @@ package org.factcast.store.internal;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.factcast.store.internal.PgFactStoreInternalConfiguration.P1_CATCHUP_DATASOURCE_BEAN_NAME;
+import static org.mockito.AdditionalAnswers.delegatesTo;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Proxy;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.sql.DataSource;
+import lombok.Getter;
 import lombok.NonNull;
+import lombok.SneakyThrows;
 import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
-import org.factcast.store.P1CatchupDataSourceProperties;
+import org.factcast.store.internal.catchup.PgCatchup;
+import org.factcast.store.internal.catchup.PgCatchupFactory;
+import org.factcast.store.internal.pipeline.ServerPipeline;
+import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.test.IntegrationTest;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.BeanPostProcessor;
-import org.springframework.context.ApplicationContextInitializer;
-import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.env.MapPropertySource;
 import org.springframework.jdbc.datasource.DelegatingDataSource;
-import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
@@ -61,16 +64,25 @@ import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 @SpringJUnitConfig(
     classes = {
       PgTestConfiguration.class,
-      PgFactStoreP1OffloadIntegrationTest.P1DataSourceInstrumentationConfig.class
+      PgFactStoreP1OffloadIntegrationTest.P1OffloadTestConfig.class
     })
-@ContextConfiguration(
-    initializers =
-        PgFactStoreP1OffloadIntegrationTest.P1CatchupDataSourcePropertiesInitializer.class)
+@TestPropertySource("/p1-catchup-datasource.properties")
 @Sql(scripts = "/wipe.sql", config = @SqlConfig(separator = "#"))
 @IntegrationTest
 class PgFactStoreP1OffloadIntegrationTest {
 
   static final String NS = "p1-offload";
+  private static final String PG_CATCHUP_FACTORY_BEAN_NAME = "pgCatchupFactory";
+
+  // @TestPropertySource resolves placeholders before Spring instantiates PgTestConfiguration,
+  // so trigger its static Testcontainers datasource setup before loading the P1 datasource file.
+  static {
+    try {
+      Class.forName(PgTestConfiguration.class.getName());
+    } catch (ClassNotFoundException e) {
+      throw new IllegalStateException(e);
+    }
+  }
 
   @Autowired FactStore store;
 
@@ -79,9 +91,14 @@ class PgFactStoreP1OffloadIntegrationTest {
   @Autowired DataSource primaryDataSource;
 
   @Test
-  void phase1UsesSeparateDataSourceAndPhase2CatchesUpOnPrimary() throws Exception {
+  @SneakyThrows
+  void phase1UsesSeparateReadOnlyDataSourceAndPhase2CatchesUpOnPrimary() {
     CountingDataSource p1CatchupDataSource =
         beanFactory.getBean(P1_CATCHUP_DATASOURCE_BEAN_NAME, CountingDataSource.class);
+    DataSourceRecordingPgCatchupFactory catchupFactory =
+        (DataSourceRecordingPgCatchupFactory) beanFactory.getBean(PgCatchupFactory.class);
+
+    assertThat(p1CatchupDataSource.opensReadOnlyConnections()).isTrue();
 
     store.publish(
         List.of(
@@ -89,6 +106,7 @@ class PgFactStoreP1OffloadIntegrationTest {
             Fact.builder().ns(NS).type("test").buildWithoutPayload()));
 
     p1CatchupDataSource.reset();
+    catchupFactory.reset();
     CountingObserver observer = new CountingObserver();
 
     CompletableFuture<Void> subscription =
@@ -114,66 +132,33 @@ class PgFactStoreP1OffloadIntegrationTest {
     assertThat(observer.error()).hasNullValue();
     assertThat(p1CatchupDataSource.target()).isNotSameAs(primaryDataSource);
     assertThat(p1CatchupDataSource.connections()).hasPositiveValue();
-  }
 
-  static class P1CatchupDataSourcePropertiesInitializer
-      implements ApplicationContextInitializer<ConfigurableApplicationContext> {
-
-    @Override
-    public void initialize(@NonNull ConfigurableApplicationContext applicationContext) {
-      try {
-        Class.forName(PgTestConfiguration.class.getName());
-      } catch (ClassNotFoundException e) {
-        throw new IllegalStateException(e);
-      }
-
-      Map<String, Object> properties = new LinkedHashMap<>();
-      putIfPresent(properties, "driver-class-name", "spring.datasource.driver-class-name");
-      putIfPresent(properties, "url", "spring.datasource.url");
-      putIfPresent(properties, "username", "spring.datasource.username");
-      putIfPresent(properties, "password", "spring.datasource.password");
-      properties.put(
-          P1CatchupDataSourceProperties.PROPERTIES_PREFIX + ".type",
-          org.apache.tomcat.jdbc.pool.DataSource.class.getName());
-      properties.put(P1CatchupDataSourceProperties.PROPERTIES_PREFIX + ".max-active", "4");
-      properties.put(P1CatchupDataSourceProperties.PROPERTIES_PREFIX + ".initial-size", "0");
-      properties.put(P1CatchupDataSourceProperties.PROPERTIES_PREFIX + ".min-idle", "0");
-      properties.put(P1CatchupDataSourceProperties.PROPERTIES_PREFIX + ".max-idle", "2");
-      properties.put(P1CatchupDataSourceProperties.PROPERTIES_PREFIX + ".test-on-borrow", "true");
-      properties.put(
-          P1CatchupDataSourceProperties.PROPERTIES_PREFIX + ".validation-query", "select 1");
-      properties.put(
-          P1CatchupDataSourceProperties.PROPERTIES_PREFIX + ".connection-properties",
-          "socketTimeout=0;preparedStatementCacheSize=0;");
-      applicationContext
-          .getEnvironment()
-          .getPropertySources()
-          .addFirst(new MapPropertySource("p1CatchupDataSource", properties));
-    }
-
-    private void putIfPresent(
-        Map<String, Object> properties, String p1PropertyName, String primaryPropertyName) {
-      String value = System.getProperty(primaryPropertyName);
-      if (value != null) {
-        properties.put(
-            P1CatchupDataSourceProperties.PROPERTIES_PREFIX + "." + p1PropertyName, value);
-      }
-    }
+    List<CatchupPhaseDataSource> catchupDataSources = catchupFactory.catchupDataSources();
+    assertThat(catchupDataSources).hasSize(2);
+    assertThat(catchupDataSources.get(0).phase()).isEqualTo(PgCatchupFactory.Phase.PHASE_1);
+    assertThat(catchupDataSources.get(0).dataSource()).isSameAs(p1CatchupDataSource);
+    assertThat(catchupDataSources.get(1).phase()).isEqualTo(PgCatchupFactory.Phase.PHASE_2);
+    assertThat(catchupDataSources.get(1).dataSource()).isNotSameAs(p1CatchupDataSource);
   }
 
   @Configuration
-  static class P1DataSourceInstrumentationConfig {
+  static class P1OffloadTestConfig {
 
     @Bean
-    static BeanPostProcessor p1CatchupDataSourceInstrumenter() {
+    static BeanPostProcessor wrapBeansForObservability() {
       return new BeanPostProcessor() {
         @Override
-        public Object postProcessAfterInitialization(Object bean, String beanName)
-            throws BeansException {
+        public Object postProcessAfterInitialization(
+            @NonNull Object bean, @NonNull String beanName) {
           if (P1_CATCHUP_DATASOURCE_BEAN_NAME.equals(beanName)
               && bean instanceof DataSource dataSource
               && !(bean instanceof CountingDataSource)) {
             return new CountingDataSource(dataSource);
+          }
+          if (PG_CATCHUP_FACTORY_BEAN_NAME.equals(beanName)
+              && bean instanceof PgCatchupFactory catchupFactory
+              && !(bean instanceof DataSourceRecordingPgCatchupFactory)) {
+            return new DataSourceRecordingPgCatchupFactory(catchupFactory);
           }
           return bean;
         }
@@ -181,11 +166,41 @@ class PgFactStoreP1OffloadIntegrationTest {
     }
   }
 
+  record CatchupPhaseDataSource(PgCatchupFactory.Phase phase, DataSource dataSource) {}
+
+  static class DataSourceRecordingPgCatchupFactory implements PgCatchupFactory {
+
+    private final PgCatchupFactory delegate;
+
+    @Getter
+    private final List<CatchupPhaseDataSource> catchupDataSources = new CopyOnWriteArrayList<>();
+
+    DataSourceRecordingPgCatchupFactory(PgCatchupFactory delegate) {
+      this.delegate = delegate;
+    }
+
+    @Override
+    public PgCatchup create(
+        @NonNull SubscriptionRequestTO request,
+        @NonNull ServerPipeline pipeline,
+        @NonNull AtomicLong serial,
+        @NonNull CurrentStatementHolder holder,
+        @NonNull DataSource ds,
+        @NonNull Phase phase) {
+      catchupDataSources.add(new CatchupPhaseDataSource(phase, ds));
+      return delegate.create(request, pipeline, serial, holder, ds, phase);
+    }
+
+    void reset() {
+      catchupDataSources.clear();
+    }
+  }
+
   static class CountingDataSource extends DelegatingDataSource {
 
-    private final DataSource target;
-    private final AtomicInteger connections = new AtomicInteger();
-    private final AtomicReference<Throwable> queryInstrumentationFailure = new AtomicReference<>();
+    @Getter private final DataSource target;
+    @Getter private final AtomicInteger connections = new AtomicInteger();
+    private final AtomicReference<Throwable> queryBlockingFailure = new AtomicReference<>();
     private final CountDownLatch phase1QueryStarted = new CountDownLatch(1);
     private final CountDownLatch releasePhase1Query = new CountDownLatch(1);
     private final AtomicBoolean holdNextCatchupQuery = new AtomicBoolean();
@@ -198,61 +213,50 @@ class PgFactStoreP1OffloadIntegrationTest {
     @Override
     public @NonNull Connection getConnection() throws SQLException {
       connections.incrementAndGet();
-      return instrument(super.getConnection());
+      return wrapConnection(super.getConnection());
     }
 
     @Override
     public @NonNull Connection getConnection(@NonNull String username, @NonNull String password)
         throws SQLException {
       connections.incrementAndGet();
-      return instrument(super.getConnection(username, password));
+      return wrapConnection(super.getConnection(username, password));
     }
 
-    private Connection instrument(Connection connection) {
-      return (Connection)
-          Proxy.newProxyInstance(
-              connection.getClass().getClassLoader(),
-              new Class<?>[] {Connection.class},
-              (proxy, method, args) -> {
-                try {
-                  Object result = method.invoke(connection, args);
-                  if ("prepareStatement".equals(method.getName())
-                      && result instanceof PreparedStatement statement
-                      && args != null
-                      && args.length > 0
-                      && args[0] instanceof String sql
-                      && isCatchupQuery(sql)) {
-                    return instrument(statement);
-                  }
-                  return result;
-                } catch (InvocationTargetException e) {
-                  throw e.getTargetException();
-                }
-              });
+    private Connection wrapConnection(Connection connection) throws SQLException {
+      Connection countingConnection = mock(Connection.class, delegatesTo(connection));
+      doAnswer(
+              invocation -> {
+                String sql = invocation.getArgument(0);
+                PreparedStatement statement = connection.prepareStatement(sql);
+                return isCatchupQuery(sql) ? countAndBlockCatchupQuery(statement) : statement;
+              })
+          .when(countingConnection)
+          .prepareStatement(anyString());
+      return countingConnection;
     }
 
-    private PreparedStatement instrument(PreparedStatement statement) {
-      return (PreparedStatement)
-          Proxy.newProxyInstance(
-              statement.getClass().getClassLoader(),
-              new Class<?>[] {PreparedStatement.class},
-              (proxy, method, args) -> {
+    @SneakyThrows
+    private PreparedStatement countAndBlockCatchupQuery(PreparedStatement statement) {
+      PreparedStatement blockedStatement = mock(PreparedStatement.class, delegatesTo(statement));
+      doAnswer(
+              invocation -> {
                 try {
-                  Object result = method.invoke(statement, args);
-                  if ("executeQuery".equals(method.getName())
-                      && holdNextCatchupQuery.compareAndSet(true, false)) {
+                  Object result = statement.executeQuery();
+                  if (holdNextCatchupQuery.compareAndSet(true, false)) {
                     phase1QueryStarted.countDown();
                     releasePhase1Query.await(10, TimeUnit.SECONDS);
                   }
                   return result;
-                } catch (InvocationTargetException e) {
-                  throw e.getTargetException();
                 } catch (InterruptedException e) {
                   Thread.currentThread().interrupt();
-                  queryInstrumentationFailure.set(e);
+                  queryBlockingFailure.set(e);
                   throw new SQLException("Interrupted while holding phase 1 query", e);
                 }
-              });
+              })
+          .when(blockedStatement)
+          .executeQuery();
+      return blockedStatement;
     }
 
     private boolean isCatchupQuery(String sql) {
@@ -262,9 +266,10 @@ class PgFactStoreP1OffloadIntegrationTest {
           && normalized.contains(" order by ser asc");
     }
 
-    void awaitPhase1QueryStarted() throws InterruptedException {
+    @SneakyThrows
+    void awaitPhase1QueryStarted() {
       assertThat(phase1QueryStarted.await(10, TimeUnit.SECONDS)).isTrue();
-      assertThat(queryInstrumentationFailure).hasNullValue();
+      assertThat(queryBlockingFailure).hasNullValue();
     }
 
     void releasePhase1Query() {
@@ -279,19 +284,19 @@ class PgFactStoreP1OffloadIntegrationTest {
 
     void reset() {
       connections.set(0);
-      queryInstrumentationFailure.set(null);
+      queryBlockingFailure.set(null);
       holdNextCatchupQuery.set(true);
     }
 
-    DataSource target() {
-      return target;
-    }
-
-    AtomicInteger connections() {
-      return connections;
+    @SneakyThrows
+    boolean opensReadOnlyConnections() {
+      try (Connection connection = getConnection()) {
+        return connection.isReadOnly();
+      }
     }
   }
 
+  @Getter
   static class CountingObserver implements FactObserver {
 
     private final AtomicInteger facts = new AtomicInteger();
@@ -317,22 +322,6 @@ class PgFactStoreP1OffloadIntegrationTest {
     @Override
     public void onError(@NonNull Throwable exception) {
       error.set(exception);
-    }
-
-    AtomicInteger facts() {
-      return facts;
-    }
-
-    AtomicInteger catchups() {
-      return catchups;
-    }
-
-    AtomicInteger completes() {
-      return completes;
-    }
-
-    AtomicReference<Throwable> error() {
-      return error;
     }
   }
 }

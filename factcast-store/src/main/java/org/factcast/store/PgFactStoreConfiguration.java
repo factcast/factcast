@@ -51,7 +51,7 @@ public class PgFactStoreConfiguration {
     return new BlacklistConfigurationProperties();
   }
 
-  @Bean
+  @Bean(autowireCandidate = false)
   P1CatchupDataSourceProperties p1CatchupDataSourceProperties() {
     return new P1CatchupDataSourceProperties();
   }
@@ -60,10 +60,10 @@ public class PgFactStoreConfiguration {
   @ConfigurationProperties(P1CatchupDataSourceProperties.PROPERTIES_PREFIX)
   @ConditionalOnMissingBean(name = P1_CATCHUP_DATASOURCE_BEAN_NAME)
   @ConditionalOnProperty(prefix = P1CatchupDataSourceProperties.PROPERTIES_PREFIX, name = "url")
-  DataSource p1CatchupDataSource(P1CatchupDataSourceProperties properties) {
+  DataSource p1CatchupDataSource() {
     log.info(
         "Configuring P1 catchup datasource from {}",
         P1CatchupDataSourceProperties.PROPERTIES_PREFIX);
-    return properties.initializeDataSourceBuilder().build();
+    return p1CatchupDataSourceProperties().initializeDataSourceBuilder().build();
   }
 }
