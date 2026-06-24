@@ -18,7 +18,6 @@ package org.factcast.store.registry.transformation.cache;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.*;
 import java.sql.*;
-import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.*;
 import lombok.AccessLevel;
@@ -110,7 +109,7 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
     }
 
     List<PgFact> facts =
-        jdbcTemplate.query(selectViaFunction(new String[] {key.id()}), new PgFactRowMapper());
+        jdbcTemplate.query(selectByCacheKeys(new String[] {key.id()}), new PgFactRowMapper());
 
     if (facts.isEmpty()) {
       registryMetrics.count(EVENT.TRANSFORMATION_CACHE_MISS);
@@ -141,7 +140,7 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
 
       facts.addAll(
           jdbcTemplate.query(
-              selectViaFunction(keys.stream().map(Key::id).toArray(String[]::new)),
+              selectByCacheKeys(keys.stream().map(Key::id).toArray(String[]::new)),
               new PgFactRowMapper()));
     }
 
@@ -154,10 +153,11 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
   }
 
   @NotNull
-  static PreparedStatementCreator selectViaFunction(String[] keys) {
+  static PreparedStatementCreator selectByCacheKeys(String[] keys) {
     return con -> {
       PreparedStatement ps =
-          con.prepareStatement("select header, payload from selectTransformations( ? )");
+          con.prepareStatement(
+              "SELECT header, payload FROM transformationcache WHERE cache_key = ANY ( ? )");
       Array idArray = con.createArrayOf("varchar", keys);
       ps.setArray(1, idArray);
       return ps;
@@ -192,25 +192,6 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
   }
 
   @Override
-  public void compact(@NonNull ZonedDateTime thresholdDate) {
-    if (!storeConfigurationProperties.isReadOnlyModeEnabled()) {
-      flush();
-
-      registryMetrics.timed(
-          OP.COMPACT_TRANSFORMATION_CACHE,
-          () ->
-              inTransactionWithLock(
-                  () -> {
-                    Timestamp d = Timestamp.from(thresholdDate.toInstant());
-                    // will cascade down to tc_access
-                    jdbcTemplate.update(
-                        "DELETE FROM transformationcache WHERE cache_key in (SELECT cache_key FROM transformationcache_access WHERE last_access < ?)",
-                        d);
-                  }));
-    }
-  }
-
-  @Override
   public void invalidateTransformationFor(String ns, String type) {
     // we need to flush even if we're in read only mode in order to prevent a buffer overflow
     flush();
@@ -219,7 +200,6 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
       // it is fine if flush worked in another transaction, it just has to be serialized
       inTransactionWithLock(
           () ->
-              // will cascade down to tc_access
               jdbcTemplate.update(
                   "DELETE FROM transformationcache WHERE header ->> 'ns' = ? AND header ->> 'type' = ?",
                   ns,
@@ -233,13 +213,9 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
     flush();
 
     if (!storeConfigurationProperties.isReadOnlyModeEnabled()) {
-      final var cacheKeySearchString = factId.toString() + "%";
       // it is fine if flush worked in another transaction, it just has to be serialized
       inTransactionWithLock(
-          () ->
-              // will cascade down to tc_access
-              jdbcTemplate.update(
-                  "DELETE FROM transformationcache WHERE cache_key LIKE ?", cacheKeySearchString));
+          () -> jdbcTemplate.update("DELETE FROM transformationcache WHERE fact_id = ?", factId));
     }
   }
 
@@ -289,7 +265,10 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
             .map(
                 p ->
                     new Object[] {
-                      p.getKey().id(), p.getValue().jsonHeader(), p.getValue().jsonPayload()
+                      p.getKey().id(),
+                      p.getKey().factId(),
+                      p.getValue().jsonHeader(),
+                      p.getValue().jsonPayload()
                     })
             .toList();
 
@@ -301,15 +280,9 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
 
                 // dup-keys can be ignored, in case another node just did the same
                 jdbcTemplate.batchUpdate(
-                    "INSERT INTO transformationcache (cache_key, header, payload) VALUES (?, ? :: JSONB, ? ::"
+                    "INSERT INTO transformationcache (cache_key, fact_id, header, payload) VALUES (?, ?, ? :: JSONB, ? ::"
                         + " JSONB) ON CONFLICT(cache_key) DO NOTHING",
                     parameters);
-
-                jdbcTemplate.batchUpdate(
-                    "INSERT INTO transformationcache_access(cache_key,last_access) VALUES(?,current_date) "
-                        + "ON CONFLICT(cache_key) DO UPDATE SET last_access=current_date "
-                        + "WHERE excluded.cache_key=? AND transformationcache_access.last_access < current_date",
-                    parameters.stream().map(o -> new Object[] {o[0], o[0]}).toList());
 
                 return null;
               });

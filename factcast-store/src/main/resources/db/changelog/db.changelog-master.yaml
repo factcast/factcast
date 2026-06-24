@@ -605,3 +605,39 @@ databaseChangeLog:
            relativeToChangelogFile: true
            splitStatements: false
            stripComments: true
+
+  - changeSet:
+      id: issue4589
+      author: mamup11
+      runInTransaction: false
+      preConditions:
+        - onFail: MARK_RAN
+        - sqlCheck:
+            expectedResult: t
+            sql: SELECT count_estimate('SELECT * FROM transformationcache') < 10000000;
+      comment: If you have less than 10mio transformation results, this will be executed - otherwise we kindly ask you to execute this script manually.
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue4589/01_add_columns.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue4589/02_backfill.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue4589/03_add_index.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue4589/04_drop_old.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true

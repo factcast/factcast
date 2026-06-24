@@ -15,7 +15,6 @@
  */
 package org.factcast.store.registry.transformation.cache;
 
-import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
@@ -34,8 +33,6 @@ public interface TransformationCache {
 
   Set<PgFact> findAll(Collection<Key> keys);
 
-  void compact(ZonedDateTime thresholdDate);
-
   void invalidateTransformationFor(String ns, String type);
 
   void invalidateTransformationFor(UUID factId);
@@ -45,11 +42,13 @@ public interface TransformationCache {
   @Value
   class Key {
 
+    UUID factId;
+
     String id;
 
     public static Key of(@NonNull UUID id, int version, @NonNull String transformationChainId) {
       return new Key(
-          String.join("-", id.toString(), String.valueOf(version), transformationChainId));
+          id, String.join("-", id.toString(), String.valueOf(version), transformationChainId));
     }
   }
 }
