@@ -34,5 +34,7 @@ public record PocProperties(
       int filterIterations,
       int invalidationRuns,
       int insertBatchSize,
+      int taxIterations,
+      int wireSizeSample,
       String reportCsv) {}
 }

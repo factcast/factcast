@@ -46,6 +46,20 @@
       <groupId>com.fasterxml.jackson.dataformat</groupId>
       <artifactId>jackson-dataformat-smile</artifactId>
     </dependency>
+    <!-- production JSON mapper (FactCastJson) and the actual gRPC wire codecs,
+      so the wire-size / re-serialization benches measure the real thing. -->
+    <dependency>
+      <groupId>org.factcast</groupId>
+      <artifactId>factcast-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.factcast</groupId>
+      <artifactId>factcast-grpc-lz4</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.factcast</groupId>
+      <artifactId>factcast-grpc-snappy</artifactId>
+    </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-csv</artifactId>

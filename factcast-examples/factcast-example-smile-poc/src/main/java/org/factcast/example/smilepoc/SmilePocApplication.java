@@ -21,8 +21,10 @@ import org.factcast.example.smilepoc.bench.BulkReadBenchmark;
 import org.factcast.example.smilepoc.bench.InsertBenchmark;
 import org.factcast.example.smilepoc.bench.InvalidationBenchmark;
 import org.factcast.example.smilepoc.bench.ParseBenchmark;
+import org.factcast.example.smilepoc.bench.ReserializationTaxBenchmark;
 import org.factcast.example.smilepoc.bench.SingleReadBenchmark;
 import org.factcast.example.smilepoc.bench.SizeBenchmark;
+import org.factcast.example.smilepoc.bench.WireSizeBenchmark;
 import org.factcast.example.smilepoc.report.ReportWriter;
 import org.factcast.example.smilepoc.schema.SchemaInitializer;
 import org.springframework.boot.ApplicationRunner;
@@ -51,6 +53,8 @@ public class SmilePocApplication {
       ParseBenchmark parse,
       AggIdFilterBenchmark filter,
       InvalidationBenchmark invalidation,
+      ReserializationTaxBenchmark reserializeTax,
+      WireSizeBenchmark wireSize,
       ReportWriter report) {
     return args -> {
       try {
@@ -75,6 +79,10 @@ public class SmilePocApplication {
         parse.run();
         filter.run();
         invalidation.run();
+
+        // experiment 1 & 2 — CPU tax and post-compression wire size (CSV-driven, no DB).
+        reserializeTax.run();
+        wireSize.run();
 
         report.flushConsole();
         report.writeCsv();
