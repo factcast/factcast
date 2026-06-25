@@ -16,10 +16,10 @@
 package org.factcast.store.internal.catchup.cursor;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import io.micrometer.core.instrument.Timer;
 import java.time.Duration;
 import java.util.concurrent.atomic.*;
-import javax.sql.DataSource;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -38,6 +38,7 @@ import org.factcast.store.internal.rowmapper.PgFactExtractor;
 import org.postgresql.util.PSQLException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowCallbackHandler;
+import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
 @Slf4j
 public class PgCursorCatchup extends AbstractPgCatchup {
@@ -49,7 +50,7 @@ public class PgCursorCatchup extends AbstractPgCatchup {
       @NonNull ServerPipeline pipeline,
       @NonNull AtomicLong serial,
       @NonNull CurrentStatementHolder statementHolder,
-      @NonNull DataSource ds,
+      @NonNull SingleConnectionDataSource ds,
       PgCatchupFactory.@NonNull Phase phase) {
     super(props, metrics, req, pipeline, serial, statementHolder, ds, phase);
   }
@@ -68,8 +69,15 @@ public class PgCursorCatchup extends AbstractPgCatchup {
     }
   }
 
+  @SneakyThrows
   @VisibleForTesting
   void fetch(JdbcTemplate jdbc) {
+    // this needs to be transactional for fetch-size to have any effect whatsoever. luckyly, we use
+    // a org.springframework.jdbc.datasource.SingleConnectionDataSource with autoCommitDisabled.
+
+    Preconditions.checkState(
+        !ds.getConnection().getAutoCommit(), "Connection must not be in autocommit mode");
+
     jdbc.setFetchSize(props.getPageSize());
     jdbc.setQueryTimeout(0); // disable query timeout
     final var b = new PgQueryBuilder(req.specs(), statementHolder);

@@ -22,7 +22,6 @@ import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-import javax.sql.DataSource;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
@@ -133,7 +132,7 @@ public class PgFactStream {
   void catchupAndFastForward(
       @NonNull SubscriptionRequestTO request,
       @NonNull HighWaterMark hwm,
-      @NonNull DataSource datasource) {
+      @NonNull SingleConnectionDataSource datasource) {
     if (request.ephemeral()) {
       // just fast forward to the latest event published by now
       serial.set(hwm.targetSer());
@@ -231,7 +230,7 @@ public class PgFactStream {
   }
 
   @VisibleForTesting
-  void catchup(long highWaterMarkSerial, DataSource ds) {
+  void catchup(long highWaterMarkSerial, SingleConnectionDataSource ds) {
     if (serial.get() <= 0 && props.getFromScratchCatchupMinLogLevel() != null) {
       FromScratchCatchupLogSuppressingTurboFilter.beginCatchup(request.debugInfo());
     }

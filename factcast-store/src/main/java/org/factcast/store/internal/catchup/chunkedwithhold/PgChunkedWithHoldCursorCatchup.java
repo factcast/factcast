@@ -22,7 +22,6 @@ import java.time.Duration;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-import javax.sql.DataSource;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -37,14 +36,15 @@ import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.query.PgQueryBuilder;
 import org.factcast.store.internal.rowmapper.PgFactExtractor;
 import org.postgresql.util.PSQLException;
-import org.springframework.jdbc.datasource.SingleConnectionDataSource;
+import org.springframework.jdbc.datasource.*;
+import org.springframework.jdbc.support.JdbcTransactionManager;
 import org.springframework.transaction.*;
 import org.springframework.transaction.support.TransactionTemplate;
 
 @Slf4j
 public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
 
-  private final @NonNull PlatformTransactionManager txMgr;
+  private @NonNull DataSourceTransactionManager txMgr;
 
   @SuppressWarnings("java:S107")
   public PgChunkedWithHoldCursorCatchup(
@@ -54,31 +54,24 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
       @NonNull ServerPipeline pipeline,
       @NonNull AtomicLong serial,
       @NonNull CurrentStatementHolder statementHolder,
-      @NonNull DataSource ds,
-      @NonNull PlatformTransactionManager txMgr,
+      @NonNull SingleConnectionDataSource ds,
       @NonNull PgCatchupFactory.Phase phase) {
     super(props, metrics, req, pipeline, serial, statementHolder, ds, phase);
-    this.txMgr = txMgr;
   }
 
   @SneakyThrows
   @Override
   public void run() {
     final var cursorName = createCursorName();
-    try (SingleConnectionDataSource sds =
-        new SingleConnectionDataSource(ds.getConnection(), true); ) {
-      if (fetch(sds.getConnection(), cursorName)) {
-        log.trace("Done fetching, flushing.");
-        pipeline.process(Signal.flush());
-      }
-    } finally {
-      statementHolder.clear();
+    if (fetch(cursorName)) {
+      log.trace("Done fetching, flushing.");
+      pipeline.process(Signal.flush());
     }
   }
 
-  @VisibleForTesting
   /** returns true if fetch was not completely empty */
-  boolean fetch(Connection connection, String cursorName) throws SQLException {
+  @VisibleForTesting
+  boolean fetch(String cursorName) throws SQLException {
     final var queryBuilder = new PgQueryBuilder(req.specs(), statementHolder);
     queryBuilder.serialsOnly();
 
@@ -89,15 +82,17 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
     final var timer = metrics.timer(StoreMetrics.OP.RESULT_STREAM_START, isFromScratch);
     final var timerSample = metrics.startSample();
     final var isFirstRow = new AtomicBoolean(false);
-
     if (statementHolder.wasCanceled()) return false;
 
     try {
       Boolean continueFetching =
-          new TransactionTemplate(txMgr)
+          new TransactionTemplate(new JdbcTransactionManager(ds))
               .execute(
                   tx -> {
                     try {
+
+                      Connection connection = ds.getConnection();
+
                       declareCursor(connection, cursorName, queryBuilder, fromSerial);
 
                       // as declaring the cursor could have taken some time, we'll check again
@@ -106,8 +101,7 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
                       // the first fetch is part of the transaction, so that the cursor is not
                       // persisted (yet)
                       int fetchedRows =
-                          fetchChunk(
-                              connection, fetchSQL, extractor, timerSample, timer, isFirstRow);
+                          fetchChunk(fetchSQL, extractor, timerSample, timer, isFirstRow);
 
                       if (fetchedRows < props.getChunkSize()) {
                         // we had rows, but less than allowed, indicating we're done
@@ -123,7 +117,7 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
                           return false;
                         }
 
-                        /**
+                        /*
                          * There is no need to rollback the transaction if the cursor is exhausted:
                          *
                          * <pre>
@@ -160,8 +154,7 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
                   });
 
       if (Boolean.TRUE.equals(continueFetching)) {
-        continueFetchingUntilExhausted(
-            connection, fetchSQL, extractor, timerSample, timer, isFirstRow);
+        continueFetchingUntilExhausted(fetchSQL, extractor, timerSample, timer, isFirstRow);
         return true;
       } else {
         // null indicates there were no rows at all
@@ -175,21 +168,22 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
         throw e;
       }
     } finally {
-      closeCursor(connection, cursorName);
+      closeCursor(cursorName);
+      statementHolder.clear();
     }
   }
 
   private void continueFetchingUntilExhausted(
-      Connection connection,
       String fetchSQL,
       PgFactExtractor extractor,
       Timer.Sample timerSample,
       Timer timer,
       AtomicBoolean isFirstRow) {
+    log.trace("{} catchup {}, fetching further rows from held cursor", req, phase);
+
     while (!statementHolder.wasCanceled()) {
       try {
-        if (fetchChunk(connection, fetchSQL, extractor, timerSample, timer, isFirstRow)
-            < props.getChunkSize())
+        if (fetchChunk(fetchSQL, extractor, timerSample, timer, isFirstRow) < props.getChunkSize())
           // early exit, as there are no more rows to fetch
           return;
       } catch (SQLException e) {
@@ -200,9 +194,9 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
   }
 
   @VisibleForTesting
-  void closeCursor(Connection connection, String cursorName) {
+  void closeCursor(String cursorName) {
     try {
-      connection.prepareStatement(createCloseCursorSql(cursorName)).execute();
+      ds.getConnection().prepareStatement(createCloseCursorSql(cursorName)).execute();
     } catch (Exception e) {
       // swallow as unimportant to not break the control flow
       log.warn("{} catchup {}, While closing held cursor", req, phase, e);
@@ -247,7 +241,6 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
 
   @VisibleForTesting
   int fetchChunk(
-      @NonNull Connection connection,
       @NonNull String fetchSQL,
       @NonNull PgFactExtractor extractor,
       @NonNull Timer.Sample timerSample,
@@ -255,7 +248,7 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
       @NonNull AtomicBoolean firstRowSeen)
       throws SQLException {
     int rows = 0;
-    try (Statement fetch = connection.createStatement()) {
+    try (Statement fetch = ds.getConnection().createStatement()) {
       fetch.setFetchSize(props.getPageSize());
       statementHolder.statement(fetch, false);
       try (ResultSet rs = fetch.executeQuery(fetchSQL)) {
