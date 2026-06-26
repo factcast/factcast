@@ -204,14 +204,16 @@ class PgChunkedWithHoldCursorCatchupTest {
       PgQueryBuilder qb = new PgQueryBuilder(Collections.emptyList(), statementHolder);
       qb.serialsOnly();
 
+      verify(statementHolder, never()).statement(ps);
+
       underTest.declareCursor(conn, "catchup_x", qb, new AtomicLong(0));
+      verify(statementHolder).statement(ps);
 
       ArgumentCaptor<String> sqlCap = ArgumentCaptor.forClass(String.class);
       verify(conn).prepareStatement(sqlCap.capture());
       assertThat(sqlCap.getValue())
           .contains("DECLARE catchup_x CURSOR WITH HOLD")
           .contains("array_agg");
-      verify(statementHolder).statement(ps, true);
       verify(ps).execute();
     }
   }

@@ -232,7 +232,6 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
             cursorName, props.getChunkSize(), queryBuilder.createSQL());
 
     try (PreparedStatement declare = connection.prepareStatement(sql)) {
-      statementHolder.statement(declare, true);
       queryBuilder.createStatementSetter(fromSerial).setValues(declare);
       declare.execute();
       log.trace("{} catchup {}, cursor-with-hold declared", req, phase);
@@ -250,7 +249,7 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
     int rows = 0;
     try (Statement fetch = ds.getConnection().createStatement()) {
       fetch.setFetchSize(props.getPageSize());
-      statementHolder.statement(fetch, false);
+      statementHolder.statement(fetch);
       try (ResultSet rs = fetch.executeQuery(fetchSQL)) {
         if (firstRowSeen.compareAndSet(false, true)) {
           logIfAboveThreshold(Duration.ofNanos(timerSample.stop(timer)));
