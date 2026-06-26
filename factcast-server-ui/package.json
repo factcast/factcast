@@ -18,7 +18,7 @@
     "monaco-editor": "0.33.0",
     "react": "19.2.7",
     "react-dom": "19.2.7",
-    "react-router": "7.17.0"
+    "react-router": "7.18.0"
   },
   "devDependencies": {
     "@babel/core": "7.29.7",
@@ -29,10 +29,10 @@
     "@rolldown/plugin-babel": "0.2.3",
     "@rollup/plugin-replace": "6.0.3",
     "@rollup/pluginutils": "5.4.0",
-    "@types/node": "25.9.3",
+    "@types/node": "25.9.4",
     "@types/react": "19.2.17",
     "@types/react-dom": "19.2.3",
-    "@vitejs/plugin-react": "6.0.2",
+    "@vitejs/plugin-react": "6.0.3",
     "magic-string": "0.30.21",
     "rollup-plugin-brotli": "3.1.0",
     "rollup-plugin-visualizer": "7.0.1",
@@ -40,7 +40,7 @@
     "transform-ast": "2.4.4",
     "typescript": "6.0.3",
     "vite": "8.0.16",
-    "vite-plugin-checker": "0.14.1"
+    "vite-plugin-checker": "0.14.4"
   },
   "vaadin": {
     "dependencies": {
@@ -59,7 +59,7 @@
       "monaco-editor": "0.33.0",
       "react": "19.2.7",
       "react-dom": "19.2.7",
-      "react-router": "7.17.0"
+      "react-router": "7.18.0"
     },
     "devDependencies": {
       "@babel/core": "7.29.7",
@@ -70,10 +70,10 @@
       "@rolldown/plugin-babel": "0.2.3",
       "@rollup/plugin-replace": "6.0.3",
       "@rollup/pluginutils": "5.4.0",
-      "@types/node": "25.9.3",
+      "@types/node": "25.9.4",
       "@types/react": "19.2.17",
       "@types/react-dom": "19.2.3",
-      "@vitejs/plugin-react": "6.0.2",
+      "@vitejs/plugin-react": "6.0.3",
       "magic-string": "0.30.21",
       "rollup-plugin-brotli": "3.1.0",
       "rollup-plugin-visualizer": "7.0.1",
@@ -81,9 +81,9 @@
       "transform-ast": "2.4.4",
       "typescript": "6.0.3",
       "vite": "8.0.16",
-      "vite-plugin-checker": "0.14.1"
+      "vite-plugin-checker": "0.14.4"
     },
-    "hash": "8034c646bc06ff8fb2db2112ce5037b9d9d3cd06c98aba516480996bdbdd7bb9",
+    "hash": "f4bcef9ab9a95b1596833518985c264d8744ebc4bfdbd8bd1b57c5697bcb37d3",
     "overrides": {
       "@vaadin/a11y-base": "25.2.0",
       "@vaadin/accordion": "25.2.0",
