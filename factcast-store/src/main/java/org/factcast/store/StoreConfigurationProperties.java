@@ -213,7 +213,7 @@ public class StoreConfigurationProperties implements InitializingBean {
   boolean readOnlyModeEnabled;
 
   /**
-   * Size of a chunk, that is used to fetch events from the store during CHUNKED_HOLD catchup
+   * Size of a chunk, that is used to fetch events from the store during CHUNKED_WITH_HOLD catchup
    * strategy.
    */
   @Positive
