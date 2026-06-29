@@ -126,11 +126,15 @@ class PgCursorCatchupTest {
   @Nested
   class WhenFetching {
     @Mock @NonNull JdbcTemplate jdbc;
+    @Mock Connection c;
 
+    @SneakyThrows
     @BeforeEach
     void setup() {
       when(props.getPageSize()).thenReturn(47);
       when(metrics.counter(StoreMetrics.EVENT.FACTS_SENT)).thenReturn(counter);
+      when(ds.getConnection()).thenReturn(c);
+      when(c.getAutoCommit()).thenReturn(false);
     }
 
     @Test

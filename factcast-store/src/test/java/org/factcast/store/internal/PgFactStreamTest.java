@@ -24,7 +24,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
-import javax.sql.DataSource;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.Range;
 import org.assertj.core.api.Assertions;
@@ -123,7 +122,7 @@ class PgFactStreamTest {
 
   @Nested
   class WhenCatchingUpAndFastForwarding {
-    @Mock DataSource ds;
+    @Mock SingleConnectionDataSource ds;
     final HighWaterMark hwm = HighWaterMark.of(UUID.randomUUID(), 66L);
 
     @BeforeEach
@@ -416,7 +415,7 @@ class PgFactStreamTest {
 
   @Nested
   class WhenCatchingUp {
-    @Mock DataSource ds;
+    @Mock SingleConnectionDataSource ds;
 
     @BeforeEach
     void setup() {
