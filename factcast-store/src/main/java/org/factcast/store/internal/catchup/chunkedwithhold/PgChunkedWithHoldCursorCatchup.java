@@ -23,7 +23,6 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.annotation.*;
 import lombok.*;
-import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.*;
@@ -33,12 +32,12 @@ import org.factcast.store.internal.query.*;
 import org.factcast.store.internal.rowmapper.PgFactExtractor;
 import org.postgresql.util.PSQLException;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.datasource.*;
-import org.springframework.transaction.TransactionException;
 
-@Slf4j
 public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
 
+  private static final Logger log = LoggerFactory.getLogger(PgChunkedWithHoldCursorCatchup.class);
   private Connection connection;
 
   @SneakyThrows
@@ -102,13 +101,23 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
 
     try {
       Boolean moreToFetch =
-          declareAndFetchFirstChunkInTransaction(cursor, queryBuilder, fromSerial, extractor);
+          inTransaction(() -> declareAndFetchFirst(cursor, queryBuilder, fromSerial, extractor));
 
       if (moreToFetch == null) {
         // no rows fetched whatsoever
         return false;
       } else {
-        if (moreToFetch) continueFetchingUntilExhausted(cursor, extractor);
+        if (moreToFetch) {
+          log.trace("{} catchup {}, fetching further rows from held cursor", req, phase);
+
+          // thing is, we still need another transaction around, so that setFetchSize continues to
+          // work
+          //
+          // also we want to keep the transaction boundaries to one chunk only, in order not to
+          // block the
+          // index maintenance on the fact table
+          inTransaction(() -> continueFetchingUntilExhausted(cursor, extractor));
+        }
         return true;
       }
     } finally {
@@ -118,22 +127,17 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
 
   @VisibleForTesting
   protected void continueFetchingUntilExhausted(
-      @Nonnull Cursor cursor, @Nonnull PgFactExtractor extractor) throws SQLException {
-    log.trace("{} catchup {}, fetching further rows from held cursor", req, phase);
+      @NonNull Cursor cursor, @NonNull PgFactExtractor extractor) throws SQLException {
 
-    // thing is, we still need another transaction around, so that setFetchSize continues to work
-    //
-    // also we want to keep the transaction boundaries to one chunk only, in order not to block the
-    // index maintenance on the fact table
-    inTransaction(
-        () -> {
-          while (!statementHolder.wasCanceled()) {
-            log.debug("{} catchup {}, fetching next chunk", req, phase);
-            if (cursor.fetchChunk(extractor) < cursor.chunkSize())
-              // early exit, as there are no more rows to fetch
-              return;
-          }
-        });
+    Preconditions.checkArgument(
+        !connection.getAutoCommit(), "We rely on this being executed in a transaction");
+
+    while (!statementHolder.wasCanceled()) {
+      log.debug("{} catchup {}, fetching next chunk", req, phase);
+      if (cursor.fetchChunk(extractor) < cursor.chunkSize())
+        // early exit, as there are no more rows to fetch
+        return;
+    }
   }
 
   /**
@@ -141,50 +145,49 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
    *     false if some rows were fetched, but the cursor is exhausted now, so there is nothing more
    *     to fetch, <br>
    *     null if no rows were fetched at all
-   * @throws TransactionException
+   * @throws SQLException
    */
   @VisibleForTesting
   @Nullable
-  protected Boolean declareAndFetchFirstChunkInTransaction(
-      @Nonnull Cursor cursor,
-      @Nonnull PgQueryBuilder queryBuilder,
-      @Nonnull AtomicLong fromSerial,
-      @Nonnull PgFactExtractor extractor)
+  Boolean declareAndFetchFirst(
+      @NonNull Cursor cursor,
+      @NonNull PgQueryBuilder queryBuilder,
+      @org.jspecify.annotations.NonNull AtomicLong fromSerial,
+      @org.jspecify.annotations.NonNull PgFactExtractor extractor)
       throws SQLException {
-    return inTransaction(
-        () -> {
-          final var timer =
-              metrics.timer(StoreMetrics.OP.RESULT_STREAM_START, fromSerial.get() <= 0);
-          final var timerSample = metrics.startSample();
 
-          cursor.declare(queryBuilder, fromSerial);
+    Preconditions.checkArgument(
+        !connection.getAutoCommit(), "We rely on this being executed in a transaction");
 
-          // as declaring the cursor could have taken some time, we'll check again
-          if (statementHolder.wasCanceled()) return null;
+    final var timer = metrics.timer(StoreMetrics.OP.RESULT_STREAM_START, fromSerial.get() <= 0);
+    final var timerSample = metrics.startSample();
 
-          log.debug("{} catchup {}, fetching first chunk", req, phase);
+    cursor.declare(queryBuilder, fromSerial);
 
-          // the first fetch is part of the transaction, so that the cursor is not
-          // persisted (yet)
-          int fetchedRows =
-              cursor.fetchChunk(
-                  extractor,
-                  () -> logIfAboveThreshold(log, Duration.ofNanos(timerSample.stop(timer))));
+    // as declaring the cursor could have taken some time, we'll check again
+    if (statementHolder.wasCanceled()) return null;
 
-          if (fetchedRows < props.getChunkSize()) {
-            // we had rows, but less than allowed, indicating we're done
+    log.debug("{} catchup {}, fetching first chunk", req, phase);
 
-            if (fetchedRows == 0) {
-              log.trace("{} catchup {}, empty cursor", req, phase);
-              return null; // signal, nothing was read at all
-            } else {
-              // There is no need to rollback the transaction if the cursor is
-              // exhausted.
-              log.trace("{} catchup {}, quick catchup: no need to hold the cursor", req, phase);
-              return false;
-            }
-          } else return true;
-        });
+    // the first fetch is part of the transaction, so that the cursor is not
+    // persisted (yet)
+    int fetchedRows =
+        cursor.fetchChunk(
+            extractor, () -> logIfAboveThreshold(log, Duration.ofNanos(timerSample.stop(timer))));
+
+    if (fetchedRows < props.getChunkSize()) {
+      // we had rows, but less than allowed, indicating we're done
+
+      if (fetchedRows == 0) {
+        log.trace("{} catchup {}, empty cursor", req, phase);
+        return null;
+      } else {
+        // There is no need to rollback the transaction if the cursor is
+        // exhausted.
+        log.trace("{} catchup {}, quick catchup: no need to hold the cursor", req, phase);
+        return false;
+      }
+    } else return true;
   }
 
   @VisibleForTesting
@@ -304,38 +307,8 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
     void run() throws SQLException;
   }
 
-  //
-  //  void inTransaction(@Nonnull ThrowingRunnable runnable) throws SQLException {
-  //    inTransaction(
-  //        () -> {
-  //          runnable.run();
-  //          return null;
-  //        });
-  //  }
-  //
-  //  <R> R inTransaction(@Nonnull ThrowingCallable<R> callable) throws SQLException {
-  //    try {
-  //      return new TransactionTemplate(new JdbcTransactionManager(ds))
-  //          .execute(
-  //              tx -> {
-  //                try {
-  //                  return callable.call();
-  //                } catch (SQLException sql) {
-  //                  throw new TransactionException("While catching up:", sql) {};
-  //                }
-  //              });
-  //    } catch (TransactionException e) {
-  //      if (e.getCause() instanceof SQLException sql) {
-  //        // unwrap
-  //        throw sql;
-  //      } else {
-  //        throw e;
-  //      }
-  //    }
-  //  }
-
   void inTransaction(@Nonnull ThrowingRunnable runnable) throws SQLException {
-    inTransaction(
+    doInTransaction(
         () -> {
           runnable.run();
           return null;
@@ -343,6 +316,10 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
   }
 
   <R> R inTransaction(@Nonnull ThrowingCallable<R> callable) throws SQLException {
+    return doInTransaction(callable);
+  }
+
+  private <R> R doInTransaction(@NonNull ThrowingCallable<R> callable) throws SQLException {
     connection.setAutoCommit(false);
 
     try {
