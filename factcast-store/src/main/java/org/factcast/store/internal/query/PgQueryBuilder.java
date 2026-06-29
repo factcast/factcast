@@ -276,11 +276,19 @@ public class PgQueryBuilder {
     return sql;
   }
 
-  public void useTempTable(@NonNull String tempTableName) {
+  /**
+   * @deprecated will be removed with CHUNKED
+   * @param tempTableName
+   * @return
+   */
+  @Deprecated
+  public PgQueryBuilder useTempTable(@NonNull String tempTableName) {
     this.tempTableName = tempTableName;
+    return this;
   }
 
-  public void serialsOnly() {
+  public PgQueryBuilder serialsOnly() {
     serialsOnly = true;
+    return this;
   }
 }

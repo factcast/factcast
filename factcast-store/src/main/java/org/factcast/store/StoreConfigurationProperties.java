@@ -261,7 +261,8 @@ public class StoreConfigurationProperties implements InitializingBean {
     CHUNKED_WITH_HOLD
   }
 
-  CatchupStrategy catchupStrategy = CatchupStrategy.CURSOR;
+  // TODO stick with CURSOR
+  CatchupStrategy catchupStrategy = CatchupStrategy.CHUNKED_WITH_HOLD;
 
   boolean catchupAsyncFetch = false; // might default to true in the future
 
