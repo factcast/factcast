@@ -281,7 +281,7 @@ public class PgQueryBuilder {
    * @param tempTableName
    * @return
    */
-  @Deprecated
+  @Deprecated(since = "0.11.0", forRemoval = true)
   public PgQueryBuilder useTempTable(@NonNull String tempTableName) {
     this.tempTableName = tempTableName;
     return this;

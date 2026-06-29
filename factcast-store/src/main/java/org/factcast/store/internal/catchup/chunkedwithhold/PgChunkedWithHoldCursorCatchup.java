@@ -75,7 +75,7 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
   // needed for comfortable mocking
   @VisibleForTesting
   @NonNull
-  Cursor createCursor(int chunkSize) throws SQLException {
+  Cursor createCursor(int chunkSize) {
     return new Cursor(chunkSize);
   }
 
