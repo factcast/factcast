@@ -88,6 +88,7 @@ public class PgCursorCatchup extends AbstractPgCatchup {
     final var timer = metrics.timer(StoreMetrics.OP.RESULT_STREAM_START, isFromScratch);
     final var rowCallbackHandler = createTimedRowCallbackHandler(extractor, timer);
     log.trace("{} catchup {} - facts starting with SER={}", req, phase, fromSerial.get());
+
     jdbc.query(catchupSQL, b.createStatementSetter(fromSerial), rowCallbackHandler);
   }
 

@@ -39,6 +39,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
+import org.springframework.transaction.PlatformTransactionManager;
 
 @ExtendWith(MockitoExtension.class)
 class PgChunkedCatchupTest {
@@ -60,6 +61,7 @@ class PgChunkedCatchupTest {
   @Mock @NonNull Connection c;
   @Mock @NonNull AtomicLong serial;
   @Mock SingleConnectionDataSource ds;
+  @Mock PlatformTransactionManager txMgr;
   @Mock PgCatchupFactory.Phase phase;
 
   @Spy @InjectMocks PgChunkedCatchup underTest;

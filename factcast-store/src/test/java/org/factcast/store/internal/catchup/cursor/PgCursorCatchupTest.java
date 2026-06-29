@@ -48,6 +48,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
+import org.springframework.transaction.PlatformTransactionManager;
 
 @ExtendWith(MockitoExtension.class)
 class PgCursorCatchupTest {
@@ -72,6 +73,7 @@ class PgCursorCatchupTest {
   @Mock @NonNull AtomicLong serial;
   @Mock @NonNull PgConnectionSupplier connectionSupplier;
   @Mock SingleConnectionDataSource ds;
+  @Mock @NonNull PlatformTransactionManager txMgr;
   @Mock PgCatchupFactory.Phase phase;
 
   @Spy @InjectMocks PgCursorCatchup underTest;

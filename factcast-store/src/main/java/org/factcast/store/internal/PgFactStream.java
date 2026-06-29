@@ -57,6 +57,7 @@ import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 public class PgFactStream {
 
   final PgConnectionSupplier connectionSupplier;
+  final org.springframework.transaction.PlatformTransactionManager txMgr;
   final EventBus eventBus;
   final PgFactIdToSerialMapper idToSerMapper;
   final PgCatchupFactory pgCatchupFactory;

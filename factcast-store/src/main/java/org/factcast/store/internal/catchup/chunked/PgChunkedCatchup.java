@@ -79,6 +79,9 @@ public class PgChunkedCatchup extends AbstractPgCatchup {
       String tempTableName = "catchup_" + UUID.randomUUID().toString().replace("-", "");
 
       try {
+        // this needs to be transactional for fetch-size to have any effect whatsoever. luckyly, we
+        // use
+        // a org.springframework.jdbc.datasource.SingleConnectionDataSource with autoCommitDisabled.
         jdbc.setFetchSize(props.getPageSize());
         jdbc.setQueryTimeout(0); // disable query timeout
         if (prepareTemporaryTable(jdbc, tempTableName) > 0) {
@@ -116,7 +119,6 @@ public class PgChunkedCatchup extends AbstractPgCatchup {
       } finally {
         // tmp table is not needed anymore. As we reuse the connection, it'd be good to drop it.
         try {
-
           jdbc.execute("drop table " + tempTableName);
         } catch (Exception e) {
           log.warn("{} catchup {} - while dropping tmp table:", req, phase, e);
