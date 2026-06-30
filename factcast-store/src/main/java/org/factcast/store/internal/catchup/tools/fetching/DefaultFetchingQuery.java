@@ -13,12 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.internal.catchup;
+package org.factcast.store.internal.catchup.tools.fetching;
 
 import java.sql.*;
-import lombok.*;
+import lombok.NonNull;
+import org.factcast.store.internal.catchup.RowProcessor;
 
-public interface FetchingQuery {
-  void executeAndProcess(@NonNull PreparedStatement ps, @NonNull RowProcessor rowProcessor)
-      throws SQLException;
+public class DefaultFetchingQuery implements FetchingQuery {
+
+  @Override
+  public void executeAndProcess(
+      @NonNull PreparedStatement ps,
+      @NonNull RowProcessor rowProcessor,
+      @NonNull Runnable callbackBeforeProcessing)
+      throws SQLException {
+    try (ResultSet rs = ps.executeQuery()) {
+      callbackBeforeProcessing.run();
+      while (rs.next()) rowProcessor.process(rs);
+    }
+  }
 }

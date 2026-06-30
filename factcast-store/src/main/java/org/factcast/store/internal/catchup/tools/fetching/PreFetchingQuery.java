@@ -13,18 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.internal.catchup;
+package org.factcast.store.internal.catchup.tools.fetching;
 
 import java.sql.*;
 import java.util.concurrent.*;
 import javax.sql.rowset.*;
 import lombok.NonNull;
 import lombok.experimental.Delegate;
+import org.factcast.store.internal.catchup.RowProcessor;
 
 @SuppressWarnings("java:S2142")
 public class PreFetchingQuery implements FetchingQuery {
+  // to not pass nulls
+  private static final @NonNull Runnable NOP = () -> {};
+
   @Override
-  public void executeAndProcess(@NonNull PreparedStatement ps, @NonNull RowProcessor rowProcessor)
+  public void executeAndProcess(
+      @NonNull PreparedStatement ps,
+      @NonNull RowProcessor rowProcessor,
+      @NonNull Runnable callbackBeforeProcessing)
       throws SQLException {
 
     if (ps.getConnection().getAutoCommit())
@@ -43,6 +50,7 @@ public class PreFetchingQuery implements FetchingQuery {
     ps.setFetchSize(fetchSize / 2);
 
     ResultSet resultSet = ps.executeQuery();
+    callbackBeforeProcessing.run();
 
     // async producer, terminated by closing the rs
     CompletableFuture.runAsync(() -> produce(resultSet, q));
@@ -80,7 +88,7 @@ public class PreFetchingQuery implements FetchingQuery {
         synchronized (resultSet) {
           crs.populate(new ResultSetPage(resultSet));
         }
-        put(q, crs);
+        put(q, crs); // this will block if the queue is full
       }
 
       // signal the end
@@ -94,7 +102,7 @@ public class PreFetchingQuery implements FetchingQuery {
   /**
    * The only reason for this method to exist (apart from swallowing InterruptedException) is to
    * remind the reader that we're using Queue.put here instead of Queue.add, as add would throw an
-   * exception on a full queue, while put blocks (which is exactly what we want here
+   * exception on a full queue, while put blocks (which is exactly what we want here)
    */
   private void put(ArrayBlockingQueue<ResultSet> q, ResultSet rs) {
     try {
@@ -102,6 +110,12 @@ public class PreFetchingQuery implements FetchingQuery {
     } catch (InterruptedException e) {
       // in that case we do not care.
     }
+  }
+
+  // convenience
+  public void executeAndProcess(PreparedStatement ps, RowProcessor rowProcessor)
+      throws SQLException {
+    executeAndProcess(ps, rowProcessor, NOP);
   }
 
   /**

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.internal.catchup;
+package org.factcast.store.internal.catchup.tools.fetching;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;

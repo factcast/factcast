@@ -17,7 +17,7 @@ package org.factcast.store.internal.catchup.cursor;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import io.micrometer.core.instrument.Timer;
+import java.sql.*;
 import java.time.Duration;
 import java.util.concurrent.atomic.*;
 import lombok.NonNull;
@@ -30,13 +30,13 @@ import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.StoreMetrics;
 import org.factcast.store.internal.catchup.AbstractPgCatchup;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
+import org.factcast.store.internal.catchup.tools.fetching.FetchingQuery;
 import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.pipeline.Signal;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.query.PgQueryBuilder;
 import org.factcast.store.internal.rowmapper.PgFactExtractor;
 import org.postgresql.util.PSQLException;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
@@ -59,51 +59,42 @@ public class PgCursorCatchup extends AbstractPgCatchup {
   @Override
   public void run() {
     try {
-      var jdbc = new JdbcTemplate(ds);
-      fetch(jdbc);
+      // this needs to be transactional for fetch-size to have any effect whatsoever. luckily,
+      // we use a org.springframework.jdbc.datasource.SingleConnectionDataSource with
+      // autoCommitDisabled.
+
+      Preconditions.checkState(
+          !ds.getConnection().getAutoCommit(), "Connection must not be in autocommit mode");
+
+      final var b = new PgQueryBuilder(req.specs(), statementHolder);
+      final var extractor = new PgFactExtractor(serial);
+      final var fromSerial = serial.get() < fastForward ? new AtomicLong(fastForward) : serial;
+      final var catchupSQL = b.createSQL();
+      final var isFromScratch = (fromSerial.get() <= 0);
+      log.trace("{} catchup {} - facts starting with SER={}", req, phase, fromSerial.get());
+
+      try (Connection conn = ds.getConnection();
+          PreparedStatement prep = conn.prepareStatement(catchupSQL); ) {
+        b.createStatementSetter(fromSerial).setValues(prep);
+        prep.setFetchSize(props.getPageSize());
+        prep.setQueryTimeout(0);
+
+        final var timer = metrics.timer(StoreMetrics.OP.RESULT_STREAM_START, isFromScratch);
+        final var timerSample = metrics.startSample();
+
+        RowCallbackHandler rowCallbackHandler = createRowCallbackHandler(extractor);
+        FetchingQuery.create(props)
+            .executeAndProcess(
+                prep,
+                rowCallbackHandler::processRow,
+                () -> logIfAboveThreshold(Duration.ofNanos(timerSample.stop(timer))));
+      }
     } finally {
       statementHolder.clear();
 
       log.trace("Done fetching, flushing.");
       pipeline.process(Signal.flush());
     }
-  }
-
-  @SneakyThrows
-  @VisibleForTesting
-  void fetch(JdbcTemplate jdbc) {
-    // this needs to be transactional for fetch-size to have any effect whatsoever. luckyly, we use
-    // a org.springframework.jdbc.datasource.SingleConnectionDataSource with autoCommitDisabled.
-
-    Preconditions.checkState(
-        !ds.getConnection().getAutoCommit(), "Connection must not be in autocommit mode");
-
-    jdbc.setFetchSize(props.getPageSize());
-    jdbc.setQueryTimeout(0); // disable query timeout
-    final var b = new PgQueryBuilder(req.specs(), statementHolder);
-    final var extractor = new PgFactExtractor(serial);
-    final var fromSerial = serial.get() < fastForward ? new AtomicLong(fastForward) : serial;
-    final var catchupSQL = b.createSQL();
-    final var isFromScratch = (fromSerial.get() <= 0);
-    final var timer = metrics.timer(StoreMetrics.OP.RESULT_STREAM_START, isFromScratch);
-    final var rowCallbackHandler = createTimedRowCallbackHandler(extractor, timer);
-    log.trace("{} catchup {} - facts starting with SER={}", req, phase, fromSerial.get());
-
-    jdbc.query(catchupSQL, b.createStatementSetter(fromSerial), rowCallbackHandler);
-  }
-
-  @VisibleForTesting
-  RowCallbackHandler createTimedRowCallbackHandler(PgFactExtractor extractor, Timer timer) {
-    final var isFirstRow = new AtomicBoolean(true);
-    final var timerSample = metrics.startSample();
-    final var handler = createRowCallbackHandler(extractor);
-    return rs -> {
-      if (isFirstRow.getAndSet(false)) {
-        final var elapsed = Duration.ofNanos(timerSample.stop(timer));
-        logIfAboveThreshold(elapsed);
-      }
-      handler.processRow(rs);
-    };
   }
 
   private void logIfAboveThreshold(Duration elapsed) {
