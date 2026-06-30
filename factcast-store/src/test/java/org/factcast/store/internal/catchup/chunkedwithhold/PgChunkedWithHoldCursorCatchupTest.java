@@ -126,9 +126,7 @@ class PgChunkedWithHoldCursorCatchupTest {
       boolean result = underTest.fetchAll(cursor);
 
       assertThat(result).isTrue();
-      // for the second chunk
       verify(underTest).inTransaction(any(PgChunkedWithHoldCursorCatchup.ThrowingCallable.class));
-      verify(underTest).inTransaction(any(PgChunkedWithHoldCursorCatchup.ThrowingRunnable.class));
     }
 
     @Test
@@ -142,6 +140,20 @@ class PgChunkedWithHoldCursorCatchupTest {
       underTest.inTransaction(() -> underTest.continueFetchingUntilExhausted(cursor, extractor));
 
       verify(cursor, times(1)).fetchChunk(any());
+    }
+
+    @Test
+    @SneakyThrows
+    void testContinueFetchingUntilExhausted_Loop() {
+      when(statementHolder.wasCanceled()).thenReturn(false);
+      when(cursor.chunkSize()).thenReturn(1000);
+      when(cursor.fetchChunk(any())).thenReturn(1000, 1000, 750); // < 1000, should return
+
+      PgFactExtractor extractor = mock(PgFactExtractor.class);
+      underTest.continueFetchingUntilExhausted(cursor, extractor);
+
+      verify(cursor, times(3)).fetchChunk(any());
+      verify(connection, times(3)).commit();
     }
 
     @Test

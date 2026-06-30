@@ -114,9 +114,8 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
           // work
           //
           // also we want to keep the transaction boundaries to one chunk only, in order not to
-          // block the
-          // index maintenance on the fact table
-          inTransaction(() -> continueFetchingUntilExhausted(cursor, extractor));
+          // block the index maintenance on the fact table
+          continueFetchingUntilExhausted(cursor, extractor);
         }
         return true;
       }
@@ -129,12 +128,9 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
   protected void continueFetchingUntilExhausted(
       @NonNull Cursor cursor, @NonNull PgFactExtractor extractor) throws SQLException {
 
-    Preconditions.checkArgument(
-        !connection.getAutoCommit(), "We rely on this being executed in a transaction");
-
     while (!statementHolder.wasCanceled()) {
       log.debug("{} catchup {}, fetching next chunk", req, phase);
-      if (cursor.fetchChunk(extractor) < cursor.chunkSize())
+      if (inTransaction(() -> cursor.fetchChunk(extractor)) < cursor.chunkSize())
         // early exit, as there are no more rows to fetch
         return;
     }
@@ -326,9 +322,10 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
       R call = callable.call();
       connection.commit();
       return call;
-    } catch (SQLException sql) {
+    } catch (Exception e) {
       connection.rollback();
-      throw sql;
+      if (e instanceof SQLException sql) throw sql;
+      throw new SQLException(e);
     }
   }
 }
