@@ -46,17 +46,22 @@ public class PgQueryBuilder {
 
   private final @NonNull Collection<FactSpec> factSpecs;
   private final CurrentStatementHolder statementHolder;
+  private final boolean useInternalExclusion;
   private String tempTableName = null;
 
-  public PgQueryBuilder(@NonNull Collection<FactSpec> specs) {
+  public PgQueryBuilder(@NonNull Collection<FactSpec> specs, boolean useInternalExclusion) {
     factSpecs = specs;
     statementHolder = null;
+    this.useInternalExclusion = useInternalExclusion;
   }
 
   public PgQueryBuilder(
-      @NonNull Collection<FactSpec> specs, @NonNull CurrentStatementHolder holder) {
+      @NonNull Collection<FactSpec> specs,
+      @NonNull CurrentStatementHolder holder,
+      boolean useInternalExclusion) {
     factSpecs = specs;
     this.statementHolder = holder;
+    this.useInternalExclusion = useInternalExclusion;
   }
 
   public PreparedStatementSetter createStatementSetter(@NonNull AtomicLong serial) {
@@ -224,7 +229,13 @@ public class PgQueryBuilder {
           predicates.add(sb.toString());
         });
     String predicatesAsString = String.join(OR, predicates);
-    return "( " + predicatesAsString + " ) " + AND + PgConstants.COLUMN_SER + ">?";
+    StringBuilder sb = new StringBuilder("( ").append(predicatesAsString).append(" ) ");
+    // when internal exclusion is enabled, only ever match non-excluded facts; matches the
+    // partial GIN index idx_fact_header_active WHERE exclusion_reason IS NULL
+    if (useInternalExclusion) {
+      sb.append(AND).append(PgConstants.COLUMN_EXCLUSION_REASON).append(" IS NULL ");
+    }
+    return sb.append(AND).append(PgConstants.COLUMN_SER).append(">?").toString();
   }
 
   public String createSQL() {

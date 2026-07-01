@@ -287,7 +287,7 @@ public class PgFactStore extends AbstractFactStore {
     return metrics.time(
         StoreMetrics.OP.GET_STATE_FOR,
         () -> {
-          PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs);
+          PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs, props.isUseInternalExclusion());
           String stateSQL = pgQueryBuilder.createStateSQL();
           PreparedStatementSetter statementSetter =
               pgQueryBuilder.createStatementSetter(new AtomicLong(lastMatchingSerial));

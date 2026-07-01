@@ -4,6 +4,31 @@ type = "docs"
 weight = 100015
 +++
 
+## Upgrading to 0.12.0
+
+### New exclusion mechanism replaces former "Blacklist"
+
+Maintaining a separate table of factIds to be filtered out of every result turned out to be inefficient.
+Therefore, a new `exclusion_reason` column is introduced on the fact table, causing all facts with a non-NULL
+value to be ignored at query time. To migrate from the previous solution, follow the steps described below:
+
+1. The feature is guarded behind the new property `factcast.store.useInternalExclusion`, which defaults to `false`.
+   Ensure FactCast is deployed once with this default to trigger the changeset, which migrates all entries from the blacklist into the new column and creates a new partial GIN index on the fact header that takes the new column into account.
+   1. For tables with more than 10,000,000 entries, the automated migration and index creation are skipped and have to be conducted manually:
+      1. ```sql
+         -- adjust the batch size depending on your needs
+         CALL migrate_blacklist_to_exclusion_reason(10000);
+         ```
+      2. ```sql
+         -- After the migration is done create the new index
+         CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_fact_header_active
+         ON fact USING GIN (header jsonb_path_ops)
+         WITH (fastupdate=false)
+         WHERE exclusion_reason IS NULL;
+         ```
+2. To switch to the new behavior, deploy FactCast again with `factcast.store.useInternalExclusion` set to `true`. Attempts to add new entries to the old blacklist will then trigger a warning.
+3. Finally, execute the `drop_idx_fact_header.sql` changeset to avoid maintaining duplicate indexes on each insert. Please be aware that this index has to be re-created before rolling back to a previous version.
+
 ## Upgrading to 0.11.0
 
 ### `Projection.postprocess` now takes a `Collection` instead of a `List`

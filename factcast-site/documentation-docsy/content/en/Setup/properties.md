@@ -53,6 +53,7 @@ description: Properties you can use to configure FactCast
 | factcast.store.enumerationDirectModeEnabled                  | Despite of a Schema-Registry being defined or not, if set to true, enumeration of types or namespace will examine the data in the store directly, so that you only see data from already published facts.                                                                                                                                                                                                                                           | false                                    |
 | factcast.store.autoFlushDelay                                | When catching up, if production of a full notification of facts takes longer than this value (in milliseconds), an additional flush is inserted into the pipelin in order to send the notification as is to the client. This is done in order to balance parallelization vs. network/compression efficiency.                                                                                                                                        | <nobr>10000</nobr>                       |
 | factcast.store.catchupStrategy                               | Available: CURSOR and CHUNKED. Cursor does the catchup query in one go and keeps the cursor open until the facts are sent to the client. Chunked runs queries limited to page-size rows instead.                                                                                                                                                                                                                                                    | CURSOR                                   |
+| factcast.store.useInternalExclusion                          | Enable only after finishing the blacklist migration described [here]({{< ref "migration.md">}}). Disables the blacklist entirely and instead enables filtering via exclusion column on the database level.                                                                                                                                                                                                                                          | false                                    |
 
 {{< alert severity="warning" size="small" >}}
 
@@ -170,7 +171,9 @@ spring.grpc.server.keep-alive.permit-time=100
 
 ---
 
-### Blacklist
+### Blacklist (deprecated in version `0.X.X`)
+
+> The following properties only take effect as long as `factcast.store.useInternalExclusion` is set to false.
 
 | Property                    | Description                                                                                                | Default                  | Example                            |
 | --------------------------- | :--------------------------------------------------------------------------------------------------------- | :----------------------- | :--------------------------------- |

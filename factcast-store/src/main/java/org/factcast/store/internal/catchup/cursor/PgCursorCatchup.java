@@ -72,7 +72,7 @@ public class PgCursorCatchup extends AbstractPgCatchup {
   void fetch(JdbcTemplate jdbc) {
     jdbc.setFetchSize(props.getPageSize());
     jdbc.setQueryTimeout(0); // disable query timeout
-    final var b = new PgQueryBuilder(req.specs(), statementHolder);
+    final var b = new PgQueryBuilder(req.specs(), statementHolder, props.isUseInternalExclusion());
     final var extractor = new PgFactExtractor(serial);
     final var fromSerial = serial.get() < fastForward ? new AtomicLong(fastForward) : serial;
     final var catchupSQL = b.createSQL();
