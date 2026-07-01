@@ -26,7 +26,7 @@ import org.factcast.client.grpc.cli.conv.Converters;
 public class Parser {
   private static final String BASICAUTH_SYSPROP_NAME = "grpc.client.factstore.credentials";
 
-  private static final String ADDRESS_SYSPROP_NAME = "spring.grpc.client.channel.factstore.address";
+  private static final String ADDRESS_SYSPROP_NAME = "spring.grpc.client.channel.factstore.target";
 
   private final JCommander jc;
 
