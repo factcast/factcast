@@ -294,7 +294,11 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
     }
 
     private @NonNull String createFetchSQL() {
-      return "SELECT " + PgConstants.PROJECTION_FACT + " FROM fetchFactsFrom('" + name() + "')";
+      return "SELECT "
+          + PgConstants.PROJECTION_FACT
+          + " FROM fetchFactsFromCursorWithHold('"
+          + name()
+          + "')";
     }
   }
 
