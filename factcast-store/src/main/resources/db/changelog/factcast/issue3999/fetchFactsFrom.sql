@@ -2,7 +2,7 @@
 -- contains all the serials of the facts to fetch in one function call.
 -- Those facts are then fetched and returned as a table, unless the cursor is exhausted.
 --
--- See CHUNKED_WIH_HOLD Catchup Strategy
+-- See CHUNKED_WITH_HOLD Catchup Strategy
 --
 CREATE OR REPLACE FUNCTION fetchFactsFromCursorWithHold(cur refcursor)
     RETURNS TABLE
