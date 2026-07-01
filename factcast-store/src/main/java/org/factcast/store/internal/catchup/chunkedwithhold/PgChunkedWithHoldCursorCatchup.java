@@ -328,9 +328,11 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
     try {
       R call = callable.call();
       connection.commit();
+      connection.setAutoCommit(true);
       return call;
     } catch (Exception e) {
       connection.rollback();
+      connection.setAutoCommit(true);
       if (e instanceof SQLException sql) throw sql;
       throw new SQLException(e);
     }
