@@ -129,7 +129,7 @@ spring.grpc.client.channel.factstore.keepalive.time=300
 spring.grpc.client.channel.factstore.keepalive.without-calls=true
 ```
 
-Further details can be found here : `org.springframework.grpc.autoconfigure.client.GrpcClientProperties`.
+Further details can be found here : `org.springframework.boot.grpc.client.autoconfigure.GrpcClientProperties`.
 
 #### FactCast client specific
 
@@ -193,4 +193,4 @@ spring.grpc.server.keep-alive.permit-time=100
 | factcast.ui.report.store.path | The path under which reports are stored if no external ReportStore is configured.                                            | /tmp/factcast-ui/report |
 | factcast.ui.report.store.s3   | The name of the S3 Bucket in which the reports are stored by the S3ReportStore. This overrides factcast.ui.report.store.path |                         |
 
-Further details can be found here : `org.springframework.grpc.autoconfigure.server.GrpcServerProperties`.
+Further details can be found here : `org.springframework.boot.grpc.server.autoconfigure.GrpcServerProperties`.
