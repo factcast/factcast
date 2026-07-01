@@ -1,3 +1,9 @@
+-- The cursor cur is supposed to contain just one column of type bitint[] that
+-- contains serials of the facts to fetch in one function call.
+-- Those facts are then fetched and returned as a table, unless the cursor is exhausted.
+--
+-- See CHUNKED_WTH_HOLD Catchup Strategy
+--
 CREATE OR REPLACE FUNCTION fetchFactsFrom(cur refcursor)
     RETURNS TABLE
             (
