@@ -27,7 +27,6 @@ import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.core.*;
 import org.factcast.factus.projection.WriterToken;
 
-// TODO consider making this a general ShedlockWriterToken implementation
 @Slf4j
 public class MongoDbWriterToken implements WriterToken {
   private @NonNull SimpleLock lock;
@@ -49,7 +48,7 @@ public class MongoDbWriterToken implements WriterToken {
    * @param lock the lock to be held during the lifetime of the token
    * @param lockConfiguration configuration used to extend the lock
    */
-  protected MongoDbWriterToken(
+  public MongoDbWriterToken(
       @NonNull SimpleLock lock, @NonNull LockConfiguration lockConfiguration) {
     this(lock, lockConfiguration, lockConfiguration.getLockAtMostFor().dividedBy(3));
   }

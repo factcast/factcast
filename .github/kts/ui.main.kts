@@ -5,8 +5,8 @@
 @file:Repository("https://repo.maven.apache.org/maven2/")
 @file:Repository("https://bindings.krzeminski.it")
 
-@file:DependsOn("actions:checkout:v6")
-@file:DependsOn("actions:cache:v5")
+@file:DependsOn("actions:checkout:v7")
+@file:DependsOn("actions:cache:v6")
 @file:DependsOn("actions:setup-java:v5")
 
 import io.github.typesafegithub.workflows.actions.actions.Cache

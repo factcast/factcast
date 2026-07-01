@@ -14,19 +14,19 @@ jobs:
     steps:
     - id: 'step-0'
       name: 'Checkout'
-      uses: 'actions/checkout@v6'
+      uses: 'actions/checkout@v7'
       with:
         fetch-depth: '0'
     - id: 'step-1'
       name: 'Cache - Maven Repository'
-      uses: 'actions/cache@v5'
+      uses: 'actions/cache@v6'
       with:
         path: '~/.m2/repository'
         key: '${{ runner.os }}-maven-${{ hashFiles(''**/pom.xml'') }}'
         restore-keys: '${{ runner.os }}-maven-'
     - id: 'step-2'
       name: 'Cache - Sonar cache'
-      uses: 'actions/cache@v5'
+      uses: 'actions/cache@v6'
       with:
         path: '~/.sonar/cache'
         key: '${{ runner.os }}-sonar-${{ hashFiles(''**/pom.xml'') }}'
@@ -47,13 +47,13 @@ jobs:
       name: 'Sonar upload'
       env:
         SONAR: '${{ secrets.SONAR_TOKEN }}'
-      run: './mvnw -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=factcast -Dsonar.organization=factcast -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=$SONAR'
+      run: './mvnw -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=factcast -Dsonar.organization=factcast -Dsonar.host.url=https://sonarcloud.io -Dsonar.token=$SONAR'
     - id: 'step-7'
       name: 'Test - Integration'
       run: './mvnw -B verify -DskipUnitTests'
     - id: 'step-8'
       name: 'Codecov upload'
-      uses: 'codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2'
+      uses: 'codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de'
       with:
         token: '${{ secrets.CODECOV_TOKEN }}'
   postgres-compatibility:
@@ -65,12 +65,12 @@ jobs:
     steps:
     - id: 'step-0'
       name: 'Checkout'
-      uses: 'actions/checkout@v6'
+      uses: 'actions/checkout@v7'
       with:
         fetch-depth: '0'
     - id: 'step-1'
       name: 'Cache - Maven Repository'
-      uses: 'actions/cache@v5'
+      uses: 'actions/cache@v6'
       with:
         path: '~/.m2/repository'
         key: '${{ runner.os }}-maven-${{ hashFiles(''**/pom.xml'') }}'
