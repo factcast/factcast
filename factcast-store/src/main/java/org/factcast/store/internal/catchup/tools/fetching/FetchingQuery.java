@@ -18,18 +18,26 @@ package org.factcast.store.internal.catchup.tools.fetching;
 import java.sql.*;
 import lombok.*;
 import org.factcast.store.StoreConfigurationProperties;
-import org.factcast.store.internal.catchup.RowProcessor;
 
 public interface FetchingQuery {
+
+  // to not pass nulls
+  @NonNull CallbackAfterQueryFinished NOP = () -> {};
+
   static FetchingQuery create(@NonNull StoreConfigurationProperties props) {
     return props.isCatchupAsyncFetch() ? FetchingQuery.async() : FetchingQuery.sync();
   }
 
-  void executeAndProcess(
+  int executeAndProcess(
       @NonNull PreparedStatement ps,
       @NonNull RowProcessor rowProcessor,
-      @NonNull Runnable callbackBeforeProcessing)
+      @NonNull CallbackAfterQueryFinished callbackBeforeProcessing)
       throws SQLException;
+
+  default int executeAndProcess(@NonNull PreparedStatement ps, @NonNull RowProcessor rowProcessor)
+      throws SQLException {
+    return executeAndProcess(ps, rowProcessor, NOP);
+  }
 
   static FetchingQuery sync() {
     return new DefaultFetchingQuery();
@@ -37,5 +45,14 @@ public interface FetchingQuery {
 
   static FetchingQuery async() {
     return new PreFetchingQuery();
+  }
+
+  /** the user must not call rs.next() */
+  interface RowProcessor {
+    void process(ResultSet row) throws SQLException;
+  }
+
+  interface CallbackAfterQueryFinished {
+    void afterQueryFinished();
   }
 }

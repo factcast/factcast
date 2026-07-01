@@ -17,19 +17,23 @@ package org.factcast.store.internal.catchup.tools.fetching;
 
 import java.sql.*;
 import lombok.NonNull;
-import org.factcast.store.internal.catchup.RowProcessor;
 
 public class DefaultFetchingQuery implements FetchingQuery {
 
   @Override
-  public void executeAndProcess(
+  public int executeAndProcess(
       @NonNull PreparedStatement ps,
       @NonNull RowProcessor rowProcessor,
-      @NonNull Runnable callbackBeforeProcessing)
+      @NonNull CallbackAfterQueryFinished callbackBeforeProcessing)
       throws SQLException {
+    int rows = 0;
     try (ResultSet rs = ps.executeQuery()) {
-      callbackBeforeProcessing.run();
-      while (rs.next()) rowProcessor.process(rs);
+      callbackBeforeProcessing.afterQueryFinished();
+      while (rs.next() && !ps.isClosed()) {
+        rowProcessor.process(rs);
+        rows++;
+      }
     }
+    return rows;
   }
 }

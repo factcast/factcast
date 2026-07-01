@@ -20,7 +20,6 @@ import static org.mockito.Mockito.*;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import org.factcast.store.internal.catchup.RowProcessor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,8 +31,8 @@ class DefaultFetchingQueryTest {
 
   @Mock private PreparedStatement ps;
   @Mock private ResultSet resultSet;
-  @Mock private RowProcessor rowProcessor;
-  @Mock private Runnable callback;
+  @Mock private FetchingQuery.RowProcessor rowProcessor;
+  @Mock private FetchingQuery.CallbackAfterQueryFinished callback;
 
   private DefaultFetchingQuery underTest;
 
@@ -49,7 +48,7 @@ class DefaultFetchingQueryTest {
 
     underTest.executeAndProcess(ps, rowProcessor, callback);
 
-    verify(callback).run();
+    verify(callback).afterQueryFinished();
     verify(rowProcessor, times(2)).process(resultSet);
     verify(resultSet).close();
   }
@@ -75,7 +74,7 @@ class DefaultFetchingQueryTest {
       // expected
     }
 
-    verify(callback).run();
+    verify(callback).afterQueryFinished();
     verify(resultSet).close();
   }
 }

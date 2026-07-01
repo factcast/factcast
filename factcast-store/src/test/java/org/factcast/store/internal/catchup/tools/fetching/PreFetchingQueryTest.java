@@ -23,7 +23,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import org.factcast.store.internal.catchup.RowProcessor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -37,7 +36,7 @@ class PreFetchingQueryTest {
   @Mock private Connection connection;
   @Mock private ResultSet resultSet;
   @Mock private ResultSetMetaData resultSetMetaData;
-  @Mock private RowProcessor rowProcessor;
+  @Mock private FetchingQuery.RowProcessor rowProcessor;
 
   private PreFetchingQuery underTest;
 

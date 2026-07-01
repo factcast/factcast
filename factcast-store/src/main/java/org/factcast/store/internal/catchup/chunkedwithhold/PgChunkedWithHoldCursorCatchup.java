@@ -20,17 +20,17 @@ import com.google.common.base.Preconditions;
 import java.sql.*;
 import java.time.Duration;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.*;
 import javax.annotation.*;
 import lombok.*;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.*;
 import org.factcast.store.internal.catchup.*;
+import org.factcast.store.internal.catchup.tools.fetching.FetchingQuery;
 import org.factcast.store.internal.pipeline.*;
 import org.factcast.store.internal.query.*;
 import org.factcast.store.internal.rowmapper.PgFactExtractor;
-import org.postgresql.util.PSQLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.datasource.*;
@@ -243,50 +243,34 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
 
     @VisibleForTesting
     int fetchChunk(@NonNull PgFactExtractor extractor) throws SQLException {
-      return fetchChunk(extractor, null);
+      return fetchChunk(extractor, () -> {});
     }
 
     @VisibleForTesting
     @SuppressWarnings("java:S1141")
-    int fetchChunk(@NonNull PgFactExtractor extractor, @Nullable Runnable callbackAfterExecution)
+    int fetchChunk(@NonNull PgFactExtractor extractor, @Nonnull Runnable callbackAfterExecution)
         throws SQLException {
-      @SuppressWarnings("ReassignedVariable")
-      int rows = 0;
-      try (Statement fetch = connection.createStatement()) {
+
+      final AtomicInteger rows = new AtomicInteger(0);
+      try (PreparedStatement fetch = connection.prepareStatement(fetchSql)) {
         fetch.setFetchSize(props.getPageSize());
         statementHolder.statement(fetch);
 
-        try (ResultSet rs = fetch.executeQuery(fetchSql)) {
+        FetchingQuery.create(props)
+            .executeAndProcess(
+                fetch,
+                rs -> {
+                  if (statementHolder.wasCanceled()) {
+                    log.trace("{} catchup {}, fetch chunk statement was cancelled", req, phase);
+                  } else {
+                    PgFact fact = extractor.mapRow(rs, rows.get());
+                    pipeline.process(Signal.of(fact));
+                    rows.incrementAndGet();
+                  }
+                },
+                callbackAfterExecution::run);
 
-          if (callbackAfterExecution != null) callbackAfterExecution.run();
-
-          while (rs.next()) {
-            if (statementHolder.wasCanceled() || rs.isClosed()) {
-              return rows;
-            }
-
-            try {
-              PgFact fact = extractor.mapRow(rs, rows);
-              pipeline.process(Signal.of(fact));
-              rows++;
-            } catch (PSQLException e) {
-              if (statementHolder.wasCanceled()) {
-                log.trace("fetch chunk statement was cancelled", e);
-                return rows;
-              } else {
-                throw e;
-              }
-            }
-          }
-          return rows;
-        }
-      } catch (PSQLException e) {
-        if (statementHolder.wasCanceled()) {
-          log.trace("fetch chunk statement was cancelled", e);
-          return rows;
-        } else {
-          throw e;
-        }
+        return rows.get();
       }
     }
 

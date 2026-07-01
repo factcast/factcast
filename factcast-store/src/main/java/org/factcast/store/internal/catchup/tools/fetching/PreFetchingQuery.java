@@ -20,19 +20,19 @@ import java.util.concurrent.*;
 import javax.sql.rowset.*;
 import lombok.NonNull;
 import lombok.experimental.Delegate;
-import org.factcast.store.internal.catchup.RowProcessor;
 
 @SuppressWarnings("java:S2142")
 public class PreFetchingQuery implements FetchingQuery {
-  // to not pass nulls
-  private static final @NonNull Runnable NOP = () -> {};
 
   @Override
-  public void executeAndProcess(
+  public int executeAndProcess(
       @NonNull PreparedStatement ps,
       @NonNull RowProcessor rowProcessor,
-      @NonNull Runnable callbackBeforeProcessing)
+      @NonNull CallbackAfterQueryFinished callbackBeforeProcessing)
       throws SQLException {
+
+    @SuppressWarnings("ReassignedVariable")
+    int rows = 0;
 
     if (ps.getConnection().getAutoCommit())
       throw new IllegalArgumentException(
@@ -50,7 +50,7 @@ public class PreFetchingQuery implements FetchingQuery {
     ps.setFetchSize(fetchSize / 2);
 
     ResultSet resultSet = ps.executeQuery();
-    callbackBeforeProcessing.run();
+    callbackBeforeProcessing.afterQueryFinished();
 
     // async producer, terminated by closing the rs
     CompletableFuture.runAsync(() -> produce(resultSet, q));
@@ -63,9 +63,10 @@ public class PreFetchingQuery implements FetchingQuery {
         exhausted = true;
         ResultSet page = q.take();
 
-        while (page.next()) {
+        while (page.next() && !ps.isClosed()) {
           exhausted = false;
           rowProcessor.process(page);
+          rows++;
         }
 
       } while (!exhausted);
@@ -78,6 +79,7 @@ public class PreFetchingQuery implements FetchingQuery {
       }
       q.clear();
     }
+    return rows;
   }
 
   @SuppressWarnings({"java:S2445", "java:S2095", "SynchronizationOnLocalVariableOrMethodParameter"})
@@ -110,12 +112,6 @@ public class PreFetchingQuery implements FetchingQuery {
     } catch (InterruptedException e) {
       // in that case we do not care.
     }
-  }
-
-  // convenience
-  public void executeAndProcess(PreparedStatement ps, RowProcessor rowProcessor)
-      throws SQLException {
-    executeAndProcess(ps, rowProcessor, NOP);
   }
 
   /**
