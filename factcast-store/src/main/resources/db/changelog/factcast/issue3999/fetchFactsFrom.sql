@@ -17,7 +17,7 @@ $$
 DECLARE
     serialChunk bigint[];
 BEGIN
-    FETCH NEXT FROM fetchFactsFrom.cur INTO serialChunk;
+    FETCH NEXT FROM fetchFactsFromCursorWithHold.cur INTO serialChunk;
     RETURN QUERY SELECT f.ser     as ser,
                         f.payload as payload,
                         f.header  as header
