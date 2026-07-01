@@ -56,6 +56,7 @@ import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.datasource.DelegatingDataSource;
+import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
@@ -137,9 +138,9 @@ class PgFactStoreP1OffloadIntegrationTest {
     List<CatchupPhaseDataSource> catchupDataSources = catchupFactory.catchupDataSources();
     assertThat(catchupDataSources).hasSize(2);
     assertThat(catchupDataSources.get(0).phase()).isEqualTo(PgCatchupFactory.Phase.PHASE_1);
-    assertThat(catchupDataSources.get(0).dataSource()).isSameAs(p1CatchupDataSource);
     assertThat(catchupDataSources.get(1).phase()).isEqualTo(PgCatchupFactory.Phase.PHASE_2);
-    assertThat(catchupDataSources.get(1).dataSource()).isNotSameAs(p1CatchupDataSource);
+    assertThat(catchupDataSources.get(0).dataSource())
+        .isNotSameAs(catchupDataSources.get(1).dataSource());
   }
 
   @Configuration
@@ -167,7 +168,8 @@ class PgFactStoreP1OffloadIntegrationTest {
     }
   }
 
-  record CatchupPhaseDataSource(PgCatchupFactory.Phase phase, DataSource dataSource) {}
+  record CatchupPhaseDataSource(
+      PgCatchupFactory.Phase phase, SingleConnectionDataSource dataSource) {}
 
   static class DataSourceRecordingPgCatchupFactory implements PgCatchupFactory {
 
@@ -186,7 +188,7 @@ class PgFactStoreP1OffloadIntegrationTest {
         @NonNull ServerPipeline pipeline,
         @NonNull AtomicLong serial,
         @NonNull CurrentStatementHolder holder,
-        @NonNull DataSource ds,
+        @NonNull SingleConnectionDataSource ds,
         @NonNull Phase phase) {
       catchupDataSources.add(new CatchupPhaseDataSource(phase, ds));
       return delegate.create(request, pipeline, serial, holder, ds, phase);

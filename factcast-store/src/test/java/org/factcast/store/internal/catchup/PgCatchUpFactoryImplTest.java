@@ -19,7 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 import java.util.concurrent.atomic.AtomicLong;
-import javax.sql.DataSource;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.StoreConfigurationProperties.CatchupStrategy;
@@ -35,7 +34,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
 @ExtendWith(MockitoExtension.class)
 class PgCatchUpFactoryImplTest {
@@ -49,8 +48,7 @@ class PgCatchUpFactoryImplTest {
   @Mock ServerPipeline pipeline;
   @Mock AtomicLong serial;
   @Mock CurrentStatementHolder holder;
-  @Mock DataSource ds;
-  @Mock PlatformTransactionManager txMgr;
+  @Mock SingleConnectionDataSource ds;
 
   @InjectMocks PgCatchUpFactoryImpl underTest;
 
@@ -60,7 +58,7 @@ class PgCatchUpFactoryImplTest {
     @Test
     void returnsFetchingInPhase2RegardlessOfStrategy() {
       when(props.getCatchupStrategy()).thenReturn(CatchupStrategy.CURSOR);
-      underTest = new PgCatchUpFactoryImpl(props, metrics, txMgr);
+      underTest = new PgCatchUpFactoryImpl(props, metrics);
 
       // even if CHUNKED is configured, PHASE_2 must use cursor
       var result =

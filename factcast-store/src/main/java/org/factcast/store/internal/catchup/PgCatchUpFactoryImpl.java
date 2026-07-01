@@ -16,7 +16,6 @@
 package org.factcast.store.internal.catchup;
 
 import java.util.concurrent.atomic.*;
-import javax.sql.DataSource;
 import lombok.NonNull;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
@@ -26,21 +25,17 @@ import org.factcast.store.internal.catchup.chunkedwithhold.PgChunkedWithHoldCurs
 import org.factcast.store.internal.catchup.cursor.PgCursorCatchup;
 import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.query.CurrentStatementHolder;
-import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
 public class PgCatchUpFactoryImpl implements PgCatchupFactory {
 
   @NonNull final StoreConfigurationProperties props;
   @NonNull final PgMetrics metrics;
-  @NonNull final PlatformTransactionManager txMgr;
 
   public PgCatchUpFactoryImpl(
-      @NonNull StoreConfigurationProperties props,
-      @NonNull PgMetrics metrics,
-      @NonNull PlatformTransactionManager txMgr) {
+      @NonNull StoreConfigurationProperties props, @NonNull PgMetrics metrics) {
     this.props = props;
     this.metrics = metrics;
-    this.txMgr = txMgr;
   }
 
   @Override
@@ -49,7 +44,7 @@ public class PgCatchUpFactoryImpl implements PgCatchupFactory {
       @NonNull ServerPipeline pipeline,
       @NonNull AtomicLong serial,
       @NonNull CurrentStatementHolder holder,
-      @NonNull DataSource ds,
+      @NonNull SingleConnectionDataSource ds,
       @NonNull Phase phase) {
 
     // does not make sense to use in phase 2 altogether, as we're not expecting many facts there.
@@ -62,7 +57,7 @@ public class PgCatchUpFactoryImpl implements PgCatchupFactory {
           new PgChunkedCatchup(props, metrics, request, pipeline, serial, holder, ds, phase);
       case CHUNKED_WITH_HOLD ->
           new PgChunkedWithHoldCursorCatchup(
-              props, metrics, request, pipeline, serial, holder, ds, txMgr, phase);
+              props, metrics, request, pipeline, serial, holder, ds, phase);
       case CURSOR ->
           new PgCursorCatchup(props, metrics, request, pipeline, serial, holder, ds, phase);
     };

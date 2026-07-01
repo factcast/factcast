@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 import com.google.common.eventbus.EventBus;
+import java.sql.Connection;
 import java.sql.ResultSet;
 import java.util.Optional;
 import java.util.UUID;
@@ -123,7 +124,7 @@ class PgFactStreamTest {
 
   @Nested
   class WhenCatchingUpAndFastForwarding {
-    @Mock DataSource ds;
+    @Mock SingleConnectionDataSource ds;
     final HighWaterMark hwm = HighWaterMark.of(UUID.randomUUID(), 66L);
 
     @BeforeEach
@@ -416,8 +417,9 @@ class PgFactStreamTest {
 
   @Nested
   class WhenCatchingUp {
-    @Mock DataSource ds;
+    @Mock SingleConnectionDataSource ds;
     @Mock DataSource p1Ds;
+    @Mock Connection p1Connection;
 
     @BeforeEach
     void setup() {
@@ -477,7 +479,9 @@ class PgFactStreamTest {
     }
 
     @Test
+    @SneakyThrows
     void usesConfiguredDataSourceOnlyForPhase1() {
+      when(p1Ds.getConnection()).thenReturn(p1Connection);
       PgFactStream withP1DataSource =
           spy(
               new PgFactStream(
@@ -506,7 +510,7 @@ class PgFactStreamTest {
               same(pipeline),
               same(serial),
               any(CurrentStatementHolder.class),
-              same(p1Ds),
+              argThat(phase1Ds -> phase1Ds instanceof SingleConnectionDataSource && phase1Ds != ds),
               eq(PgCatchupFactory.Phase.PHASE_1));
       verify(pgCatchupFactory)
           .create(
@@ -516,6 +520,7 @@ class PgFactStreamTest {
               any(CurrentStatementHolder.class),
               same(ds),
               eq(PgCatchupFactory.Phase.PHASE_2));
+      verify(p1Connection).close();
     }
 
     @Test

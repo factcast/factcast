@@ -26,6 +26,7 @@ import javax.sql.DataSource;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.FactStreamPosition;
 import org.factcast.core.subscription.FactStreamInfo;
@@ -181,7 +182,7 @@ public class PgFactStream {
   void catchupAndFastForward(
       @NonNull SubscriptionRequestTO request,
       @NonNull HighWaterMark hwm,
-      @NonNull DataSource datasource) {
+      @NonNull SingleConnectionDataSource datasource) {
     if (request.ephemeral()) {
       // just fast forward to the latest event published by now
       serial.set(hwm.targetSer());
@@ -279,21 +280,28 @@ public class PgFactStream {
   }
 
   @VisibleForTesting
-  void catchup(long highWaterMarkSerial, DataSource ds) {
+  void catchup(long highWaterMarkSerial, SingleConnectionDataSource ds) {
     if (serial.get() <= 0 && props.getFromScratchCatchupMinLogLevel() != null) {
       FromScratchCatchupLogSuppressingTurboFilter.beginCatchup(request.debugInfo());
     }
     try {
       if (isConnected()) {
-        pgCatchupFactory
-            .create(
-                request,
-                pipeline,
-                serial,
-                statementHolder,
-                phase1CatchupDataSourceOr(ds),
-                PgCatchupFactory.Phase.PHASE_1)
-            .run();
+        SingleConnectionDataSource phase1DataSource = phase1CatchupDataSourceOr(ds);
+        try {
+          pgCatchupFactory
+              .create(
+                  request,
+                  pipeline,
+                  serial,
+                  statementHolder,
+                  phase1DataSource,
+                  PgCatchupFactory.Phase.PHASE_1)
+              .run();
+        } finally {
+          if (phase1DataSource != ds) {
+            phase1DataSource.destroy();
+          }
+        }
       }
       if (isConnected()) {
         // if we did not find anything in phase1,
@@ -312,10 +320,12 @@ public class PgFactStream {
 
   @VisibleForTesting
   @NonNull
-  DataSource phase1CatchupDataSourceOr(@NonNull DataSource primaryDataSource) {
+  @SneakyThrows
+  SingleConnectionDataSource phase1CatchupDataSourceOr(
+      @NonNull SingleConnectionDataSource primaryDataSource) {
     if (p1CatchupDataSource != null) {
       log.info("{} using configured P1 catchup datasource", request);
-      return p1CatchupDataSource;
+      return new SingleConnectionDataSource(p1CatchupDataSource.getConnection(), true);
     }
     return primaryDataSource;
   }

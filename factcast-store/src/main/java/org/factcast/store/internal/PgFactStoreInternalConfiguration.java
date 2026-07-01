@@ -102,11 +102,8 @@ public class PgFactStoreInternalConfiguration {
 
   @Bean
   @DependsOnDatabaseInitialization
-  public PgCatchupFactory pgCatchupFactory(
-      StoreConfigurationProperties props,
-      PgMetrics metrics,
-      PlatformTransactionManager platformTransactionManager) {
-    return new PgCatchUpFactoryImpl(props, metrics, platformTransactionManager);
+  public PgCatchupFactory pgCatchupFactory(StoreConfigurationProperties props, PgMetrics metrics) {
+    return new PgCatchUpFactoryImpl(props, metrics);
   }
 
   @Bean
