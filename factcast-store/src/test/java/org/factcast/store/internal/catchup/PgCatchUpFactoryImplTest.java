@@ -19,12 +19,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 import java.util.concurrent.atomic.AtomicLong;
-import javax.sql.DataSource;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.StoreConfigurationProperties.CatchupStrategy;
 import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.catchup.chunked.PgChunkedCatchup;
+import org.factcast.store.internal.catchup.chunkedwithhold.PgChunkedWithHoldCursorCatchup;
 import org.factcast.store.internal.catchup.cursor.PgCursorCatchup;
 import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.query.CurrentStatementHolder;
@@ -34,6 +34,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
 @ExtendWith(MockitoExtension.class)
 class PgCatchUpFactoryImplTest {
@@ -47,7 +48,7 @@ class PgCatchUpFactoryImplTest {
   @Mock ServerPipeline pipeline;
   @Mock AtomicLong serial;
   @Mock CurrentStatementHolder holder;
-  @Mock DataSource ds;
+  @Mock SingleConnectionDataSource ds;
 
   @InjectMocks PgCatchUpFactoryImpl underTest;
 
@@ -84,6 +85,16 @@ class PgCatchUpFactoryImplTest {
           underTest.create(request, pipeline, serial, holder, ds, PgCatchupFactory.Phase.PHASE_1);
 
       assertThat(result).isInstanceOf(PgCursorCatchup.class);
+    }
+
+    @Test
+    void returnsHoldCursorInPhase1WhenStrategyIsHoldCursor() {
+      when(props.getCatchupStrategy()).thenReturn(CatchupStrategy.CHUNKED_WITH_HOLD);
+
+      var result =
+          underTest.create(request, pipeline, serial, holder, ds, PgCatchupFactory.Phase.PHASE_1);
+
+      assertThat(result).isInstanceOf(PgChunkedWithHoldCursorCatchup.class);
     }
   }
 }

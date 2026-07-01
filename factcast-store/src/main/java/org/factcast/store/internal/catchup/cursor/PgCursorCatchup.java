@@ -19,7 +19,6 @@ import com.google.common.annotations.VisibleForTesting;
 import io.micrometer.core.instrument.Timer;
 import java.time.Duration;
 import java.util.concurrent.atomic.*;
-import javax.sql.DataSource;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -38,6 +37,9 @@ import org.factcast.store.internal.rowmapper.PgFactExtractor;
 import org.postgresql.util.PSQLException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowCallbackHandler;
+import org.springframework.jdbc.datasource.SingleConnectionDataSource;
+import org.springframework.jdbc.support.JdbcTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @Slf4j
 public class PgCursorCatchup extends AbstractPgCatchup {
@@ -49,7 +51,7 @@ public class PgCursorCatchup extends AbstractPgCatchup {
       @NonNull ServerPipeline pipeline,
       @NonNull AtomicLong serial,
       @NonNull CurrentStatementHolder statementHolder,
-      @NonNull DataSource ds,
+      @NonNull SingleConnectionDataSource ds,
       PgCatchupFactory.@NonNull Phase phase) {
     super(props, metrics, req, pipeline, serial, statementHolder, ds, phase);
   }
@@ -58,8 +60,12 @@ public class PgCursorCatchup extends AbstractPgCatchup {
   @Override
   public void run() {
     try {
-      var jdbc = new JdbcTemplate(ds);
-      fetch(jdbc);
+      new TransactionTemplate(new JdbcTransactionManager(ds))
+          .execute(
+              ts -> {
+                fetch(new JdbcTemplate(ds));
+                return null;
+              });
     } finally {
       statementHolder.clear();
 
