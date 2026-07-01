@@ -16,7 +16,6 @@
 package org.factcast.store.internal.catchup.cursor;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
 import io.micrometer.core.instrument.Timer;
 import java.time.Duration;
 import java.util.concurrent.atomic.*;
@@ -39,6 +38,8 @@ import org.postgresql.util.PSQLException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
+import org.springframework.jdbc.support.JdbcTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @Slf4j
 public class PgCursorCatchup extends AbstractPgCatchup {
@@ -59,8 +60,12 @@ public class PgCursorCatchup extends AbstractPgCatchup {
   @Override
   public void run() {
     try {
-      var jdbc = new JdbcTemplate(ds);
-      fetch(jdbc);
+      new TransactionTemplate(new JdbcTransactionManager(ds))
+          .execute(
+              ts -> {
+                fetch(new JdbcTemplate(ds));
+                return null;
+              });
     } finally {
       statementHolder.clear();
 
@@ -69,15 +74,8 @@ public class PgCursorCatchup extends AbstractPgCatchup {
     }
   }
 
-  @SneakyThrows
   @VisibleForTesting
   void fetch(JdbcTemplate jdbc) {
-    // this needs to be transactional for fetch-size to have any effect whatsoever. luckyly, we use
-    // a org.springframework.jdbc.datasource.SingleConnectionDataSource with autoCommitDisabled.
-
-    Preconditions.checkState(
-        !ds.getConnection().getAutoCommit(), "Connection must not be in autocommit mode");
-
     jdbc.setFetchSize(props.getPageSize());
     jdbc.setQueryTimeout(0); // disable query timeout
     final var b = new PgQueryBuilder(req.specs(), statementHolder);
