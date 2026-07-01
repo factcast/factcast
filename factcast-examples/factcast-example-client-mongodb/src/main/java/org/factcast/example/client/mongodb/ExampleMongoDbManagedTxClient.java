@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2024 factcast.org
+ * Copyright © 2017-2020 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.mongodb;
+package org.factcast.example.client.mongodb;
 
-import com.mongodb.client.MongoDatabase;
-import lombok.NonNull;
-import org.factcast.factus.projection.ExternalizedProjection;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-public interface MongoDbProjection extends ExternalizedProjection {
-  String STATE_COLLECTION_NAME = "factcast_states";
-  String PROJECTION_CLASS_FIELD = "projectionKey";
-  String LAST_FACT_ID_FIELD = "lastFactId";
-  String LAST_FACT_SERIAL_FIELD = "lastFactSerial";
-
-  @NonNull
-  MongoDatabase mongoDb();
+/** Demonstrates publishing a UserChanged event and updating a transactional managed projection. */
+@SpringBootApplication
+public class ExampleMongoDbManagedTxClient {
+  public static void main(String[] args) {
+    SpringApplication.run(ExampleMongoDbManagedTxClient.class, Examples.TRANSACTIONAL.name());
+  }
 }

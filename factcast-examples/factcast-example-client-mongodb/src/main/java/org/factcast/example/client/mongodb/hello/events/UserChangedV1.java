@@ -29,9 +29,8 @@ import org.factcast.factus.event.Specification;
 public class UserChangedV1 implements EventObject {
   private UUID aggregateId;
 
-  String lastName;
-
   String firstName;
+  String lastName;
 
   @Override
   public Set<UUID> aggregateIds() {

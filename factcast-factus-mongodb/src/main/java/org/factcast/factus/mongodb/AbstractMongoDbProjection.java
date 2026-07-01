@@ -20,40 +20,22 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.ReplaceOptions;
 import java.time.Duration;
-import java.time.Instant;
-import java.time.ZonedDateTime;
-import java.util.Optional;
 import java.util.UUID;
 import lombok.Getter;
 import lombok.NonNull;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import net.javacrumbs.shedlock.core.*;
-import net.javacrumbs.shedlock.provider.mongo.MongoLockProvider;
+import net.javacrumbs.shedlock.core.LockProvider;
 import org.bson.Document;
 import org.factcast.core.FactStreamPosition;
 import org.factcast.factus.projection.WriterToken;
 
 @Slf4j
-@SuppressWarnings({"java:S1133", "java:S2142"})
-abstract class AbstractMongoDbProjection implements MongoDbProjection {
-  public static final String STATE_COLLECTION = "states";
-  public static final String LOCK_COLLECTION = "locks";
-  public static final String PROJECTION_CLASS_FIELD = "projectionKey";
-  public static final String LAST_FACT_ID_FIELD = "lastFactId";
-  public static final String LAST_FACT_SERIAL_FIELD = "lastFactSerial";
-
-  // Time after which the lock is released if unlock() is called
-  protected static final Duration MIN_LEASE_DURATION_SECONDS = Duration.ofSeconds(1);
-  // Time after which the lock is automatically released
-  protected static final Duration MAX_LEASE_DURATION_SECONDS = Duration.ofSeconds(60);
-  private static final long MAX_RETRY_INTERVAL_MILLISECONDS = 30_000;
-
+@SuppressWarnings("java:S1133")
+public abstract class AbstractMongoDbProjection implements MongoDbProjection {
   @Getter @NonNull private final MongoDatabase mongoDb;
   @Getter @NonNull protected final String projectionKey;
   @NonNull private final MongoCollection<Document> stateCollection;
-  @NonNull private final LockProvider lockProvider;
-  @Getter @Setter private SimpleLock lock;
+  @NonNull private final MongoDbWriterTokenManager writerTokenAcquirer;
 
   protected AbstractMongoDbProjection(
       @NonNull MongoClient mongoClient, @NonNull String databaseName) {
@@ -61,11 +43,11 @@ abstract class AbstractMongoDbProjection implements MongoDbProjection {
   }
 
   protected AbstractMongoDbProjection(@NonNull MongoDatabase mongoDb) {
-    this(
-        mongoDb,
-        // Collections are created automatically when non-existent
-        mongoDb.getCollection(STATE_COLLECTION),
-        createLockClient(mongoDb));
+    this.mongoDb = mongoDb;
+    this.projectionKey = this.getScopedName().asString();
+    // Collections are created automatically when non-existent
+    this.stateCollection = mongoDb.getCollection(STATE_COLLECTION_NAME);
+    this.writerTokenAcquirer = MongoDbWriterTokenManager.create(mongoDb, projectionKey);
   }
 
   // Only for testing purposes.
@@ -77,13 +59,7 @@ abstract class AbstractMongoDbProjection implements MongoDbProjection {
     this.projectionKey = this.getScopedName().asString();
     // Collections are created automatically when non-existent
     this.stateCollection = stateCollection;
-    this.lockProvider = lockProvider;
-  }
-
-  private static LockProvider createLockClient(MongoDatabase database) {
-    log.debug("Configuring lock provider: MongoDB.");
-    MongoCollection<Document> lockTable = database.getCollection(LOCK_COLLECTION);
-    return new MongoLockProvider(lockTable);
+    this.writerTokenAcquirer = new MongoDbWriterTokenManager(lockProvider, projectionKey);
   }
 
   @Override
@@ -117,45 +93,6 @@ abstract class AbstractMongoDbProjection implements MongoDbProjection {
 
   @Override
   public WriterToken acquireWriteToken(@NonNull Duration maxWait) {
-    final LockConfiguration lockConfiguration = getLockConfiguration(getLockKey());
-    Optional<SimpleLock> acquiredLock =
-        tryToAcquireLock(lockConfiguration, ZonedDateTime.now().plus(maxWait));
-    this.lock = acquiredLock.orElse(null);
-    return acquiredLock.map(l -> new MongoDbWriterToken(l, lockConfiguration)).orElse(null);
-  }
-
-  private String getLockKey() {
-    return projectionKey + "_lock";
-  }
-
-  private static LockConfiguration getLockConfiguration(String lockKey) {
-    return new LockConfiguration(
-        Instant.now(), lockKey, MAX_LEASE_DURATION_SECONDS, MIN_LEASE_DURATION_SECONDS);
-  }
-
-  /**
-   * Attempts to acquire the lock until retryUntil has passed. Retry interval is increasing until
-   * MAX_RETRY_INTERVAL_MILLISECONDS is reached, starting with 0.5 seconds.
-   */
-  private Optional<SimpleLock> tryToAcquireLock(
-      @NonNull LockConfiguration lockConfig, @NonNull ZonedDateTime retryUntil) {
-    try {
-      long retryBackoffDuration = 500;
-      do {
-        log.debug("Trying to acquire lock for projection: {}", projectionKey);
-        Optional<SimpleLock> acquiredLock = lockProvider.lock(lockConfig);
-        if (acquiredLock.isPresent()) {
-          log.debug("Acquired lock for projection: {}", projectionKey);
-          return acquiredLock;
-        }
-        Thread.sleep(retryBackoffDuration);
-        retryBackoffDuration =
-            Math.min(MAX_RETRY_INTERVAL_MILLISECONDS * 1000, retryBackoffDuration * 2);
-      } while (ZonedDateTime.now().isBefore(retryUntil));
-    } catch (InterruptedException e) {
-      log.info("Interrupted while trying to acquire lock: {}", e.getMessage());
-      Thread.currentThread().interrupt();
-    }
-    return Optional.empty();
+    return writerTokenAcquirer.acquireWriteToken(maxWait);
   }
 }
