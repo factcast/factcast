@@ -13,7 +13,7 @@
   <name>${project.groupId}:${project.artifactId}</name>
   <properties>
     <java.version>21</java.version>
-    <vaadin.version>25.1.8</vaadin.version>
+    <vaadin.version>25.2.1</vaadin.version>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -128,7 +128,7 @@
     <dependency>
       <groupId>com.microsoft.playwright</groupId>
       <artifactId>playwright</artifactId>
-      <version>1.60.0</version>
+      <version>1.61.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>
