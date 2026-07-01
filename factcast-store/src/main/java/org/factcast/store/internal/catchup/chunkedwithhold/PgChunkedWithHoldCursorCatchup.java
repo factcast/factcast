@@ -219,6 +219,9 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
 
       // ok, this is messy, but the only way i can think of to still use the preparedQuerySetter,
       // which is impossible to do, if we pass a string to a function...
+      //
+      // This will declare a cursor as needed from and specified by SQL function
+      // fetchFactsFromCursorWithHold
 
       String sql =
           String.format(
@@ -275,7 +278,11 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
     }
 
     private @NonNull String createFetchSQL() {
-      return "SELECT " + PgConstants.PROJECTION_FACT + " FROM fetchFactsFrom('" + name() + "')";
+      return "SELECT "
+          + PgConstants.PROJECTION_FACT
+          + " FROM fetchFactsFromCursorWithHold('"
+          + name()
+          + "')";
     }
   }
 
