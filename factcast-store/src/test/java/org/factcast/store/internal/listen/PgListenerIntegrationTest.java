@@ -96,8 +96,10 @@ class PgListenerIntegrationTest {
       @SuppressWarnings("unused")
       @Subscribe
       public void onEvent(FactInsertionNotification ev) {
-        signals.add(ev);
-        latch.countDown();
+        synchronized (signals) {
+          signals.add(ev);
+          latch.countDown();
+        }
       }
 
       private final CountDownLatch latch = new CountDownLatch(2);
