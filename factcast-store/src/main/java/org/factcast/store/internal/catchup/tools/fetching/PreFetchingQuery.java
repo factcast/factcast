@@ -88,7 +88,12 @@ public class PreFetchingQuery implements FetchingQuery {
     }
   }
 
-  @SuppressWarnings({"java:S2445", "java:S2095", "SynchronizationOnLocalVariableOrMethodParameter"})
+  @SuppressWarnings({
+    "java:S2445",
+    "java:S2095",
+    "java:S2093",
+    "SynchronizationOnLocalVariableOrMethodParameter"
+  })
   private void produce(@NonNull ResultSet resultSet, @NonNull ArrayBlockingQueue<ResultSet> q) {
     //noinspection TryFinallyCanBeTryWithResources
     try {
@@ -110,8 +115,8 @@ public class PreFetchingQuery implements FetchingQuery {
     } finally {
       try {
         resultSet.close();
-      } catch (SQLException ignore) {
-        log.debug("Chunk resultset cannot be closed: ", ignore);
+      } catch (SQLException e) {
+        log.debug("Chunk resultset cannot be closed: ", e);
       }
     }
   }
