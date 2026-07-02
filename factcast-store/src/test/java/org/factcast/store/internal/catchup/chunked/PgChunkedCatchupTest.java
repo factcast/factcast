@@ -40,6 +40,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
+@SuppressWarnings("removal")
 @ExtendWith(MockitoExtension.class)
 class PgChunkedCatchupTest {
 
