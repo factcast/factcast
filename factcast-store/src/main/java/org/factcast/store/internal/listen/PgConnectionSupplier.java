@@ -144,26 +144,4 @@ public class PgConnectionSupplier {
       @NonNull List<ConnectionModifier> filterList) {
     return new ModifiedSingleConnectionDataSource(ds.getConnection(), filterList);
   }
-
-  static class ModifiedSingleConnectionDataSource extends SingleConnectionDataSource {
-    private final Connection c;
-    private final List<ConnectionModifier> filterList;
-
-    public ModifiedSingleConnectionDataSource(
-        @NonNull Connection c, @NonNull List<ConnectionModifier> filterList) {
-      super(c, true);
-      this.c = c;
-      this.filterList = filterList;
-
-      filterList.forEach(f -> f.afterBorrow(c));
-    }
-
-    @Override
-    public void destroy() {
-      var rev = new ArrayList<>(filterList);
-      Collections.reverse(rev);
-      rev.forEach(f -> f.beforeReturn(c));
-      super.destroy();
-    }
-  }
 }

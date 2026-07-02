@@ -266,7 +266,7 @@ class PgConnectionSupplierTest {
 
     @Test
     void cleansUpConnection() {
-      var uut = new PgConnectionSupplier.ModifiedSingleConnectionDataSource(c, List.of(cm1));
+      var uut = new ModifiedSingleConnectionDataSource(c, List.of(cm1));
       uut.close();
 
       verify(cm1).beforeReturn(c);
@@ -275,7 +275,7 @@ class PgConnectionSupplierTest {
     @Test
     void reversesOrder() {
       InOrder inOrder = inOrder(cm1, cm2);
-      var uut = new PgConnectionSupplier.ModifiedSingleConnectionDataSource(c, List.of(cm1, cm2));
+      var uut = new ModifiedSingleConnectionDataSource(c, List.of(cm1, cm2));
       inOrder.verify(cm1).afterBorrow(c);
       inOrder.verify(cm2).afterBorrow(c);
 

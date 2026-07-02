@@ -17,6 +17,7 @@ package org.factcast.store.internal;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.EventBus;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
@@ -37,6 +38,7 @@ import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.catchup.*;
 import org.factcast.store.internal.filter.FromScratchCatchupLogSuppressingTurboFilter;
 import org.factcast.store.internal.listen.ConnectionModifier;
+import org.factcast.store.internal.listen.ModifiedSingleConnectionDataSource;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.pipeline.Signal;
@@ -252,7 +254,13 @@ public class PgFactStream {
   @VisibleForTesting
   @NonNull
   SingleConnectionDataSource createSingleDataSource(@NonNull SubscriptionRequest request) {
-    return connectionSupplier.getPooledAsSingleDataSource(
+    return connectionSupplier.getPooledAsSingleDataSource(catchupConnectionModifiers(request));
+  }
+
+  @VisibleForTesting
+  @NonNull
+  List<ConnectionModifier> catchupConnectionModifiers(@NonNull SubscriptionRequest request) {
+    return List.of(
         ConnectionModifier.withCustomPlanForced(),
         ConnectionModifier.withAutoCommitDisabled(),
         ConnectionModifier.withApplicationName(request.debugInfo()));
@@ -311,8 +319,8 @@ public class PgFactStream {
             pgCatchupFactory.create(
                 request, pipeline, serial, statementHolder, ds, PgCatchupFactory.Phase.PHASE_2);
         // Only skip to the initial HWM when phase 1 queried the primary datasource. A dedicated
-        // phase1 datasource (e.g. read replica) might lag behind that HWM, so phase 2 must continue
-        // after the last serial actually read in phase 1.
+        // phase1 datasource might be behind that HWM, so phase 2 must continue after the last
+        // serial actually read in phase 1.
         if (p1CatchupDataSource == null) {
           pgCatchup.fastForward(highWaterMarkSerial);
         }
@@ -330,7 +338,8 @@ public class PgFactStream {
       @NonNull SingleConnectionDataSource primaryDataSource) {
     if (p1CatchupDataSource != null) {
       log.info("{} using configured P1 catchup datasource", request);
-      return new SingleConnectionDataSource(p1CatchupDataSource.getConnection(), true);
+      return new ModifiedSingleConnectionDataSource(
+          p1CatchupDataSource.getConnection(), catchupConnectionModifiers(request));
     }
     return primaryDataSource;
   }
