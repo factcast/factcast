@@ -18,6 +18,7 @@ package org.factcast.store.internal;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.EventBus;
 import java.util.concurrent.*;
+import javax.sql.DataSource;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.subscription.*;
@@ -29,6 +30,7 @@ import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.pipeline.*;
 import org.factcast.store.internal.query.*;
 import org.factcast.store.internal.telemetry.PgStoreTelemetry;
+import org.jetbrains.annotations.Nullable;
 
 // TODO integrate with PGQuery
 @SuppressWarnings("UnstableApiUsage")
@@ -48,6 +50,7 @@ public class PgSubscriptionFactory implements AutoCloseable {
   final ExecutorService es;
   final PgStoreTelemetry telemetry;
   final StoreConfigurationProperties props;
+  @Nullable final DataSource p1CatchupDataSource;
   private final int maxPipelineBufferSize;
 
   public PgSubscriptionFactory(
@@ -60,6 +63,30 @@ public class PgSubscriptionFactory implements AutoCloseable {
       ServerPipelineFactory pipelineFactory,
       PgMetrics metrics,
       PgStoreTelemetry telemetry) {
+    this(
+        connectionSupplier,
+        eventBus,
+        idToSerialMapper,
+        props,
+        catchupFactory,
+        hwmFetcher,
+        pipelineFactory,
+        metrics,
+        telemetry,
+        null);
+  }
+
+  public PgSubscriptionFactory(
+      PgConnectionSupplier connectionSupplier,
+      EventBus eventBus,
+      PgFactIdToSerialMapper idToSerialMapper,
+      StoreConfigurationProperties props,
+      PgCatchupFactory catchupFactory,
+      HighWaterMarkFetcher hwmFetcher,
+      ServerPipelineFactory pipelineFactory,
+      PgMetrics metrics,
+      PgStoreTelemetry telemetry,
+      @Nullable DataSource p1CatchupDataSource) {
     this.connectionSupplier = connectionSupplier;
     this.eventBus = eventBus;
     this.idToSerialMapper = idToSerialMapper;
@@ -68,6 +95,7 @@ public class PgSubscriptionFactory implements AutoCloseable {
     this.pipelineFactory = pipelineFactory;
     this.telemetry = telemetry;
     this.props = props;
+    this.p1CatchupDataSource = p1CatchupDataSource;
 
     this.maxPipelineBufferSize = props.getTransformationCachePageSize();
 
@@ -92,6 +120,7 @@ public class PgSubscriptionFactory implements AutoCloseable {
             pipe,
             telemetry,
             props,
+            p1CatchupDataSource,
             req);
 
     // when closing the subscription, also close the PgFactStream

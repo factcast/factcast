@@ -17,15 +17,17 @@ package org.factcast.store.internal;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.EventBus;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import javax.sql.DataSource;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.FactStreamPosition;
 import org.factcast.core.subscription.FactStreamInfo;
@@ -36,6 +38,7 @@ import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.catchup.*;
 import org.factcast.store.internal.filter.FromScratchCatchupLogSuppressingTurboFilter;
 import org.factcast.store.internal.listen.ConnectionModifier;
+import org.factcast.store.internal.listen.ModifiedSingleConnectionDataSource;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.pipeline.Signal;
@@ -44,6 +47,7 @@ import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgQueryBuilder;
 import org.factcast.store.internal.telemetry.PgStoreTelemetry;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
@@ -53,7 +57,6 @@ import org.springframework.jdbc.datasource.SingleConnectionDataSource;
  * @author <uwe.schaefer@prisma-capacity.eu>
  */
 @Slf4j
-@RequiredArgsConstructor
 public class PgFactStream {
 
   final PgConnectionSupplier connectionSupplier;
@@ -64,6 +67,7 @@ public class PgFactStream {
   final ServerPipeline pipeline;
   final PgStoreTelemetry telemetry;
   final StoreConfigurationProperties props;
+  @Nullable final DataSource p1CatchupDataSource;
 
   @Getter(AccessLevel.PROTECTED)
   final SubscriptionRequestTO request;
@@ -77,6 +81,54 @@ public class PgFactStream {
   final AtomicBoolean disconnected = new AtomicBoolean(false);
 
   final CurrentStatementHolder statementHolder = new CurrentStatementHolder();
+
+  @SuppressWarnings("java:S107")
+  public PgFactStream(
+      PgConnectionSupplier connectionSupplier,
+      EventBus eventBus,
+      PgFactIdToSerialMapper idToSerMapper,
+      PgCatchupFactory pgCatchupFactory,
+      HighWaterMarkFetcher hwmFetcher,
+      ServerPipeline pipeline,
+      PgStoreTelemetry telemetry,
+      StoreConfigurationProperties props,
+      SubscriptionRequestTO request) {
+    this(
+        connectionSupplier,
+        eventBus,
+        idToSerMapper,
+        pgCatchupFactory,
+        hwmFetcher,
+        pipeline,
+        telemetry,
+        props,
+        null,
+        request);
+  }
+
+  @SuppressWarnings("java:S107")
+  public PgFactStream(
+      PgConnectionSupplier connectionSupplier,
+      EventBus eventBus,
+      PgFactIdToSerialMapper idToSerMapper,
+      PgCatchupFactory pgCatchupFactory,
+      HighWaterMarkFetcher hwmFetcher,
+      ServerPipeline pipeline,
+      PgStoreTelemetry telemetry,
+      StoreConfigurationProperties props,
+      @Nullable DataSource p1CatchupDataSource,
+      SubscriptionRequestTO request) {
+    this.connectionSupplier = connectionSupplier;
+    this.eventBus = eventBus;
+    this.idToSerMapper = idToSerMapper;
+    this.pgCatchupFactory = pgCatchupFactory;
+    this.hwmFetcher = hwmFetcher;
+    this.pipeline = pipeline;
+    this.telemetry = telemetry;
+    this.props = props;
+    this.p1CatchupDataSource = p1CatchupDataSource;
+    this.request = request;
+  }
 
   void connect() {
     log.debug("{} connect subscription {}", request, request.dump());
@@ -202,7 +254,13 @@ public class PgFactStream {
   @VisibleForTesting
   @NonNull
   SingleConnectionDataSource createSingleDataSource(@NonNull SubscriptionRequest request) {
-    return connectionSupplier.getPooledAsSingleDataSource(
+    return connectionSupplier.getPooledAsSingleDataSource(catchupConnectionModifiers(request));
+  }
+
+  @VisibleForTesting
+  @NonNull
+  List<ConnectionModifier> catchupConnectionModifiers(@NonNull SubscriptionRequest request) {
+    return List.of(
         ConnectionModifier.withCustomPlanForced(),
         ConnectionModifier.withAutoCommitDisabled(),
         ConnectionModifier.withApplicationName(request.debugInfo()));
@@ -236,9 +294,22 @@ public class PgFactStream {
     }
     try {
       if (isConnected()) {
-        pgCatchupFactory
-            .create(request, pipeline, serial, statementHolder, ds, PgCatchupFactory.Phase.PHASE_1)
-            .run();
+        SingleConnectionDataSource phase1DataSource = phase1CatchupDataSourceOr(ds);
+        try {
+          pgCatchupFactory
+              .create(
+                  request,
+                  pipeline,
+                  serial,
+                  statementHolder,
+                  phase1DataSource,
+                  PgCatchupFactory.Phase.PHASE_1)
+              .run();
+        } finally {
+          if (phase1DataSource != ds) {
+            phase1DataSource.destroy();
+          }
+        }
       }
       if (isConnected()) {
         // if we did not find anything in phase1,
@@ -247,12 +318,30 @@ public class PgFactStream {
         PgCatchup pgCatchup =
             pgCatchupFactory.create(
                 request, pipeline, serial, statementHolder, ds, PgCatchupFactory.Phase.PHASE_2);
-        pgCatchup.fastForward(highWaterMarkSerial);
+        // Only skip to the initial HWM when phase 1 queried the primary datasource. A dedicated
+        // phase1 datasource might be behind that HWM, so phase 2 must continue after the last
+        // serial actually read in phase 1.
+        if (p1CatchupDataSource == null) {
+          pgCatchup.fastForward(highWaterMarkSerial);
+        }
         pgCatchup.run();
       }
     } finally {
       FromScratchCatchupLogSuppressingTurboFilter.endCatchup();
     }
+  }
+
+  @VisibleForTesting
+  @NonNull
+  @SneakyThrows
+  SingleConnectionDataSource phase1CatchupDataSourceOr(
+      @NonNull SingleConnectionDataSource primaryDataSource) {
+    if (p1CatchupDataSource != null) {
+      log.info("{} using configured P1 catchup datasource", request);
+      return new ModifiedSingleConnectionDataSource(
+          p1CatchupDataSource.getConnection(), catchupConnectionModifiers(request));
+    }
+    return primaryDataSource;
   }
 
   @VisibleForTesting

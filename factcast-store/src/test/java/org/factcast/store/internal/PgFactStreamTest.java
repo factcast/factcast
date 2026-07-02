@@ -19,11 +19,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 import com.google.common.eventbus.EventBus;
+import java.sql.Connection;
 import java.sql.ResultSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
+import javax.sql.DataSource;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.Range;
 import org.assertj.core.api.Assertions;
@@ -113,9 +116,10 @@ class PgFactStreamTest {
       try (var ignored = uut.createSingleDataSource(reqTo)) {
         verify(connectionSupplier)
             .getPooledAsSingleDataSource(
-                ConnectionModifier.withCustomPlanForced(),
-                ConnectionModifier.withAutoCommitDisabled(),
-                ConnectionModifier.withApplicationName("foo"));
+                List.of(
+                    ConnectionModifier.withCustomPlanForced(),
+                    ConnectionModifier.withAutoCommitDisabled(),
+                    ConnectionModifier.withApplicationName("foo")));
       }
     }
   }
@@ -416,6 +420,8 @@ class PgFactStreamTest {
   @Nested
   class WhenCatchingUp {
     @Mock SingleConnectionDataSource ds;
+    @Mock DataSource p1Ds;
+    @Mock Connection p1Connection;
 
     @BeforeEach
     void setup() {
@@ -443,6 +449,171 @@ class PgFactStreamTest {
 
       verify(catchup1, times(1)).run();
       verify(catchup2, times(1)).run();
+    }
+
+    @Test
+    void usesPrimaryDataSourceForBothPhasesByDefault() {
+      PgCatchup catchup1 = mock(PgCatchup.class);
+      PgCatchup catchup2 = mock(PgCatchup.class);
+      when(uut.isConnected()).thenReturn(true);
+      when(pgCatchupFactory.create(any(), any(), any(), any(), any(), any()))
+          .thenReturn(catchup1, catchup2);
+
+      uut.catchup(42L, ds);
+
+      AtomicLong serial = uut.serial();
+      verify(pgCatchupFactory)
+          .create(
+              same(reqTo),
+              same(pipeline),
+              same(serial),
+              any(CurrentStatementHolder.class),
+              same(ds),
+              eq(PgCatchupFactory.Phase.PHASE_1));
+      verify(pgCatchupFactory)
+          .create(
+              same(reqTo),
+              same(pipeline),
+              same(serial),
+              any(CurrentStatementHolder.class),
+              same(ds),
+              eq(PgCatchupFactory.Phase.PHASE_2));
+      verify(catchup2).fastForward(42L);
+    }
+
+    @Test
+    @SneakyThrows
+    void usesConfiguredDataSourceOnlyForPhase1() {
+      when(p1Ds.getConnection()).thenReturn(p1Connection);
+      PgFactStream withP1DataSource =
+          spy(
+              new PgFactStream(
+                  connectionSupplier,
+                  eventBus,
+                  id2ser,
+                  pgCatchupFactory,
+                  hwmFetcher,
+                  pipeline,
+                  telemetry,
+                  props,
+                  p1Ds,
+                  reqTo));
+      PgCatchup catchup1 = mock(PgCatchup.class);
+      PgCatchup catchup2 = mock(PgCatchup.class);
+      when(withP1DataSource.isConnected()).thenReturn(true);
+      doReturn(List.<ConnectionModifier>of())
+          .when(withP1DataSource)
+          .catchupConnectionModifiers(reqTo);
+      when(pgCatchupFactory.create(any(), any(), any(), any(), any(), any()))
+          .thenReturn(catchup1, catchup2);
+
+      withP1DataSource.catchup(42L, ds);
+
+      AtomicLong serial = withP1DataSource.serial();
+      verify(pgCatchupFactory)
+          .create(
+              same(reqTo),
+              same(pipeline),
+              same(serial),
+              any(CurrentStatementHolder.class),
+              argThat(phase1Ds -> phase1Ds instanceof SingleConnectionDataSource && phase1Ds != ds),
+              eq(PgCatchupFactory.Phase.PHASE_1));
+      verify(pgCatchupFactory)
+          .create(
+              same(reqTo),
+              same(pipeline),
+              same(serial),
+              any(CurrentStatementHolder.class),
+              same(ds),
+              eq(PgCatchupFactory.Phase.PHASE_2));
+      verify(catchup2, never()).fastForward(anyLong());
+      verify(p1Connection).close();
+    }
+
+    @Test
+    @SneakyThrows
+    void appliesCatchupConnectionModifiersToConfiguredPhase1DataSource() {
+      when(p1Ds.getConnection()).thenReturn(p1Connection);
+      PgFactStream withP1DataSource =
+          spy(
+              new PgFactStream(
+                  connectionSupplier,
+                  eventBus,
+                  id2ser,
+                  pgCatchupFactory,
+                  hwmFetcher,
+                  pipeline,
+                  telemetry,
+                  props,
+                  p1Ds,
+                  reqTo));
+      ConnectionModifier modifier = mock(ConnectionModifier.class);
+      doReturn(List.of(modifier)).when(withP1DataSource).catchupConnectionModifiers(reqTo);
+
+      SingleConnectionDataSource phase1DataSource = withP1DataSource.phase1CatchupDataSourceOr(ds);
+      phase1DataSource.destroy();
+
+      verify(modifier).afterBorrow(p1Connection);
+      verify(modifier).beforeReturn(p1Connection);
+      verify(p1Connection).close();
+    }
+
+    @Test
+    @SneakyThrows
+    void phase2ContinuesAfterPhase1SerialWhenConfiguredDataSourceMayBeBehindHwm() {
+      when(p1Ds.getConnection()).thenReturn(p1Connection);
+      PgFactStream withP1DataSource =
+          spy(
+              new PgFactStream(
+                  connectionSupplier,
+                  eventBus,
+                  id2ser,
+                  pgCatchupFactory,
+                  hwmFetcher,
+                  pipeline,
+                  telemetry,
+                  props,
+                  p1Ds,
+                  reqTo));
+      when(withP1DataSource.isConnected()).thenReturn(true);
+      doReturn(List.<ConnectionModifier>of())
+          .when(withP1DataSource)
+          .catchupConnectionModifiers(reqTo);
+
+      AtomicLong phase2StartSerial = new AtomicLong(-1);
+      PgCatchup phase1 =
+          new PgCatchup() {
+            @Override
+            public void run() {
+              withP1DataSource.serial().set(7L);
+            }
+
+            @Override
+            public void fastForward(long serialToStartFrom) {
+              Assertions.fail("Phase 1 must not be fast-forwarded");
+            }
+          };
+      PgCatchup phase2 =
+          new PgCatchup() {
+            private long fastForward;
+
+            @Override
+            public void run() {
+              phase2StartSerial.set(Math.max(withP1DataSource.serial().get(), fastForward));
+            }
+
+            @Override
+            public void fastForward(long serialToStartFrom) {
+              fastForward = serialToStartFrom;
+            }
+          };
+      when(pgCatchupFactory.create(any(), any(), any(), any(), any(), any()))
+          .thenReturn(phase1, phase2);
+
+      withP1DataSource.catchup(42L, ds);
+
+      assertThat(phase2StartSerial).hasValue(7L);
+      verify(p1Connection).close();
     }
 
     @Test
