@@ -310,7 +310,12 @@ public class PgFactStream {
         PgCatchup pgCatchup =
             pgCatchupFactory.create(
                 request, pipeline, serial, statementHolder, ds, PgCatchupFactory.Phase.PHASE_2);
-        pgCatchup.fastForward(highWaterMarkSerial);
+        // Only skip to the initial HWM when phase 1 queried the primary datasource. A dedicated
+        // phase1 datasource (e.g. read replica) might lag behind that HWM, so phase 2 must continue
+        // after the last serial actually read in phase 1.
+        if (p1CatchupDataSource == null) {
+          pgCatchup.fastForward(highWaterMarkSerial);
+        }
         pgCatchup.run();
       }
     } finally {

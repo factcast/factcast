@@ -476,6 +476,7 @@ class PgFactStreamTest {
               any(CurrentStatementHolder.class),
               same(ds),
               eq(PgCatchupFactory.Phase.PHASE_2));
+      verify(catchup2).fastForward(42L);
     }
 
     @Test
@@ -520,6 +521,7 @@ class PgFactStreamTest {
               any(CurrentStatementHolder.class),
               same(ds),
               eq(PgCatchupFactory.Phase.PHASE_2));
+      verify(catchup2, never()).fastForward(anyLong());
       verify(p1Connection).close();
     }
 
