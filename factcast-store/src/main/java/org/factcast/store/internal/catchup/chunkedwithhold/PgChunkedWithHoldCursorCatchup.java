@@ -129,7 +129,6 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
       @NonNull Cursor cursor, @NonNull PgFactExtractor extractor) throws SQLException {
 
     while (!statementHolder.wasCanceled()) {
-      log.debug("{} catchup {}, fetching next chunk", req, phase);
       if (inTransaction(() -> cursor.fetchChunk(extractor)) < cursor.chunkSize())
         // early exit, as there are no more rows to fetch
         return;
@@ -214,9 +213,6 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
 
       Preconditions.checkArgument(chunkSize >= 1000, "chunkSize must be >= 1000");
 
-      log.trace(
-          "{} catchup {}, declaring cursor-with-hold after SER={}", req, phase, fromSerial.get());
-
       // ok, this is messy, but the only way i can think of to still use the preparedQuerySetter,
       // which is impossible to do, if we pass a string to a function...
       //
@@ -236,6 +232,13 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
                                   SELECT array_agg(ser ORDER BY rn) FROM numbered GROUP BY grp ORDER BY grp ASC
                               """,
               name(), chunkSize, queryBuilder.createSQL());
+
+      log.trace(
+          "{} catchup {}, declaring cursor-with-hold after SER={}\n{}",
+          req,
+          phase,
+          fromSerial.get(),
+          sql);
 
       try (PreparedStatement declare = connection.prepareStatement(sql)) {
         queryBuilder.createStatementSetter(fromSerial).setValues(declare);
@@ -258,6 +261,13 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
       try (PreparedStatement fetch = connection.prepareStatement(fetchSql)) {
         fetch.setFetchSize(props.getPageSize());
         statementHolder.statement(fetch);
+
+        log.debug(
+            "{} catchup {}, query next chunk of size {} by ser \n{}",
+            req,
+            phase,
+            chunkSize(),
+            fetchSql);
 
         FetchingQuery.create(props)
             .executeAndProcess(

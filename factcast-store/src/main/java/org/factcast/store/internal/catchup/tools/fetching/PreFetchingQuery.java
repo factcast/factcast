@@ -61,10 +61,13 @@ public class PreFetchingQuery implements FetchingQuery {
       // sync consumer
       try {
 
+        int pageNumber = 0;
         boolean exhausted;
         do {
           exhausted = true;
           ResultSet page = q.take();
+
+          log.trace("processing page {}", ++pageNumber);
 
           while (page.next() && !ps.isClosed()) {
             exhausted = false;
@@ -72,7 +75,6 @@ public class PreFetchingQuery implements FetchingQuery {
             rows++;
           }
           page.close(); // not strictly necessary
-
         } while (!exhausted);
 
       } catch (InterruptedException e) {
@@ -90,9 +92,11 @@ public class PreFetchingQuery implements FetchingQuery {
   private void produce(@NonNull ResultSet resultSet, @NonNull ArrayBlockingQueue<ResultSet> q) {
     //noinspection TryFinallyCanBeTryWithResources
     try {
+      int page = 0;
       while (!resultSet.isClosed()) {
         CachedRowSet crs = RowSetProvider.newFactory().createCachedRowSet();
         synchronized (resultSet) {
+          log.trace("fetching page {} to memory (size={})", ++page, resultSet.getFetchSize());
           crs.populate(new ResultSetPage(resultSet));
         }
         put(q, crs); // this will block if the queue is full

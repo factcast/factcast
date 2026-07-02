@@ -16,12 +16,12 @@
 package org.factcast.example.client.spring.boot2.hello;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
 import org.factcast.core.spec.FactSpec;
-import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
@@ -35,88 +35,26 @@ public class HelloWorldRunner implements CommandLineRunner {
   @Override
   public void run(String... args) throws Exception {
 
-    final UUID id = UUID.randomUUID();
-    Fact fact =
-        Fact.builder()
-            .ns("users")
-            .type("UserCreated")
-            .version(1)
-            .id(id)
-            .build("{\"firstName\":\"Horst\",\"lastName\":\"Lichter\"}");
-    fc.publish(fact);
-    System.out.println("published " + fact);
+    List<Fact> facts = new ArrayList<Fact>();
 
-    @NonNull Optional<Fact> uc = fc.fetchById(id);
-    System.out.println(uc.get().jsonPayload());
+    for (int i = 0; i < 25000; i++) {
+      final UUID id = UUID.randomUUID();
+      Fact fact =
+          Fact.builder()
+              .ns("users")
+              .type("UserCreated")
+              .version(1)
+              .id(id)
+              .build("{\"firstName\":\"Horst\",\"lastName\":\"Lichter\"}");
+      facts.add(fact);
+    }
 
-    @NonNull Optional<Fact> uc1 = fc.fetchByIdAndVersion(id, 1);
-    System.out.println(uc1.get().jsonPayload());
+    fc.publish(facts);
 
-    @NonNull Optional<Fact> uc2 = fc.fetchByIdAndVersion(id, 2);
-    System.out.println(uc2.get().jsonPayload());
-
-    @NonNull Optional<Fact> uc3 = fc.fetchByIdAndVersion(id, 3);
-    System.out.println(uc3.get().jsonPayload());
-
+    AtomicInteger count = new AtomicInteger(0);
     fc.subscribe(
-            SubscriptionRequest.catchup(FactSpec.ns("users").type("UserCreated").version(3))
-                .fromScratch(),
-            System.out::println)
+            SubscriptionRequest.catchup(FactSpec.ns("users").type("UserCreated")).fromScratch(),
+            f -> System.out.println(count.incrementAndGet()))
         .awaitCatchup();
-
-    fc.subscribe(
-            SubscriptionRequest.catchup(FactSpec.ns("users").type("UserCreated").version(1))
-                .fromScratch(),
-            System.out::println)
-        .awaitCatchup();
-
-    // Follow subscription
-    Subscription followSub =
-        fc.subscribe(
-            SubscriptionRequest.follow(FactSpec.ns("users").type("UserCreated").version(3))
-                .fromScratch(),
-            System.out::println);
-
-    Fact anotherFact =
-        Fact.builder()
-            .ns("users")
-            .type("UserCreated")
-            .version(3)
-            .id(UUID.randomUUID())
-            .build(
-                "{\"firstName\":\"John\",\"lastName\":\"Wayne\",\"salutation\":\"Mr\",\"displayName\":\"JW\"}");
-    fc.publish(anotherFact);
-    System.out.println("published " + anotherFact);
-
-    followSub.awaitCatchup(5000).close();
-
-    UUID predefinedId = UUID.randomUUID();
-    Subscription followSubAggId =
-        fc.subscribe(
-            SubscriptionRequest.follow(
-                    FactSpec.ns("users").type("UserCreated").aggId(predefinedId).version(3))
-                .fromScratch(),
-            System.out::println);
-
-    Fact predefinedIdFact =
-        Fact.builder()
-            .ns("users")
-            .type("UserCreated")
-            .version(3)
-            .id(UUID.randomUUID())
-            .aggId(predefinedId)
-            .build(
-                "{\"firstName\":\"Dale\",\"lastName\":\"Cooper\",\"salutation\":\"Mr\",\"displayName\":\"Coop\"}");
-    fc.publish(predefinedIdFact);
-    System.out.println("published " + predefinedIdFact);
-
-    fc.subscribe(
-            SubscriptionRequest.catchup(
-                    FactSpec.ns("users").type("UserCreated").aggId(predefinedId).version(3))
-                .fromScratch(),
-            System.out::println)
-        .awaitCatchup();
-
-    followSubAggId.awaitCatchup(5000).close();
   }
 }
