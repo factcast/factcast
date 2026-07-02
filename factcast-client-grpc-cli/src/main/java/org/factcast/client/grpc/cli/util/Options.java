@@ -40,12 +40,6 @@ public class Options {
   boolean pretty;
 
   @Parameter(
-      names = {"--no-tls"},
-      help = true,
-      description = "do NOT use TLS to connect (plaintext-communication)")
-  boolean notls;
-
-  @Parameter(
       names = {"--debug"},
       help = true,
       description = "show debug-level debug messages",

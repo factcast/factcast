@@ -30,11 +30,14 @@ public @NonNull Collection<FactSpec> postprocess(@NonNull Collection<FactSpec> s
 
 #### Migrating with OpenRewrite
 
-FactCast ships a recipe that rewrites the signature for you. **Run it before upgrading your FactCast dependency.** Once you bump to 0.11.0, the old `List<FactSpec>` signature is gone and the project won't compile, the recipe needs the old code still in place to match against.
+FactCast ships a recipe that rewrites the signature for you. **Run it before upgrading your FactCast dependency.** Once
+you bump to 0.11.0, the old `List<FactSpec>` signature is gone and the project won't compile, the recipe needs the old
+code still in place to match against.
 
 ##### Step 1: Add the plugin
 
-While still on your current FactCast version, add the OpenRewrite Maven plugin to your `pom.xml`. The plugin dependency points at `0.11.0` since that's where the recipe lives:
+While still on your current FactCast version, add the OpenRewrite Maven plugin to your `pom.xml`. The plugin dependency
+points at `0.11.0` since that's where the recipe lives:
 
 ```xml
 <build>
@@ -66,7 +69,8 @@ While still on your current FactCast version, add the OpenRewrite Maven plugin t
 mvn rewrite:dryRun
 ```
 
-Writes a patch to `target/rewrite/rewrite.patch` without touching your source. Check that it only affects `postprocess` overrides.
+Writes a patch to `target/rewrite/rewrite.patch` without touching your source. Check that it only affects `postprocess`
+overrides.
 
 ##### Step 3: Apply
 
@@ -78,7 +82,9 @@ Updates parameter and return types from `List<FactSpec>` to `Collection<FactSpec
 
 ##### Step 4: Check method bodies
 
-The recipe only touches the signature, not the body. `forEach`, `stream`, and `isEmpty` all work on `Collection`, so most implementations need nothing more. If your body calls `get(int)`, `set(int, E)`, `sort(Comparator)`, or `subList(int, int)`, or assigns the parameter to a `List<FactSpec>` variable, fix those manually.
+The recipe only touches the signature, not the body. `forEach`, `stream`, and `isEmpty` all work on `Collection`, so
+most implementations need nothing more. If your body calls `get(int)`, `set(int, E)`, `sort(Comparator)`, or
+`subList(int, int)`, or assigns the parameter to a `List<FactSpec>` variable, fix those manually.
 
 ##### Step 5: Upgrade FactCast
 
@@ -94,9 +100,30 @@ Remove the OpenRewrite plugin config (or just the `activeRecipes` entry) from yo
 mvn clean verify
 ```
 
+## Upgrading to 0.12.0
+
+Version 0.12.0 updated `spring-grpc` dependencies to `1.1.0` which makes them being part of the Spring Boot BOM.
+
+The following properties (documented for factcast) should be renamed accordingly:
+
+| Old Property                                                     | New Property                                                   | Notes                                           |
+| ---------------------------------------------------------------- | -------------------------------------------------------------- | ----------------------------------------------- |
+| `spring.grpc.client.channels.factstore.address`                  | `spring.grpc.client.channel.factstore.tagrte`                  |                                                 |
+| `spring.grpc.client.channels.factstore.negotiation-type`         | `spring.grpc.client.channel.factstore.ssl.enabled`             | The property was replaced by a new one for SSL. |
+| `spring.grpc.client.channels.factstore.enable-keep-alive`        |                                                                | The property was removed.                       |
+| `spring.grpc.client.channels.factstore.keep-alive-time`          | `spring.grpc.client.channel.factstore.keepalive.time`          |                                                 |
+| `spring.grpc.client.channels.factstore.keep-alive-without-calls` | `spring.grpc.client.channel.factstore.keepalive.without-calls` |                                                 |
+| `spring.grpc.server.keep-alive.permit-without-calls`             | `spring.grpc.server.keepalive.permit.without-calls`            |                                                 |
+| `spring.grpc.server.keep-alive.permit-time`                      | `spring.grpc.server.keepalive.permit.time`                     |                                                 |
+
+Check
+the [spring-grpc migration guide](https://github.com/spring-projects/spring-grpc/wiki/Spring-gRPC-1.1-Migration-Guide)
+for more details.
+
 ## Upgrading to 0.10.0
 
-Version 0.10.0 switched from `net.devh:grpc-client-spring-boot-starter` to `org.springframework.grpc:spring-grpc-client-spring-boot-starter`.
+Version 0.10.0 switched from `net.devh:grpc-client-spring-boot-starter` to
+`org.springframework.grpc:spring-grpc-client-spring-boot-starter`.
 
 The following properties (documented for factcast) should be renamed accordingly:
 
@@ -110,7 +137,8 @@ The following properties (documented for factcast) should be renamed accordingly
 | `grpc.server.permit-keep-alive-without-calls`    | `spring.grpc.server.keep-alive.permit-without-calls`             |       |
 | `grpc.server.permit-keep-alive-time`             | `spring.grpc.server.keep-alive.permit-time`                      |       |
 
-For every other property previously made available by `net.devh:grpc-client-spring-boot-starter`, follow the rule of thumb:
+For every other property previously made available by `net.devh:grpc-client-spring-boot-starter`, follow the rule of
+thumb:
 
 - `grpc.client.factstore.*` becomes `spring.grpc.client.channels.factstore.*`
 - `grpc.server.*` becomes `spring.grpc.server.*`
