@@ -29,7 +29,6 @@ import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.pipeline.*;
 import org.factcast.store.internal.query.*;
 import org.factcast.store.internal.telemetry.PgStoreTelemetry;
-import org.springframework.transaction.PlatformTransactionManager;
 
 // TODO integrate with PGQuery
 @SuppressWarnings("UnstableApiUsage")
@@ -50,11 +49,9 @@ public class PgSubscriptionFactory implements AutoCloseable {
   final PgStoreTelemetry telemetry;
   final StoreConfigurationProperties props;
   private final int maxPipelineBufferSize;
-  private final PlatformTransactionManager txMgr;
 
   public PgSubscriptionFactory(
       PgConnectionSupplier connectionSupplier,
-      PlatformTransactionManager txMgr,
       EventBus eventBus,
       PgFactIdToSerialMapper idToSerialMapper,
       StoreConfigurationProperties props,
@@ -64,7 +61,6 @@ public class PgSubscriptionFactory implements AutoCloseable {
       PgMetrics metrics,
       PgStoreTelemetry telemetry) {
     this.connectionSupplier = connectionSupplier;
-    this.txMgr = txMgr;
     this.eventBus = eventBus;
     this.idToSerialMapper = idToSerialMapper;
     this.catchupFactory = catchupFactory;
@@ -89,7 +85,6 @@ public class PgSubscriptionFactory implements AutoCloseable {
     PgFactStream pgsub =
         new PgFactStream(
             connectionSupplier,
-            txMgr,
             eventBus,
             idToSerialMapper,
             catchupFactory,

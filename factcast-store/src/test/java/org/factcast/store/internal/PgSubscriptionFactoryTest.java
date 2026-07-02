@@ -39,7 +39,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.transaction.PlatformTransactionManager;
 
 @ExtendWith(MockitoExtension.class)
 class PgSubscriptionFactoryTest {
@@ -56,7 +55,6 @@ class PgSubscriptionFactoryTest {
 
   @Mock private ServerPipelineFactory pipelineFactory;
   @Mock private PgConnectionSupplier connectionSupplier;
-  @Mock private PlatformTransactionManager txMgr;
 
   @Spy private ExecutorService executorService = Executors.newSingleThreadExecutor();
   private PgSubscriptionFactory underTest;
@@ -68,7 +66,6 @@ class PgSubscriptionFactoryTest {
     underTest =
         new PgSubscriptionFactory(
             connectionSupplier,
-            txMgr,
             eventBus,
             idToSerialMapper,
             props,

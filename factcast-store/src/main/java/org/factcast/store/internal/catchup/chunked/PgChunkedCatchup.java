@@ -72,57 +72,53 @@ public class PgChunkedCatchup extends AbstractPgCatchup {
   @SneakyThrows
   @SuppressWarnings("java:S2077")
   void fetch(DataSource ds) {
+    JdbcTemplate jdbc = new JdbcTemplate(ds);
 
-    try (SingleConnectionDataSource singleConnectionDataSource = createSingleDS(ds); ) {
-      JdbcTemplate jdbc = new JdbcTemplate(singleConnectionDataSource);
+    String tempTableName = "catchup_" + UUID.randomUUID().toString().replace("-", "");
 
-      String tempTableName = "catchup_" + UUID.randomUUID().toString().replace("-", "");
+    try {
+      // this needs to be transactional for fetch-size to have any effect whatsoever.
+      ds.getConnection().setAutoCommit(false);
+      jdbc.setFetchSize(props.getPageSize());
+      jdbc.setQueryTimeout(0); // disable query timeout
+      if (prepareTemporaryTable(jdbc, tempTableName) > 0) {
 
-      try {
-        // this needs to be transactional for fetch-size to have any effect whatsoever. luckyly, we
-        // use
-        // a org.springframework.jdbc.datasource.SingleConnectionDataSource with autoCommitDisabled.
-        jdbc.setFetchSize(props.getPageSize());
-        jdbc.setQueryTimeout(0); // disable query timeout
-        if (prepareTemporaryTable(jdbc, tempTableName) > 0) {
+        final var extractor = new PgFactExtractor(serial);
 
-          final var extractor = new PgFactExtractor(serial);
+        String chunkQuery = prepareChunkQuery(tempTableName);
 
-          String chunkQuery = prepareChunkQuery(tempTableName);
+        int chunkCount = 0;
+        int rowsToProcess = -1;
+        while (rowsToProcess != 0) {
 
-          int chunkCount = 0;
-          int rowsToProcess = -1;
-          while (rowsToProcess != 0) {
-
-            if (statementHolder.wasCanceled()) {
-              log.trace("{} catchup {} - was cancelled", req, phase);
-              return;
-            }
-
-            log.trace("{} catchup {} - fetching chunk {}", req, phase, ++chunkCount);
-            List<PgFact> facts = jdbc.query(chunkQuery, extractor);
-            rowsToProcess = facts.size();
-            log.trace(
-                "{} catchup {} - processing chunk {} - found {} rows",
-                req,
-                phase,
-                chunkCount,
-                rowsToProcess);
-
-            // process them
-            facts.forEach(f -> pipeline.process(Signal.of(f)));
+          if (statementHolder.wasCanceled()) {
+            log.trace("{} catchup {} - was cancelled", req, phase);
+            return;
           }
-          log.trace("{} catchup {} - all chunks processed", req, phase);
-        } else {
-          log.trace("{} catchup {} - no matching serials found", req, phase);
+
+          log.trace("{} catchup {} - fetching chunk {}", req, phase, ++chunkCount);
+          List<PgFact> facts = jdbc.query(chunkQuery, extractor);
+          rowsToProcess = facts.size();
+          log.trace(
+              "{} catchup {} - processing chunk {} - found {} rows",
+              req,
+              phase,
+              chunkCount,
+              rowsToProcess);
+
+          // process them
+          facts.forEach(f -> pipeline.process(Signal.of(f)));
         }
-      } finally {
-        // tmp table is not needed anymore. As we reuse the connection, it'd be good to drop it.
-        try {
-          jdbc.execute("drop table " + tempTableName);
-        } catch (Exception e) {
-          log.warn("{} catchup {} - while dropping tmp table:", req, phase, e);
-        }
+        log.trace("{} catchup {} - all chunks processed", req, phase);
+      } else {
+        log.trace("{} catchup {} - no matching serials found", req, phase);
+      }
+    } finally {
+      // tmp table is not needed anymore. As we reuse the connection, it'd be good to drop it.
+      try {
+        jdbc.execute("drop table " + tempTableName);
+      } catch (Exception e) {
+        log.warn("{} catchup {} - while dropping tmp table:", req, phase, e);
       }
     }
   }

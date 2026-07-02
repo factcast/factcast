@@ -141,7 +141,6 @@ public class PgFactStoreInternalConfiguration {
   @Bean
   public PgSubscriptionFactory pgSubscriptionFactory(
       PgConnectionSupplier connectionSupplier,
-      PlatformTransactionManager txMgr,
       EventBus eventBus,
       PgFactIdToSerialMapper pgFactIdToSerialMapper,
       StoreConfigurationProperties props,
@@ -152,7 +151,6 @@ public class PgFactStoreInternalConfiguration {
       PgMetrics metrics) {
     return new PgSubscriptionFactory(
         connectionSupplier,
-        txMgr,
         eventBus,
         pgFactIdToSerialMapper,
         props,

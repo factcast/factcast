@@ -174,7 +174,6 @@ class PgChunkedWithHoldCursorCatchupTest {
   class CursorTest {
     @Mock PreparedStatement ps;
     @Mock ResultSet rs;
-    @Mock ResultSet rs2;
     @Mock Statement statement;
     @Mock PgQueryBuilder queryBuilder;
     @Mock PgFactExtractor extractor;
@@ -319,9 +318,8 @@ class PgChunkedWithHoldCursorCatchupTest {
     @SneakyThrows
     void testFetchChunk_Callback() {
       when(connection.prepareStatement(anyString())).thenReturn(ps);
-      when(ps.executeQuery()).thenReturn(rs, rs2);
+      when(ps.executeQuery()).thenReturn(rs);
       lenient().when(rs.next()).thenReturn(false);
-      lenient().when(rs2.next()).thenReturn(false);
 
       PgChunkedWithHoldCursorCatchup.Cursor cursor = underTest.new Cursor(1000);
       Runnable callback = mock(Runnable.class);
