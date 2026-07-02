@@ -37,11 +37,7 @@ public class BinaryJacksonSnapshotSerializerAutoConfiguration {
   public SnapshotSerializer snapshotSerializer(
       List<BinaryJacksonSnapshotSerializerCustomizer> customizers) {
     return new CompressedBinaryJacksonSnapshotSerializer(
-        objectMapper -> {
-          for (var customizer : customizers) {
-            customizer.accept(objectMapper);
-          }
-        });
+        objectMapper -> customizers.forEach(customizer -> customizer.accept(objectMapper)));
   }
 
   @Bean
