@@ -27,7 +27,8 @@ public class DefaultFetchingQuery implements FetchingQuery {
       @NonNull CallbackAfterQueryFinished callbackBeforeProcessing)
       throws SQLException {
     int rows = 0;
-    try (ResultSet rs = ps.executeQuery()) {
+    try (ps;
+        ResultSet rs = ps.executeQuery()) {
       callbackBeforeProcessing.afterQueryFinished();
       while (rs.next() && !ps.isClosed()) {
         rowProcessor.process(rs);
