@@ -65,15 +65,13 @@ class PreFetchingQueryTest {
   }
 
   @Test
-  void testSuccessfulProcessing() throws SQLException, InterruptedException {
+  void testSuccessfulProcessing() throws SQLException {
     when(ps.getConnection()).thenReturn(connection);
     when(connection.getAutoCommit()).thenReturn(false);
     when(ps.getFetchSize()).thenReturn(10);
     when(ps.executeQuery()).thenReturn(resultSet);
 
-    // Setup ResultSet for producer loop: not closed -> closed
-    // 1st: loop check, 2nd: loop check, 3rd: terminate loop, 4th: finally block
-    when(resultSet.isClosed()).thenReturn(false, false, true, false);
+    // Setup ResultSet for producer loop:
     when(resultSet.getFetchSize()).thenReturn(10);
     when(resultSet.getMetaData()).thenReturn(resultSetMetaData);
     when(resultSetMetaData.getColumnCount()).thenReturn(1);

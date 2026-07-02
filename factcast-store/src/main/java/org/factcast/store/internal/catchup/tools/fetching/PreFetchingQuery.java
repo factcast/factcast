@@ -20,8 +20,10 @@ import java.util.concurrent.*;
 import javax.sql.rowset.*;
 import lombok.NonNull;
 import lombok.experimental.Delegate;
+import lombok.extern.slf4j.Slf4j;
 
 @SuppressWarnings("java:S2142")
+@Slf4j
 public class PreFetchingQuery implements FetchingQuery {
 
   @Override
@@ -49,41 +51,44 @@ public class PreFetchingQuery implements FetchingQuery {
     // and one waiting.
     ps.setFetchSize(fetchSize / 2);
 
-    ResultSet resultSet = ps.executeQuery();
-    callbackBeforeProcessing.afterQueryFinished();
+    try (ps;
+        ResultSet resultSet = ps.executeQuery()) {
+      callbackBeforeProcessing.afterQueryFinished();
 
-    // async producer, terminated by closing the rs
-    CompletableFuture.runAsync(() -> produce(resultSet, q));
+      // async producer, terminated by closing the rs
+      CompletableFuture.runAsync(() -> produce(resultSet, q));
 
-    // sync consumer
-    try {
+      // sync consumer
+      try {
 
-      boolean exhausted;
-      do {
-        exhausted = true;
-        ResultSet page = q.take();
+        boolean exhausted;
+        do {
+          exhausted = true;
+          ResultSet page = q.take();
 
-        while (page.next() && !ps.isClosed()) {
-          exhausted = false;
-          rowProcessor.process(page);
-          rows++;
-        }
+          while (page.next() && !ps.isClosed()) {
+            exhausted = false;
+            rowProcessor.process(page);
+            rows++;
+          }
+          page.close(); // not strictly necessary
 
-      } while (!exhausted);
+        } while (!exhausted);
 
-    } catch (InterruptedException e) {
-      // in that case we do not care.
-    } finally {
-      synchronized (resultSet) {
-        if (!resultSet.isClosed()) resultSet.close();
+      } catch (InterruptedException e) {
+        // in that case we do not care.
       }
+      return rows;
+    } finally {
+      // as the statement is closed by now, this should unblock a producer, and give it the chance
+      // to terminate
       q.clear();
     }
-    return rows;
   }
 
   @SuppressWarnings({"java:S2445", "java:S2095", "SynchronizationOnLocalVariableOrMethodParameter"})
   private void produce(@NonNull ResultSet resultSet, @NonNull ArrayBlockingQueue<ResultSet> q) {
+    //noinspection TryFinallyCanBeTryWithResources
     try {
       while (!resultSet.isClosed()) {
         CachedRowSet crs = RowSetProvider.newFactory().createCachedRowSet();
@@ -98,6 +103,12 @@ public class PreFetchingQuery implements FetchingQuery {
     } catch (Exception e) {
       // we're relying on the consumer to instanceOf
       put(q, new ThrowingResultSet(e));
+    } finally {
+      try {
+        resultSet.close();
+      } catch (SQLException ignore) {
+        log.debug("Chunk resultset cannot be closed: ", ignore);
+      }
     }
   }
 
