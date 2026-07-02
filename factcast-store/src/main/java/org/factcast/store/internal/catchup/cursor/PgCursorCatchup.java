@@ -16,7 +16,6 @@
 package org.factcast.store.internal.catchup.cursor;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
 import java.sql.*;
 import java.time.Duration;
 import java.util.concurrent.atomic.*;
@@ -59,12 +58,6 @@ public class PgCursorCatchup extends AbstractPgCatchup {
   @Override
   public void run() {
     try {
-      // this needs to be transactional for fetch-size to have any effect whatsoever. luckily,
-      // we use a org.springframework.jdbc.datasource.SingleConnectionDataSource with
-      // autoCommitDisabled.
-
-      Preconditions.checkState(
-          !ds.getConnection().getAutoCommit(), "Connection must not be in autocommit mode");
 
       final var b = new PgQueryBuilder(req.specs(), statementHolder);
       final var extractor = new PgFactExtractor(serial);
@@ -75,9 +68,12 @@ public class PgCursorCatchup extends AbstractPgCatchup {
 
       try (Connection conn = ds.getConnection();
           PreparedStatement prep = conn.prepareStatement(catchupSQL); ) {
-        b.createStatementSetter(fromSerial).setValues(prep);
+        // this needs to be transactional for fetch-size to have any effect whatsoever.
+        conn.setAutoCommit(false);
         prep.setFetchSize(props.getPageSize());
         prep.setQueryTimeout(0);
+
+        b.createStatementSetter(fromSerial).setValues(prep);
 
         final var timer = metrics.timer(StoreMetrics.OP.RESULT_STREAM_START, isFromScratch);
         final var timerSample = metrics.startSample();
