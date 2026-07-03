@@ -36,10 +36,10 @@ import org.redisson.client.codec.ByteArrayCodec;
 @RequiredArgsConstructor
 public class RedissonSnapshotCache implements SnapshotCache {
 
-  private static final String PREFIX = "sc_";
-
-  final RedissonClient redisson;
-  private final RedissonSnapshotProperties properties;
+  protected static final String PREFIX = "sc_";
+  protected static final ByteArrayCodec CODEC = ByteArrayCodec.INSTANCE;
+  protected final RedissonClient redisson;
+  protected final RedissonSnapshotProperties properties;
 
   @NonNull
   @VisibleForTesting

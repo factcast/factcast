@@ -36,4 +36,6 @@ public class RedissonSnapshotProperties {
   public int getRetentionTime() {
     return this.getDeleteSnapshotStaleForDays();
   }
+
+  int localCacheSize = 10000;
 }

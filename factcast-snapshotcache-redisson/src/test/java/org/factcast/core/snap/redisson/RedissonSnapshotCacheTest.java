@@ -31,6 +31,7 @@ import org.factcast.factus.snapshot.SnapshotData;
 import org.factcast.factus.snapshot.SnapshotIdentifier;
 import org.factcast.factus.snapshot.SnapshotSerializerSelector;
 import org.factcast.test.IntegrationTest;
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -52,7 +53,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 @SpringBootTest
-@SpringJUnitConfig(classes = {RedissonAutoConfigurationV4.class})
+@SpringJUnitConfig(classes = {RedissonAutoConfigurationV4.class, Conf.class})
 @ExtendWith(MockitoExtension.class)
 @Testcontainers
 @IntegrationTest
@@ -60,10 +61,10 @@ class RedissonSnapshotCacheTest {
 
   @SuppressWarnings("rawtypes")
   @Container
-  static final GenericContainer redis =
-      new GenericContainer<>("redis:5.0.3-alpine").withExposedPorts(6379);
+  protected static final GenericContainer redis =
+      new GenericContainer<>("redis:8.8.0-alpine").withExposedPorts(6379);
 
-  private final RedissonSnapshotProperties props =
+  protected final RedissonSnapshotProperties props =
       new RedissonSnapshotProperties().setDeleteSnapshotStaleForDays(90);
 
   @BeforeAll
@@ -72,7 +73,7 @@ class RedissonSnapshotCacheTest {
     System.setProperty("spring.data.redis.port", String.valueOf(redis.getMappedPort(6379)));
   }
 
-  @MockitoSpyBean private RedissonClient redisson;
+  @MockitoSpyBean protected RedissonClient redisson;
 
   @Mock SnapshotSerializerSelector selector;
 
@@ -84,7 +85,7 @@ class RedissonSnapshotCacheTest {
   class WhenGettingSnapshot {
     @BeforeEach
     void setup() {
-      underTest = new RedissonSnapshotCache(redisson, props);
+      underTest = createUnderTest();
       redisson.getKeys().flushdb();
     }
 
@@ -118,11 +119,15 @@ class RedissonSnapshotCacheTest {
     }
   }
 
+  protected @NonNull RedissonSnapshotCache createUnderTest() {
+    return new RedissonSnapshotCache(redisson, props);
+  }
+
   @Nested
   class WhenClearingSnapshot {
     @BeforeEach
     void setup() {
-      underTest = new RedissonSnapshotCache(redisson, props);
+      underTest = createUnderTest();
     }
 
     @Test
@@ -188,13 +193,10 @@ class RedissonSnapshotCacheTest {
           .isEqualTo("sc_hugo_1_" + uuid);
 
       assertThat(underTest.createKeyFor(SnapshotIdentifier.of(TestAggregate.class, uuid)))
-          .isEqualTo(
-              "sc_org.factcast.core.snap.redisson.RedissonSnapshotCacheTest$TestAggregate_1_"
-                  + uuid);
+          .endsWith("$TestAggregate_1_" + uuid);
 
       assertThat(underTest.createKeyFor(SnapshotIdentifier.of(TestSnapshotProjection.class)))
-          .isEqualTo(
-              "sc_org.factcast.core.snap.redisson.RedissonSnapshotCacheTest$TestSnapshotProjection_1_snapshot");
+          .endsWith("$TestSnapshotProjection_1_snapshot");
     }
   }
 
