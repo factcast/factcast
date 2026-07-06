@@ -15,14 +15,15 @@
  */
 package org.factcast.example.client.spring.boot2.hello;
 
+import static java.lang.System.*;
+
+import com.google.common.base.Stopwatch;
 import java.util.*;
+import java.util.concurrent.*;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
-import org.factcast.core.spec.FactSpec;
-import org.factcast.core.subscription.Subscription;
-import org.factcast.core.subscription.SubscriptionRequest;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
@@ -30,93 +31,58 @@ import org.springframework.stereotype.Component;
 @Component
 public class HelloWorldRunner implements CommandLineRunner {
 
+  private static final int MAX = 1000 * 1000;
   @NonNull private final FactCast fc;
+  final org.springframework.jdbc.core.JdbcTemplate jdbc;
+  private Random random = new Random();
 
   @Override
   public void run(String... args) throws Exception {
 
-    final UUID id = UUID.randomUUID();
-    Fact fact =
-        Fact.builder()
-            .ns("users")
-            .type("UserCreated")
-            .version(1)
-            .id(id)
-            .build("{\"firstName\":\"Horst\",\"lastName\":\"Lichter\"}");
-    fc.publish(fact);
-    System.out.println("published " + fact);
+    @NonNull List<Fact> facts = new LinkedList<>();
+    out.println("Preparing");
+    long milis = currentTimeMillis();
+    for (int i = 0; i < MAX; i++) {
+      Fact fact =
+          Fact.builder()
+              .ns("someNs" + random.nextInt(3))
+              .type("someType" + random.nextInt(10))
+              .version(1)
+              .id(new UUID(milis, i))
+              .build("{\"firstName\":\"Horst\",\"lastName\":\"Lichter\"}");
+      facts.add(fact);
+      //      if (i % 10000 == 0) {
+      //        out.println("published " + i + " facts so far");
+      //        if (!facts.isEmpty()) fc.publish(facts);
+      //        facts.clear();
+      //      } else {
+      //        facts.add(fact);
+      //      }
 
-    @NonNull Optional<Fact> uc = fc.fetchById(id);
-    System.out.println(uc.get().jsonPayload());
+    }
 
-    @NonNull Optional<Fact> uc1 = fc.fetchByIdAndVersion(id, 1);
-    System.out.println(uc1.get().jsonPayload());
+    ExecutorService es = Executors.newFixedThreadPool(32);
+    out.println("Publishing");
+    Stopwatch sw = Stopwatch.createStarted();
+    facts.parallelStream().forEach(fact -> CompletableFuture.runAsync(() -> fc.publish(fact), es));
+    es.shutdown();
+    es.awaitTermination(10, TimeUnit.MINUTES);
+    long ms = sw.stop().elapsed().toMillis();
 
-    @NonNull Optional<Fact> uc2 = fc.fetchByIdAndVersion(id, 2);
-    System.out.println(uc2.get().jsonPayload());
+    out.println(
+        "published "
+            + MAX
+            + " facts in "
+            + ms
+            + "ms ("
+            + ((MAX / (double) ms) * 1000)
+            + "/second)");
+  }
 
-    @NonNull Optional<Fact> uc3 = fc.fetchByIdAndVersion(id, 3);
-    System.out.println(uc3.get().jsonPayload());
-
-    fc.subscribe(
-            SubscriptionRequest.catchup(FactSpec.ns("users").type("UserCreated").version(3))
-                .fromScratch(),
-            System.out::println)
-        .awaitCatchup();
-
-    fc.subscribe(
-            SubscriptionRequest.catchup(FactSpec.ns("users").type("UserCreated").version(1))
-                .fromScratch(),
-            System.out::println)
-        .awaitCatchup();
-
-    // Follow subscription
-    Subscription followSub =
-        fc.subscribe(
-            SubscriptionRequest.follow(FactSpec.ns("users").type("UserCreated").version(3))
-                .fromScratch(),
-            System.out::println);
-
-    Fact anotherFact =
-        Fact.builder()
-            .ns("users")
-            .type("UserCreated")
-            .version(3)
-            .id(UUID.randomUUID())
-            .build(
-                "{\"firstName\":\"John\",\"lastName\":\"Wayne\",\"salutation\":\"Mr\",\"displayName\":\"JW\"}");
-    fc.publish(anotherFact);
-    System.out.println("published " + anotherFact);
-
-    followSub.awaitCatchup(5000).close();
-
-    UUID predefinedId = UUID.randomUUID();
-    Subscription followSubAggId =
-        fc.subscribe(
-            SubscriptionRequest.follow(
-                    FactSpec.ns("users").type("UserCreated").aggId(predefinedId).version(3))
-                .fromScratch(),
-            System.out::println);
-
-    Fact predefinedIdFact =
-        Fact.builder()
-            .ns("users")
-            .type("UserCreated")
-            .version(3)
-            .id(UUID.randomUUID())
-            .aggId(predefinedId)
-            .build(
-                "{\"firstName\":\"Dale\",\"lastName\":\"Cooper\",\"salutation\":\"Mr\",\"displayName\":\"Coop\"}");
-    fc.publish(predefinedIdFact);
-    System.out.println("published " + predefinedIdFact);
-
-    fc.subscribe(
-            SubscriptionRequest.catchup(
-                    FactSpec.ns("users").type("UserCreated").aggId(predefinedId).version(3))
-                .fromScratch(),
-            System.out::println)
-        .awaitCatchup();
-
-    followSubAggId.awaitCatchup(5000).close();
+  private void publish(Fact fact) {
+    jdbc.update(
+        "insert into fact (header, payload) values (?::jsonb, ?::jsonb)",
+        fact.jsonHeader(),
+        fact.jsonPayload());
   }
 }

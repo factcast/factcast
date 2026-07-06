@@ -17,16 +17,24 @@ package org.factcast.store.internal.lock;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
 public class AdvisoryWriteLock implements FactTableWriteLock {
   private final JdbcTemplate tpl;
 
   @Override
-  @Transactional(propagation = Propagation.MANDATORY)
-  public void aquireExclusiveTXLock() {
-    tpl.execute("SELECT pg_advisory_xact_lock(" + AdvisoryLocks.PUBLISH.code() + ")");
+  public AutoCloseable aquireSharedTXLock() {
+    tpl.execute("SELECT pg_advisory_lock_shared(" + AdvisoryLocks.PUBLISH.code() + ")");
+    return () -> {
+      tpl.execute("SELECT pg_advisory_unlock_shared(" + AdvisoryLocks.PUBLISH.code() + ")");
+    };
+  }
+
+  @Override
+  public AutoCloseable aquireExclusiveTXLock() {
+    tpl.execute("SELECT pg_advisory_lock(" + AdvisoryLocks.PUBLISH.code() + ")");
+    return () -> {
+      tpl.execute("SELECT pg_advisory_unlock(" + AdvisoryLocks.PUBLISH.code() + ")");
+    };
   }
 }

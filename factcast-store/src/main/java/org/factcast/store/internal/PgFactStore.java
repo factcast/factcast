@@ -124,12 +124,10 @@ public class PgFactStore extends AbstractFactStore {
     metrics.time(
         StoreMetrics.OP.PUBLISH,
         () -> {
-          try {
-            lock.aquireExclusiveTXLock();
-
-            List<Fact> copiedListOfFacts = Lists.newArrayList(factsToPublish);
-            int numberOfFactsToPublish = factsToPublish.size();
-            log.trace("Inserting {} fact(s)", numberOfFactsToPublish);
+          List<Fact> copiedListOfFacts = Lists.newArrayList(factsToPublish);
+          int numberOfFactsToPublish = factsToPublish.size();
+          log.trace("Inserting {} fact(s)", numberOfFactsToPublish);
+          try (var l = lock.aquireSharedTXLock()) {
             jdbcTemplate.batchUpdate(
                 PgConstants.INSERT_FACT,
                 copiedListOfFacts,
@@ -139,10 +137,13 @@ public class PgFactStore extends AbstractFactStore {
                   statement.setString(1, fact.jsonHeader());
                   statement.setString(2, fact.jsonPayload());
                 });
+
             // adding serials to headers is done via trigger
 
           } catch (DuplicateKeyException dupkey) {
             throw new DuplicateFactException(dupkey.getMessage());
+          } catch (Exception e) {
+            throw new RuntimeException(e);
           }
         });
   }
@@ -266,8 +267,11 @@ public class PgFactStore extends AbstractFactStore {
     return metrics.time(
         StoreMetrics.OP.PUBLISH_IF_UNCHANGED,
         () -> {
-          lock.aquireExclusiveTXLock();
-          return super.publishIfUnchanged(factsToPublish, optionalToken);
+          try (AutoCloseable l = lock.aquireExclusiveTXLock()) {
+            return super.publishIfUnchanged(factsToPublish, optionalToken);
+          } catch (Exception e) {
+            throw new RuntimeException(e);
+          }
         });
   }
 

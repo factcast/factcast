@@ -6,30 +6,64 @@ CREATE OR REPLACE FUNCTION notifyFactInsert() RETURNS trigger AS
 
 $$
 DECLARE
-    notified BOOLEAN;
-    ns varchar;
-    type varchar;
+    millis bigint ;
+    first  bigint;
+    count  int;
+    abool  text;
 BEGIN
+    millis := (extract(epoch FROM clock_timestamp()) * 1000)::bigint;
+    insert into pending_notifications
+    values (millis, NEW.header ->> 'ns', NEW.header ->> 'type')
+    on conflict do nothing;
+    --     PERFORM pg_notify('fact_insert', CONCAT(NEW.ser, ':', NEW.header ->> 'ns', ':', NEW.header ->> 'type'));
 
-    ns := NEW.header ->> 'ns';
-    type := NEW.header ->> 'type';
 
-    notified := NULLIF(current_setting(CONCAT('myvars.facttrigger.',ns,'.',type), TRUE), '');
+    SELECT min(ms)
+    from pending_notifications
+    into first;
 
-    IF notified IS NULL THEN
-        perform set_config(CONCAT('myvars.facttrigger.',ns,'.',type),'TRUE',TRUE);
-        PERFORM pg_notify('fact_insert', json_build_object(
-                'ser', NEW.ser,
-                'header', NEW.header,
-                'txId', txid_current(),
-                'ns',ns,
-                'type',type
-            )::text);
+    if (first < millis - 100) then
+        -- but only if we're not already in the middle of a flush
+        WITH attempt AS (SELECT pg_try_advisory_lock(1, 8192) AS got)
+        SELECT CASE WHEN got THEN flushNotifications() END
+        FROM attempt
+        into abool;
     END IF;
 
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION flushNotifications() RETURNS void AS
+$$
+DECLARE
+    payload text;
+    hwm     bigint ;
+BEGIN
+    select max(ms) from pending_notifications into hwm;
+    SELECT jsonb_agg(
+                   jsonb_build_object(
+                           'ns', ns,
+                           'type', type
+                   )
+           ) AS rows_json
+    FROM pending_notifications
+    into payload;
 
-CREATE CONSTRAINT TRIGGER tr_deferred_fact_insert AFTER INSERT ON fact DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE PROCEDURE notifyFactInsert();
+    IF (length(payload) < 7500) THEN
+        PERFORM pg_notify('fact_insert', concat(payload, ' --- ', now()::text));
+    ELSE
+        PERFORM pg_notify('fact_insert', '--- too many facts to send ---');--todo
+    END IF;
+
+    delete from pending_notifications where ms <= hwm;
+
+    PERFORM pg_advisory_unlock(1, 8192);
+END
+$$ LANGUAGE plpgsql;
+
+CREATE CONSTRAINT TRIGGER tr_deferred_fact_insert
+    AFTER INSERT
+    ON fact DEFERRABLE INITIALLY DEFERRED
+    FOR EACH ROW
+EXECUTE PROCEDURE notifyFactInsert();
