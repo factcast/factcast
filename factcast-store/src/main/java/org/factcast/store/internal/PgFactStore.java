@@ -124,10 +124,13 @@ public class PgFactStore extends AbstractFactStore {
     metrics.time(
         StoreMetrics.OP.PUBLISH,
         () -> {
-          List<Fact> copiedListOfFacts = Lists.newArrayList(factsToPublish);
-          int numberOfFactsToPublish = factsToPublish.size();
-          log.trace("Inserting {} fact(s)", numberOfFactsToPublish);
-          try (var l = lock.aquireSharedTXLock()) {
+          try {
+
+            List<Fact> copiedListOfFacts = Lists.newArrayList(factsToPublish);
+            int numberOfFactsToPublish = factsToPublish.size();
+            log.trace("Inserting {} fact(s)", numberOfFactsToPublish);
+
+            lock.aquireSharedTXLock();
             jdbcTemplate.batchUpdate(
                 PgConstants.INSERT_FACT,
                 copiedListOfFacts,
@@ -258,21 +261,25 @@ public class PgFactStore extends AbstractFactStore {
 
   @Override
   @Transactional(propagation = Propagation.REQUIRED)
+  @SuppressWarnings("java:S6809") // as we started a transaction already
   public boolean publishIfUnchanged(
       @NonNull List<? extends Fact> factsToPublish, @NonNull Optional<StateToken> optionalToken) {
     if (props.isReadOnlyModeEnabled()) {
       throw new UnsupportedOperationException("Publishing is not allowed in read-only mode");
     }
 
-    return metrics.time(
-        StoreMetrics.OP.PUBLISH_IF_UNCHANGED,
-        () -> {
-          try (AutoCloseable l = lock.aquireExclusiveTXLock()) {
+    if (optionalToken.isEmpty()) {
+      // even though this fallback behavior already is present in super, we branch here to avoid
+      // double (and unnecessarily exclusive) locking
+      publish(factsToPublish);
+      return true;
+    } else
+      return metrics.time(
+          StoreMetrics.OP.PUBLISH_IF_UNCHANGED,
+          () -> {
+            lock.aquireExclusiveTXLock();
             return super.publishIfUnchanged(factsToPublish, optionalToken);
-          } catch (Exception e) {
-            throw new RuntimeException(e);
-          }
-        });
+          });
   }
 
   @Override
