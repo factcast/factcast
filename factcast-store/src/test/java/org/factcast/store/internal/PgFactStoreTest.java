@@ -148,7 +148,7 @@ class PgFactStoreTest {
               eq(Lists.newArrayList(fact)),
               eq(Integer.MAX_VALUE),
               any(ParameterizedPreparedStatementSetter.class));
-      verify(lock).aquireExclusiveTXLock();
+      verify(lock).aquireSharedTXLock();
     }
 
     @Test
