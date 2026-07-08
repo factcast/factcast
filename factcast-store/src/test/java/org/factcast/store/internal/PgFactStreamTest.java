@@ -141,7 +141,7 @@ class PgFactStreamTest {
 
       uut.catchupAndFastForward(reqTo, hwm, ds);
 
-      assertThat(uut.serial().get()).isEqualTo(0L);
+      assertThat(uut.serial().get()).isZero();
       verify(uut).catchup(hwm.targetSer(), ds);
     }
 
@@ -271,7 +271,6 @@ class PgFactStreamTest {
     @Test
     void noFfwdIfTargetBehindConsumed() {
       UUID uuid = UUID.randomUUID();
-      // when(reqTo.startingAfter()).thenReturn(Optional.empty());
       uut.serial().set(6);
 
       uut.fastForward(HighWaterMark.of(UUID.randomUUID(), 5));
@@ -504,6 +503,8 @@ class PgFactStreamTest {
       doReturn(List.<ConnectionModifier>of())
           .when(withP1DataSource)
           .catchupConnectionModifiers(reqTo);
+      when(hwmFetcher.highWaterMark(any(SingleConnectionDataSource.class)))
+          .thenReturn(HighWaterMark.of(UUID.randomUUID(), 17L));
       when(pgCatchupFactory.create(any(), any(), any(), any(), any(), any()))
           .thenReturn(catchup1, catchup2);
 
@@ -516,7 +517,7 @@ class PgFactStreamTest {
               same(pipeline),
               same(serial),
               any(CurrentStatementHolder.class),
-              argThat(phase1Ds -> phase1Ds instanceof SingleConnectionDataSource && phase1Ds != ds),
+              argThat(phase1Ds -> phase1Ds != ds),
               eq(PgCatchupFactory.Phase.PHASE_1));
       verify(pgCatchupFactory)
           .create(
@@ -526,7 +527,8 @@ class PgFactStreamTest {
               any(CurrentStatementHolder.class),
               same(ds),
               eq(PgCatchupFactory.Phase.PHASE_2));
-      verify(catchup2, never()).fastForward(anyLong());
+      verify(hwmFetcher).highWaterMark(argThat(phase1Ds -> phase1Ds != ds));
+      verify(catchup2).fastForward(17L);
       verify(p1Connection).close();
     }
 
@@ -560,7 +562,7 @@ class PgFactStreamTest {
 
     @Test
     @SneakyThrows
-    void phase2ContinuesAfterPhase1SerialWhenConfiguredDataSourceMayBeBehindHwm() {
+    void phase2FastForwardsToConfiguredDataSourceHighWaterMark() {
       when(p1Ds.getConnection()).thenReturn(p1Connection);
       PgFactStream withP1DataSource =
           spy(
@@ -579,6 +581,8 @@ class PgFactStreamTest {
       doReturn(List.<ConnectionModifier>of())
           .when(withP1DataSource)
           .catchupConnectionModifiers(reqTo);
+      when(hwmFetcher.highWaterMark(any(SingleConnectionDataSource.class)))
+          .thenReturn(HighWaterMark.of(UUID.randomUUID(), 12L));
 
       AtomicLong phase2StartSerial = new AtomicLong(-1);
       PgCatchup phase1 =
@@ -612,7 +616,7 @@ class PgFactStreamTest {
 
       withP1DataSource.catchup(42L, ds);
 
-      assertThat(phase2StartSerial).hasValue(7L);
+      assertThat(phase2StartSerial).hasValue(12L);
       verify(p1Connection).close();
     }
 

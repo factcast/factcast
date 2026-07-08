@@ -293,9 +293,15 @@ public class PgFactStream {
       FromScratchCatchupLogSuppressingTurboFilter.beginCatchup(request.debugInfo());
     }
     try {
+      // The primary HWM is the catchup boundary, a dedicated phase-1 datasource could lag behind
+      // it, so use that datasource's own HWM as phase 2's safe fast-forward target.
+      long phase2FastForwardSerial = highWaterMarkSerial;
       if (isConnected()) {
         SingleConnectionDataSource phase1DataSource = phase1CatchupDataSourceOr(ds);
         try {
+          if (phase1DataSource != ds) {
+            phase2FastForwardSerial = hwmFetcher.highWaterMark(phase1DataSource).targetSer();
+          }
           pgCatchupFactory
               .create(
                   request,
@@ -318,12 +324,7 @@ public class PgFactStream {
         PgCatchup pgCatchup =
             pgCatchupFactory.create(
                 request, pipeline, serial, statementHolder, ds, PgCatchupFactory.Phase.PHASE_2);
-        // Only skip to the initial HWM when phase 1 queried the primary datasource. A dedicated
-        // phase1 datasource might be behind that HWM, so phase 2 must continue after the last
-        // serial actually read in phase 1.
-        if (p1CatchupDataSource == null) {
-          pgCatchup.fastForward(highWaterMarkSerial);
-        }
+        pgCatchup.fastForward(phase2FastForwardSerial);
         pgCatchup.run();
       }
     } finally {
