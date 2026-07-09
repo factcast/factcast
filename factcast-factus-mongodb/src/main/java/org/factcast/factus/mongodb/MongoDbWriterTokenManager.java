@@ -15,7 +15,6 @@
  */
 package org.factcast.factus.mongodb;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import java.time.Duration;
