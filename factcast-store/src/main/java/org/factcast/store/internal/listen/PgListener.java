@@ -149,9 +149,22 @@ public class PgListener implements InitializingBean, DisposableBean {
 
   @VisibleForTesting
   protected void processNotifications(PGNotification[] notifications) {
-    List<PGNotification> list = List.of(notifications);
+    Predicate<PGNotification> isNudge = n -> PgConstants.CHANNEL_NUDGE.equals(n.getName());
     Predicate<PGNotification> isFactInsert =
         n -> PgConstants.CHANNEL_FACT_INSERT.equals(n.getName());
+
+    // lets deal with nudges first
+    Arrays.stream(notifications)
+        .filter(isNudge)
+        // one nudge is enough, we don't care about the content
+        .limit(1)
+        .map(NudgeNotification::createFrom)
+        .filter(Objects::nonNull)
+        .forEach(this::post);
+
+    // lets collect the rest
+    List<PGNotification> list =
+        Arrays.stream(notifications).filter(Predicate.not(isNudge)).toList();
 
     List<PGNotification> nonFactInserts =
         list.stream().filter(Predicate.not(isFactInsert)).toList();

@@ -43,6 +43,15 @@ public class FactInsertionNotification extends StoreNotification {
     };
   }
 
+  public static StoreNotification internal(String ns, String type) {
+    return new FactInsertionNotification(ns, type, null) {
+      @Override
+      public boolean distributed() {
+        return false;
+      }
+    };
+  }
+
   @Override
   public String uniqueId() {
     if (ser == null) {

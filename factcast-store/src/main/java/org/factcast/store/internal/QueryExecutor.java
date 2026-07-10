@@ -18,7 +18,6 @@ package org.factcast.store.internal;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.Subscribe;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -31,40 +30,16 @@ import org.factcast.store.internal.notification.FactInsertionNotification;
  * @author uwe.schaefer@prisma-capacity.eu
  */
 @Slf4j
-class CondensedQueryExecutor {
-
-  private final long maxDelayInMillis;
+class QueryExecutor {
 
   private final PgSynchronizedQuery target;
-
   private final Supplier<Boolean> connectionStateSupplier;
   private final Set<String> interests;
 
-  @NonNull private final Timer timer;
-
-  private final AtomicBoolean currentlyScheduled = new AtomicBoolean(false);
-
-  @VisibleForTesting
-  CondensedQueryExecutor(
-      long maxDelayInMillis,
-      @NonNull PgSynchronizedQuery target,
-      @NonNull Supplier<Boolean> connectionStateSupplier,
-      @NonNull List<FactSpec> specs,
-      @NonNull Timer timer) {
-    this.maxDelayInMillis = maxDelayInMillis;
-    this.target = target;
-    this.connectionStateSupplier = connectionStateSupplier;
-    this.timer = timer;
-    interests = extractInterests(specs);
-  }
-
-  public CondensedQueryExecutor(
-      long maxDelayInMillis,
+  public QueryExecutor(
       @NonNull PgSynchronizedQuery target,
       @NonNull Supplier<Boolean> connectionStateSupplier,
       @NonNull List<FactSpec> specs) {
-    this.timer = new Timer(CondensedQueryExecutor.class.getSimpleName() + ".timer", true);
-    this.maxDelayInMillis = maxDelayInMillis;
     this.target = target;
     this.connectionStateSupplier = connectionStateSupplier;
     interests = extractInterests(specs);
@@ -84,37 +59,17 @@ class CondensedQueryExecutor {
   }
 
   public void trigger() {
+    // TODO recheck if needed
     if (Boolean.TRUE.equals(connectionStateSupplier.get())) {
-      if (maxDelayInMillis < 1) {
-        runTarget();
-      } else if (!currentlyScheduled.getAndSet(true)) {
-        timer.schedule(
-            new TimerTask() {
-
-              @Override
-              public void run() {
-                currentlyScheduled.set(false);
-                try {
-                  runTarget();
-                } catch (Exception e) {
-                  log.error("Scheduled query failed, closing: {}", e.getMessage());
-                }
-              }
-            },
-            maxDelayInMillis);
-      }
+      runTarget();
     }
   }
 
   // called by the EventBus
   @Subscribe
   public void onEvent(FactInsertionNotification ev) {
-
-    String ns = ev.ns();
-    String type = ev.type();
-
     // only trigger if necessary
-    if (mightMatch(ns, type)) {
+    if (mightMatch(ev.ns(), ev.type())) {
       trigger();
     }
   }
@@ -141,11 +96,5 @@ class CondensedQueryExecutor {
     }
   }
 
-  public void cancel() {
-    currentlyScheduled.set(true);
-    timer.cancel();
-    timer.purge();
-    // make sure, the final run did not flip again
-    currentlyScheduled.set(true);
-  }
+  public void cancel() {}
 }
