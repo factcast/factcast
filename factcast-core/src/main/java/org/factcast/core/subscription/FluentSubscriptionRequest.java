@@ -22,6 +22,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.spec.FactSpec;
 
 /**
@@ -34,8 +35,6 @@ import org.factcast.core.spec.FactSpec;
 class FluentSubscriptionRequest implements SubscriptionRequest {
 
   boolean ephemeral;
-
-  long maxBatchDelayInMs = SubscriptionRequestTO.DEFAULT_MAX_BATCH_DELAY_IN_MS;
 
   long keepaliveIntervalInMs;
 
@@ -63,6 +62,7 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
     return new Builder();
   }
 
+  @Slf4j
   public static class Builder implements SpecBuilder {
 
     private final FluentSubscriptionRequest toBuild = new FluentSubscriptionRequest();
@@ -118,12 +118,9 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
     }
 
     @Override
+    @Deprecated(forRemoval = true, since = "0.11.2")
     public @NonNull SpecBuilder withMaxBatchDelayInMs(long msec) {
-      if (msec < 10) {
-        throw new IllegalArgumentException("The minimum maxBatchDelayInMs is 10msec");
-      }
-
-      toBuild.maxBatchDelayInMs = msec;
+      log.warn("Max batch delay has been deprecated");
       return this;
     }
 

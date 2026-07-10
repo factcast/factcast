@@ -173,13 +173,6 @@ public class FluentSubscriptionRequestTest {
   }
 
   @Test
-  void setMaxBatchDelayInMs() {
-    SubscriptionRequest r =
-        SubscriptionRequest.catchup(FactSpec.ns("foo")).withMaxBatchDelayInMs(21).fromScratch();
-    assertEquals(r.maxBatchDelayInMs(), 21);
-  }
-
-  @Test
   void setKeepaliveIntervalInMs() {
     SubscriptionRequest r =
         SubscriptionRequest.catchup(FactSpec.ns("foo"))
@@ -197,21 +190,5 @@ public class FluentSubscriptionRequestTest {
                   .fromScratch();
             })
         .isInstanceOf(IllegalArgumentException.class);
-  }
-
-  @Test
-  void setMaxBatchDelayInMs_lowerBound() {
-    assertThatThrownBy(
-            () -> {
-              SubscriptionRequest.catchup(FactSpec.ns("foo"))
-                  .withMaxBatchDelayInMs(1)
-                  .fromScratch();
-            })
-        .isInstanceOf(IllegalArgumentException.class);
-  }
-
-  @Test
-  void setMaxBatchDelayInMs_lowerBoundOk() {
-    SubscriptionRequest.catchup(FactSpec.ns("foo")).withMaxBatchDelayInMs(10).fromScratch();
   }
 }
