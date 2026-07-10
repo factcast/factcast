@@ -630,7 +630,7 @@ public abstract class AbstractFactStoreTest {
           TestFactObserver obs = new TestFactObserver();
           try (Subscription s =
               uut.subscribe(
-                  SubscriptionRequest.follow(500, FactSpec.ns("default").aggId(id)).fromScratch(),
+                  SubscriptionRequest.follow(FactSpec.ns("default").aggId(id)).withMaxBatchDelayInMs(200).fromScratch(),
                   obs)) {
             uut.publish(
                 Fact.of(
@@ -640,7 +640,7 @@ public abstract class AbstractFactStoreTest {
                         + id
                         + "\"]}",
                     "{}"));
-            // will take some time on pgstore
+            // might take some time on pgstore
             obs.await(1);
           }
         });

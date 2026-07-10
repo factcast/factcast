@@ -56,6 +56,7 @@ import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 @RequiredArgsConstructor
 public class PgFactStream {
 
+  private static final long DEFAULT_MAX_BATCH_DELAY =10 ;
   final PgConnectionSupplier connectionSupplier;
   final EventBus eventBus;
   final PgFactIdToSerialMapper idToSerMapper;
@@ -158,7 +159,8 @@ public class PgFactStream {
         // signal follow
         telemetry.onFollow(request);
         long delayInMs;
-        if (request.maxBatchDelayInMs() < 1) {
+        long delayRequested = Optional.ofNullable(request.maxBatchDelayInMs()).orElse(DEFAULT_MAX_BATCH_DELAY);
+        if (delayRequested < 1) {
           // ok, instant query after NOTIFY
           delayInMs = 0;
         } else {
@@ -170,15 +172,18 @@ public class PgFactStream {
           // distributes delay between 75% and 100% of the maxDelay
           delayInMs =
               Math.round(
-                  request.maxBatchDelayInMs()
+                  delayRequested
                       * (0.75 + ThreadLocalRandom.current().nextDouble() * 0.25));
           log.trace(
               "{} setting delay to {}, maxDelay was {}",
               request,
               delayInMs,
-              request.maxBatchDelayInMs());
+                  delayRequested);
         }
-        condensedExecutor = createCondensedExecutor(request, query, delayInMs);
+        // setting it back to the request
+        request.maxBatchDelayInMs(delayInMs);
+
+        condensedExecutor = createCondensedExecutor(request, query);
         eventBus.register(condensedExecutor);
         // catchup phase 3 – make sure, we did not miss any fact due to
         // slow registration
@@ -195,8 +200,9 @@ public class PgFactStream {
   @VisibleForTesting
   @NonNull
   CondensedQueryExecutor createCondensedExecutor(
-      @NonNull SubscriptionRequest request, @NonNull PgSynchronizedQuery query, long delayInMs) {
-    return new CondensedQueryExecutor(delayInMs, query, this::isConnected, request.specs());
+      @NonNull SubscriptionRequest request, @NonNull PgSynchronizedQuery query) {
+    return new CondensedQueryExecutor(
+        request().maxBatchDelayInMs(), query, this::isConnected, request.specs());
   }
 
   @VisibleForTesting

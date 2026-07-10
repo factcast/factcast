@@ -182,7 +182,7 @@ class PgFactStreamTest {
     void registersCondensedExecutorIfRequestIsContinuous() {
       var maxBatchDelay = 0L;
       doReturn(true).when(uut).isConnected();
-      doReturn(condensedExecutor).when(uut).createCondensedExecutor(reqTo, query, maxBatchDelay);
+      doReturn(condensedExecutor).when(uut).createCondensedExecutor(reqTo, query);
       when(reqTo.continuous()).thenReturn(true);
       when(reqTo.maxBatchDelayInMs()).thenReturn(maxBatchDelay);
 
@@ -203,9 +203,7 @@ class PgFactStreamTest {
 
       uut.follow(reqTo, query);
 
-      verify(uut)
-          .createCondensedExecutor(
-              eq(reqTo), eq(query), longThat(delay -> Range.of(75L, 100L).contains(delay)));
+      verify(uut).createCondensedExecutor(eq(reqTo), eq(query));
       verifyNoInteractions(pipeline);
     }
 

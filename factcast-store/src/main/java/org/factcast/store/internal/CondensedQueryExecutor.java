@@ -59,7 +59,7 @@ class CondensedQueryExecutor {
   }
 
   public CondensedQueryExecutor(
-      long maxDelayInMillis,
+      Long maxDelayInMillis,
       @NonNull PgSynchronizedQuery target,
       @NonNull Supplier<Boolean> connectionStateSupplier,
       @NonNull List<FactSpec> specs) {

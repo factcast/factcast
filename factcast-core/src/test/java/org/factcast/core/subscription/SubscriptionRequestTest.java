@@ -39,11 +39,6 @@ public class SubscriptionRequestTest {
   }
 
   @Test
-  void testFollowDelayNullSpec() {
-    Assertions.assertThrows(NullPointerException.class, () -> SubscriptionRequest.follow(1, null));
-  }
-
-  @Test
   void testCatchup() {
     FactSpec s = FactSpec.ns("xx");
     final SubscriptionRequest r = SubscriptionRequest.catchup(s).fromScratch();
@@ -95,7 +90,8 @@ public class SubscriptionRequestTest {
   @Test
   void testFollowMaxDelay() {
     FactSpec s = FactSpec.ns("xx");
-    final SubscriptionRequest r = SubscriptionRequest.follow(17, s).fromScratch();
+    final SubscriptionRequest r =
+        SubscriptionRequest.follow(s).withMaxBatchDelayInMs(17).fromScratch();
     assertTrue(r.specs().contains(s));
     assertEquals(1, r.specs().size());
     assertEquals(17, r.maxBatchDelayInMs());
@@ -106,7 +102,9 @@ public class SubscriptionRequestTest {
     org.assertj.core.api.Assertions.assertThatThrownBy(
             () -> {
               SubscriptionRequest r =
-                  SubscriptionRequest.follow(1, FactSpec.ns("asd")).fromScratch();
+                  SubscriptionRequest.follow(FactSpec.ns("asd"))
+                      .withMaxBatchDelayInMs(1)
+                      .fromScratch();
             })
         .isInstanceOf(IllegalArgumentException.class);
   }

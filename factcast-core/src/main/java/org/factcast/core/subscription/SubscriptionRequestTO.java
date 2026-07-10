@@ -19,6 +19,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.lang.management.ManagementFactory;
 import java.util.*;
+
+import jakarta.annotation.Nullable;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.factcast.core.spec.FactSpec;
@@ -37,11 +39,9 @@ import org.factcast.core.util.FactCastJson;
 @NoArgsConstructor
 public class SubscriptionRequestTO implements SubscriptionRequest {
 
-  public static final long DEFAULT_MAX_BATCH_DELAY_IN_MS = 10;
-
   private static final String PID = ManagementFactory.getRuntimeMXBean().getName();
 
-  @JsonProperty long maxBatchDelayInMs = DEFAULT_MAX_BATCH_DELAY_IN_MS;
+  @JsonProperty @Nullable  Long maxBatchDelayInMs = null;
 
   @JsonProperty long keepaliveIntervalInMs;
 

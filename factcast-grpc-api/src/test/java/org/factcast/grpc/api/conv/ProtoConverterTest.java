@@ -248,7 +248,7 @@ public class ProtoConverterTest {
             .continuous(true)
             .ephemeral(false)
             .debugInfo("test")
-            .maxBatchDelayInMs(13);
+            .maxBatchDelayInMs(13L);
     to.addSpecs(Collections.singletonList(FactSpec.ns("foo")));
     SubscriptionRequestTO copy = uut.fromProto(uut.toProto(to));
     assertEquals(to.debugInfo(), copy.debugInfo());
