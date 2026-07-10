@@ -56,7 +56,7 @@ import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 @RequiredArgsConstructor
 public class PgFactStream {
 
-  private static final long DEFAULT_MAX_BATCH_DELAY =10 ;
+  private static final long DEFAULT_MAX_BATCH_DELAY = 10;
   final PgConnectionSupplier connectionSupplier;
   final EventBus eventBus;
   final PgFactIdToSerialMapper idToSerMapper;
@@ -159,7 +159,8 @@ public class PgFactStream {
         // signal follow
         telemetry.onFollow(request);
         long delayInMs;
-        long delayRequested = Optional.ofNullable(request.maxBatchDelayInMs()).orElse(DEFAULT_MAX_BATCH_DELAY);
+        long delayRequested =
+            Optional.ofNullable(request.maxBatchDelayInMs()).orElse(DEFAULT_MAX_BATCH_DELAY);
         if (delayRequested < 1) {
           // ok, instant query after NOTIFY
           delayInMs = 0;
@@ -171,14 +172,8 @@ public class PgFactStream {
           // ok, that is unlikely to be necessary, but easy to do, so...
           // distributes delay between 75% and 100% of the maxDelay
           delayInMs =
-              Math.round(
-                  delayRequested
-                      * (0.75 + ThreadLocalRandom.current().nextDouble() * 0.25));
-          log.trace(
-              "{} setting delay to {}, maxDelay was {}",
-              request,
-              delayInMs,
-                  delayRequested);
+              Math.round(delayRequested * (0.75 + ThreadLocalRandom.current().nextDouble() * 0.25));
+          log.trace("{} setting delay to {}, maxDelay was {}", request, delayInMs, delayRequested);
         }
         // setting it back to the request
         request.maxBatchDelayInMs(delayInMs);

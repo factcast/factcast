@@ -630,7 +630,9 @@ public abstract class AbstractFactStoreTest {
           TestFactObserver obs = new TestFactObserver();
           try (Subscription s =
               uut.subscribe(
-                  SubscriptionRequest.follow(FactSpec.ns("default").aggId(id)).withMaxBatchDelayInMs(200).fromScratch(),
+                  SubscriptionRequest.follow(FactSpec.ns("default").aggId(id))
+                      .withMaxBatchDelayInMs(200)
+                      .fromScratch(),
                   obs)) {
             uut.publish(
                 Fact.of(

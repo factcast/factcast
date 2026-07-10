@@ -107,13 +107,12 @@ public class SubscriptionRequestTOTest {
     assertEquals(17, uut.maxBatchDelayInMs());
   }
 
-
   @Test
   void testMaxDelayUnset() {
     FactSpec s = FactSpec.ns("foo");
     SubscriptionRequest r = SubscriptionRequest.catchup(s).fromScratch();
     SubscriptionRequestTO uut = SubscriptionRequestTO.from(r);
-    assertNull( uut.maxBatchDelayInMs());
+    assertNull(uut.maxBatchDelayInMs());
   }
 
   @Test

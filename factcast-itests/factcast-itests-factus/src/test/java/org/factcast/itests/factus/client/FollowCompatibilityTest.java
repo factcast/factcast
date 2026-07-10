@@ -1,3 +1,18 @@
+/*
+ * Copyright © 2017-2026 factcast.org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.factcast.itests.factus.client;
 
 import java.util.*;
@@ -8,19 +23,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.Assertions;
 import org.factcast.factus.Factus;
 import org.factcast.factus.Handler;
-import org.factcast.factus.event.EventConverter;
 import org.factcast.factus.projection.LocalSubscribedProjection;
 import org.factcast.factus.projection.SubscribedProjection;
 import org.factcast.itests.TestFactusApplication;
-import org.factcast.itests.factus.config.RedissonProjectionConfiguration;
 import org.factcast.itests.factus.event.*;
 import org.factcast.itests.factus.event.film.*;
 import org.factcast.itests.factus.proj.*;
-import org.factcast.spring.boot.autoconfigure.snap.RedissonSnapshotCacheAutoConfiguration;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.factcast.test.FactcastTestConfig;
 import org.junit.jupiter.api.Test;
-import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 
@@ -32,7 +43,7 @@ import org.springframework.test.context.ContextConfiguration;
 @FactcastTestConfig(factcastVersion = "0.11.1")
 public class FollowCompatibilityTest extends AbstractFactCastIntegrationTest {
 
-    @Autowired Factus factus;
+  @Autowired Factus factus;
 
   CountDownLatch cdl = new CountDownLatch(3);
   CountDownLatch catchup = new CountDownLatch(1);
@@ -52,11 +63,11 @@ public class FollowCompatibilityTest extends AbstractFactCastIntegrationTest {
     factus.publish(new StarTrekCharacterCreated("Odo"));
     factus.publish(new StarTrekCharacterCreated("7of9"));
 
-    Assertions.assertThat( cdl.await(10, TimeUnit.SECONDS)).isTrue();
+    Assertions.assertThat(cdl.await(10, TimeUnit.SECONDS)).isTrue();
   }
 
   private class StarTrekNames extends LocalSubscribedProjection {
-@Handler
+    @Handler
     public void apply(StarTrekCharacterCreated created) {
       cdl.countDown();
     }

@@ -25,7 +25,6 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 import lombok.SneakyThrows;
-import org.apache.commons.lang3.Range;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.FactStreamPosition;
 import org.factcast.core.TestFactStreamPosition;
