@@ -100,22 +100,6 @@ public class SubscriptionRequestTOTest {
   }
 
   @Test
-  void testMaxDelay() {
-    FactSpec s = FactSpec.ns("foo");
-    SubscriptionRequest r = SubscriptionRequest.catchup(s).withMaxBatchDelayInMs(17).fromScratch();
-    SubscriptionRequestTO uut = SubscriptionRequestTO.from(r);
-    assertEquals(17, uut.maxBatchDelayInMs());
-  }
-
-  @Test
-  void testMaxDelayUnset() {
-    FactSpec s = FactSpec.ns("foo");
-    SubscriptionRequest r = SubscriptionRequest.catchup(s).fromScratch();
-    SubscriptionRequestTO uut = SubscriptionRequestTO.from(r);
-    assertNull(uut.maxBatchDelayInMs());
-  }
-
-  @Test
   void testAddSpecs() {
     FactSpec s = FactSpec.ns("foo");
     SubscriptionRequest r = SubscriptionRequest.catchup(s).fromScratch();

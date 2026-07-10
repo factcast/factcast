@@ -28,8 +28,6 @@ import org.factcast.core.spec.FactSpec;
  */
 public interface SubscriptionRequest {
 
-  Long maxBatchDelayInMs();
-
   long keepaliveIntervalInMs();
 
   boolean streamInfo();

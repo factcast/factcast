@@ -244,17 +244,12 @@ public class ProtoConverterTest {
   @Test
   void testToProtoSubscriptionRequest() {
     SubscriptionRequestTO to =
-        new SubscriptionRequestTO()
-            .continuous(true)
-            .ephemeral(false)
-            .debugInfo("test")
-            .maxBatchDelayInMs(13L);
+        new SubscriptionRequestTO().continuous(true).ephemeral(false).debugInfo("test");
     to.addSpecs(Collections.singletonList(FactSpec.ns("foo")));
     SubscriptionRequestTO copy = uut.fromProto(uut.toProto(to));
     assertEquals(to.debugInfo(), copy.debugInfo());
     assertEquals(to.ephemeral(), copy.ephemeral());
     assertEquals(to.continuous(), copy.continuous());
-    assertEquals(to.maxBatchDelayInMs(), copy.maxBatchDelayInMs());
     assertEquals(to.specs().get(0).type(), copy.specs().get(0).type());
     assertEquals(to.specs().get(0).ns(), copy.specs().get(0).ns());
   }

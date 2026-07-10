@@ -87,28 +87,6 @@ public class SubscriptionRequestTest {
     assertEquals(1, r.specs().size());
   }
 
-  @Test
-  void testFollowMaxDelay() {
-    FactSpec s = FactSpec.ns("xx");
-    final SubscriptionRequest r =
-        SubscriptionRequest.follow(s).withMaxBatchDelayInMs(17).fromScratch();
-    assertTrue(r.specs().contains(s));
-    assertEquals(1, r.specs().size());
-    assertEquals(17, r.maxBatchDelayInMs());
-  }
-
-  @Test
-  void testMinimumMaxDelay() {
-    org.assertj.core.api.Assertions.assertThatThrownBy(
-            () -> {
-              SubscriptionRequest r =
-                  SubscriptionRequest.follow(FactSpec.ns("asd"))
-                      .withMaxBatchDelayInMs(1)
-                      .fromScratch();
-            })
-        .isInstanceOf(IllegalArgumentException.class);
-  }
-
   // overloads with projection/aggregate class
 
   @Test

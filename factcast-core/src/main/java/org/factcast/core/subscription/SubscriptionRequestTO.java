@@ -17,7 +17,6 @@ package org.factcast.core.subscription;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.annotation.Nullable;
 import java.lang.management.ManagementFactory;
 import java.util.*;
 import lombok.*;
@@ -39,8 +38,6 @@ import org.factcast.core.util.FactCastJson;
 public class SubscriptionRequestTO implements SubscriptionRequest {
 
   private static final String PID = ManagementFactory.getRuntimeMXBean().getName();
-
-  @JsonProperty @Nullable Long maxBatchDelayInMs = null;
 
   @JsonProperty long keepaliveIntervalInMs;
 
@@ -69,7 +66,6 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
 
   // copy constr. from a SR
   public SubscriptionRequestTO(SubscriptionRequest request) {
-    maxBatchDelayInMs = request.maxBatchDelayInMs();
     keepaliveIntervalInMs = request.keepaliveIntervalInMs();
     streamInfo = request.streamInfo();
     continuous = request.continuous();

@@ -19,7 +19,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.EventBus;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.AccessLevel;
@@ -158,26 +157,6 @@ public class PgFactStream {
         log.debug("{} entering follow mode", request);
         // signal follow
         telemetry.onFollow(request);
-        long delayInMs;
-        long delayRequested =
-            Optional.ofNullable(request.maxBatchDelayInMs()).orElse(DEFAULT_MAX_BATCH_DELAY);
-        if (delayRequested < 1) {
-          // ok, instant query after NOTIFY
-          delayInMs = 0;
-        } else {
-          // spread consumers, so that they query at different points
-          // in time, even if they get triggered at the same PIT, and
-          // share the same latency requirements
-          //
-          // ok, that is unlikely to be necessary, but easy to do, so...
-          // distributes delay between 75% and 100% of the maxDelay
-          delayInMs =
-              Math.round(delayRequested * (0.75 + ThreadLocalRandom.current().nextDouble() * 0.25));
-          log.trace("{} setting delay to {}, maxDelay was {}", request, delayInMs, delayRequested);
-        }
-        // setting it back to the request
-        request.maxBatchDelayInMs(delayInMs);
-
         condensedExecutor = createCondensedExecutor(request, query);
         eventBus.register(condensedExecutor);
         // catchup phase 3 – make sure, we did not miss any fact due to
@@ -196,8 +175,7 @@ public class PgFactStream {
   @NonNull
   CondensedQueryExecutor createCondensedExecutor(
       @NonNull SubscriptionRequest request, @NonNull PgSynchronizedQuery query) {
-    return new CondensedQueryExecutor(
-        request().maxBatchDelayInMs(), query, this::isConnected, request.specs());
+    return new CondensedQueryExecutor(query, this::isConnected, request.specs());
   }
 
   @VisibleForTesting
