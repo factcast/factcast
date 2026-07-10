@@ -36,8 +36,6 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
 
   boolean ephemeral;
 
-  Long maxBatchDelayInMs = null;
-
   long keepaliveIntervalInMs;
 
   /**
