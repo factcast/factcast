@@ -31,7 +31,7 @@ import org.factcast.itests.factus.event.film.*;
 import org.factcast.itests.factus.proj.*;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.factcast.test.FactcastTestConfig;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 
@@ -41,6 +41,11 @@ import org.springframework.test.context.ContextConfiguration;
     })
 @Slf4j
 @FactcastTestConfig(factcastVersion = "0.11.1")
+// This is disabled, because it cannot be run in the pipeline currently, as using a different fc
+// version makes the toxyproxies collide.
+// As this is a one-shot compatibility test, it is fine to be run only locally and will be deleted
+// in the next version
+@Disabled
 public class FollowCompatibilityTest extends AbstractFactCastIntegrationTest {
 
   @Autowired Factus factus;

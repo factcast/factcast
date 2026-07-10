@@ -50,7 +50,6 @@ import org.factcast.itests.factus.event.film.*;
 import org.factcast.itests.factus.proj.*;
 import org.factcast.spring.boot.autoconfigure.snap.RedissonSnapshotCacheAutoConfiguration;
 import org.factcast.test.AbstractFactCastIntegrationTest;
-import org.factcast.test.FactcastTestConfig;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.*;
 import org.redisson.api.*;
@@ -65,7 +64,6 @@ import org.testcontainers.shaded.org.awaitility.Awaitility;
       RedissonSnapshotCacheAutoConfiguration.class
     })
 @Slf4j
-@FactcastTestConfig(factcastVersion = "0.11.1")
 class FactusClientTest extends AbstractFactCastIntegrationTest {
   private static final long WAIT_TIME_FOR_ASYNC_FACT_DELIVERY = 1000;
 
