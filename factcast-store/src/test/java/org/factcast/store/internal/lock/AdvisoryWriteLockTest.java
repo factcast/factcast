@@ -39,22 +39,22 @@ class AdvisoryWriteLockTest {
   @InjectMocks private AdvisoryWriteLock underTest;
 
   @Nested
-  class AquireSharedTXLock {
+  class AcquireSharedTXLock {
 
     @Test
     void executesSharedAdvisoryLockStatement() {
-      underTest.aquireSharedTXLock();
+      underTest.acquireSharedTXLock();
 
       verify(tpl).execute(LOCK_SHARED_SQL);
     }
   }
 
   @Nested
-  class AquireExclusiveTXLock {
+  class AcquireExclusiveTXLock {
 
     @Test
     void executesExclusiveAdvisoryLockStatement() {
-      underTest.aquireExclusiveTXLock();
+      underTest.acquireExclusiveTXLock();
 
       verify(tpl).execute(LOCK_EXCLUSIVE_SQL);
     }

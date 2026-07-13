@@ -32,13 +32,13 @@ public class AdvisoryWriteLock implements FactTableWriteLock {
 
   @Override
   @Transactional(propagation = Propagation.MANDATORY)
-  public void aquireSharedTXLock() {
+  public void acquireSharedTXLock() {
     tpl.execute(LOCK_SHARED_SQL);
   }
 
   @Override
   @Transactional(propagation = Propagation.MANDATORY)
-  public void aquireExclusiveTXLock() {
+  public void acquireExclusiveTXLock() {
     tpl.execute(LOCK_EXCLUSIVE_SQL);
   }
 }
