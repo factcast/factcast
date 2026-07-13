@@ -17,6 +17,7 @@ package org.factcast.store.internal.listen;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.*;
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.atomic.*;
 import java.util.concurrent.locks.*;
@@ -48,6 +49,7 @@ public class NudgeNotificationHandler implements SmartInitializingSingleton, Dis
   @Override
   public void afterSingletonsInstantiated() {
     bus.register(this);
+    timer.scheduleAtFixedRate(new ScheduledCleanup(), 0, Duration.ofMinutes(1).toMillis());
   }
 
   @Subscribe
@@ -85,6 +87,13 @@ public class NudgeNotificationHandler implements SmartInitializingSingleton, Dis
         // only if we're in the current 100msec window
         fetchPairsAndDispatch();
       }
+    }
+  }
+
+  class ScheduledCleanup extends TimerTask {
+    @Override
+    public void run() {
+      jdbc.execute("select notificationCleanup()");
     }
   }
 

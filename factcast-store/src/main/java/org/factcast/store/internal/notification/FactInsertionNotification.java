@@ -43,7 +43,7 @@ public class FactInsertionNotification extends StoreNotification {
     };
   }
 
-  public static StoreNotification internal(String ns, String type) {
+  public static FactInsertionNotification internal(String ns, String type) {
     return new FactInsertionNotification(ns, type, null) {
       @Override
       public boolean distributed() {

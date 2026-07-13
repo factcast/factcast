@@ -265,14 +265,6 @@ public class StoreConfigurationProperties implements InitializingBean {
 
   boolean catchupAsyncFetch = false; // might default to true in the future
 
-  public enum LatencyRequirement {
-    LOWEST,
-    LOW,
-    MEDIUM,
-    RELAXED,
-    LAZY
-  }
-
   /**
    * When catching up, if production of a full notification of facts takes longer than this (10
    * seconds default, 2 seconds minimum), an additional flush is inserted into the pipelin in order

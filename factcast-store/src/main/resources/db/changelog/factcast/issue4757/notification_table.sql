@@ -36,3 +36,11 @@ CREATE TRIGGER tr_notification_insert
     ON notification
     FOR EACH ROW
 EXECUTE PROCEDURE notificationInsert();
+
+CREATE OR REPLACE PROCEDURE notificationCleanup() AS
+$$
+BEGIN
+    -- delete all notifications older than one minute
+    DELETE FROM notification WHERE tw < (extract(epoch FROM clock_timestamp()) * 10 - 600);
+END;
+$$ LANGUAGE plpgsql;
