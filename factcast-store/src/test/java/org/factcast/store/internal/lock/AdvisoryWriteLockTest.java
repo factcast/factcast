@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2020 factcast.org
+ * Copyright © 2017-2026 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,30 +15,48 @@
  */
 package org.factcast.store.internal.lock;
 
-import lombok.RequiredArgsConstructor;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
+import static org.mockito.Mockito.verify;
 
-@RequiredArgsConstructor
-@SuppressWarnings("java:S2077")
-public class AdvisoryWriteLock implements FactTableWriteLock {
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.jdbc.core.JdbcTemplate;
+
+@ExtendWith(MockitoExtension.class)
+class AdvisoryWriteLockTest {
+
   private static final String LOCK_SHARED_SQL =
       "SELECT pg_advisory_xact_lock_shared(" + AdvisoryLocks.PUBLISH.code() + ")";
+
   private static final String LOCK_EXCLUSIVE_SQL =
       "SELECT pg_advisory_xact_lock(" + AdvisoryLocks.PUBLISH.code() + ")";
 
-  private final JdbcTemplate tpl;
+  @Mock private JdbcTemplate tpl;
 
-  @Override
-  @Transactional(propagation = Propagation.MANDATORY)
-  public void acquireSharedTXLock() {
-    tpl.execute(LOCK_SHARED_SQL);
+  @InjectMocks private AdvisoryWriteLock underTest;
+
+  @Nested
+  class AcquireSharedTXLock {
+
+    @Test
+    void executesSharedAdvisoryLockStatement() {
+      underTest.acquireSharedTXLock();
+
+      verify(tpl).execute(LOCK_SHARED_SQL);
+    }
   }
 
-  @Override
-  @Transactional(propagation = Propagation.MANDATORY)
-  public void acquireExclusiveTXLock() {
-    tpl.execute(LOCK_EXCLUSIVE_SQL);
+  @Nested
+  class AcquireExclusiveTXLock {
+
+    @Test
+    void executesExclusiveAdvisoryLockStatement() {
+      underTest.acquireExclusiveTXLock();
+
+      verify(tpl).execute(LOCK_EXCLUSIVE_SQL);
+    }
   }
 }

@@ -125,11 +125,12 @@ public class PgFactStore extends AbstractFactStore {
         StoreMetrics.OP.PUBLISH,
         () -> {
           try {
-            lock.aquireExclusiveTXLock();
 
             List<Fact> copiedListOfFacts = Lists.newArrayList(factsToPublish);
             int numberOfFactsToPublish = factsToPublish.size();
             log.trace("Inserting {} fact(s)", numberOfFactsToPublish);
+
+            lock.acquireSharedTXLock();
             jdbcTemplate.batchUpdate(
                 PgConstants.INSERT_FACT,
                 copiedListOfFacts,
@@ -257,18 +258,25 @@ public class PgFactStore extends AbstractFactStore {
 
   @Override
   @Transactional(propagation = Propagation.REQUIRED)
+  @SuppressWarnings("java:S6809") // as we started a transaction already
   public boolean publishIfUnchanged(
       @NonNull List<? extends Fact> factsToPublish, @NonNull Optional<StateToken> optionalToken) {
     if (props.isReadOnlyModeEnabled()) {
       throw new UnsupportedOperationException("Publishing is not allowed in read-only mode");
     }
 
-    return metrics.time(
-        StoreMetrics.OP.PUBLISH_IF_UNCHANGED,
-        () -> {
-          lock.aquireExclusiveTXLock();
-          return super.publishIfUnchanged(factsToPublish, optionalToken);
-        });
+    if (optionalToken.isEmpty()) {
+      // even though this fallback behavior already is present in super, we branch here to avoid
+      // double (and unnecessarily exclusive) locking
+      publish(factsToPublish);
+      return true;
+    } else
+      return metrics.time(
+          StoreMetrics.OP.PUBLISH_IF_UNCHANGED,
+          () -> {
+            lock.acquireExclusiveTXLock();
+            return PgFactStore.super.publishIfUnchanged(factsToPublish, optionalToken);
+          });
   }
 
   @Override
