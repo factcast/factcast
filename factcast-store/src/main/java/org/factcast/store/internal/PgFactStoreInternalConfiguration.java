@@ -324,7 +324,8 @@ public class PgFactStoreInternalConfiguration {
   }
 
   @Bean
-  public NudgeNotificationHandler nudgeHanlder(EventBus bus) {
-    return new NudgeNotificationHandler(bus);
+  public NudgeNotificationHandler nudgeHandler(
+      EventBus bus, JdbcTemplate jdbcTemplate, StoreConfigurationProperties props) {
+    return new NudgeNotificationHandler(bus, jdbcTemplate, props);
   }
 }

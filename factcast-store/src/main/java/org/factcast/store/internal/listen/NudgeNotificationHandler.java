@@ -15,54 +15,105 @@
  */
 package org.factcast.store.internal.listen;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.*;
+import java.util.*;
 import java.util.concurrent.atomic.*;
-import javax.sql.DataSource;
+import java.util.concurrent.locks.*;
 import lombok.*;
+import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.notification.*;
 import org.springframework.beans.factory.*;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 @RequiredArgsConstructor
 public class NudgeNotificationHandler implements SmartInitializingSingleton, DisposableBean {
+  private static final String BASE_EXISTS_SQL =
+      "SELECT (exists(select 1 from notification where ser=?))";
   private final @NonNull EventBus bus;
-  private final @NonNull DataSource ds;
-  private final AtomicLong notificationSer = new AtomicLong(0);
-  private JdbcTemplate jdbc;
+  private final @NonNull JdbcTemplate jdbc;
+  private final @NonNull StoreConfigurationProperties props;
+  @VisibleForTesting protected final StampedLock lock = new StampedLock();
+  @VisibleForTesting protected final AtomicLong notificationSer = new AtomicLong(0);
+  @VisibleForTesting protected final Timer timer = new Timer(true);
+  // this we need in order to skip obsolete tasks
+  @VisibleForTesting protected final AtomicLong timerVersion = new AtomicLong(0);
 
   @Override
   public void destroy() throws Exception {
     bus.unregister(this);
+    timer.cancel();
   }
 
   @Override
   public void afterSingletonsInstantiated() {
     bus.register(this);
-    this.jdbc = new JdbcTemplate(ds);
   }
 
   @Subscribe
   public void nudge(NudgeNotification nudgeNotification) {
-
-    String baseExists = "SELECT (exists(select 1 from notification where ser=?))";
-
-    if (notificationSer.get() == 0 || !jdbc.queryForObject(baseExists, Boolean.class)) {
+    if (notificationSer.get() == 0
+        || Boolean.FALSE.equals(
+            jdbc.queryForObject(BASE_EXISTS_SQL, Boolean.class, notificationSer.get()))) {
+      // in both cases, we need all subscriptions to fetch
+      // and set the notificationSer to current max
+      Long max = jdbc.queryForObject("SELECT max(ser) FROM notification", Long.class);
+      if (max != null) notificationSer.set(max.longValue());
 
       bus.post(FactInsertionNotification.internal());
+    } else {
+      fetchPairsAndDispatch();
     }
 
-    fetchPairsAndDispatch();
-    // TODO schedule subsequent polls
+    // this makes all currently schedule tasks just return. unfortunately, we cannot cancel tasks on
+    // a timer without also canceling the timer itself
+    long version = timerVersion.incrementAndGet();
+    long interval = props.getMaxNotificationPollLatencyInMillis();
 
+    for (long i = 0; i < 100; i = i + interval) {
+      timer.schedule(new ScheduledPoll(version), i + interval);
+    }
   }
 
-  private void fetchPairsAndDispatch() {
-    jdbc.query(
-        "SELECT max(ser) as ser,ns,type FROM notification WHERE ser > ? GROUP BY DISTINCT(ns,type) ORDER BY ser",
-        new Object[] {notificationSer.get()},
-        rs -> {
-          bus.post(FactInsertionNotification.internal(rs.getString(2), rs.getString(3)));
-          notificationSer.set(rs.getLong(1));
-        });
+  @RequiredArgsConstructor
+  class ScheduledPoll extends TimerTask {
+    final long version;
+
+    @Override
+    public void run() {
+      if (version == timerVersion.get()) {
+        // only if we're in the current 100msec window
+        fetchPairsAndDispatch();
+      }
+    }
+  }
+
+  public record FetchNotificationTuple(long max, long ser, String ns, String type) {
+    public StoreNotification toFactInsertionNotification() {
+      return FactInsertionNotification.internal(ns(), type());
+    }
+  }
+
+  void fetchPairsAndDispatch() {
+    // we're trying to avoid query storms here, as well as raceconditions on notificationSer.set
+    // we're not using synchronized in order to not stack up useless queries.
+    long lockStamp = lock.tryWriteLock();
+    if (lockStamp != 0) {
+      try {
+        // TODO we certainly want a metric emitted from here
+        List<FetchNotificationTuple> results =
+            jdbc.queryForList(
+                "SELECT max(ser) as ser,ns,type FROM notification WHERE ser > ? GROUP BY DISTINCT(ns,type) ORDER BY ser",
+                FetchNotificationTuple.class);
+
+        results.forEach(
+            t -> {
+              bus.post(t.toFactInsertionNotification());
+              notificationSer.set(t.ser());
+            });
+      } finally {
+        lock.unlockWrite(lockStamp);
+      }
+    }
   }
 }

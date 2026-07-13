@@ -284,6 +284,12 @@ public class StoreConfigurationProperties implements InitializingBean {
   @Min(AutoFlushingServerPipeline.AUTOFLUSH_CHECK_INTERVAL)
   int autoFlushDelay = 10000; // 10 seconds default
 
+  @Positive
+  @Min(5)
+  @Max(50)
+  long maxNotificationPollLatencyInMillis = 25;
+
+  @Positive
   @Override
   public void afterPropertiesSet() throws Exception {
     if (integrationTestMode) {
