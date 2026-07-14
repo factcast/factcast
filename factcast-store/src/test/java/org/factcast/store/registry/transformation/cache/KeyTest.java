@@ -15,7 +15,7 @@
  */
 package org.factcast.store.registry.transformation.cache;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.*;
 import org.factcast.core.Fact;
@@ -25,13 +25,11 @@ class KeyTest {
 
   @Test
   void of() {
-    String chainId = "[3-2-1]";
     Fact fact = Fact.builder().ns("ns").type("type").id(UUID.randomUUID()).version(1).build("{}");
 
-    var ofId = TransformationCache.Key.of(fact.id(), fact.version(), chainId);
+    var key = TransformationCache.Key.of(fact.id(), fact.version());
 
-    assertTrue(ofId.id().contains(fact.id().toString()));
-    assertTrue(ofId.id().contains(String.valueOf(fact.version())));
-    assertTrue(ofId.id().contains(chainId));
+    assertEquals(fact.id(), key.factId());
+    assertEquals(fact.version(), key.version());
   }
 }

@@ -96,10 +96,9 @@ class FactTransformerServiceImplTest {
       when(req.targetVersions()).thenReturn(Collections.singleton(5));
       when(req.toTransform()).thenReturn(fact);
 
-      when(chain.id()).thenReturn("myChainId");
       when(chain.toVersion()).thenReturn(5);
       when(chains.get(eq(key), eq(4), eq(Collections.singleton(5)))).thenReturn(chain);
-      TransformationCache.Key cacheKey = TransformationCache.Key.of(fact.id(), 5, "myChainId");
+      TransformationCache.Key cacheKey = TransformationCache.Key.of(fact.id(), 5);
       when(cache.find(cacheKey)).thenReturn(Optional.of(fact2));
 
       Fact transformed = underTest.transform(req);
@@ -143,13 +142,12 @@ class FactTransformerServiceImplTest {
       when(req.targetVersions()).thenReturn(Collections.singleton(5));
       when(req.toTransform()).thenReturn(fact);
 
-      when(chain.id()).thenReturn("myChainId");
       when(chain.toVersion()).thenReturn(5);
       when(chain.fromVersion()).thenReturn(4);
       when(chain.key()).thenReturn(TransformationKey.from(fact));
       when(chain.toString()).thenCallRealMethod();
       when(chains.get(eq(key), eq(4), eq(Collections.singleton(5)))).thenReturn(chain);
-      TransformationCache.Key cacheKey = TransformationCache.Key.of(fact.id(), 5, "myChainId");
+      TransformationCache.Key cacheKey = TransformationCache.Key.of(fact.id(), 5);
       when(cache.find(cacheKey)).thenReturn(Optional.empty());
       Transformation t;
       when(trans.transform(same(chain), eq(JsonString.of(fact.jsonPayload()))))
@@ -181,10 +179,9 @@ class FactTransformerServiceImplTest {
       when(req.targetVersions()).thenReturn(Collections.singleton(5));
       when(req.toTransform()).thenReturn(fact);
 
-      when(chain.id()).thenReturn("myChainId");
       when(chain.toVersion()).thenReturn(5);
       when(chains.get(eq(key), eq(4), eq(Collections.singleton(5)))).thenReturn(chain);
-      TransformationCache.Key cacheKey = TransformationCache.Key.of(fact.id(), 5, "myChainId");
+      TransformationCache.Key cacheKey = TransformationCache.Key.of(fact.id(), 5);
       when(cache.find(cacheKey)).thenReturn(Optional.empty());
       Transformation t;
       when(trans.transform(same(chain), eq(JsonString.of(fact.jsonPayload()))))
@@ -213,10 +210,9 @@ class FactTransformerServiceImplTest {
       when(req.toTransform()).thenReturn(fact);
       when(req.pop()).thenReturn(fact);
 
-      when(chain.id()).thenReturn("myChainId");
       when(chain.toVersion()).thenReturn(5);
       when(chains.get(eq(key), eq(4), eq(Collections.singleton(5)))).thenReturn(chain);
-      TransformationCache.Key cacheKey = TransformationCache.Key.of(fact.id(), 5, "myChainId");
+      TransformationCache.Key cacheKey = TransformationCache.Key.of(fact.id(), 5);
       when(cache.findAll(Set.of(cacheKey))).thenReturn(Collections.emptySet());
       Transformation t;
       when(trans.transform(same(chain), eq(JsonString.of(fact.jsonPayload()))))
@@ -258,7 +254,6 @@ class FactTransformerServiceImplTest {
       var req1 = new TransformationRequest(fact, Collections.singleton(5));
       var req2 = new TransformationRequest(fact2, Collections.singleton(5));
 
-      when(chain.id()).thenReturn("chain1");
       when(chains.get(eq(key1), eq(4), eq(Collections.singleton(5)))).thenReturn(chain);
       when(chains.get(eq(key2), eq(4), eq(Collections.singleton(5)))).thenReturn(chain);
 
@@ -290,7 +285,6 @@ class FactTransformerServiceImplTest {
                     .build("{\"a\":1}"));
         TransformationKey key1 = TransformationKey.from(fact);
         var req1 = new TransformationRequest(fact, Collections.singleton(5));
-        when(chain.id()).thenReturn("chain1");
         when(chains.get(eq(key1), eq(4), eq(Collections.singleton(5)))).thenReturn(chain);
         when(trans.transform(same(chain), eq(JsonString.of(fact.jsonPayload()))))
             .thenAnswer(

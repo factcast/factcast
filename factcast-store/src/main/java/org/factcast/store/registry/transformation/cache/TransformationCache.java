@@ -44,11 +44,12 @@ public interface TransformationCache {
 
     UUID factId;
 
-    String id;
+    int version;
 
-    public static Key of(@NonNull UUID id, int version, @NonNull String transformationChainId) {
-      return new Key(
-          id, String.join("-", id.toString(), String.valueOf(version), transformationChainId));
+    // The transformation chain is deterministic for a given (factId, version), so it carries no
+    // additional identity and is intentionally not part of the key.
+    public static Key of(@NonNull UUID id, int version) {
+      return new Key(id, version);
     }
   }
 }

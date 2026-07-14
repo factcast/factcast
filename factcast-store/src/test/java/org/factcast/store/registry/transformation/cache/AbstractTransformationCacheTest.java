@@ -48,7 +48,7 @@ public abstract class AbstractTransformationCacheTest {
 
   @Test
   void testEmptyFind() {
-    Optional<PgFact> fact = uut.find(TransformationCache.Key.of(UUID.randomUUID(), 1, "1"));
+    Optional<PgFact> fact = uut.find(TransformationCache.Key.of(UUID.randomUUID(), 1));
 
     assertThat(fact.isPresent()).isFalse();
 
@@ -63,17 +63,16 @@ public abstract class AbstractTransformationCacheTest {
     PgFact fact1 = PgFact.from(Fact.builder().ns("ns").type("type").id(id1).version(1).build("{}"));
     PgFact fact2 = PgFact.from(Fact.builder().ns("ns").type("type").id(id2).version(1).build("{}"));
     PgFact fact3 = PgFact.from(Fact.builder().ns("ns").type("type").id(id3).version(1).build("{}"));
-    String chainId = "1-2-3";
 
-    uut.put(TransformationCache.Key.of(fact1.id(), 1, chainId), fact1);
-    uut.put(TransformationCache.Key.of(fact2.id(), 1, chainId), fact2);
+    uut.put(TransformationCache.Key.of(fact1.id(), 1), fact1);
+    uut.put(TransformationCache.Key.of(fact2.id(), 1), fact2);
     // but not fact3 !
 
     Collection<TransformationCache.Key> keys =
         Lists.newArrayList(
-            TransformationCache.Key.of(fact1.id(), fact1.version(), chainId),
-            TransformationCache.Key.of(fact2.id(), fact2.version(), chainId),
-            TransformationCache.Key.of(fact3.id(), fact3.version(), chainId));
+            TransformationCache.Key.of(fact1.id(), fact1.version()),
+            TransformationCache.Key.of(fact2.id(), fact2.version()),
+            TransformationCache.Key.of(fact3.id(), fact3.version()));
     var found = uut.findAll(keys);
 
     assertThat(found).hasSize(2).contains(fact1, fact2);
@@ -86,12 +85,10 @@ public abstract class AbstractTransformationCacheTest {
     PgFact fact =
         PgFact.from(
             Fact.builder().ns("ns").type("type").id(UUID.randomUUID()).version(1).build("{}"));
-    String chainId = "1-2-3";
 
-    uut.put(TransformationCache.Key.of(fact.id(), 1, chainId), fact);
+    uut.put(TransformationCache.Key.of(fact.id(), 1), fact);
 
-    Optional<PgFact> found =
-        uut.find(TransformationCache.Key.of(fact.id(), fact.version(), chainId));
+    Optional<PgFact> found = uut.find(TransformationCache.Key.of(fact.id(), fact.version()));
 
     assertThat(found.isPresent()).isTrue();
     assertEquals(fact, found.get());
@@ -99,32 +96,24 @@ public abstract class AbstractTransformationCacheTest {
   }
 
   @Test
-  void testRespectsChainId() {
-    PgFact fact = PgFact.from(Fact.builder().ns("name").type("type").version(1).build("{}"));
-
-    uut.put(TransformationCache.Key.of(fact.id(), 1, "foo"), fact);
-    assertThat(uut.find(TransformationCache.Key.of(fact.id(), 1, "xoo"))).isEmpty();
-  }
-
-  @Test
   void testDoesNotFindUnknown() {
-    uut.find(TransformationCache.Key.of(UUID.randomUUID(), 1, "foo"));
+    uut.find(TransformationCache.Key.of(UUID.randomUUID(), 1));
   }
 
   @Test
   void testHappyPath() {
     PgFact f = PgFact.from(Fact.builder().ns("name").type("type").version(1).build("{}"));
 
-    uut.put(TransformationCache.Key.of(f.id(), 1, "foo"), f);
-    assertThat(uut.find(TransformationCache.Key.of(f.id(), 1, "foo"))).contains(f);
+    uut.put(TransformationCache.Key.of(f.id(), 1), f);
+    assertThat(uut.find(TransformationCache.Key.of(f.id(), 1))).contains(f);
   }
 
   @Test
   void testRespectsVersion() {
     PgFact f = PgFact.from(Fact.builder().ns("name").type("type").version(1).build("{}"));
 
-    uut.put(TransformationCache.Key.of(f.id(), 1, "foo"), f);
-    assertThat(uut.find(TransformationCache.Key.of(f.id(), 2, "foo"))).isEmpty();
+    uut.put(TransformationCache.Key.of(f.id(), 1), f);
+    assertThat(uut.find(TransformationCache.Key.of(f.id(), 2))).isEmpty();
   }
 
   @Test
@@ -135,13 +124,13 @@ public abstract class AbstractTransformationCacheTest {
         PgFact.from(Fact.builder().ns(matchingNs).type(matchingType).version(1).build("{}"));
     PgFact f2 =
         PgFact.from(Fact.builder().ns(matchingNs).type(matchingType).version(2).build("{}"));
-    uut.put(TransformationCache.Key.of(f1.id(), 1, "foo1"), f1);
-    uut.put(TransformationCache.Key.of(f2.id(), 2, "foo2"), f2);
+    uut.put(TransformationCache.Key.of(f1.id(), 1), f1);
+    uut.put(TransformationCache.Key.of(f2.id(), 2), f2);
 
     uut.invalidateTransformationFor(matchingNs, matchingType);
 
-    assertThat(uut.find(TransformationCache.Key.of(f1.id(), 1, "foo1"))).isEmpty();
-    assertThat(uut.find(TransformationCache.Key.of(f2.id(), 2, "foo2"))).isEmpty();
+    assertThat(uut.find(TransformationCache.Key.of(f1.id(), 1))).isEmpty();
+    assertThat(uut.find(TransformationCache.Key.of(f2.id(), 2))).isEmpty();
   }
 
   @Test
@@ -149,14 +138,14 @@ public abstract class AbstractTransformationCacheTest {
     UUID matchingFactId = UUID.randomUUID();
     PgFact f1 = PgFact.from(Fact.builder().id(matchingFactId).version(1).build("{}"));
     PgFact f2 = PgFact.from(Fact.builder().id(UUID.randomUUID()).version(2).build("{}"));
-    uut.put(TransformationCache.Key.of(f1.id(), 1, "foo1.1"), f1);
-    uut.put(TransformationCache.Key.of(f1.id(), 2, "foo1.2"), f1);
-    uut.put(TransformationCache.Key.of(f2.id(), 2, "foo2"), f2);
+    uut.put(TransformationCache.Key.of(f1.id(), 1), f1);
+    uut.put(TransformationCache.Key.of(f1.id(), 2), f1);
+    uut.put(TransformationCache.Key.of(f2.id(), 2), f2);
 
     uut.invalidateTransformationFor(matchingFactId);
 
-    assertThat(uut.find(TransformationCache.Key.of(f1.id(), 1, "foo1.1"))).isEmpty();
-    assertThat(uut.find(TransformationCache.Key.of(f1.id(), 2, "foo1.2"))).isEmpty();
-    assertThat(uut.find(TransformationCache.Key.of(f2.id(), 2, "foo2"))).isNotEmpty();
+    assertThat(uut.find(TransformationCache.Key.of(f1.id(), 1))).isEmpty();
+    assertThat(uut.find(TransformationCache.Key.of(f1.id(), 2))).isEmpty();
+    assertThat(uut.find(TransformationCache.Key.of(f2.id(), 2))).isNotEmpty();
   }
 }

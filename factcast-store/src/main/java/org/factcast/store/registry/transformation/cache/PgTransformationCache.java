@@ -108,8 +108,7 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
       return Optional.of(factFromBuffer);
     }
 
-    List<PgFact> facts =
-        jdbcTemplate.query(selectByCacheKeys(new String[] {key.id()}), new PgFactRowMapper());
+    List<PgFact> facts = jdbcTemplate.query(selectByKeys(List.of(key)), new PgFactRowMapper());
 
     if (facts.isEmpty()) {
       registryMetrics.count(EVENT.TRANSFORMATION_CACHE_MISS);
@@ -138,10 +137,7 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
 
     if (!keys.isEmpty()) {
 
-      facts.addAll(
-          jdbcTemplate.query(
-              selectByCacheKeys(keys.stream().map(Key::id).toArray(String[]::new)),
-              new PgFactRowMapper()));
+      facts.addAll(jdbcTemplate.query(selectByKeys(keys), new PgFactRowMapper()));
     }
 
     int hits = facts.size();
@@ -153,13 +149,22 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
   }
 
   @NotNull
-  static PreparedStatementCreator selectByCacheKeys(String[] keys) {
+  static PreparedStatementCreator selectByKeys(@NonNull List<Key> keys) {
     return con -> {
-      PreparedStatement ps =
-          con.prepareStatement(
-              "SELECT header, payload FROM transformationcache WHERE cache_key = ANY ( ? )");
-      Array idArray = con.createArrayOf("varchar", keys);
-      ps.setArray(1, idArray);
+      StringBuilder sql =
+          new StringBuilder(
+              "SELECT header, payload FROM transformationcache_v2 WHERE (fact_id, version) IN (");
+      for (int i = 0; i < keys.size(); i++) {
+        sql.append(i == 0 ? "(?, ?)" : ", (?, ?)");
+      }
+      sql.append(")");
+
+      PreparedStatement ps = con.prepareStatement(sql.toString());
+      int idx = 1;
+      for (Key key : keys) {
+        ps.setObject(idx++, key.factId());
+        ps.setInt(idx++, key.version());
+      }
       return ps;
     };
   }
@@ -201,7 +206,7 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
       inTransactionWithLock(
           () ->
               jdbcTemplate.update(
-                  "DELETE FROM transformationcache WHERE header ->> 'ns' = ? AND header ->> 'type' = ?",
+                  "DELETE FROM transformationcache_v2 WHERE header ->> 'ns' = ? AND header ->> 'type' = ?",
                   ns,
                   type));
     }
@@ -215,7 +220,8 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
     if (!storeConfigurationProperties.isReadOnlyModeEnabled()) {
       // it is fine if flush worked in another transaction, it just has to be serialized
       inTransactionWithLock(
-          () -> jdbcTemplate.update("DELETE FROM transformationcache WHERE fact_id = ?", factId));
+          () ->
+              jdbcTemplate.update("DELETE FROM transformationcache_v2 WHERE fact_id = ?", factId));
     }
   }
 
@@ -251,7 +257,7 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
         .execute(
             status -> {
               // we're using share mode here in order not to block reads from happening
-              jdbcTemplate.execute("LOCK TABLE transformationcache IN EXCLUSIVE MODE");
+              jdbcTemplate.execute("LOCK TABLE transformationcache_v2 IN EXCLUSIVE MODE");
               o.run();
               return null;
             });
@@ -265,8 +271,8 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
             .map(
                 p ->
                     new Object[] {
-                      p.getKey().id(),
                       p.getKey().factId(),
+                      p.getKey().version(),
                       p.getValue().jsonHeader(),
                       p.getValue().jsonPayload()
                     })
@@ -280,8 +286,8 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
 
                 // dup-keys can be ignored, in case another node just did the same
                 jdbcTemplate.batchUpdate(
-                    "INSERT INTO transformationcache (cache_key, fact_id, header, payload) VALUES (?, ?, ? :: JSONB, ? ::"
-                        + " JSONB) ON CONFLICT(cache_key) DO NOTHING",
+                    "INSERT INTO transformationcache_v2 (fact_id, version, header, payload) VALUES (?, ?, ? :: JSONB, ? ::"
+                        + " JSONB) ON CONFLICT(fact_id, version) DO NOTHING",
                     parameters);
 
                 return null;
