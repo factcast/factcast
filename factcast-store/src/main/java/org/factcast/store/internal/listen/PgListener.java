@@ -16,13 +16,14 @@
 package org.factcast.store.internal.listen;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.*;
 import com.google.common.eventbus.EventBus;
 import java.sql.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
-import java.util.stream.Stream;
+import java.util.stream.*;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -127,7 +128,8 @@ public class PgListener implements InitializingBean, DisposableBean {
         PreparedStatement ps6 = pc.prepareStatement(PgConstants.LISTEN_TRUNCATION_CHANNEL_SQL);
         PreparedStatement ps7 = pc.prepareStatement(PgConstants.LISTEN_UPDATE_CHANNEL_SQL);
         PreparedStatement ps8 =
-            pc.prepareStatement(PgConstants.LISTEN_CACHE_INVALIDATE_ALL_CHANNEL_SQL)) {
+            pc.prepareStatement(PgConstants.LISTEN_CACHE_INVALIDATE_ALL_CHANNEL_SQL);
+        PreparedStatement ps9 = pc.prepareStatement(PgConstants.LISTEN_NUDGE_CHANNEL_SQL)) {
       ps1.execute();
       ps2.execute();
       ps3.execute();
@@ -136,6 +138,7 @@ public class PgListener implements InitializingBean, DisposableBean {
       ps6.execute();
       ps7.execute();
       ps8.execute();
+      ps9.execute();
     }
   }
 
@@ -153,37 +156,40 @@ public class PgListener implements InitializingBean, DisposableBean {
     Predicate<PGNotification> isFactInsert =
         n -> PgConstants.CHANNEL_FACT_INSERT.equals(n.getName());
 
-    // lets deal with nudges first
-    Arrays.stream(notifications)
-        .filter(isNudge)
-        // one nudge is enough, we don't care about the content
-        .limit(1)
-        .map(NudgeNotification::createFrom)
-        .filter(Objects::nonNull)
-        .forEach(this::post);
+    Map<String, List<PGNotification>> byName =
+        Arrays.stream(notifications).collect(Collectors.groupingBy(PGNotification::getName));
 
-    // lets collect the rest
-    List<PGNotification> list =
-        Arrays.stream(notifications).filter(Predicate.not(isNudge)).toList();
+    byName.forEach(
+        (k, v) -> {
+          switch (k) {
+            case PgConstants.CHANNEL_NUDGE:
+              v.stream()
+                  .limit(1)
+                  .map(NudgeNotification::createFrom)
+                  .filter(Objects::nonNull)
+                  .forEach(this::post);
+              break;
+            case PgConstants.CHANNEL_FACT_INSERT:
+              var inserts =
+                  v.stream()
+                      .filter(isFactInsert)
+                      .map(FactInsertionNotification::from)
+                      .filter(Objects::nonNull);
+              compact(inserts).forEach(this::post);
+              break;
+            default:
+              // if there are more than 1 blacklist_change notifications in the array, we need only
+              // the last
+              // one
+              // note we filter BEFORE parsing to save some cpu cycles
+              streamWithCompactedBlacklistChanges(v)
+                  .map(StoreNotification::createFrom)
+                  .filter(Objects::nonNull)
+                  .forEach(this::post);
 
-    List<PGNotification> nonFactInserts =
-        list.stream().filter(Predicate.not(isFactInsert)).toList();
-
-    // if there are more than 1 blacklist_change notifications in the array, we need only the last
-    // one
-    // note we filter BEFORE parsing to save some cpu cycles
-    streamWithCompactedBlacklistChanges(nonFactInserts)
-        .map(StoreNotification::createFrom)
-        .filter(Objects::nonNull)
-        .forEach(this::post);
-
-    // it does not make any sense here to filter before parsing, so that we start with the mapping
-    Stream<FactInsertionNotification> factInserts =
-        list.stream()
-            .filter(isFactInsert)
-            .map(FactInsertionNotification::from)
-            .filter(Objects::nonNull);
-    compact(factInserts).forEach(this::post);
+              break;
+          }
+        });
   }
 
   /** filters duplications regarding ns&type */

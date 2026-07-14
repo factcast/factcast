@@ -17,17 +17,20 @@ package org.factcast.store.internal.listen;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.*;
+import java.sql.*;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.StampedLock;
 import lombok.*;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.*;
 import org.factcast.store.internal.notification.*;
 import org.springframework.beans.factory.*;
-import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.*;
 
+@Slf4j
 public class NudgeNotificationHandler implements DisposableBean {
   private static final String BASE_EXISTS_SQL =
       "SELECT (exists(select 1 from notification where ser=?))";
@@ -65,6 +68,7 @@ public class NudgeNotificationHandler implements DisposableBean {
 
   @Subscribe
   public void nudge(NudgeNotification nudgeNotification) {
+    log.trace("Nudge received, fetching notifications");
     if (notificationSer.get() == 0
         || Boolean.FALSE.equals(
             jdbc.queryForObject(BASE_EXISTS_SQL, Boolean.class, notificationSer.get()))) {
@@ -73,6 +77,7 @@ public class NudgeNotificationHandler implements DisposableBean {
       Long max = jdbc.queryForObject("SELECT max(ser) FROM notification", Long.class);
       if (max != null) notificationSer.set(max.longValue());
 
+      log.trace("No idea where to start, waking all subscribers");
       bus.post(FactInsertionNotification.internal());
     } else {
       fetchPairsAndDispatch();
@@ -108,7 +113,7 @@ public class NudgeNotificationHandler implements DisposableBean {
     }
   }
 
-  public record FetchNotificationTuple(long max, long ser, String ns, String type) {
+  public record FetchNotificationTuple(long max, String ns, String type) {
     public StoreNotification toFactInsertionNotification() {
       return FactInsertionNotification.internal(ns(), type());
     }
@@ -122,17 +127,25 @@ public class NudgeNotificationHandler implements DisposableBean {
       try {
 
         final var timerSample = metrics.startSample();
-        List<FetchNotificationTuple> results =
-            jdbc.queryForList(
-                "SELECT max(ser) as ser,ns,type FROM notification WHERE ser > ? GROUP BY DISTINCT(ns,type) ORDER BY ser",
-                FetchNotificationTuple.class);
-        timerSample.stop(metricsTimer);
 
-        results.forEach(
-            t -> {
-              bus.post(t.toFactInsertionNotification());
-              notificationSer.set(t.ser());
-            });
+        List<FetchNotificationTuple> tuples =
+            jdbc.queryForStream(
+                    "SELECT max(ser) as ser,ns,type FROM notification WHERE notification.ser > ? GROUP BY DISTINCT(ns,type) ORDER BY ser",
+                    (rs, rowNum) ->
+                        new FetchNotificationTuple(
+                            rs.getLong("ser"), rs.getString("ns"), rs.getString("type")),
+                    new Object[] {notificationSer.get()})
+                .toList();
+
+        timerSample.stop(metricsTimer);
+        if (!tuples.isEmpty()) {
+          log.trace("Found {} notifications", tuples.size());
+          tuples.forEach(
+              t -> {
+                bus.post(t.toFactInsertionNotification());
+                notificationSer.set(t.max());
+              });
+        }
       } finally {
         lock.unlockWrite(lockStamp);
       }

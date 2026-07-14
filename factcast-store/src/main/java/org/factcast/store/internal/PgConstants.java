@@ -206,6 +206,7 @@ public class PgConstants {
 
   private static final String LISTEN = "LISTEN ";
   public static final String LISTEN_INSERT_CHANNEL_SQL = LISTEN + CHANNEL_FACT_INSERT;
+  public static final String LISTEN_NUDGE_CHANNEL_SQL = LISTEN + CHANNEL_NUDGE;
   public static final String LISTEN_TRUNCATION_CHANNEL_SQL = LISTEN + CHANNEL_FACT_TRUNCATE;
   public static final String LISTEN_UPDATE_CHANNEL_SQL = LISTEN + CHANNEL_FACT_UPDATE;
   public static final String LISTEN_ROUNDTRIP_CHANNEL_SQL = LISTEN + CHANNEL_ROUNDTRIP;

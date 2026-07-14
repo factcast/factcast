@@ -619,7 +619,7 @@ databaseChangeLog:
             stripComments: true
 
   - changeSet:
-      id: issue4757
+      id: issue4757-notification
       author: uweschaefer
       runInTransaction: false
       changes:
@@ -631,7 +631,7 @@ databaseChangeLog:
             stripComments: true
 
   - changeSet:
-      id: issue4757
+      id: issue4757-insert-trigger
       author: uweschaefer
       runInTransaction: false
       changes:

@@ -148,9 +148,9 @@ class NudgeNotificationHandlerTest {
             same(NudgeNotificationHandler.FetchNotificationTuple.class)))
         .thenReturn(
             List.of(
-                new NudgeNotificationHandler.FetchNotificationTuple(7L, 0L, "ns", "t1"),
-                new NudgeNotificationHandler.FetchNotificationTuple(8L, 0L, "ns", "t2"),
-                new NudgeNotificationHandler.FetchNotificationTuple(9L, 0L, "ns", "t3")));
+                new NudgeNotificationHandler.FetchNotificationTuple(7L, "ns", "t1"),
+                new NudgeNotificationHandler.FetchNotificationTuple(8L, "ns", "t2"),
+                new NudgeNotificationHandler.FetchNotificationTuple(9L, "ns", "t3")));
 
     final CountDownLatch cdl = new CountDownLatch(3);
     doAnswer(
@@ -190,10 +190,10 @@ class NudgeNotificationHandlerTest {
             same(NudgeNotificationHandler.FetchNotificationTuple.class)))
         .thenReturn(
             List.of(
-                new NudgeNotificationHandler.FetchNotificationTuple(7L, 0L, "ns", "t1"),
-                new NudgeNotificationHandler.FetchNotificationTuple(8L, 0L, "ns", "t2"),
-                new NudgeNotificationHandler.FetchNotificationTuple(9L, 0L, "ns", "t3")),
-            List.of(new NudgeNotificationHandler.FetchNotificationTuple(10L, 0L, "ns", "t1")));
+                new NudgeNotificationHandler.FetchNotificationTuple(7L, "ns", "t1"),
+                new NudgeNotificationHandler.FetchNotificationTuple(8L, "ns", "t2"),
+                new NudgeNotificationHandler.FetchNotificationTuple(9L, "ns", "t3")),
+            List.of(new NudgeNotificationHandler.FetchNotificationTuple(10L, "ns", "t1")));
 
     final CountDownLatch cdl = new CountDownLatch(3);
     final CountDownLatch cdl4 = new CountDownLatch(4);
