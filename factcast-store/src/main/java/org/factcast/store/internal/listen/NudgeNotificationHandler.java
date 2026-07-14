@@ -23,6 +23,7 @@ import java.util.concurrent.atomic.*;
 import java.util.concurrent.locks.*;
 import lombok.*;
 import org.factcast.store.StoreConfigurationProperties;
+import org.factcast.store.internal.*;
 import org.factcast.store.internal.notification.*;
 import org.springframework.beans.factory.*;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -34,16 +35,19 @@ public class NudgeNotificationHandler implements SmartInitializingSingleton, Dis
   private final @NonNull EventBus bus;
   private final @NonNull JdbcTemplate jdbc;
   private final @NonNull StoreConfigurationProperties props;
+  private final @NonNull PgMetrics metrics;
   @VisibleForTesting protected final StampedLock lock = new StampedLock();
   @VisibleForTesting protected final AtomicLong notificationSer = new AtomicLong(0);
   @VisibleForTesting protected final Timer timer = new Timer(true);
   // this we need in order to skip obsolete tasks
   @VisibleForTesting protected final AtomicLong timerVersion = new AtomicLong(0);
+  private io.micrometer.core.instrument.@NonNull Timer metricsTimer;
 
   @Override
   public void destroy() throws Exception {
     bus.unregister(this);
     timer.cancel();
+    metricsTimer = metrics.timer(StoreMetrics.OP.SELECT_DISTINCT_NOTIFICATIONS);
   }
 
   @Override
@@ -93,7 +97,7 @@ public class NudgeNotificationHandler implements SmartInitializingSingleton, Dis
   class ScheduledCleanup extends TimerTask {
     @Override
     public void run() {
-      jdbc.execute("select notificationCleanup()");
+      jdbc.execute("CALL notificationCleanup()");
     }
   }
 
@@ -109,11 +113,13 @@ public class NudgeNotificationHandler implements SmartInitializingSingleton, Dis
     long lockStamp = lock.tryWriteLock();
     if (lockStamp != 0) {
       try {
-        // TODO we certainly want a metric emitted from here
+
+        final var timerSample = metrics.startSample();
         List<FetchNotificationTuple> results =
             jdbc.queryForList(
                 "SELECT max(ser) as ser,ns,type FROM notification WHERE ser > ? GROUP BY DISTINCT(ns,type) ORDER BY ser",
                 FetchNotificationTuple.class);
+        timerSample.stop(metricsTimer);
 
         results.forEach(
             t -> {
