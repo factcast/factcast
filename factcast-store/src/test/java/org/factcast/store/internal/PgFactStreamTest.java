@@ -183,7 +183,6 @@ class PgFactStreamTest {
       doReturn(true).when(uut).isConnected();
       doReturn(condensedExecutor).when(uut).createCondensedExecutor(reqTo, query);
       when(reqTo.continuous()).thenReturn(true);
-      when(reqTo.maxBatchDelayInMs()).thenReturn(maxBatchDelay);
 
       uut.follow(reqTo, query);
 
