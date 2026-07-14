@@ -20,6 +20,11 @@ import lombok.NonNull;
 import org.factcast.factus.projection.ExternalizedProjection;
 
 public interface MongoDbProjection extends ExternalizedProjection {
+  String STATE_COLLECTION_NAME = "factcast_states";
+  String PROJECTION_CLASS_FIELD = "projectionKey";
+  String LAST_FACT_ID_FIELD = "lastFactId";
+  String LAST_FACT_SERIAL_FIELD = "lastFactSerial";
+
   @NonNull
   MongoDatabase mongoDb();
 }

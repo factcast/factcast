@@ -16,8 +16,7 @@
 package org.factcast.store.internal.query;
 
 import java.io.Closeable;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
@@ -30,20 +29,44 @@ public class CurrentStatementHolder implements Closeable {
   @Override
   public void close() {
     synchronized (mutex) {
+      if (statement == null) {
+        log.trace("statement is null, so no closing necessary. Duplicate call to close()?");
+        return;
+      }
+
+      // not elegant, but plenty of different things can go wrong
+      Connection c = null;
+
+      try {
+        c = statement.getConnection();
+      } catch (SQLException e) {
+        log.debug("While fetching connection from statement to cancel: {}", statement, e);
+      }
+
       if (statement != null) {
-        log.info("Canceling statement " + statement);
+        log.info("Canceling statement {}", statement);
         try {
           statement.cancel();
-
-          // we have to roll back the tx on the underlying connection
-          // if we do not end the transaction, statements are cancelled but still "idle in
-          // transaction" and so block further actions like wiping between tests
-          statement.getConnection().rollback();
         } catch (SQLException e) {
-          log.debug("Exception while closing statement {}:", statement, e);
+          log.debug("Exception while cancelling statement {}:", statement, e);
         } finally {
           wasCanceled = true;
         }
+
+        if (c != null)
+          try {
+            if (!c.getAutoCommit()) {
+              // we have to roll back the tx on the underlying connection
+              // if we do not end the transaction, statements are canceled but still "idle in
+              // transaction" and so block further actions like wiping between tests
+              c.rollback();
+            }
+          } catch (SQLException e) {
+            log.debug(
+                "Exception while rolling back transaction for cancelled statement {}:",
+                statement,
+                e);
+          }
       }
     }
   }

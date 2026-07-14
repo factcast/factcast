@@ -37,6 +37,10 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
 @Slf4j
+@Deprecated(forRemoval = true, since = "0.11.1")
+/**
+ * @deprecated Should no longer be used as PgChunkedWithHoldCursorCatchup is more efficient.
+ */
 public class PgChunkedCatchup extends AbstractPgCatchup {
   @SuppressWarnings("java:S107")
   public PgChunkedCatchup(
@@ -46,7 +50,7 @@ public class PgChunkedCatchup extends AbstractPgCatchup {
       @NonNull ServerPipeline pipeline,
       @NonNull AtomicLong serial,
       @NonNull CurrentStatementHolder statementHolder,
-      @NonNull DataSource ds,
+      @NonNull SingleConnectionDataSource ds,
       PgCatchupFactory.@NonNull Phase phase) {
     super(props, metrics, req, pipeline, serial, statementHolder, ds, phase);
   }

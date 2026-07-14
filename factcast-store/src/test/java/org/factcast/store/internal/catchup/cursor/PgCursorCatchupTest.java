@@ -36,7 +36,7 @@ import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.listen.*;
 import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.pipeline.Signal;
-import org.factcast.store.internal.query.CurrentStatementHolder;
+import org.factcast.store.internal.query.*;
 import org.factcast.store.internal.rowmapper.PgFactExtractor;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -77,7 +77,9 @@ class PgCursorCatchupTest {
   @Spy @InjectMocks PgCursorCatchup underTest;
 
   @BeforeEach
-  void setup() {}
+  void setup() throws SQLException {
+    lenient().when(ds.getConnection()).thenReturn(c);
+  }
 
   @Nested
   class WhenRunning {
@@ -127,10 +129,10 @@ class PgCursorCatchupTest {
   class WhenFetching {
     @Mock @NonNull JdbcTemplate jdbc;
 
+    @SneakyThrows
     @BeforeEach
     void setup() {
       when(props.getPageSize()).thenReturn(47);
-      when(metrics.counter(StoreMetrics.EVENT.FACTS_SENT)).thenReturn(counter);
     }
 
     @Test
@@ -138,6 +140,7 @@ class PgCursorCatchupTest {
       doNothing()
           .when(jdbc)
           .query(anyString(), any(PreparedStatementSetter.class), any(RowCallbackHandler.class));
+
       underTest.fetch(jdbc);
       verify(jdbc).setFetchSize(props.getPageSize());
     }

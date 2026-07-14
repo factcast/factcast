@@ -51,12 +51,26 @@ class CurrentStatementHolderTest {
     @Test
     void cancelsStatement() {
       when(statement.getConnection()).thenReturn(connection);
+      when(connection.getAutoCommit()).thenReturn(false);
 
       underTest.statement(statement);
 
       underTest.close();
       verify(statement).cancel();
       verify(connection).rollback();
+    }
+
+    @SneakyThrows
+    @Test
+    void cancelsStatementButDoesNotRollbackWhenAutoCommitIsTrue() {
+      when(statement.getConnection()).thenReturn(connection);
+      when(connection.getAutoCommit()).thenReturn(true);
+
+      underTest.statement(statement);
+
+      underTest.close();
+      verify(statement).cancel();
+      verify(connection, never()).rollback();
     }
 
     @SneakyThrows

@@ -28,4 +28,9 @@ public class ServerPipelineAdapter implements ServerPipeline {
   public void process(@NonNull Signal signal) {
     signal.pass(sub);
   }
+
+  @Override
+  public void close() {
+    // nothing to do here
+  }
 }
