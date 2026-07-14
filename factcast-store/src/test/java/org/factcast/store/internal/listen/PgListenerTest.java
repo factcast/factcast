@@ -68,7 +68,7 @@ class PgListenerTest {
     PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props, registry);
     pgListener.setupPostgresListeners(conn);
 
-    verify(conn.prepareStatement(anyString()), times(8)).execute();
+    verify(conn.prepareStatement(anyString()), times(9)).execute();
   }
 
   @Test
@@ -424,64 +424,6 @@ class PgListenerTest {
     try {
       Thread.sleep(i);
     } catch (InterruptedException ignored) {
-    }
-  }
-
-  @Nested
-  class WhenCompactingBlacklistChanges {
-
-    PgListener uut;
-
-    @BeforeEach
-    void setup() {
-      uut = new PgListener(pgConnectionSupplier, eventBus, props, registry);
-    }
-
-    @Test
-    void empty() {
-      org.assertj.core.api.Assertions.assertThat(
-              uut.streamWithCompactedBlacklistChanges(new ArrayList<>()))
-          .isEmpty();
-    }
-
-    @Test
-    void unrelated() {
-      List<PGNotification> notifications = List.of(new Notification("other", 1, "{}"));
-      org.assertj.core.api.Assertions.assertThat(
-              uut.streamWithCompactedBlacklistChanges(notifications))
-          .isEqualTo(notifications);
-    }
-
-    @Test
-    void one() {
-      List<PGNotification> notifications =
-          List.of(
-              new Notification("other", 1, "{}"),
-              new Notification(PgConstants.CHANNEL_BLACKLIST_CHANGE, 1, "{}"),
-              new Notification("other", 1, "{}"));
-      org.assertj.core.api.Assertions.assertThat(
-              uut.streamWithCompactedBlacklistChanges(notifications))
-          .isEqualTo(notifications);
-    }
-
-    @Test
-    void many() {
-      Notification unrelated1 = new Notification("other", 1, "{}");
-      Notification unrelated2 = new Notification("other", 1, "{}");
-      Notification unrelated3 = new Notification("other", 1, "{}");
-
-      Notification tx1 = new Notification(PgConstants.CHANNEL_BLACKLIST_CHANGE, 1, "{\"txId\":1}");
-      Notification tx2 = new Notification(PgConstants.CHANNEL_BLACKLIST_CHANGE, 1, "{\"txId\":2}");
-      Notification tx3 = new Notification(PgConstants.CHANNEL_BLACKLIST_CHANGE, 1, "{\"txId\":3}");
-
-      List<PGNotification> notifications =
-          List.of(unrelated1, tx1, tx2, unrelated2, tx3, unrelated3);
-
-      List<PGNotification> expected = List.of(unrelated1, unrelated2, tx3, unrelated3);
-
-      org.assertj.core.api.Assertions.assertThat(
-              uut.streamWithCompactedBlacklistChanges(notifications).toList())
-          .isEqualTo(expected);
     }
   }
 

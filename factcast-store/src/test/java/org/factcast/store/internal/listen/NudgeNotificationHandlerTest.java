@@ -21,8 +21,9 @@ import static org.mockito.Mockito.*;
 import com.google.common.eventbus.EventBus;
 import io.micrometer.core.instrument.Timer;
 import java.sql.ResultSet;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.*;
+import java.util.stream.Stream;
 import org.assertj.core.api.Assertions;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.*;
@@ -143,11 +144,12 @@ class NudgeNotificationHandlerTest {
             anyLong()))
         .thenReturn(true);
 
-    when(jdbc.queryForList(
+    when(jdbc.queryForStream(
             startsWith("SELECT max(ser) as ser,ns,type FROM notification WHERE"),
-            same(NudgeNotificationHandler.FetchNotificationTuple.class)))
+            any(),
+            any(Object[].class)))
         .thenReturn(
-            List.of(
+            Stream.of(
                 new NudgeNotificationHandler.FetchNotificationTuple(7L, "ns", "t1"),
                 new NudgeNotificationHandler.FetchNotificationTuple(8L, "ns", "t2"),
                 new NudgeNotificationHandler.FetchNotificationTuple(9L, "ns", "t3")));
@@ -185,15 +187,16 @@ class NudgeNotificationHandlerTest {
             anyLong()))
         .thenReturn(true);
 
-    when(jdbc.queryForList(
+    when(jdbc.queryForStream(
             startsWith("SELECT max(ser) as ser,ns,type FROM notification WHERE"),
-            same(NudgeNotificationHandler.FetchNotificationTuple.class)))
+            any(),
+            any(Object[].class)))
         .thenReturn(
-            List.of(
+            Stream.of(
                 new NudgeNotificationHandler.FetchNotificationTuple(7L, "ns", "t1"),
                 new NudgeNotificationHandler.FetchNotificationTuple(8L, "ns", "t2"),
                 new NudgeNotificationHandler.FetchNotificationTuple(9L, "ns", "t3")),
-            List.of(new NudgeNotificationHandler.FetchNotificationTuple(10L, "ns", "t1")));
+            Stream.of(new NudgeNotificationHandler.FetchNotificationTuple(10L, "ns", "t1")));
 
     final CountDownLatch cdl = new CountDownLatch(3);
     final CountDownLatch cdl4 = new CountDownLatch(4);
@@ -249,12 +252,14 @@ class NudgeNotificationHandlerTest {
     // Given
     CountDownLatch latch = new CountDownLatch(1);
     // Mock queryForList to hold execution
-    when(jdbc.queryForList(anyString(), eq(NudgeNotificationHandler.FetchNotificationTuple.class)))
+    when(jdbc.queryForStream(anyString(), any(), any(Object[].class)))
         .thenAnswer(
             inv -> {
               latch.await(2, TimeUnit.SECONDS);
               return java.util.Collections.emptyList();
             });
+
+    verify(jdbc, never()).queryForStream(anyString(), any(), any(Object[].class));
 
     // When
     Thread t1 = new Thread(() -> handler.fetchPairsAndDispatch());
@@ -271,8 +276,7 @@ class NudgeNotificationHandlerTest {
     t1.join();
 
     // Then
-    verify(jdbc, times(1))
-        .queryForList(anyString(), eq(NudgeNotificationHandler.FetchNotificationTuple.class));
+    verify(jdbc, times(1)).queryForStream(anyString(), any(), any(Object[].class));
   }
 
   @Test

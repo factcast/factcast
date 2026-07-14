@@ -111,7 +111,8 @@ public abstract class StoreNotification {
       case PgConstants.CHANNEL_CACHE_CLEAR -> CacheClearNotification.from(n);
       case PgConstants.CHANNEL_NUDGE -> NudgeNotification.from(n);
       default -> {
-        if (!PgConstants.CHANNEL_ROUNDTRIP.equals(n.getName())) {
+        String channel = n.getName();
+        if (!PgConstants.CHANNEL_ROUNDTRIP.equals(channel)) {
           log.warn("Ignored notification from unknown channel: {}", name);
         }
         yield null;

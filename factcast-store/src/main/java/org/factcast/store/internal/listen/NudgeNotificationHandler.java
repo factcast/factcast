@@ -68,7 +68,7 @@ public class NudgeNotificationHandler implements DisposableBean {
 
   @Subscribe
   public void nudge(NudgeNotification nudgeNotification) {
-    log.trace("Nudge received, fetching notifications");
+    log.trace("Nudge received");
     if (notificationSer.get() == 0
         || Boolean.FALSE.equals(
             jdbc.queryForObject(BASE_EXISTS_SQL, Boolean.class, notificationSer.get()))) {
@@ -125,7 +125,7 @@ public class NudgeNotificationHandler implements DisposableBean {
     long lockStamp = lock.tryWriteLock();
     if (lockStamp != 0) {
       try {
-
+        log.trace("fetching notifications");
         final var timerSample = metrics.startSample();
 
         List<FetchNotificationTuple> tuples =

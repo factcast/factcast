@@ -156,7 +156,7 @@ public class PgFactStream {
         log.debug("{} entering follow mode", request);
         // signal follow
         telemetry.onFollow(request);
-        condensedExecutor = createCondensedExecutor(request, query);
+        condensedExecutor = createQueryExecutor(request, query);
         eventBus.register(condensedExecutor);
         // catchup phase 3 – make sure, we did not miss any fact due to
         // slow registration
@@ -172,7 +172,7 @@ public class PgFactStream {
 
   @VisibleForTesting
   @NonNull
-  QueryExecutor createCondensedExecutor(
+  QueryExecutor createQueryExecutor(
       @NonNull SubscriptionRequest request, @NonNull PgSynchronizedQuery query) {
     return new QueryExecutor(query, this::isConnected, request.specs());
   }

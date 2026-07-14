@@ -170,19 +170,19 @@ public class PgListener implements InitializingBean, DisposableBean {
                   .forEach(this::post);
               break;
             case PgConstants.CHANNEL_FACT_INSERT:
-              var inserts =
-                  v.stream()
-                      .filter(isFactInsert)
-                      .map(FactInsertionNotification::from)
-                      .filter(Objects::nonNull);
-              compact(inserts).forEach(this::post);
+              // this one we skip, as those notification might still occur (transition phase),
+              // but should no longer be processed
               break;
             default:
               // if there are more than 1 blacklist_change notifications in the array, we need only
-              // the last
-              // one
+              // the last one.
               // note we filter BEFORE parsing to save some cpu cycles
-              streamWithCompactedBlacklistChanges(v)
+
+              if (k.equals(PgConstants.CHANNEL_BLACKLIST_CHANGE)) {
+                v = Lists.newArrayList(v.remove(v.size() - 1));
+              }
+
+              v.stream()
                   .map(StoreNotification::createFrom)
                   .filter(Objects::nonNull)
                   .forEach(this::post);
@@ -197,24 +197,6 @@ public class PgListener implements InitializingBean, DisposableBean {
   Stream<FactInsertionNotification> compact(Stream<FactInsertionNotification> factInserts) {
     Set<String> coordinatesIncluded = new HashSet<>();
     return factInserts.filter(n -> coordinatesIncluded.add(n.nsAndType()));
-  }
-
-  /** remove all but the last CHANNEL_BLACKLIST_CHANGE */
-  @VisibleForTesting
-  Stream<PGNotification> streamWithCompactedBlacklistChanges(List<PGNotification> nonFactInserts) {
-    Optional<PGNotification> lastBCN =
-        nonFactInserts.stream()
-            .filter(n -> PgConstants.CHANNEL_BLACKLIST_CHANGE.equals(n.getName()))
-            .reduce((a, b) -> b);
-
-    if (lastBCN.isPresent()) {
-      // delete all others
-      PGNotification last = lastBCN.get();
-      return nonFactInserts.stream()
-          .filter(n -> !PgConstants.CHANNEL_BLACKLIST_CHANGE.equals(n.getName()) || n == last);
-    } else {
-      return nonFactInserts.stream();
-    }
   }
 
   @VisibleForTesting

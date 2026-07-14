@@ -1,5 +1,5 @@
 drop table if exists notification cascade;
-create unlogged table notification
+create table notification
 (
     ser   bigserial,
     -- time window (epoch/100)
@@ -23,7 +23,7 @@ BEGIN
         -- multiple nudge notifications within 100msec, as on the server side
         -- this would just restart the timer. This might be faster than using
         -- explicit locking.
-        NEW.nudge := FALSE;
+        NEW.nudge := TRUE;
         PERFORM pg_notify('nudge', json_build_object('txId', txid_current())::text);
     END IF;
 
