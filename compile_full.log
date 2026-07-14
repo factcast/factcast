@@ -1,0 +1,771 @@
+[INFO] Maven Test Profiler 0.1.2 started.
+[INFO] Scanning for projects...
+[WARNING] 
+[WARNING] Some problems were encountered while building the effective model for org.factcast:factcast-store:jar:0.11.2-SNAPSHOT
+[WARNING] 'build.plugins.plugin.version' for org.codehaus.mojo:exec-maven-plugin is missing. @ line 284, column 15
+[WARNING] 
+[WARNING] It is highly recommended to fix these problems because they threaten the stability of your build.
+[WARNING] 
+[WARNING] For this reason, future Maven versions might no longer support building such malformed projects.
+[WARNING] 
+[INFO] ------------------------------------------------------------------------
+[INFO] Detecting the operating system and CPU architecture
+[INFO] ------------------------------------------------------------------------
+[INFO] os.detected.name: linux
+[INFO] os.detected.arch: x86_64
+[INFO] os.detected.bitness: 64
+[INFO] os.detected.version: 7.0
+[INFO] os.detected.version.major: 7
+[INFO] os.detected.version.minor: 0
+[INFO] os.detected.release: ubuntu
+[INFO] os.detected.release.version: 26.04
+[INFO] os.detected.release.like.ubuntu: true
+[INFO] os.detected.release.like.debian: true
+[INFO] os.detected.classifier: linux-x86_64
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Build Order:
+[INFO] 
+[INFO] factcast                                                           [pom]
+[INFO] org.factcast:factcast-bom                                          [pom]
+[INFO] org.factcast:factcast-factus-event                                 [jar]
+[INFO] org.factcast:factcast-core                                         [jar]
+[INFO] org.factcast:factcast-factus                                       [jar]
+[INFO] org.factcast:factcast-test                                         [jar]
+[INFO] org.factcast:factcast-test-factus                                  [jar]
+[INFO] org.factcast:factcast-test-redis                                   [jar]
+[INFO] org.factcast:factcast-test-dynamo                                  [jar]
+[INFO] org.factcast:factcast-test-mongodb                                 [jar]
+[INFO] org.factcast:factcast-internal-dep                                 [pom]
+[INFO] org.factcast:factcast-internal-dep-boot                            [pom]
+[INFO] org.factcast:factcast-grpc-api                                     [jar]
+[INFO] org.factcast:factcast-client-grpc                                  [jar]
+[INFO] org.factcast:factcast-store-test                                   [jar]
+[INFO] org.factcast:factcast-store                                        [jar]
+[INFO] org.factcast:factcast-store-redis                                  [jar]
+[INFO] org.factcast:factcast-store-pub-redis                              [jar]
+[INFO] org.factcast:factcast-store-sub-redis                              [jar]
+[INFO] org.factcast:factcast-grpc-lz4                                     [jar]
+[INFO] org.factcast:factcast-grpc-snappy                                  [jar]
+[INFO] org.factcast:factcast-server-security                              [jar]
+[INFO] org.factcast:factcast-server-ui                                    [jar]
+[INFO] org.factcast:factcast-server-ui-s3-reportstore                     [jar]
+[INFO] org.factcast:factcast-factus-serializer-binary                     [jar]
+[INFO] org.factcast:factcast-factus-serializer-fury                       [jar]
+[INFO] org.factcast:factcast-factus-serializer-fory                       [jar]
+[INFO] org.factcast:factcast-snapshotcache-local-memory                   [jar]
+[INFO] org.factcast:factcast-snapshotcache-local-disk                     [jar]
+[INFO] org.factcast:factcast-factus-redis                                 [jar]
+[INFO] org.factcast:factcast-snapshotcache-redisson                       [jar]
+[INFO] org.factcast:factcast-snapshotcache-jdbc                           [jar]
+[INFO] org.factcast:factcast-snapshotcache-mongodb                        [jar]
+[INFO] org.factcast:factcast-server-grpc                                  [jar]
+[INFO] org.factcast:factcast-spring-boot-autoconfigure                    [jar]
+[INFO] org.factcast:factcast-factus-bin-snapser                           [jar]
+[INFO] org.factcast:factcast-client-grpc-cli                              [jar]
+[INFO] org.factcast:factcast-factus-migration                             [jar]
+[INFO] org.factcast:factcast-factus-spring-tx                             [jar]
+[INFO] org.factcast:factcast-factus-dynamo                                [jar]
+[INFO] org.factcast:factcast-factus-mongodb                               [jar]
+[INFO] org.factcast:factcast-schema-registry-cli                          [jar]
+[INFO] org.factcast:factcast-schema-registry-maven-plugin        [maven-plugin]
+[INFO] org.factcast:factcast-site                                         [jar]
+[INFO] org.factcast:factcast-docker                                       [jar]
+[INFO] org.factcast:factcast-docker-dep                                   [jar]
+[INFO] org.factcast:factcast-examples                                     [pom]
+[INFO] org.factcast:factcast-example-client-basicauth                     [jar]
+[INFO] org.factcast:factcast-example-client-spring-boot2                  [jar]
+[INFO] org.factcast:factcast-example-client-dynamo                        [jar]
+[INFO] org.factcast:factcast-example-client-mongodb                       [jar]
+[INFO] org.factcast:factcast-example-server                               [jar]
+[INFO] org.factcast:factcast-example-server-basicauth                     [jar]
+[INFO] org.factcast:factcast-example-tls-client                           [jar]
+[INFO] org.factcast:factcast-example-tls-server                           [jar]
+[INFO] org.factcast:factcast-example-schema-registry                      [jar]
+[INFO] org.factcast:factcast-example-server-telemetry                     [jar]
+[INFO] org.factcast:factcast-example-server-ui-s3-reports                 [jar]
+[INFO] org.factcast:factcast-itests                                       [pom]
+[INFO] factcast-itests-tls                                                [jar]
+[INFO] factcast-itests-transformation                                     [jar]
+[INFO] factcast-itests-novalidation                                       [jar]
+[INFO] factcast-itests-factus                                             [jar]
+[INFO] factcast-itests-exception-handling                                 [jar]
+[INFO] factcast-itests-store                                              [jar]
+[INFO] factcast-itests-doc                                                [jar]
+[INFO] factcast-itests-security                                           [jar]
+[INFO] 
+[INFO] -----------------------< org.factcast:factcast >------------------------
+[INFO] Building factcast 0.11.2-SNAPSHOT                                 [1/67]
+[INFO]   from pom.xml
+[INFO] --------------------------------[ pom ]---------------------------------
+[INFO] 
+[INFO] --- enforcer:3.6.3:enforce (enforce-versions) @ factcast ---
+[INFO] Rule 0: org.apache.maven.enforcer.rules.version.RequireMavenVersion passed
+[INFO] Rule 1: org.apache.maven.enforcer.rules.version.RequireJavaVersion passed
+[INFO] 
+[INFO] --- os:1.7.1:detect (default) @ factcast ---
+[INFO] ------------------------------------------------------------------------
+[INFO] Detecting the operating system and CPU architecture
+[INFO] ------------------------------------------------------------------------
+[INFO] os.detected.name: linux
+[INFO] os.detected.arch: x86_64
+[INFO] os.detected.bitness: 64
+[INFO] os.detected.version: 7.0
+[INFO] os.detected.version.major: 7
+[INFO] os.detected.version.minor: 0
+[INFO] os.detected.release: ubuntu
+[INFO] os.detected.release.version: 26.04
+[INFO] os.detected.release.like.ubuntu: true
+[INFO] os.detected.release.like.debian: true
+[INFO] os.detected.classifier: linux-x86_64
+[INFO] 
+[INFO] --- dependency:3.7.0:properties (default) @ factcast ---
+[INFO] 
+[INFO] ---------------------< org.factcast:factcast-bom >----------------------
+[INFO] Building org.factcast:factcast-bom 0.11.2-SNAPSHOT                [2/67]
+[INFO]   from factcast-bom/pom.xml
+[INFO] --------------------------------[ pom ]---------------------------------
+[INFO] 
+[INFO] --- enforcer:3.6.3:enforce (enforce-versions) @ factcast-bom ---
+[INFO] 
+[INFO] --- os:1.7.1:detect (default) @ factcast-bom ---
+[INFO] ------------------------------------------------------------------------
+[INFO] Detecting the operating system and CPU architecture
+[INFO] ------------------------------------------------------------------------
+[INFO] os.detected.name: linux
+[INFO] os.detected.arch: x86_64
+[INFO] os.detected.bitness: 64
+[INFO] os.detected.version: 7.0
+[INFO] os.detected.version.major: 7
+[INFO] os.detected.version.minor: 0
+[INFO] os.detected.release: ubuntu
+[INFO] os.detected.release.version: 26.04
+[INFO] os.detected.release.like.ubuntu: true
+[INFO] os.detected.release.like.debian: true
+[INFO] os.detected.classifier: linux-x86_64
+[INFO] 
+[INFO] --- dependency:3.7.0:properties (default) @ factcast-bom ---
+[INFO] 
+[INFO] -----------------< org.factcast:factcast-factus-event >-----------------
+[INFO] Building org.factcast:factcast-factus-event 0.11.2-SNAPSHOT       [3/67]
+[INFO]   from factcast-factus-event/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- enforcer:3.6.3:enforce (enforce-versions) @ factcast-factus-event ---
+[INFO] 
+[INFO] --- os:1.7.1:detect (default) @ factcast-factus-event ---
+[INFO] ------------------------------------------------------------------------
+[INFO] Detecting the operating system and CPU architecture
+[INFO] ------------------------------------------------------------------------
+[INFO] os.detected.name: linux
+[INFO] os.detected.arch: x86_64
+[INFO] os.detected.bitness: 64
+[INFO] os.detected.version: 7.0
+[INFO] os.detected.version.major: 7
+[INFO] os.detected.version.minor: 0
+[INFO] os.detected.release: ubuntu
+[INFO] os.detected.release.version: 26.04
+[INFO] os.detected.release.like.ubuntu: true
+[INFO] os.detected.release.like.debian: true
+[INFO] os.detected.classifier: linux-x86_64
+[INFO] 
+[INFO] --- dependency:3.7.0:properties (default) @ factcast-factus-event ---
+[INFO] 
+[INFO] --- resources:3.5.0:resources (default-resources) @ factcast-factus-event ---
+[INFO] skip non existing resourceDirectory /home/uwe/idea/factcast/factcast-factus-event/src/main/resources
+[INFO] 
+[INFO] --- compiler:3.15.0:compile (default-compile) @ factcast-factus-event ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] ---------------------< org.factcast:factcast-core >---------------------
+[INFO] Building org.factcast:factcast-core 0.11.2-SNAPSHOT               [4/67]
+[INFO]   from factcast-core/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- enforcer:3.6.3:enforce (enforce-versions) @ factcast-core ---
+[INFO] 
+[INFO] --- os:1.7.1:detect (default) @ factcast-core ---
+[INFO] ------------------------------------------------------------------------
+[INFO] Detecting the operating system and CPU architecture
+[INFO] ------------------------------------------------------------------------
+[INFO] os.detected.name: linux
+[INFO] os.detected.arch: x86_64
+[INFO] os.detected.bitness: 64
+[INFO] os.detected.version: 7.0
+[INFO] os.detected.version.major: 7
+[INFO] os.detected.version.minor: 0
+[INFO] os.detected.release: ubuntu
+[INFO] os.detected.release.version: 26.04
+[INFO] os.detected.release.like.ubuntu: true
+[INFO] os.detected.release.like.debian: true
+[INFO] os.detected.classifier: linux-x86_64
+[INFO] 
+[INFO] --- dependency:3.7.0:properties (default) @ factcast-core ---
+[INFO] 
+[INFO] --- resources:3.5.0:resources (default-resources) @ factcast-core ---
+[INFO] skip non existing resourceDirectory /home/uwe/idea/factcast/factcast-core/src/main/resources
+[INFO] 
+[INFO] --- compiler:3.15.0:compile (default-compile) @ factcast-core ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --------------------< org.factcast:factcast-factus >--------------------
+[INFO] Building org.factcast:factcast-factus 0.11.2-SNAPSHOT             [5/67]
+[INFO]   from factcast-factus/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- enforcer:3.6.3:enforce (enforce-versions) @ factcast-factus ---
+[INFO] 
+[INFO] --- os:1.7.1:detect (default) @ factcast-factus ---
+[INFO] ------------------------------------------------------------------------
+[INFO] Detecting the operating system and CPU architecture
+[INFO] ------------------------------------------------------------------------
+[INFO] os.detected.name: linux
+[INFO] os.detected.arch: x86_64
+[INFO] os.detected.bitness: 64
+[INFO] os.detected.version: 7.0
+[INFO] os.detected.version.major: 7
+[INFO] os.detected.version.minor: 0
+[INFO] os.detected.release: ubuntu
+[INFO] os.detected.release.version: 26.04
+[INFO] os.detected.release.like.ubuntu: true
+[INFO] os.detected.release.like.debian: true
+[INFO] os.detected.classifier: linux-x86_64
+[INFO] 
+[INFO] --- dependency:3.7.0:properties (default) @ factcast-factus ---
+[INFO] 
+[INFO] --- resources:3.5.0:resources (default-resources) @ factcast-factus ---
+[INFO] skip non existing resourceDirectory /home/uwe/idea/factcast/factcast-factus/src/main/resources
+[INFO] 
+[INFO] --- compiler:3.15.0:compile (default-compile) @ factcast-factus ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] ---------------------< org.factcast:factcast-test >---------------------
+[INFO] Building org.factcast:factcast-test 0.11.2-SNAPSHOT               [6/67]
+[INFO]   from factcast-test/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- enforcer:3.6.3:enforce (enforce-versions) @ factcast-test ---
+[INFO] 
+[INFO] --- os:1.7.1:detect (default) @ factcast-test ---
+[INFO] ------------------------------------------------------------------------
+[INFO] Detecting the operating system and CPU architecture
+[INFO] ------------------------------------------------------------------------
+[INFO] os.detected.name: linux
+[INFO] os.detected.arch: x86_64
+[INFO] os.detected.bitness: 64
+[INFO] os.detected.version: 7.0
+[INFO] os.detected.version.major: 7
+[INFO] os.detected.version.minor: 0
+[INFO] os.detected.release: ubuntu
+[INFO] os.detected.release.version: 26.04
+[INFO] os.detected.release.like.ubuntu: true
+[INFO] os.detected.release.like.debian: true
+[INFO] os.detected.classifier: linux-x86_64
+[INFO] 
+[INFO] --- dependency:3.7.0:properties (default) @ factcast-test ---
+[INFO] 
+[INFO] --- resources:3.5.0:resources (default-resources) @ factcast-test ---
+[INFO] Copying 1 resource from src/main/resources to target/classes
+[INFO] 
+[INFO] --- compiler:3.15.0:compile (default-compile) @ factcast-test ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] -----------------< org.factcast:factcast-test-factus >------------------
+[INFO] Building org.factcast:factcast-test-factus 0.11.2-SNAPSHOT        [7/67]
+[INFO]   from factcast-test-factus/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- enforcer:3.6.3:enforce (enforce-versions) @ factcast-test-factus ---
+[INFO] 
+[INFO] --- os:1.7.1:detect (default) @ factcast-test-factus ---
+[INFO] ------------------------------------------------------------------------
+[INFO] Detecting the operating system and CPU architecture
+[INFO] ------------------------------------------------------------------------
+[INFO] os.detected.name: linux
+[INFO] os.detected.arch: x86_64
+[INFO] os.detected.bitness: 64
+[INFO] os.detected.version: 7.0
+[INFO] os.detected.version.major: 7
+[INFO] os.detected.version.minor: 0
+[INFO] os.detected.release: ubuntu
+[INFO] os.detected.release.version: 26.04
+[INFO] os.detected.release.like.ubuntu: true
+[INFO] os.detected.release.like.debian: true
+[INFO] os.detected.classifier: linux-x86_64
+[INFO] 
+[INFO] --- dependency:3.7.0:properties (default) @ factcast-test-factus ---
+[INFO] 
+[INFO] --- resources:3.5.0:resources (default-resources) @ factcast-test-factus ---
+[INFO] skip non existing resourceDirectory /home/uwe/idea/factcast/factcast-test-factus/src/main/resources
+[INFO] 
+[INFO] --- compiler:3.15.0:compile (default-compile) @ factcast-test-factus ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] ------------------< org.factcast:factcast-test-redis >------------------
+[INFO] Building org.factcast:factcast-test-redis 0.11.2-SNAPSHOT         [8/67]
+[INFO]   from factcast-test-redis/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- enforcer:3.6.3:enforce (enforce-versions) @ factcast-test-redis ---
+[INFO] 
+[INFO] --- os:1.7.1:detect (default) @ factcast-test-redis ---
+[INFO] ------------------------------------------------------------------------
+[INFO] Detecting the operating system and CPU architecture
+[INFO] ------------------------------------------------------------------------
+[INFO] os.detected.name: linux
+[INFO] os.detected.arch: x86_64
+[INFO] os.detected.bitness: 64
+[INFO] os.detected.version: 7.0
+[INFO] os.detected.version.major: 7
+[INFO] os.detected.version.minor: 0
+[INFO] os.detected.release: ubuntu
+[INFO] os.detected.release.version: 26.04
+[INFO] os.detected.release.like.ubuntu: true
+[INFO] os.detected.release.like.debian: true
+[INFO] os.detected.classifier: linux-x86_64
+[INFO] 
+[INFO] --- dependency:3.7.0:properties (default) @ factcast-test-redis ---
+[INFO] 
+[INFO] --- resources:3.5.0:resources (default-resources) @ factcast-test-redis ---
+[INFO] Copying 1 resource from src/main/resources to target/classes
+[INFO] 
+[INFO] --- compiler:3.15.0:compile (default-compile) @ factcast-test-redis ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] -----------------< org.factcast:factcast-test-dynamo >------------------
+[INFO] Building org.factcast:factcast-test-dynamo 0.11.2-SNAPSHOT        [9/67]
+[INFO]   from factcast-test-dynamo/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- enforcer:3.6.3:enforce (enforce-versions) @ factcast-test-dynamo ---
+[INFO] 
+[INFO] --- os:1.7.1:detect (default) @ factcast-test-dynamo ---
+[INFO] ------------------------------------------------------------------------
+[INFO] Detecting the operating system and CPU architecture
+[INFO] ------------------------------------------------------------------------
+[INFO] os.detected.name: linux
+[INFO] os.detected.arch: x86_64
+[INFO] os.detected.bitness: 64
+[INFO] os.detected.version: 7.0
+[INFO] os.detected.version.major: 7
+[INFO] os.detected.version.minor: 0
+[INFO] os.detected.release: ubuntu
+[INFO] os.detected.release.version: 26.04
+[INFO] os.detected.release.like.ubuntu: true
+[INFO] os.detected.release.like.debian: true
+[INFO] os.detected.classifier: linux-x86_64
+[INFO] 
+[INFO] --- dependency:3.7.0:properties (default) @ factcast-test-dynamo ---
+[INFO] 
+[INFO] --- resources:3.5.0:resources (default-resources) @ factcast-test-dynamo ---
+[INFO] Copying 1 resource from src/main/resources to target/classes
+[INFO] 
+[INFO] --- compiler:3.15.0:compile (default-compile) @ factcast-test-dynamo ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] -----------------< org.factcast:factcast-test-mongodb >-----------------
+[INFO] Building org.factcast:factcast-test-mongodb 0.11.2-SNAPSHOT      [10/67]
+[INFO]   from factcast-test-mongodb/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- enforcer:3.6.3:enforce (enforce-versions) @ factcast-test-mongodb ---
+[INFO] 
+[INFO] --- os:1.7.1:detect (default) @ factcast-test-mongodb ---
+[INFO] ------------------------------------------------------------------------
+[INFO] Detecting the operating system and CPU architecture
+[INFO] ------------------------------------------------------------------------
+[INFO] os.detected.name: linux
+[INFO] os.detected.arch: x86_64
+[INFO] os.detected.bitness: 64
+[INFO] os.detected.version: 7.0
+[INFO] os.detected.version.major: 7
+[INFO] os.detected.version.minor: 0
+[INFO] os.detected.release: ubuntu
+[INFO] os.detected.release.version: 26.04
+[INFO] os.detected.release.like.ubuntu: true
+[INFO] os.detected.release.like.debian: true
+[INFO] os.detected.classifier: linux-x86_64
+[INFO] 
+[INFO] --- dependency:3.7.0:properties (default) @ factcast-test-mongodb ---
+[INFO] 
+[INFO] --- resources:3.5.0:resources (default-resources) @ factcast-test-mongodb ---
+[INFO] Copying 1 resource from src/main/resources to target/classes
+[INFO] 
+[INFO] --- compiler:3.15.0:compile (default-compile) @ factcast-test-mongodb ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] -----------------< org.factcast:factcast-internal-dep >-----------------
+[INFO] Building org.factcast:factcast-internal-dep 0.11.2-SNAPSHOT      [11/67]
+[INFO]   from factcast-internal-dep/pom.xml
+[INFO] --------------------------------[ pom ]---------------------------------
+[INFO] 
+[INFO] --- enforcer:3.6.3:enforce (enforce-versions) @ factcast-internal-dep ---
+[INFO] 
+[INFO] --- os:1.7.1:detect (default) @ factcast-internal-dep ---
+[INFO] ------------------------------------------------------------------------
+[INFO] Detecting the operating system and CPU architecture
+[INFO] ------------------------------------------------------------------------
+[INFO] os.detected.name: linux
+[INFO] os.detected.arch: x86_64
+[INFO] os.detected.bitness: 64
+[INFO] os.detected.version: 7.0
+[INFO] os.detected.version.major: 7
+[INFO] os.detected.version.minor: 0
+[INFO] os.detected.release: ubuntu
+[INFO] os.detected.release.version: 26.04
+[INFO] os.detected.release.like.ubuntu: true
+[INFO] os.detected.release.like.debian: true
+[INFO] os.detected.classifier: linux-x86_64
+[INFO] 
+[INFO] --- dependency:3.7.0:properties (default) @ factcast-internal-dep ---
+[INFO] 
+[INFO] --------------< org.factcast:factcast-internal-dep-boot >---------------
+[INFO] Building org.factcast:factcast-internal-dep-boot 0.11.2-SNAPSHOT [12/67]
+[INFO]   from factcast-internal-dep-boot/pom.xml
+[INFO] --------------------------------[ pom ]---------------------------------
+[INFO] 
+[INFO] --- enforcer:3.6.3:enforce (enforce-versions) @ factcast-internal-dep-boot ---
+[INFO] 
+[INFO] --- os:1.7.1:detect (default) @ factcast-internal-dep-boot ---
+[INFO] ------------------------------------------------------------------------
+[INFO] Detecting the operating system and CPU architecture
+[INFO] ------------------------------------------------------------------------
+[INFO] os.detected.name: linux
+[INFO] os.detected.arch: x86_64
+[INFO] os.detected.bitness: 64
+[INFO] os.detected.version: 7.0
+[INFO] os.detected.version.major: 7
+[INFO] os.detected.version.minor: 0
+[INFO] os.detected.release: ubuntu
+[INFO] os.detected.release.version: 26.04
+[INFO] os.detected.release.like.ubuntu: true
+[INFO] os.detected.release.like.debian: true
+[INFO] os.detected.classifier: linux-x86_64
+[INFO] 
+[INFO] --- dependency:3.7.0:properties (default) @ factcast-internal-dep-boot ---
+[INFO] 
+[INFO] -------------------< org.factcast:factcast-grpc-api >-------------------
+[INFO] Building org.factcast:factcast-grpc-api 0.11.2-SNAPSHOT          [13/67]
+[INFO]   from factcast-grpc-api/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- enforcer:3.6.3:enforce (enforce-versions) @ factcast-grpc-api ---
+[INFO] Rule 0: org.apache.maven.enforcer.rules.version.RequireMavenVersion passed
+[INFO] Rule 1: org.apache.maven.enforcer.rules.version.RequireJavaVersion passed
+[INFO] 
+[INFO] --- os:1.7.1:detect (default) @ factcast-grpc-api ---
+[INFO] ------------------------------------------------------------------------
+[INFO] Detecting the operating system and CPU architecture
+[INFO] ------------------------------------------------------------------------
+[INFO] os.detected.name: linux
+[INFO] os.detected.arch: x86_64
+[INFO] os.detected.bitness: 64
+[INFO] os.detected.version: 7.0
+[INFO] os.detected.version.major: 7
+[INFO] os.detected.version.minor: 0
+[INFO] os.detected.release: ubuntu
+[INFO] os.detected.release.version: 26.04
+[INFO] os.detected.release.like.ubuntu: true
+[INFO] os.detected.release.like.debian: true
+[INFO] os.detected.classifier: linux-x86_64
+[INFO] 
+[INFO] --- dependency:3.7.0:properties (default) @ factcast-grpc-api ---
+[INFO] 
+[INFO] --- build-helper:3.6.1:add-source (add-source) @ factcast-grpc-api ---
+[INFO] Source directory: /home/uwe/idea/factcast/factcast-grpc-api/target/generated-sources/java added.
+[INFO] Source directory: /home/uwe/idea/factcast/factcast-grpc-api/target/generated-sources/grpc-java added.
+[INFO] 
+[INFO] --- protobuf:0.6.1:compile (default) @ factcast-grpc-api ---
+[INFO] Compiling 1 proto file(s) to /home/uwe/idea/factcast/factcast-grpc-api/target/generated-sources/protobuf/java
+[INFO] 
+[INFO] --- protobuf:0.6.1:compile-custom (default) @ factcast-grpc-api ---
+[INFO] Compiling 1 proto file(s) to /home/uwe/idea/factcast/factcast-grpc-api/target/generated-sources/protobuf/grpc-java
+[INFO] 
+[INFO] --- resources:3.5.0:resources (default-resources) @ factcast-grpc-api ---
+[INFO] skip non existing resourceDirectory /home/uwe/idea/factcast/factcast-grpc-api/src/main/resources
+[INFO] Copying 1 resource from src/main/proto to target/classes
+[INFO] Copying 1 resource from src/main/proto to target/classes
+[INFO] 
+[INFO] --- compiler:3.15.0:compile (default-compile) @ factcast-grpc-api ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 13 source files with javac [debug release 17] to target/classes
+[INFO] Annotation processing is enabled because one or more processors were found
+  on the class path. A future release of javac may disable annotation processing
+  unless at least one processor is specified by name (-processor), or a search
+  path is specified (--processor-path, --processor-module-path), or annotation
+  processing is enabled explicitly (-proc:only, -proc:full).
+  Use -Xlint:-options to suppress this message.
+  Use -proc:none to disable annotation processing.
+[INFO] 
+[INFO] -----------------< org.factcast:factcast-client-grpc >------------------
+[INFO] Building org.factcast:factcast-client-grpc 0.11.2-SNAPSHOT       [14/67]
+[INFO]   from factcast-client-grpc/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- enforcer:3.6.3:enforce (enforce-versions) @ factcast-client-grpc ---
+[INFO] 
+[INFO] --- os:1.7.1:detect (default) @ factcast-client-grpc ---
+[INFO] ------------------------------------------------------------------------
+[INFO] Detecting the operating system and CPU architecture
+[INFO] ------------------------------------------------------------------------
+[INFO] os.detected.name: linux
+[INFO] os.detected.arch: x86_64
+[INFO] os.detected.bitness: 64
+[INFO] os.detected.version: 7.0
+[INFO] os.detected.version.major: 7
+[INFO] os.detected.version.minor: 0
+[INFO] os.detected.release: ubuntu
+[INFO] os.detected.release.version: 26.04
+[INFO] os.detected.release.like.ubuntu: true
+[INFO] os.detected.release.like.debian: true
+[INFO] os.detected.classifier: linux-x86_64
+[INFO] 
+[INFO] --- dependency:3.7.0:properties (default) @ factcast-client-grpc ---
+[INFO] 
+[INFO] --- resources:3.5.0:resources (default-resources) @ factcast-client-grpc ---
+[INFO] Copying 1 resource from src/main/resources to target/classes
+[INFO] 
+[INFO] --- compiler:3.15.0:compile (default-compile) @ factcast-client-grpc ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 13 source files with javac [debug release 17] to target/classes
+[INFO] Annotation processing is enabled because one or more processors were found
+  on the class path. A future release of javac may disable annotation processing
+  unless at least one processor is specified by name (-processor), or a search
+  path is specified (--processor-path, --processor-module-path), or annotation
+  processing is enabled explicitly (-proc:only, -proc:full).
+  Use -Xlint:-options to suppress this message.
+  Use -proc:none to disable annotation processing.
+[INFO] 
+[INFO] ------------------< org.factcast:factcast-store-test >------------------
+[INFO] Building org.factcast:factcast-store-test 0.11.2-SNAPSHOT        [15/67]
+[INFO]   from factcast-store-test/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- enforcer:3.6.3:enforce (enforce-versions) @ factcast-store-test ---
+[INFO] 
+[INFO] --- os:1.7.1:detect (default) @ factcast-store-test ---
+[INFO] ------------------------------------------------------------------------
+[INFO] Detecting the operating system and CPU architecture
+[INFO] ------------------------------------------------------------------------
+[INFO] os.detected.name: linux
+[INFO] os.detected.arch: x86_64
+[INFO] os.detected.bitness: 64
+[INFO] os.detected.version: 7.0
+[INFO] os.detected.version.major: 7
+[INFO] os.detected.version.minor: 0
+[INFO] os.detected.release: ubuntu
+[INFO] os.detected.release.version: 26.04
+[INFO] os.detected.release.like.ubuntu: true
+[INFO] os.detected.release.like.debian: true
+[INFO] os.detected.classifier: linux-x86_64
+[INFO] 
+[INFO] --- dependency:3.7.0:properties (default) @ factcast-store-test ---
+[INFO] 
+[INFO] --- resources:3.5.0:resources (default-resources) @ factcast-store-test ---
+[INFO] skip non existing resourceDirectory /home/uwe/idea/factcast/factcast-store-test/src/main/resources
+[INFO] 
+[INFO] --- compiler:3.15.0:compile (default-compile) @ factcast-store-test ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --------------------< org.factcast:factcast-store >---------------------
+[INFO] Building org.factcast:factcast-store 0.11.2-SNAPSHOT             [16/67]
+[INFO]   from factcast-store/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- enforcer:3.6.3:enforce (enforce-versions) @ factcast-store ---
+[INFO] 
+[INFO] --- os:1.7.1:detect (default) @ factcast-store ---
+[INFO] ------------------------------------------------------------------------
+[INFO] Detecting the operating system and CPU architecture
+[INFO] ------------------------------------------------------------------------
+[INFO] os.detected.name: linux
+[INFO] os.detected.arch: x86_64
+[INFO] os.detected.bitness: 64
+[INFO] os.detected.version: 7.0
+[INFO] os.detected.version.major: 7
+[INFO] os.detected.version.minor: 0
+[INFO] os.detected.release: ubuntu
+[INFO] os.detected.release.version: 26.04
+[INFO] os.detected.release.like.ubuntu: true
+[INFO] os.detected.release.like.debian: true
+[INFO] os.detected.classifier: linux-x86_64
+[INFO] 
+[INFO] --- dependency:3.7.0:properties (default) @ factcast-store ---
+[INFO] 
+[INFO] --- dependency:3.7.0:build-classpath (build-classpath) @ factcast-store ---
+[INFO] Dependencies classpath:
+/home/uwe/.m2/repository/net/javacrumbs/shedlock/shedlock-spring/7.7.0/shedlock-spring-7.7.0.jar:/home/uwe/.m2/repository/net/javacrumbs/shedlock/shedlock-core/7.7.0/shedlock-core-7.7.0.jar:/home/uwe/.m2/repository/org/springframework/spring-context/7.0.8/spring-context-7.0.8.jar:/home/uwe/.m2/repository/org/springframework/spring-aop/7.0.8/spring-aop-7.0.8.jar:/home/uwe/.m2/repository/org/springframework/spring-expression/7.0.8/spring-expression-7.0.8.jar:/home/uwe/.m2/repository/net/javacrumbs/shedlock/shedlock-provider-jdbc-template/7.7.0/shedlock-provider-jdbc-template-7.7.0.jar:/home/uwe/.m2/repository/net/javacrumbs/shedlock/shedlock-sql-support/7.7.0/shedlock-sql-support-7.7.0.jar:/home/uwe/.m2/repository/net/javacrumbs/shedlock/shedlock-provider-inmemory/7.7.0/shedlock-provider-inmemory-7.7.0.jar:/home/uwe/idea/factcast/factcast-core/target/classes:/home/uwe/.m2/repository/com/fasterxml/jackson/core/jackson-databind/2.22.1/jackson-databind-2.22.1.jar:/home/uwe/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.22/jackson-annotations-2.22.jar:/home/uwe/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.22.1/jackson-core-2.22.1.jar:/home/uwe/.m2/repository/org/slf4j/slf4j-api/2.0.18/slf4j-api-2.0.18.jar:/home/uwe/idea/factcast/factcast-factus-event/target/classes:/home/uwe/.m2/repository/commons-io/commons-io/2.20.0/commons-io-2.20.0.jar:/home/uwe/.m2/repository/org/apache/commons/commons-lang3/3.20.0/commons-lang3-3.20.0.jar:/home/uwe/.m2/repository/org/apache/logging/log4j/log4j-to-slf4j/2.25.4/log4j-to-slf4j-2.25.4.jar:/home/uwe/.m2/repository/org/apache/logging/log4j/log4j-api/2.25.4/log4j-api-2.25.4.jar:/home/uwe/.m2/repository/org/slf4j/jul-to-slf4j/2.0.18/jul-to-slf4j-2.0.18.jar:/home/uwe/.m2/repository/org/springframework/boot/spring-boot-starter-liquibase/4.1.0/spring-boot-starter-liquibase-4.1.0.jar:/home/uwe/.m2/repository/org/springframework/boot/spring-boot-starter/4.1.0/spring-boot-starter-4.1.0.jar:/home/uwe/.m2/repository/org/springframework/boot/spring-boot-starter-logging/4.1.0/spring-boot-starter-logging-4.1.0.jar:/home/uwe/.m2/repository/org/yaml/snakeyaml/2.6/snakeyaml-2.6.jar:/home/uwe/.m2/repository/org/springframework/boot/spring-boot-starter-jdbc/4.1.0/spring-boot-starter-jdbc-4.1.0.jar:/home/uwe/.m2/repository/org/springframework/boot/spring-boot-jdbc/4.1.0/spring-boot-jdbc-4.1.0.jar:/home/uwe/.m2/repository/org/springframework/boot/spring-boot-sql/4.1.0/spring-boot-sql-4.1.0.jar:/home/uwe/.m2/repository/org/springframework/boot/spring-boot-transaction/4.1.0/spring-boot-transaction-4.1.0.jar:/home/uwe/.m2/repository/org/springframework/boot/spring-boot-persistence/4.1.0/spring-boot-persistence-4.1.0.jar:/home/uwe/.m2/repository/org/springframework/boot/spring-boot-liquibase/4.1.0/spring-boot-liquibase-4.1.0.jar:/home/uwe/.m2/repository/org/liquibase/liquibase-core/5.0.3/liquibase-core-5.0.3.jar:/home/uwe/.m2/repository/org/apache/commons/commons-text/1.15.0/commons-text-1.15.0.jar:/home/uwe/.m2/repository/com/opencsv/opencsv/5.12.0/opencsv-5.12.0.jar:/home/uwe/.m2/repository/org/postgresql/postgresql/42.7.13/postgresql-42.7.13.jar:/home/uwe/.m2/repository/org/checkerframework/checker-qual/3.55.1/checker-qual-3.55.1.jar:/home/uwe/.m2/repository/com/google/guava/guava/33.6.0-jre/guava-33.6.0-jre.jar:/home/uwe/.m2/repository/com/google/guava/failureaccess/1.0.3/failureaccess-1.0.3.jar:/home/uwe/.m2/repository/com/google/guava/listenablefuture/9999.0-empty-to-avoid-conflict-with-guava/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar:/home/uwe/.m2/repository/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar:/home/uwe/.m2/repository/com/google/errorprone/error_prone_annotations/2.47.0/error_prone_annotations-2.47.0.jar:/home/uwe/.m2/repository/com/google/j2objc/j2objc-annotations/3.1/j2objc-annotations-3.1.jar:/home/uwe/.m2/repository/com/github/erosb/everit-json-schema/1.14.6/everit-json-schema-1.14.6.jar:/home/uwe/.m2/repository/commons-validator/commons-validator/1.9.0/commons-validator-1.9.0.jar:/home/uwe/.m2/repository/commons-digester/commons-digester/2.1/commons-digester-2.1.jar:/home/uwe/.m2/repository/commons-collections/commons-collections/3.2.2/commons-collections-3.2.2.jar:/home/uwe/.m2/repository/com/damnhandy/handy-uri-templates/2.1.8/handy-uri-templates-2.1.8.jar:/home/uwe/.m2/repository/joda-time/joda-time/2.10.2/joda-time-2.10.2.jar:/home/uwe/.m2/repository/com/google/re2j/re2j/1.8/re2j-1.8.jar:/home/uwe/.m2/repository/com/vaadin/external/google/android-json/0.0.20131108.vaadin1/android-json-0.0.20131108.vaadin1.jar:/home/uwe/.m2/repository/org/springframework/spring-core/7.0.8/spring-core-7.0.8.jar:/home/uwe/.m2/repository/commons-logging/commons-logging/1.3.6/commons-logging-1.3.6.jar:/home/uwe/.m2/repository/org/springframework/spring-jdbc/7.0.8/spring-jdbc-7.0.8.jar:/home/uwe/.m2/repository/org/springframework/spring-beans/7.0.8/spring-beans-7.0.8.jar:/home/uwe/.m2/repository/org/springframework/spring-tx/7.0.8/spring-tx-7.0.8.jar:/home/uwe/.m2/repository/org/apache/tomcat/tomcat-jdbc/11.0.22/tomcat-jdbc-11.0.22.jar:/home/uwe/.m2/repository/org/apache/tomcat/tomcat-juli/11.0.22/tomcat-juli-11.0.22.jar:/home/uwe/.m2/repository/io/micrometer/micrometer-core/1.17.0/micrometer-core-1.17.0.jar:/home/uwe/.m2/repository/io/micrometer/micrometer-commons/1.17.0/micrometer-commons-1.17.0.jar:/home/uwe/.m2/repository/io/micrometer/micrometer-observation/1.17.0/micrometer-observation-1.17.0.jar:/home/uwe/.m2/repository/org/hdrhistogram/HdrHistogram/2.2.2/HdrHistogram-2.2.2.jar:/home/uwe/.m2/repository/org/springframework/boot/spring-boot-autoconfigure/4.1.0/spring-boot-autoconfigure-4.1.0.jar:/home/uwe/.m2/repository/org/springframework/boot/spring-boot/4.1.0/spring-boot-4.1.0.jar:/home/uwe/.m2/repository/org/springframework/boot/spring-boot-configuration-processor/4.1.0/spring-boot-configuration-processor-4.1.0.jar:/home/uwe/.m2/repository/org/springframework/spring-aspects/7.0.8/spring-aspects-7.0.8.jar:/home/uwe/.m2/repository/org/aspectj/aspectjweaver/1.9.25.1/aspectjweaver-1.9.25.1.jar:/home/uwe/.m2/repository/org/jetbrains/kotlin/kotlin-stdlib/2.3.21/kotlin-stdlib-2.3.21.jar:/home/uwe/.m2/repository/org/jetbrains/annotations/13.0/annotations-13.0.jar:/home/uwe/.m2/repository/es/usc/citius/hipster/hipster-core/1.0.1/hipster-core-1.0.1.jar:/home/uwe/.m2/repository/org/apache/commons/commons-collections4/4.5.0/commons-collections4-4.5.0.jar:/home/uwe/.m2/repository/com/squareup/okhttp3/okhttp-jvm/5.4.0/okhttp-jvm-5.4.0.jar:/home/uwe/.m2/repository/com/squareup/okio/okio-jvm/3.17.0/okio-jvm-3.17.0.jar:/home/uwe/.m2/repository/org/graalvm/polyglot/polyglot/25.1.3/polyglot-25.1.3.jar:/home/uwe/.m2/repository/org/graalvm/sdk/collections/25.1.3/collections-25.1.3.jar:/home/uwe/.m2/repository/org/graalvm/sdk/nativeimage/25.1.3/nativeimage-25.1.3.jar:/home/uwe/.m2/repository/org/graalvm/sdk/word/25.1.3/word-25.1.3.jar:/home/uwe/.m2/repository/org/graalvm/js/js-scriptengine/25.1.3/js-scriptengine-25.1.3.jar:/home/uwe/.m2/repository/org/graalvm/polyglot/js-community/25.1.3/js-community-25.1.3.pom:/home/uwe/.m2/repository/org/graalvm/js/js-community/25.1.3/js-community-25.1.3.pom:/home/uwe/.m2/repository/org/graalvm/js/js/25.1.3/js-25.1.3.pom:/home/uwe/.m2/repository/org/graalvm/js/js-language/25.1.3/js-language-25.1.3.jar:/home/uwe/.m2/repository/org/graalvm/regex/regex/25.1.3/regex-25.1.3.jar:/home/uwe/.m2/repository/org/graalvm/shadowed/icu4j/25.1.3/icu4j-25.1.3.jar:/home/uwe/.m2/repository/org/graalvm/shadowed/xz/25.1.3/xz-25.1.3.jar:/home/uwe/.m2/repository/org/graalvm/truffle/truffle-runtime/25.1.3/truffle-runtime-25.1.3.jar:/home/uwe/.m2/repository/org/graalvm/truffle/truffle-compiler/25.1.3/truffle-compiler-25.1.3.jar:/home/uwe/.m2/repository/org/graalvm/truffle/truffle-api/25.1.3/truffle-api-25.1.3.jar:/home/uwe/.m2/repository/org/graalvm/sdk/jniutils/25.1.3/jniutils-25.1.3.jar:/home/uwe/.m2/repository/org/springframework/retry/spring-retry/2.0.13/spring-retry-2.0.13.jar:/home/uwe/.m2/repository/org/springframework/boot/spring-boot-starter-validation/4.1.0/spring-boot-starter-validation-4.1.0.jar:/home/uwe/.m2/repository/org/springframework/boot/spring-boot-validation/4.1.0/spring-boot-validation-4.1.0.jar:/home/uwe/.m2/repository/org/apache/tomcat/embed/tomcat-embed-el/11.0.22/tomcat-embed-el-11.0.22.jar:/home/uwe/.m2/repository/org/hibernate/validator/hibernate-validator/9.1.0.Final/hibernate-validator-9.1.0.Final.jar:/home/uwe/.m2/repository/jakarta/validation/jakarta.validation-api/3.1.1/jakarta.validation-api-3.1.1.jar:/home/uwe/.m2/repository/org/jboss/logging/jboss-logging/3.6.3.Final/jboss-logging-3.6.3.Final.jar:/home/uwe/.m2/repository/com/fasterxml/classmate/1.7.3/classmate-1.7.3.jar:/home/uwe/.m2/repository/org/springframework/boot/spring-boot-properties-migrator/4.1.0/spring-boot-properties-migrator-4.1.0.jar:/home/uwe/.m2/repository/org/springframework/boot/spring-boot-configuration-metadata/4.1.0/spring-boot-configuration-metadata-4.1.0.jar
+[INFO] 
+[INFO] --- resources:3.5.0:resources (default-resources) @ factcast-store ---
+[INFO] Copying 69 resources from src/main/resources to target/classes
+[INFO] 
+[INFO] --- compiler:3.15.0:compile (default-compile) @ factcast-store ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 150 source files with javac [debug release 17] to target/classes
+[INFO] /home/uwe/idea/factcast/factcast-store/src/main/java/org/factcast/store/registry/http/HttpRegistryFileFetcher.java: /home/uwe/idea/factcast/factcast-store/src/main/java/org/factcast/store/registry/http/HttpRegistryFileFetcher.java uses or overrides a deprecated API.
+[INFO] /home/uwe/idea/factcast/factcast-store/src/main/java/org/factcast/store/registry/http/HttpRegistryFileFetcher.java: Recompile with -Xlint:deprecation for details.
+[INFO] /home/uwe/idea/factcast/factcast-store/src/main/java/org/factcast/store/internal/filter/JSFilterScriptMatcher.java: /home/uwe/idea/factcast/factcast-store/src/main/java/org/factcast/store/internal/filter/JSFilterScriptMatcher.java uses unchecked or unsafe operations.
+[INFO] /home/uwe/idea/factcast/factcast-store/src/main/java/org/factcast/store/internal/filter/JSFilterScriptMatcher.java: Recompile with -Xlint:unchecked for details.
+[INFO] -------------------------------------------------------------
+[WARNING] COMPILATION WARNING : 
+[INFO] -------------------------------------------------------------
+[WARNING] /home/uwe/idea/factcast/factcast-store/src/main/java/org/factcast/store/internal/filter/blacklist/BlacklistEntry.java:[25,1] Ambiguous: Jackson2 and Jackson3 exist; define which variant(s) you want in 'lombok.config'. See https://projectlombok.org/features/experimental/Jacksonized
+[WARNING] /home/uwe/idea/factcast/factcast-store/src/main/java/org/factcast/store/internal/catchup/PgCatchUpFactoryImpl.java:[57,15] org.factcast.store.internal.catchup.chunked.PgChunkedCatchup in org.factcast.store.internal.catchup.chunked has been deprecated and marked for removal
+[WARNING] /home/uwe/idea/factcast/factcast-store/src/main/java/org/factcast/store/internal/catchup/chunked/PgChunkedCatchup.java:[152,6] useTempTable(@lombok.NonNull java.lang.String) in org.factcast.store.internal.query.PgQueryBuilder has been deprecated and marked for removal
+[INFO] 3 warnings 
+[INFO] -------------------------------------------------------------
+[INFO] -------------------------------------------------------------
+[ERROR] COMPILATION ERROR : 
+[INFO] -------------------------------------------------------------
+[ERROR] /home/uwe/idea/factcast/factcast-store/src/main/java/org/factcast/store/internal/PgFactStoreInternalConfiguration.java:[329,12] constructor NudgeNotificationHandler in class org.factcast.store.internal.listen.NudgeNotificationHandler cannot be applied to given types;
+  required: @lombok.NonNull com.google.common.eventbus.EventBus,@lombok.NonNull org.springframework.jdbc.core.JdbcTemplate,@lombok.NonNull org.factcast.store.StoreConfigurationProperties,@lombok.NonNull org.factcast.store.internal.PgMetrics
+  found:    com.google.common.eventbus.EventBus,org.springframework.jdbc.core.JdbcTemplate,org.factcast.store.StoreConfigurationProperties
+  reason: actual and formal argument lists differ in length
+[INFO] 1 error
+[INFO] -------------------------------------------------------------
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Summary for factcast 0.11.2-SNAPSHOT:
+[INFO] 
+[INFO] factcast ........................................... SUCCESS [  0.455 s]
+[INFO] org.factcast:factcast-bom .......................... SUCCESS [  0.016 s]
+[INFO] org.factcast:factcast-factus-event ................. SUCCESS [  0.089 s]
+[INFO] org.factcast:factcast-core ......................... SUCCESS [  0.022 s]
+[INFO] org.factcast:factcast-factus ....................... SUCCESS [  0.047 s]
+[INFO] org.factcast:factcast-test ......................... SUCCESS [  0.058 s]
+[INFO] org.factcast:factcast-test-factus .................. SUCCESS [  0.014 s]
+[INFO] org.factcast:factcast-test-redis ................... SUCCESS [  0.052 s]
+[INFO] org.factcast:factcast-test-dynamo .................. SUCCESS [  0.054 s]
+[INFO] org.factcast:factcast-test-mongodb ................. SUCCESS [  0.012 s]
+[INFO] org.factcast:factcast-internal-dep ................. SUCCESS [  0.004 s]
+[INFO] org.factcast:factcast-internal-dep-boot ............ SUCCESS [  0.008 s]
+[INFO] org.factcast:factcast-grpc-api ..................... SUCCESS [  2.989 s]
+[INFO] org.factcast:factcast-client-grpc .................. SUCCESS [  0.755 s]
+[INFO] org.factcast:factcast-store-test ................... SUCCESS [  0.017 s]
+[INFO] org.factcast:factcast-store ........................ FAILURE [  1.972 s]
+[INFO] org.factcast:factcast-store-redis .................. SKIPPED
+[INFO] org.factcast:factcast-store-pub-redis .............. SKIPPED
+[INFO] org.factcast:factcast-store-sub-redis .............. SKIPPED
+[INFO] org.factcast:factcast-grpc-lz4 ..................... SKIPPED
+[INFO] org.factcast:factcast-grpc-snappy .................. SKIPPED
+[INFO] org.factcast:factcast-server-security .............. SKIPPED
+[INFO] org.factcast:factcast-server-ui .................... SKIPPED
+[INFO] org.factcast:factcast-server-ui-s3-reportstore ..... SKIPPED
+[INFO] org.factcast:factcast-factus-serializer-binary ..... SKIPPED
+[INFO] org.factcast:factcast-factus-serializer-fury ....... SKIPPED
+[INFO] org.factcast:factcast-factus-serializer-fory ....... SKIPPED
+[INFO] org.factcast:factcast-snapshotcache-local-memory ... SKIPPED
+[INFO] org.factcast:factcast-snapshotcache-local-disk ..... SKIPPED
+[INFO] org.factcast:factcast-factus-redis ................. SKIPPED
+[INFO] org.factcast:factcast-snapshotcache-redisson ....... SKIPPED
+[INFO] org.factcast:factcast-snapshotcache-jdbc ........... SKIPPED
+[INFO] org.factcast:factcast-snapshotcache-mongodb ........ SKIPPED
+[INFO] org.factcast:factcast-server-grpc .................. SKIPPED
+[INFO] org.factcast:factcast-spring-boot-autoconfigure .... SKIPPED
+[INFO] org.factcast:factcast-factus-bin-snapser ........... SKIPPED
+[INFO] org.factcast:factcast-client-grpc-cli .............. SKIPPED
+[INFO] org.factcast:factcast-factus-migration ............. SKIPPED
+[INFO] org.factcast:factcast-factus-spring-tx ............. SKIPPED
+[INFO] org.factcast:factcast-factus-dynamo ................ SKIPPED
+[INFO] org.factcast:factcast-factus-mongodb ............... SKIPPED
+[INFO] org.factcast:factcast-schema-registry-cli .......... SKIPPED
+[INFO] org.factcast:factcast-schema-registry-maven-plugin . SKIPPED
+[INFO] org.factcast:factcast-site ......................... SKIPPED
+[INFO] org.factcast:factcast-docker ....................... SKIPPED
+[INFO] org.factcast:factcast-docker-dep ................... SKIPPED
+[INFO] org.factcast:factcast-examples ..................... SKIPPED
+[INFO] org.factcast:factcast-example-client-basicauth ..... SKIPPED
+[INFO] org.factcast:factcast-example-client-spring-boot2 .. SKIPPED
+[INFO] org.factcast:factcast-example-client-dynamo ........ SKIPPED
+[INFO] org.factcast:factcast-example-client-mongodb ....... SKIPPED
+[INFO] org.factcast:factcast-example-server ............... SKIPPED
+[INFO] org.factcast:factcast-example-server-basicauth ..... SKIPPED
+[INFO] org.factcast:factcast-example-tls-client ........... SKIPPED
+[INFO] org.factcast:factcast-example-tls-server ........... SKIPPED
+[INFO] org.factcast:factcast-example-schema-registry ...... SKIPPED
+[INFO] org.factcast:factcast-example-server-telemetry ..... SKIPPED
+[INFO] org.factcast:factcast-example-server-ui-s3-reports . SKIPPED
+[INFO] org.factcast:factcast-itests ....................... SKIPPED
+[INFO] factcast-itests-tls ................................ SKIPPED
+[INFO] factcast-itests-transformation ..................... SKIPPED
+[INFO] factcast-itests-novalidation ....................... SKIPPED
+[INFO] factcast-itests-factus ............................. SKIPPED
+[INFO] factcast-itests-exception-handling ................. SKIPPED
+[INFO] factcast-itests-store .............................. SKIPPED
+[INFO] factcast-itests-doc ................................ SKIPPED
+[INFO] factcast-itests-security ........................... SKIPPED
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  6.836 s
+[INFO] Finished at: 2026-07-14T09:54:54+02:00
+[INFO] ------------------------------------------------------------------------
+[INFO] 
+[INFO] 
+[INFO] SUREFIRE TEST SUMMARY
+[INFO] Tests run Failures Errors Skipped Elapsed    ClassName
+[INFO]                                   Time (sec)
+[INFO] --------- -------- ------ ------- ----------
+[INFO]      1136        0      0       3    277.591
+[INFO] ========= ======== ====== ======= ==========
+[INFO] 
+[INFO] Rate: 99.736 %
+[INFO] Average Time per Test: 0.244358
+[INFO] ------------------------------------------------------------------------
+[INFO] SLOWEST SUREFIRE TEST SUMMARY
+[INFO] Tests run Failures Errors Skipped Elapsed    ClassName
+[INFO]                                   Time (sec)
+[INFO]         6        0      0       0     25.500 org.factcast.factus.migration.PostprocessToCollectionRecipeTest
+[INFO]         1        0      0       0     18.693 org.factcast.factus.serializer.fory.ForySnapshotSerializerTest
+[INFO]        11        0      0       0     16.612 org.factcast.core.snap.jdbc.JdbcSnapshotCacheTest$WhenCrud
+[INFO]        13        0      0       0     16.211 org.factcast.client.grpc.ResilientGrpcSubscriptionTest
+[INFO]         1        0      0       0     12.543 org.factcast.factus.dynamo.AbstractDynamoSubscribedProjectionTest$MissingProjectionMetaDataAnnotation
+[INFO]         2        0      0       0     12.406 org.factcast.core.snap.mongo.MongoDbSnapshotCacheTest$WhenGettingSnapshot
+[INFO]         1        0      0       0     11.709 org.factcast.factus.serializer.fory.ForySnapshotSerializerTest$WhenSerializingPlain
+[INFO]         1        0      0       0     10.958 org.factcast.factus.serializer.binary.BinaryJacksonSnapshotSerializerTest
+[INFO]         1        0      0       0     10.091 org.factcast.factus.serializer.fury.FurySnapshotSerializerTest
+[INFO]         1        0      0       0      9.486 org.factcast.factus.serializer.fury.ComplexExampleTest
+[INFO]         2        0      0       0      8.854 org.factcast.factus.redis.RedisWriterTokenTest$WhenCheckingIfIsValid
+[INFO]         2        0      0       0      7.981 org.factcast.factus.mongodb.MongoDbWriterTokenTest$WhenRefreshing
+[INFO]         1        0      0       0      7.268 org.factcast.factus.spring.tx.SpringTxAdapterTest$WhenCommitting
+[INFO]         1        0      0       0      6.766 org.factcast.core.snap.local.InMemorySnapshotCacheTest$WhenClearingSnapshot
+[INFO]         1        0      0       0      6.683 org.factcast.factus.serializer.fury.FurySnapshotSerializerTest$WhenSerializingPlain
+[INFO]         7        0      0       0      6.147 org.factcast.server.grpc.BlockingStreamObserverTest
+[INFO]         3        0      0       0      5.298 org.factcast.factus.FactusImplTest
+[INFO]         1        0      0       0      4.206 org.factcast.factus.FactusImplTest$IntervalSnapshotterTests
+[INFO]        56        0      0       0      3.999 org.factcast.server.grpc.FactStoreGrpcServiceTest
+[INFO] ------------------------------------------------------------------------
+[INFO] 
+[INFO] 
+[INFO] FAILSAFE TEST SUMMARY
+[INFO] Tests run Failures Errors Skipped Elapsed    ClassName
+[INFO]                                   Time (sec)
+[INFO] --------- -------- ------ ------- ----------
+[INFO]        10        0      0       0      0.720
+[INFO] ========= ======== ====== ======= ==========
+[INFO] 
+[INFO] Rate: 100 %
+[INFO] Average Time per Test: 0.072000
+[INFO] ------------------------------------------------------------------------
+[INFO] SLOWEST FAILSAFE TEST SUMMARY
+[INFO] Tests run Failures Errors Skipped Elapsed    ClassName
+[INFO]                                   Time (sec)
+[INFO]         2        0      0       0      0.372 org.factcast.core.snap.redisson.RedissonSnapshotCacheTest$WhenClearingSnapshot
+[INFO]         2        0      0       0      0.282 org.factcast.core.snap.redisson.RedissonSnapshotCacheTest$WhenCompacting
+[INFO]         4        0      0       0      0.049 org.factcast.core.snap.redisson.RedissonSnapshotCacheTest$WhenGettingSnapshot
+[INFO]         2        0      0       0      0.017 org.factcast.core.snap.redisson.RedissonSnapshotCacheTest$WhenCodecIsSet
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.15.0:compile (default-compile) on project factcast-store: Compilation failure
+[ERROR] /home/uwe/idea/factcast/factcast-store/src/main/java/org/factcast/store/internal/PgFactStoreInternalConfiguration.java:[329,12] constructor NudgeNotificationHandler in class org.factcast.store.internal.listen.NudgeNotificationHandler cannot be applied to given types;
+[ERROR]   required: @lombok.NonNull com.google.common.eventbus.EventBus,@lombok.NonNull org.springframework.jdbc.core.JdbcTemplate,@lombok.NonNull org.factcast.store.StoreConfigurationProperties,@lombok.NonNull org.factcast.store.internal.PgMetrics
+[ERROR]   found:    com.google.common.eventbus.EventBus,org.springframework.jdbc.core.JdbcTemplate,org.factcast.store.StoreConfigurationProperties
+[ERROR]   reason: actual and formal argument lists differ in length
+[ERROR] 
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException
+[ERROR] 
+[ERROR] After correcting the problems, you can resume the build with the command
+[ERROR]   mvn <args> -rf :factcast-store

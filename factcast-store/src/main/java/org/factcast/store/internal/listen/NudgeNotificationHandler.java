@@ -19,8 +19,8 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.*;
 import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.atomic.*;
-import java.util.concurrent.locks.*;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.StampedLock;
 import lombok.*;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.*;
@@ -28,8 +28,7 @@ import org.factcast.store.internal.notification.*;
 import org.springframework.beans.factory.*;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-@RequiredArgsConstructor
-public class NudgeNotificationHandler implements SmartInitializingSingleton, DisposableBean {
+public class NudgeNotificationHandler implements DisposableBean {
   private static final String BASE_EXISTS_SQL =
       "SELECT (exists(select 1 from notification where ser=?))";
   private final @NonNull EventBus bus;
@@ -43,17 +42,25 @@ public class NudgeNotificationHandler implements SmartInitializingSingleton, Dis
   @VisibleForTesting protected final AtomicLong timerVersion = new AtomicLong(0);
   private io.micrometer.core.instrument.@NonNull Timer metricsTimer;
 
-  @Override
-  public void destroy() throws Exception {
-    bus.unregister(this);
-    timer.cancel();
+  public NudgeNotificationHandler(
+      @NonNull EventBus bus,
+      @NonNull JdbcTemplate jdbc,
+      @NonNull StoreConfigurationProperties props,
+      @NonNull PgMetrics metrics) {
+    this.bus = bus;
+    this.jdbc = jdbc;
+    this.props = props;
+    this.metrics = metrics;
+
+    bus.register(this);
+    timer.scheduleAtFixedRate(new ScheduledCleanup(), 0, Duration.ofMinutes(1).toMillis());
     metricsTimer = metrics.timer(StoreMetrics.OP.SELECT_DISTINCT_NOTIFICATIONS);
   }
 
   @Override
-  public void afterSingletonsInstantiated() {
-    bus.register(this);
-    timer.scheduleAtFixedRate(new ScheduledCleanup(), 0, Duration.ofMinutes(1).toMillis());
+  public void destroy() throws Exception {
+    bus.unregister(this);
+    timer.cancel();
   }
 
   @Subscribe

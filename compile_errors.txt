@@ -44,45 +44,40 @@
 [INFO] Copying 69 resources from src/main/resources to target/classes
 [INFO] 
 [INFO] --- compiler:3.15.0:compile (default-compile) @ factcast-store ---
-[INFO] Nothing to compile - all classes are up to date.
-[INFO] 
-[INFO] --- resources:3.5.0:testResources (default-testResources) @ factcast-store ---
-[INFO] Copying 10 resources from src/test/resources to target/test-classes
-[INFO] 
-[INFO] --- compiler:3.15.0:testCompile (default-testCompile) @ factcast-store ---
 [INFO] Recompiling the module because of changed source code.
-[INFO] Compiling 116 source files with javac [debug release 17] to target/test-classes
+[INFO] Compiling 150 source files with javac [debug release 17] to target/classes
+[INFO] /home/uwe/idea/factcast/factcast-store/src/main/java/org/factcast/store/registry/http/HttpRegistryFileFetcher.java: /home/uwe/idea/factcast/factcast-store/src/main/java/org/factcast/store/registry/http/HttpRegistryFileFetcher.java uses or overrides a deprecated API.
+[INFO] /home/uwe/idea/factcast/factcast-store/src/main/java/org/factcast/store/registry/http/HttpRegistryFileFetcher.java: Recompile with -Xlint:deprecation for details.
+[INFO] /home/uwe/idea/factcast/factcast-store/src/main/java/org/factcast/store/internal/filter/JSFilterScriptMatcher.java: /home/uwe/idea/factcast/factcast-store/src/main/java/org/factcast/store/internal/filter/JSFilterScriptMatcher.java uses unchecked or unsafe operations.
+[INFO] /home/uwe/idea/factcast/factcast-store/src/main/java/org/factcast/store/internal/filter/JSFilterScriptMatcher.java: Recompile with -Xlint:unchecked for details.
+[INFO] -------------------------------------------------------------
+[WARNING] COMPILATION WARNING : 
+[INFO] -------------------------------------------------------------
+[WARNING] /home/uwe/idea/factcast/factcast-store/src/main/java/org/factcast/store/internal/filter/blacklist/BlacklistEntry.java:[25,1] Ambiguous: Jackson2 and Jackson3 exist; define which variant(s) you want in 'lombok.config'. See https://projectlombok.org/features/experimental/Jacksonized
+[WARNING] /home/uwe/idea/factcast/factcast-store/src/main/java/org/factcast/store/internal/catchup/PgCatchUpFactoryImpl.java:[57,15] org.factcast.store.internal.catchup.chunked.PgChunkedCatchup in org.factcast.store.internal.catchup.chunked has been deprecated and marked for removal
+[WARNING] /home/uwe/idea/factcast/factcast-store/src/main/java/org/factcast/store/internal/catchup/chunked/PgChunkedCatchup.java:[152,6] useTempTable(@lombok.NonNull java.lang.String) in org.factcast.store.internal.query.PgQueryBuilder has been deprecated and marked for removal
+[INFO] 3 warnings 
+[INFO] -------------------------------------------------------------
 [INFO] -------------------------------------------------------------
 [ERROR] COMPILATION ERROR : 
 [INFO] -------------------------------------------------------------
-[ERROR] /home/uwe/idea/factcast/factcast-store/src/test/java/org/factcast/store/internal/CondensedQueryExecutorTest.java:[120,1] reached end of file while parsing
+[ERROR] /home/uwe/idea/factcast/factcast-store/src/main/java/org/factcast/store/internal/PgFactStoreInternalConfiguration.java:[329,12] constructor NudgeNotificationHandler in class org.factcast.store.internal.listen.NudgeNotificationHandler cannot be applied to given types;
+  required: @lombok.NonNull com.google.common.eventbus.EventBus,@lombok.NonNull org.springframework.jdbc.core.JdbcTemplate,@lombok.NonNull org.factcast.store.StoreConfigurationProperties,@lombok.NonNull org.factcast.store.internal.PgMetrics
+  found:    com.google.common.eventbus.EventBus,org.springframework.jdbc.core.JdbcTemplate,org.factcast.store.StoreConfigurationProperties
+  reason: actual and formal argument lists differ in length
 [INFO] 1 error
 [INFO] -------------------------------------------------------------
 [INFO] ------------------------------------------------------------------------
 [INFO] BUILD FAILURE
 [INFO] ------------------------------------------------------------------------
-[INFO] Total time:  1.426 s
-[INFO] Finished at: 2026-07-13T16:59:13+02:00
+[INFO] Total time:  3.315 s
+[INFO] Finished at: 2026-07-14T09:52:50+02:00
 [INFO] ------------------------------------------------------------------------
-[INFO] 
-[INFO] 
-[INFO] SUREFIRE TEST SUMMARY
-[INFO] Tests run Failures Errors Skipped Elapsed    ClassName
-[INFO]                                   Time (sec)
-[INFO] --------- -------- ------ ------- ----------
-[INFO]         1        0      0       0      1.811
-[INFO] ========= ======== ====== ======= ==========
-[INFO] 
-[INFO] Rate: 100 %
-[INFO] Average Time per Test: 1.811000
-[INFO] ------------------------------------------------------------------------
-[INFO] SLOWEST SUREFIRE TEST SUMMARY
-[INFO] Tests run Failures Errors Skipped Elapsed    ClassName
-[INFO]                                   Time (sec)
-[INFO]         1        0      0       0      1.811 org.factcast.store.internal.listen.NudgeNotificationHandlerTest
-[INFO] ------------------------------------------------------------------------
-[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.15.0:testCompile (default-testCompile) on project factcast-store: Compilation failure
-[ERROR] /home/uwe/idea/factcast/factcast-store/src/test/java/org/factcast/store/internal/CondensedQueryExecutorTest.java:[120,1] reached end of file while parsing
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.15.0:compile (default-compile) on project factcast-store: Compilation failure
+[ERROR] /home/uwe/idea/factcast/factcast-store/src/main/java/org/factcast/store/internal/PgFactStoreInternalConfiguration.java:[329,12] constructor NudgeNotificationHandler in class org.factcast.store.internal.listen.NudgeNotificationHandler cannot be applied to given types;
+[ERROR]   required: @lombok.NonNull com.google.common.eventbus.EventBus,@lombok.NonNull org.springframework.jdbc.core.JdbcTemplate,@lombok.NonNull org.factcast.store.StoreConfigurationProperties,@lombok.NonNull org.factcast.store.internal.PgMetrics
+[ERROR]   found:    com.google.common.eventbus.EventBus,org.springframework.jdbc.core.JdbcTemplate,org.factcast.store.StoreConfigurationProperties
+[ERROR]   reason: actual and formal argument lists differ in length
 [ERROR] 
 [ERROR] -> [Help 1]
 [ERROR] 

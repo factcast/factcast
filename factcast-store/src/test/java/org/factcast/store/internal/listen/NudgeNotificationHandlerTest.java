@@ -19,11 +19,13 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import com.google.common.eventbus.EventBus;
+import io.micrometer.core.instrument.Timer;
 import java.sql.ResultSet;
 import java.util.List;
 import java.util.concurrent.*;
 import org.assertj.core.api.Assertions;
 import org.factcast.store.StoreConfigurationProperties;
+import org.factcast.store.internal.*;
 import org.factcast.store.internal.notification.*;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -39,24 +41,25 @@ class NudgeNotificationHandlerTest {
   @Mock private StoreConfigurationProperties props;
 
   @Mock private JdbcTemplate jdbc;
+
+  @Mock private PgMetrics metrics;
+
   @Mock ResultSet rs;
   private NudgeNotificationHandler handler;
+  private @Mock Timer timer;
+  private @Mock Timer.Sample sample;
 
   @BeforeEach
   void setUp() throws Exception {
-    handler = spy(new NudgeNotificationHandler(bus, jdbc, props));
     lenient().when(props.getMaxNotificationPollLatencyInMillis()).thenReturn(25L);
+    lenient().when(metrics.timer(any())).thenReturn(timer);
+    lenient().when(metrics.startSample()).thenReturn(sample);
+    handler = spy(new NudgeNotificationHandler(bus, jdbc, props, metrics));
   }
 
   @AfterEach
   void tearDown() throws Exception {
     handler.destroy();
-  }
-
-  @Test
-  void testAfterSingletonsInstantiatedRegistersBus() {
-    handler.afterSingletonsInstantiated();
-    verify(bus).register(handler);
   }
 
   @Test
@@ -164,6 +167,7 @@ class NudgeNotificationHandlerTest {
     verify(bus).post(eq(FactInsertionNotification.internal("ns", "t1")));
     verify(bus).post(eq(FactInsertionNotification.internal("ns", "t2")));
     verify(bus).post(eq(FactInsertionNotification.internal("ns", "t3")));
+    verify(bus).register(any());
     verifyNoMoreInteractions(bus);
   }
 
@@ -205,6 +209,7 @@ class NudgeNotificationHandlerTest {
     handler.nudge(new NudgeNotification(13));
     Assertions.assertThat(cdl.await(5, TimeUnit.SECONDS)).isTrue();
 
+    verify(bus).register(any());
     verify(bus).post(eq(FactInsertionNotification.internal("ns", "t1")));
     verify(bus).post(eq(FactInsertionNotification.internal("ns", "t2")));
     verify(bus).post(eq(FactInsertionNotification.internal("ns", "t3")));
@@ -268,5 +273,15 @@ class NudgeNotificationHandlerTest {
     // Then
     verify(jdbc, times(1))
         .queryForList(anyString(), eq(NudgeNotificationHandler.FetchNotificationTuple.class));
+  }
+
+  @Test
+  void emitsMetricsWhenFetching() {
+    // When
+    handler.fetchPairsAndDispatch();
+
+    // Then
+    verify(metrics).startSample();
+    verify(sample).stop(timer);
   }
 }
