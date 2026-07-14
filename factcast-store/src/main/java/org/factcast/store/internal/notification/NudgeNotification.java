@@ -45,4 +45,9 @@ public class NudgeNotification extends StoreNotification {
   public String uniqueId() {
     return PgConstants.CHANNEL_NUDGE + "-" + txId;
   }
+
+  @Override
+  public boolean distributed() {
+    return false;
+  }
 }
