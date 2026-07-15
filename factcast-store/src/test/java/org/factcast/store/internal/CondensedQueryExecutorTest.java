@@ -54,9 +54,9 @@ public class CondensedQueryExecutorTest {
     @Test
     void testDelayedExecution() {
       CondensedQueryExecutor uut =
-          new CondensedQueryExecutor(1, callback, () -> true, Lists.newArrayList(), mockTimer);
+          new CondensedQueryExecutor(callback, () -> true, Lists.newArrayList(), mockTimer);
       uut.trigger();
-      verify(mockTimer).schedule(any(), eq(1L));
+      verify(mockTimer).schedule(any(), eq(10L));
       task.getValue().run();
       verify(callback).run(anyBoolean());
     }
@@ -64,7 +64,7 @@ public class CondensedQueryExecutorTest {
     @Test
     void testDelayedMultipleExecution() {
       CondensedQueryExecutor uut =
-          new CondensedQueryExecutor(22, callback, () -> true, Lists.newArrayList(), mockTimer);
+          new CondensedQueryExecutor(callback, () -> true, Lists.newArrayList(), mockTimer);
       verify(mockTimer, never()).schedule(any(), anyLong());
       uut.trigger();
       task.getAllValues().get(0).run();
@@ -76,31 +76,31 @@ public class CondensedQueryExecutorTest {
     @Test
     void testDelayedCondensedExecution() {
       CondensedQueryExecutor uut =
-          new CondensedQueryExecutor(104, callback, () -> true, Lists.newArrayList(), mockTimer);
+          new CondensedQueryExecutor(callback, () -> true, Lists.newArrayList(), mockTimer);
       // not yet scheduled anything
       verify(mockTimer, never()).schedule(any(), anyLong());
       uut.trigger();
       // scheduled once
-      verify(mockTimer).schedule(any(), eq(104L));
+      verify(mockTimer).schedule(any(), eq(10L));
       uut.trigger();
       uut.trigger();
       uut.trigger();
       uut.trigger();
       // still scheduled only once
-      verify(mockTimer).schedule(any(), eq(104L));
+      verify(mockTimer).schedule(any(), eq(10L));
       TimerTask taskArg = task.getValue();
       taskArg.run();
       // executing must noch change anything for scheduling
-      verify(mockTimer).schedule(any(), eq(104L));
+      verify(mockTimer).schedule(any(), eq(10L));
       verifyNoMoreInteractions(mockTimer);
       uut.trigger();
       // a second call is scheduled
-      verify(mockTimer, times(2)).schedule(any(), eq(104L));
+      verify(mockTimer, times(2)).schedule(any(), eq(10L));
       uut.trigger();
       uut.trigger();
       uut.trigger();
       // no change: second call is scheduled
-      verify(mockTimer, times(2)).schedule(any(), eq(104L));
+      verify(mockTimer, times(2)).schedule(any(), eq(10L));
     }
   }
 
@@ -112,11 +112,7 @@ public class CondensedQueryExecutorTest {
         String nsMatcher, String typeMatcher, String ns, String type, boolean shouldMatch) {
       CondensedQueryExecutor uut =
           new CondensedQueryExecutor(
-              0,
-              callback,
-              () -> true,
-              List.of(FactSpec.ns(nsMatcher).type(typeMatcher)),
-              mockTimer);
+              callback, () -> true, List.of(FactSpec.ns(nsMatcher).type(typeMatcher)), mockTimer);
 
       final var res = uut.mightMatch(ns, type);
 

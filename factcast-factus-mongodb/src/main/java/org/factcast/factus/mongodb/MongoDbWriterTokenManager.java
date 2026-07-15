@@ -15,7 +15,6 @@
  */
 package org.factcast.factus.mongodb;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import java.time.Duration;
@@ -32,7 +31,7 @@ import org.factcast.factus.projection.WriterToken;
 import org.jspecify.annotations.Nullable;
 
 @Slf4j
-@RequiredArgsConstructor(onConstructor_ = @VisibleForTesting)
+@RequiredArgsConstructor
 public class MongoDbWriterTokenManager {
 
   public static final String LOCK_COLLECTION_NAME = "factcast_locks";

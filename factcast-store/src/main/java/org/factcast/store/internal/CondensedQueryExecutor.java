@@ -33,8 +33,7 @@ import org.factcast.store.internal.notification.FactInsertionNotification;
 @Slf4j
 class CondensedQueryExecutor {
 
-  private final long maxDelayInMillis;
-
+  private static final long DEFAULT_MAX_BATCH_DELAY = 10;
   private final PgSynchronizedQuery target;
 
   private final Supplier<Boolean> connectionStateSupplier;
@@ -46,12 +45,10 @@ class CondensedQueryExecutor {
 
   @VisibleForTesting
   CondensedQueryExecutor(
-      long maxDelayInMillis,
       @NonNull PgSynchronizedQuery target,
       @NonNull Supplier<Boolean> connectionStateSupplier,
       @NonNull List<FactSpec> specs,
       @NonNull Timer timer) {
-    this.maxDelayInMillis = maxDelayInMillis;
     this.target = target;
     this.connectionStateSupplier = connectionStateSupplier;
     this.timer = timer;
@@ -59,12 +56,10 @@ class CondensedQueryExecutor {
   }
 
   public CondensedQueryExecutor(
-      long maxDelayInMillis,
       @NonNull PgSynchronizedQuery target,
       @NonNull Supplier<Boolean> connectionStateSupplier,
       @NonNull List<FactSpec> specs) {
     this.timer = new Timer(CondensedQueryExecutor.class.getSimpleName() + ".timer", true);
-    this.maxDelayInMillis = maxDelayInMillis;
     this.target = target;
     this.connectionStateSupplier = connectionStateSupplier;
     interests = extractInterests(specs);
@@ -85,9 +80,7 @@ class CondensedQueryExecutor {
 
   public void trigger() {
     if (Boolean.TRUE.equals(connectionStateSupplier.get())) {
-      if (maxDelayInMillis < 1) {
-        runTarget();
-      } else if (!currentlyScheduled.getAndSet(true)) {
+      if (!currentlyScheduled.getAndSet(true)) {
         timer.schedule(
             new TimerTask() {
 
@@ -101,7 +94,7 @@ class CondensedQueryExecutor {
                 }
               }
             },
-            maxDelayInMillis);
+            DEFAULT_MAX_BATCH_DELAY); // hardcoded, will be removed with new notification strategy
       }
     }
   }

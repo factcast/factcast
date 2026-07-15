@@ -17,6 +17,7 @@ package org.factcast.store.internal.lock;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.annotation.*;
 
 @RequiredArgsConstructor
 @SuppressWarnings("java:S2077")
@@ -30,13 +31,13 @@ public class AdvisoryWriteLock implements FactTableWriteLock {
 
   @Override
   @Transactional(propagation = Propagation.MANDATORY)
-  public void aquireSharedTXLock() {
+  public void acquireSharedTXLock() {
     tpl.execute(LOCK_SHARED_SQL);
   }
 
   @Override
   @Transactional(propagation = Propagation.MANDATORY)
-  public void aquireExclusiveTXLock() {
+  public void acquireExclusiveTXLock() {
     tpl.execute(LOCK_EXCLUSIVE_SQL);
   }
 }

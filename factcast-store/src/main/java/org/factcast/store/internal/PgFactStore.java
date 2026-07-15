@@ -130,7 +130,7 @@ public class PgFactStore extends AbstractFactStore {
             int numberOfFactsToPublish = factsToPublish.size();
             log.trace("Inserting {} fact(s)", numberOfFactsToPublish);
 
-            lock.aquireSharedTXLock();
+            lock.acquireSharedTXLock();
             jdbcTemplate.batchUpdate(
                 PgConstants.INSERT_FACT,
                 copiedListOfFacts,
@@ -277,8 +277,8 @@ public class PgFactStore extends AbstractFactStore {
       return metrics.time(
           StoreMetrics.OP.PUBLISH_IF_UNCHANGED,
           () -> {
-            lock.aquireExclusiveTXLock();
-            return super.publishIfUnchanged(factsToPublish, optionalToken);
+            lock.acquireExclusiveTXLock();
+            return PgFactStore.super.publishIfUnchanged(factsToPublish, optionalToken);
           });
   }
 
