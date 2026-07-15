@@ -30,7 +30,7 @@ import org.postgresql.PGNotification;
 @Slf4j
 @SuppressWarnings("java:S1845")
 /**
- * not that since 0.11.3 this is no longer notified by PG, but will be created in {@link
+ * note that since 0.11.3 this is no longer notified by PG, but will be created in {@link
  * org.factcast.store.internal.listen.NudgeNotificationHandler}
  */
 public class FactInsertionNotification extends StoreNotification {
