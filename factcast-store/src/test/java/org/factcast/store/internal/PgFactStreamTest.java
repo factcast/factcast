@@ -164,7 +164,7 @@ class PgFactStreamTest {
   @Nested
   class WhenFollowing {
     @Mock PgSynchronizedQuery query;
-    @Mock QueryExecutor condensedExecutor;
+    @Mock QueryExecutor queryExecutor;
 
     @Test
     void doesNothingIfNotConnected() {
@@ -178,17 +178,17 @@ class PgFactStreamTest {
     }
 
     @Test
-    void registersCondensedExecutorIfRequestIsContinuous() {
+    void registersQueryExecutorIfRequestIsContinuous() {
       var maxBatchDelay = 0L;
       doReturn(true).when(uut).isConnected();
-      doReturn(condensedExecutor).when(uut).createQueryExecutor(reqTo, query);
+      doReturn(queryExecutor).when(uut).createQueryExecutor(reqTo, query);
       when(reqTo.continuous()).thenReturn(true);
 
       uut.follow(reqTo, query);
 
       verify(telemetry, times(1)).onFollow(reqTo);
-      verify(eventBus, times(1)).register(condensedExecutor);
-      verify(condensedExecutor, times(1)).trigger();
+      verify(eventBus, times(1)).register(queryExecutor);
+      verify(queryExecutor, times(1)).trigger();
       verifyNoInteractions(pipeline);
     }
 
