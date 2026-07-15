@@ -15,8 +15,6 @@ BEGIN
         RAISE INFO '';
 
     ELSE
-        RAISE WARNING 'Warning:';
-        RAISE WARNING '';
         RAISE WARNING 'This procedure is supposed to be used, in order to drop resources that became deprecated with';
         RAISE WARNING 'the change of notification mechanism in version 0.11.3';
         RAISE WARNING '';
