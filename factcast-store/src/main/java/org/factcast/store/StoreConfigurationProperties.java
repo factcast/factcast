@@ -213,6 +213,15 @@ public class StoreConfigurationProperties implements InitializingBean {
   boolean readOnlyModeEnabled;
 
   /**
+   * Size of a chunk, that is used to fetch events from the store during CHUNKED_WITH_HOLD catchup
+   * strategy.
+   */
+  @Positive
+  @Max(1_000_000)
+  @Min(1000)
+  int chunkSize = 10000;
+
+  /**
    * used to direct the enumerateTypes/Namespaces calls against the store directly, thus bypass the
    * schema-registry even it is configured. This is useful, if you want to see ns/types that are not
    * yet found in the registry, but exist in the factStore.
@@ -248,10 +257,13 @@ public class StoreConfigurationProperties implements InitializingBean {
 
   public enum CatchupStrategy {
     CURSOR,
-    CHUNKED
+    CHUNKED,
+    CHUNKED_WITH_HOLD
   }
 
   CatchupStrategy catchupStrategy = CatchupStrategy.CURSOR;
+
+  boolean catchupAsyncFetch = false; // might default to true in the future
 
   /**
    * When catching up, if production of a full notification of facts takes longer than this (10

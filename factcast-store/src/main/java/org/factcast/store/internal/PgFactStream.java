@@ -19,10 +19,8 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.EventBus;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-import javax.sql.DataSource;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
@@ -57,6 +55,7 @@ import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 @RequiredArgsConstructor
 public class PgFactStream {
 
+  private static final long DEFAULT_MAX_BATCH_DELAY = 10;
   final PgConnectionSupplier connectionSupplier;
   final EventBus eventBus;
   final PgFactIdToSerialMapper idToSerMapper;
@@ -133,7 +132,7 @@ public class PgFactStream {
   void catchupAndFastForward(
       @NonNull SubscriptionRequestTO request,
       @NonNull HighWaterMark hwm,
-      @NonNull DataSource datasource) {
+      @NonNull SingleConnectionDataSource datasource) {
     if (request.ephemeral()) {
       // just fast forward to the latest event published by now
       serial.set(hwm.targetSer());
@@ -158,28 +157,7 @@ public class PgFactStream {
         log.debug("{} entering follow mode", request);
         // signal follow
         telemetry.onFollow(request);
-        long delayInMs;
-        if (request.maxBatchDelayInMs() < 1) {
-          // ok, instant query after NOTIFY
-          delayInMs = 0;
-        } else {
-          // spread consumers, so that they query at different points
-          // in time, even if they get triggered at the same PIT, and
-          // share the same latency requirements
-          //
-          // ok, that is unlikely to be necessary, but easy to do, so...
-          // distributes delay between 75% and 100% of the maxDelay
-          delayInMs =
-              Math.round(
-                  request.maxBatchDelayInMs()
-                      * (0.75 + ThreadLocalRandom.current().nextDouble() * 0.25));
-          log.trace(
-              "{} setting delay to {}, maxDelay was {}",
-              request,
-              delayInMs,
-              request.maxBatchDelayInMs());
-        }
-        condensedExecutor = createCondensedExecutor(request, query, delayInMs);
+        condensedExecutor = createCondensedExecutor(request, query);
         eventBus.register(condensedExecutor);
         // catchup phase 3 – make sure, we did not miss any fact due to
         // slow registration
@@ -196,8 +174,8 @@ public class PgFactStream {
   @VisibleForTesting
   @NonNull
   CondensedQueryExecutor createCondensedExecutor(
-      @NonNull SubscriptionRequest request, @NonNull PgSynchronizedQuery query, long delayInMs) {
-    return new CondensedQueryExecutor(delayInMs, query, this::isConnected, request.specs());
+      @NonNull SubscriptionRequest request, @NonNull PgSynchronizedQuery query) {
+    return new CondensedQueryExecutor(query, this::isConnected, request.specs());
   }
 
   @VisibleForTesting
@@ -231,7 +209,7 @@ public class PgFactStream {
   }
 
   @VisibleForTesting
-  void catchup(long highWaterMarkSerial, DataSource ds) {
+  void catchup(long highWaterMarkSerial, SingleConnectionDataSource ds) {
     if (serial.get() <= 0 && props.getFromScratchCatchupMinLogLevel() != null) {
       FromScratchCatchupLogSuppressingTurboFilter.beginCatchup(request.debugInfo());
     }

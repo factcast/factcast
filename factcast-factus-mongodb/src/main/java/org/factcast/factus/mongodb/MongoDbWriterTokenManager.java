@@ -15,7 +15,6 @@
  */
 package org.factcast.factus.mongodb;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import java.time.Duration;
@@ -23,6 +22,7 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.core.*;
 import net.javacrumbs.shedlock.provider.mongo.MongoLockProvider;
@@ -31,6 +31,7 @@ import org.factcast.factus.projection.WriterToken;
 import org.jspecify.annotations.Nullable;
 
 @Slf4j
+@RequiredArgsConstructor
 public class MongoDbWriterTokenManager {
 
   public static final String LOCK_COLLECTION_NAME = "factcast_locks";
@@ -41,12 +42,6 @@ public class MongoDbWriterTokenManager {
 
   @NonNull private final LockProvider lockProvider;
   @NonNull private final String projectionKey;
-
-  @VisibleForTesting
-  MongoDbWriterTokenManager(@NonNull LockProvider lockProvider, @NonNull String projectionKey) {
-    this.lockProvider = lockProvider;
-    this.projectionKey = projectionKey;
-  }
 
   public static MongoDbWriterTokenManager create(
       @NonNull MongoDatabase database, @NonNull String projectionKey) {

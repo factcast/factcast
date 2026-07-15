@@ -24,9 +24,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
-import javax.sql.DataSource;
 import lombok.SneakyThrows;
-import org.apache.commons.lang3.Range;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.FactStreamPosition;
 import org.factcast.core.TestFactStreamPosition;
@@ -123,7 +121,7 @@ class PgFactStreamTest {
 
   @Nested
   class WhenCatchingUpAndFastForwarding {
-    @Mock DataSource ds;
+    @Mock SingleConnectionDataSource ds;
     final HighWaterMark hwm = HighWaterMark.of(UUID.randomUUID(), 66L);
 
     @BeforeEach
@@ -183,30 +181,14 @@ class PgFactStreamTest {
     void registersCondensedExecutorIfRequestIsContinuous() {
       var maxBatchDelay = 0L;
       doReturn(true).when(uut).isConnected();
-      doReturn(condensedExecutor).when(uut).createCondensedExecutor(reqTo, query, maxBatchDelay);
+      doReturn(condensedExecutor).when(uut).createCondensedExecutor(reqTo, query);
       when(reqTo.continuous()).thenReturn(true);
-      when(reqTo.maxBatchDelayInMs()).thenReturn(maxBatchDelay);
 
       uut.follow(reqTo, query);
 
       verify(telemetry, times(1)).onFollow(reqTo);
       verify(eventBus, times(1)).register(condensedExecutor);
       verify(condensedExecutor, times(1)).trigger();
-      verifyNoInteractions(pipeline);
-    }
-
-    @Test
-    void computesDelayForConsumers() {
-      var maxBatchDelay = 100L;
-      doReturn(true).when(uut).isConnected();
-      when(reqTo.continuous()).thenReturn(true);
-      when(reqTo.maxBatchDelayInMs()).thenReturn(maxBatchDelay);
-
-      uut.follow(reqTo, query);
-
-      verify(uut)
-          .createCondensedExecutor(
-              eq(reqTo), eq(query), longThat(delay -> Range.of(75L, 100L).contains(delay)));
       verifyNoInteractions(pipeline);
     }
 
@@ -416,7 +398,7 @@ class PgFactStreamTest {
 
   @Nested
   class WhenCatchingUp {
-    @Mock DataSource ds;
+    @Mock SingleConnectionDataSource ds;
 
     @BeforeEach
     void setup() {
