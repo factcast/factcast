@@ -46,10 +46,11 @@ public interface TransformationCache {
 
     int version;
 
-    // The transformation chain is deterministic for a given (factId, version), so it carries no
-    // additional identity and is intentionally not part of the key.
-    public static Key of(@NonNull UUID id, int version) {
-      return new Key(id, version);
+    // the transformation chain path (chain id), e.g. "[1, 2, 3]"
+    @NonNull String path;
+
+    public static Key of(@NonNull UUID id, int version, @NonNull String transformationChainId) {
+      return new Key(id, version, transformationChainId);
     }
   }
 }

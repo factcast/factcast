@@ -153,9 +153,9 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
     return con -> {
       StringBuilder sql =
           new StringBuilder(
-              "SELECT header, payload FROM transformationcache_v2 WHERE (fact_id, version) IN (");
+              "SELECT header, payload FROM transformation_cache WHERE (fact_id, version, path) IN (");
       for (int i = 0; i < keys.size(); i++) {
-        sql.append(i == 0 ? "(?, ?)" : ", (?, ?)");
+        sql.append(i == 0 ? "(?, ?, ?)" : ", (?, ?, ?)");
       }
       sql.append(")");
 
@@ -164,6 +164,7 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
       for (Key key : keys) {
         ps.setObject(idx++, key.factId());
         ps.setInt(idx++, key.version());
+        ps.setString(idx++, key.path());
       }
       return ps;
     };
@@ -206,7 +207,7 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
       inTransactionWithLock(
           () ->
               jdbcTemplate.update(
-                  "DELETE FROM transformationcache_v2 WHERE header ->> 'ns' = ? AND header ->> 'type' = ?",
+                  "DELETE FROM transformation_cache WHERE header ->> 'ns' = ? AND header ->> 'type' = ?",
                   ns,
                   type));
     }
@@ -220,8 +221,7 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
     if (!storeConfigurationProperties.isReadOnlyModeEnabled()) {
       // it is fine if flush worked in another transaction, it just has to be serialized
       inTransactionWithLock(
-          () ->
-              jdbcTemplate.update("DELETE FROM transformationcache_v2 WHERE fact_id = ?", factId));
+          () -> jdbcTemplate.update("DELETE FROM transformation_cache WHERE fact_id = ?", factId));
     }
   }
 
@@ -257,7 +257,7 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
         .execute(
             status -> {
               // we're using share mode here in order not to block reads from happening
-              jdbcTemplate.execute("LOCK TABLE transformationcache_v2 IN EXCLUSIVE MODE");
+              jdbcTemplate.execute("LOCK TABLE transformation_cache IN EXCLUSIVE MODE");
               o.run();
               return null;
             });
@@ -273,6 +273,7 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
                     new Object[] {
                       p.getKey().factId(),
                       p.getKey().version(),
+                      p.getKey().path(),
                       p.getValue().jsonHeader(),
                       p.getValue().jsonPayload()
                     })
@@ -286,8 +287,8 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
 
                 // dup-keys can be ignored, in case another node just did the same
                 jdbcTemplate.batchUpdate(
-                    "INSERT INTO transformationcache_v2 (fact_id, version, header, payload) VALUES (?, ?, ? :: JSONB, ? ::"
-                        + " JSONB) ON CONFLICT(fact_id, version) DO NOTHING",
+                    "INSERT INTO transformation_cache (fact_id, version, path, header, payload) VALUES (?, ?, ?, ? :: JSONB, ? ::"
+                        + " JSONB) ON CONFLICT(fact_id, version, path) DO NOTHING",
                     parameters);
 
                 return null;

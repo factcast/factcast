@@ -110,7 +110,8 @@ public class FactTransformerServiceImpl implements FactTransformerService, AutoC
 
     TransformationKey key = TransformationKey.of(e.ns(), e.type());
     TransformationChain chain = chains.get(key, sourceVersion, req.targetVersions());
-    TransformationCache.Key cacheKey = TransformationCache.Key.of(e.id(), chain.toVersion());
+    TransformationCache.Key cacheKey =
+        TransformationCache.Key.of(e.id(), chain.toVersion(), chain.id());
     return cache.find(cacheKey).orElseGet(() -> doTransform(e, chain));
   }
 
@@ -140,7 +141,9 @@ public class FactTransformerServiceImpl implements FactTransformerService, AutoC
                           .map(
                               p ->
                                   TransformationCache.Key.of(
-                                      p.left().toTransform().id(), p.right().toVersion()))
+                                      p.left().toTransform().id(),
+                                      p.right().toVersion(),
+                                      p.right().id()))
                           .collect(Collectors.toSet());
 
                   // ConcurrentHashMap needed because remove is used from a potentially
@@ -236,7 +239,9 @@ public class FactTransformerServiceImpl implements FactTransformerService, AutoC
     // we're intentionally using string here, keeping the jsonNodes around consumes more
     // memory
     PgFact transformed = PgFact.of(header.toString(), transformedPayload.json());
-    cache.put(TransformationCache.Key.of(transformed.id(), transformed.version()), transformed);
+    cache.put(
+        TransformationCache.Key.of(transformed.id(), transformed.version(), chain.id()),
+        transformed);
 
     return transformed;
   }

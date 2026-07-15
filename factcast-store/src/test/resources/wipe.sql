@@ -3,7 +3,7 @@ truncate table blacklist restart identity;
 truncate table schemastore restart identity;
 truncate table transformationstore restart identity;
 truncate table transformationcache restart identity cascade;
-truncate table transformationcache_v2 restart identity cascade;
+truncate table transformation_cache restart identity cascade;
 truncate table tokenstore restart identity;
 truncate table date2serial restart identity;
 truncate table published_schema_versions restart identity;
