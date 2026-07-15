@@ -641,3 +641,15 @@ databaseChangeLog:
             relativeToChangelogFile: true
             splitStatements: false
             stripComments: true
+
+  - changeSet:
+      id: issue4757-cleanup
+      author: uweschaefer
+      runInTransaction: false
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue4757/cleanup_deprecations.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true

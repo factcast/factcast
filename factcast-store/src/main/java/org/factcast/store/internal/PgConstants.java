@@ -73,7 +73,6 @@ public class PgConstants {
 
   private static final String TABLE_TOKENSTORE = "tokenstore";
 
-  public static final String CHANNEL_FACT_INSERT = "fact_insert";
   public static final String CHANNEL_NUDGE = "nudge";
   public static final String CHANNEL_BLACKLIST_CHANGE = "blacklist_change";
   public static final String CHANNEL_SCHEMASTORE_CHANGE = "schemastore_change";
@@ -205,7 +204,6 @@ public class PgConstants {
       "SELECT " + COLUMN_SER + " FROM " + TABLE_FACT + " WHERE " + COLUMN_HEADER + " @> ?::jsonb";
 
   private static final String LISTEN = "LISTEN ";
-  public static final String LISTEN_INSERT_CHANNEL_SQL = LISTEN + CHANNEL_FACT_INSERT;
   public static final String LISTEN_NUDGE_CHANNEL_SQL = LISTEN + CHANNEL_NUDGE;
   public static final String LISTEN_TRUNCATION_CHANNEL_SQL = LISTEN + CHANNEL_FACT_TRUNCATE;
   public static final String LISTEN_UPDATE_CHANNEL_SQL = LISTEN + CHANNEL_FACT_UPDATE;

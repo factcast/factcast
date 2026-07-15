@@ -167,11 +167,7 @@ public class PgListener implements InitializingBean, DisposableBean {
 
     byName.forEach(
         (k, v) -> {
-          Stream<PGNotification> stream =
-              v.stream()
-                  // this one we skip, as those notification might still occur (transition phase),
-                  // but should no longer be processed
-                  .filter(n -> !n.getName().equals(PgConstants.CHANNEL_FACT_INSERT));
+          Stream<PGNotification> stream = v.stream();
 
           if (k.equals(PgConstants.CHANNEL_BLACKLIST_CHANGE)
               || k.equals(PgConstants.CHANNEL_NUDGE)) {

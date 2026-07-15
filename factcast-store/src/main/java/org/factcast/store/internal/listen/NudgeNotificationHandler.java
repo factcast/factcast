@@ -134,7 +134,7 @@ public class NudgeNotificationHandler implements DisposableBean {
 
         timerSample.stop(metricsTimer);
         if (!tuples.isEmpty()) {
-          log.trace("Fetched {} notifications", tuples.size());
+          log.trace("Fetched {} notification{}", tuples.size(), tuples.size() > 1 ? "s" : "");
           tuples.forEach(
               t -> {
                 bus.post(t.toFactInsertionNotification());
