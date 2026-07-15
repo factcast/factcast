@@ -261,11 +261,6 @@ class PgListenerTest {
             "{\"ns\":\"namespace\",\"type\":\"theType\",\"version\":1,\"txId\":123}");
     PGNotification invalidNotification =
         new Notification(PgConstants.CHANNEL_SCHEMASTORE_CHANGE, 1, "{\"ns\":\"namespace\"}");
-    PGNotification otherChannelNotification =
-        new Notification(
-            PgConstants.CHANNEL_FACT_INSERT,
-            1,
-            "{\"ns\":\"namespace\",\"type\":\"theType\",\"version\":2,\"txId\":123}");
     PGNotification anotherValidNotification =
         new Notification(
             PgConstants.CHANNEL_SCHEMASTORE_CHANGE,
@@ -276,12 +271,7 @@ class PgListenerTest {
     when(conn.prepareStatement(anyString())).thenReturn(ps);
     when(conn.getNotifications(anyInt()))
         .thenReturn(
-            new PGNotification[] {
-              validNotification,
-              invalidNotification,
-              otherChannelNotification,
-              anotherValidNotification
-            })
+            new PGNotification[] {validNotification, invalidNotification, anotherValidNotification})
         .thenAnswer(
             i -> {
               latch.countDown();
@@ -329,11 +319,6 @@ class PgListenerTest {
             PgConstants.CHANNEL_TRANSFORMATIONSTORE_CHANGE,
             1,
             "{\"ns\":\"namespace\",\"invalidTypeKey\":\"theType\",\"txId\":123}");
-    PGNotification otherChannelNotification =
-        new Notification(
-            PgConstants.CHANNEL_FACT_INSERT,
-            1,
-            "{\"ns\":\"namespace\",\"type\":\"theType\",\"txId\":123}");
     PGNotification anotherValidNotification =
         new Notification(
             PgConstants.CHANNEL_TRANSFORMATIONSTORE_CHANGE,
@@ -344,12 +329,7 @@ class PgListenerTest {
     when(conn.prepareStatement(anyString())).thenReturn(ps);
     when(conn.getNotifications(anyInt()))
         .thenReturn(
-            new PGNotification[] {
-              validNotification,
-              invalidNotification,
-              otherChannelNotification,
-              anotherValidNotification
-            })
+            new PGNotification[] {validNotification, invalidNotification, anotherValidNotification})
         .thenAnswer(
             i -> {
               latch.countDown();

@@ -15,6 +15,7 @@
  */
 package org.factcast.store.internal.listen;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -23,7 +24,6 @@ import io.micrometer.core.instrument.Timer;
 import java.sql.ResultSet;
 import java.util.*;
 import java.util.concurrent.*;
-import org.assertj.core.api.Assertions;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.*;
 import org.factcast.store.internal.notification.*;
@@ -164,7 +164,7 @@ class NudgeNotificationHandlerTest {
         .post(any());
 
     handler.nudge(new NudgeNotification(13));
-    Assertions.assertThat(cdl.await(5, TimeUnit.SECONDS)).isTrue();
+    assertThat(cdl.await(5, TimeUnit.SECONDS)).isTrue();
 
     verify(bus).post(eq(FactInsertionNotification.internal("ns", "t1")));
     verify(bus).post(eq(FactInsertionNotification.internal("ns", "t2")));
@@ -210,7 +210,7 @@ class NudgeNotificationHandlerTest {
         .post(any());
 
     handler.nudge(new NudgeNotification(13));
-    Assertions.assertThat(cdl.await(5, TimeUnit.SECONDS)).isTrue();
+    assertThat(cdl.await(5, TimeUnit.SECONDS)).isTrue();
 
     verify(bus).register(any());
     verify(bus).post(eq(FactInsertionNotification.internal("ns", "t1")));
@@ -219,7 +219,7 @@ class NudgeNotificationHandlerTest {
     verifyNoMoreInteractions(bus);
 
     // now after 50ms, a scheduled poll should emit another
-    Assertions.assertThat(cdl4.await(75, TimeUnit.MILLISECONDS)).isTrue();
+    assertThat(cdl4.await(75, TimeUnit.MILLISECONDS)).isTrue();
     verify(bus, times(2)).post(eq(FactInsertionNotification.internal("ns", "t1")));
     verifyNoMoreInteractions(bus);
   }
@@ -250,12 +250,14 @@ class NudgeNotificationHandlerTest {
   @Test
   void fetchPairsAndDispatchOnlyExecutesOnceWhenCalledConcurrently() throws Exception {
     // Given
-    CountDownLatch latch = new CountDownLatch(1);
+    CountDownLatch letGo = new CountDownLatch(1);
+    CountDownLatch hasLock = new CountDownLatch(1);
     // Mock queryForList to hold execution
     when(jdbc.query(anyString(), any(DataClassRowMapper.class), any(Object[].class)))
         .thenAnswer(
             inv -> {
-              latch.await(2, TimeUnit.SECONDS);
+              hasLock.countDown();
+              letGo.await(3, TimeUnit.SECONDS);
               return java.util.Collections.emptyList();
             });
 
@@ -265,14 +267,13 @@ class NudgeNotificationHandlerTest {
     Thread t1 = new Thread(() -> handler.fetchPairsAndDispatch());
     t1.start();
 
-    // Wait for t1 to start and acquire lock (give it some time)
-    Thread.sleep(100);
+    assertThat(hasLock.await(3, TimeUnit.SECONDS)).isTrue();
 
     // Call from main thread while t1 holds lock
     handler.fetchPairsAndDispatch();
 
     // Release t1
-    latch.countDown();
+    letGo.countDown();
     t1.join();
 
     // Then

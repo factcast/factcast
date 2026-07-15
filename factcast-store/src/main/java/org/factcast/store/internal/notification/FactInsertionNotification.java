@@ -21,7 +21,6 @@ import lombok.NonNull;
 import lombok.Value;
 import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.store.internal.PgConstants;
 import org.postgresql.PGNotification;
 
 @Value
@@ -62,7 +61,7 @@ public class FactInsertionNotification extends StoreNotification {
       return null; // no dedup wanted
     } else {
       // the ser is enough if it is not null
-      return PgConstants.CHANNEL_FACT_INSERT + "-" + ser;
+      return "fact_insert-" + ser;
     }
   }
 

@@ -105,7 +105,6 @@ public abstract class StoreNotification {
       case PgConstants.CHANNEL_SCHEMASTORE_CHANGE -> SchemaStoreChangeNotification.from(n);
       case PgConstants.CHANNEL_TRANSFORMATIONSTORE_CHANGE ->
           TransformationStoreChangeNotification.from(n);
-      case PgConstants.CHANNEL_FACT_INSERT -> FactInsertionNotification.from(n);
       case PgConstants.CHANNEL_FACT_TRUNCATE -> FactTruncationNotification.from(n);
       case PgConstants.CHANNEL_FACT_UPDATE -> FactUpdateNotification.from(n);
       case PgConstants.CHANNEL_CACHE_CLEAR -> CacheClearNotification.from(n);
