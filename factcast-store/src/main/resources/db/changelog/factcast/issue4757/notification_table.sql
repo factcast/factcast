@@ -1,5 +1,5 @@
 drop table if exists notification cascade;
-create table notification
+create unlogged table notification
 (
     ser   bigserial,
     -- time window (epoch/100)

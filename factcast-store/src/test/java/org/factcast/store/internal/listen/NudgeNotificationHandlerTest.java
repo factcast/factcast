@@ -23,7 +23,6 @@ import io.micrometer.core.instrument.Timer;
 import java.sql.ResultSet;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.stream.Stream;
 import org.assertj.core.api.Assertions;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.*;
@@ -34,6 +33,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.*;
 
+@SuppressWarnings({"java:S6068", "unchecked"})
 @ExtendWith(MockitoExtension.class)
 class NudgeNotificationHandlerTest {
 
@@ -51,10 +51,11 @@ class NudgeNotificationHandlerTest {
   private @Mock Timer.Sample sample;
 
   @BeforeEach
-  void setUp() throws Exception {
+  void setUp() {
     lenient().when(props.getMaxNotificationPollLatencyInMillis()).thenReturn(25L);
     lenient().when(metrics.timer(any())).thenReturn(timer);
     lenient().when(metrics.startSample()).thenReturn(sample);
+    lenient().doNothing().when(jdbc).execute(anyString());
     handler = spy(new NudgeNotificationHandler(bus, jdbc, props, metrics));
   }
 
@@ -89,10 +90,10 @@ class NudgeNotificationHandlerTest {
     handler.notificationSer.set(100L);
 
     // Stub BASE_EXISTS_SQL to return true
-    when(jdbc.queryForObject(
-            eq("SELECT (exists(select 1 from notification where ser=?))"),
-            eq(Boolean.class),
-            anyLong()))
+    lenient()
+        .when(
+            jdbc.queryForObject(
+                eq(NudgeNotificationHandler.BASE_EXISTS_SQL), eq(Boolean.class), same(100)))
         .thenReturn(true);
 
     // When
@@ -110,13 +111,11 @@ class NudgeNotificationHandlerTest {
     // Given
     when(props.getMaxNotificationPollLatencyInMillis()).thenReturn(25L);
     // Access notificationSer to set it > 0
-    handler.notificationSer.set(100L);
+    handler.notificationSer.set(101L);
 
     // Stub BASE_EXISTS_SQL to return true
-    when(jdbc.queryForObject(
-            eq("SELECT (exists(select 1 from notification where ser=?))"),
-            eq(Boolean.class),
-            anyLong()))
+    lenient()
+        .when(jdbc.queryForObject(NudgeNotificationHandler.BASE_EXISTS_SQL, Boolean.class, 101L))
         .thenReturn(true);
     // When
     // schedules 25 50 75 100
@@ -135,24 +134,25 @@ class NudgeNotificationHandlerTest {
     // Given
     when(props.getMaxNotificationPollLatencyInMillis()).thenReturn(25L);
     // Access notificationSer to set it > 0
-    handler.notificationSer.set(100L);
+    handler.notificationSer.set(102L);
 
     // Stub BASE_EXISTS_SQL to return true
-    when(jdbc.queryForObject(
-            eq("SELECT (exists(select 1 from notification where ser=?))"),
-            eq(Boolean.class),
-            anyLong()))
+    lenient()
+        .when(
+            jdbc.queryForObject(
+                eq(NudgeNotificationHandler.BASE_EXISTS_SQL), eq(Boolean.class), same(102L)))
         .thenReturn(true);
 
-    when(jdbc.queryForStream(
-            startsWith("SELECT max(ser) as ser,ns,type FROM notification WHERE"),
-            any(),
+    when(jdbc.query(
+            startsWith("SELECT max(ser) as max,ns,type FROM notification WHERE"),
+            any(DataClassRowMapper.class),
             any(Object[].class)))
         .thenReturn(
-            Stream.of(
+            List.of(
                 new NudgeNotificationHandler.FetchNotificationTuple(7L, "ns", "t1"),
                 new NudgeNotificationHandler.FetchNotificationTuple(8L, "ns", "t2"),
-                new NudgeNotificationHandler.FetchNotificationTuple(9L, "ns", "t3")));
+                new NudgeNotificationHandler.FetchNotificationTuple(9L, "ns", "t3")),
+            Collections.emptyList());
 
     final CountDownLatch cdl = new CountDownLatch(3);
     doAnswer(
@@ -181,22 +181,22 @@ class NudgeNotificationHandlerTest {
     handler.notificationSer.set(100L);
 
     // Stub BASE_EXISTS_SQL to return true
-    when(jdbc.queryForObject(
-            eq("SELECT (exists(select 1 from notification where ser=?))"),
-            eq(Boolean.class),
-            anyLong()))
+    lenient()
+        .when(
+            jdbc.queryForObject(
+                eq(NudgeNotificationHandler.BASE_EXISTS_SQL), eq(Boolean.class), anyLong()))
         .thenReturn(true);
 
-    when(jdbc.queryForStream(
-            startsWith("SELECT max(ser) as ser,ns,type FROM notification WHERE"),
-            any(),
+    when(jdbc.query(
+            startsWith("SELECT max(ser) as max,ns,type FROM notification WHERE"),
+            any(DataClassRowMapper.class),
             any(Object[].class)))
         .thenReturn(
-            Stream.of(
+            List.of(
                 new NudgeNotificationHandler.FetchNotificationTuple(7L, "ns", "t1"),
                 new NudgeNotificationHandler.FetchNotificationTuple(8L, "ns", "t2"),
                 new NudgeNotificationHandler.FetchNotificationTuple(9L, "ns", "t3")),
-            Stream.of(new NudgeNotificationHandler.FetchNotificationTuple(10L, "ns", "t1")));
+            List.of(new NudgeNotificationHandler.FetchNotificationTuple(10L, "ns", "t1")));
 
     final CountDownLatch cdl = new CountDownLatch(3);
     final CountDownLatch cdl4 = new CountDownLatch(4);
@@ -229,13 +229,13 @@ class NudgeNotificationHandlerTest {
     // Given
     when(props.getMaxNotificationPollLatencyInMillis()).thenReturn(25L);
     // Access notificationSer to set it > 0
-    handler.notificationSer.set(100L);
+    handler.notificationSer.set(110L);
 
     // Stub BASE_EXISTS_SQL to return true
-    when(jdbc.queryForObject(
-            eq("SELECT (exists(select 1 from notification where ser=?))"),
-            eq(Boolean.class),
-            anyLong()))
+    lenient()
+        .when(
+            jdbc.queryForObject(
+                eq(NudgeNotificationHandler.BASE_EXISTS_SQL), eq(Boolean.class), same(110)))
         .thenReturn(true);
     // When
     // schedules 25 50 75 100
@@ -252,14 +252,14 @@ class NudgeNotificationHandlerTest {
     // Given
     CountDownLatch latch = new CountDownLatch(1);
     // Mock queryForList to hold execution
-    when(jdbc.queryForStream(anyString(), any(), any(Object[].class)))
+    when(jdbc.query(anyString(), any(DataClassRowMapper.class), any(Object[].class)))
         .thenAnswer(
             inv -> {
               latch.await(2, TimeUnit.SECONDS);
               return java.util.Collections.emptyList();
             });
 
-    verify(jdbc, never()).queryForStream(anyString(), any(), any(Object[].class));
+    verify(jdbc, never()).query(anyString(), any(DataClassRowMapper.class), any(Object[].class));
 
     // When
     Thread t1 = new Thread(() -> handler.fetchPairsAndDispatch());
@@ -276,7 +276,7 @@ class NudgeNotificationHandlerTest {
     t1.join();
 
     // Then
-    verify(jdbc, times(1)).queryForStream(anyString(), any(), any(Object[].class));
+    verify(jdbc, times(1)).query(anyString(), any(DataClassRowMapper.class), any(Object[].class));
   }
 
   @Test

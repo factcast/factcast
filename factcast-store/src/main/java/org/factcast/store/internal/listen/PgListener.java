@@ -16,24 +16,37 @@
 package org.factcast.store.internal.listen;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.*;
 import com.google.common.eventbus.EventBus;
-import java.sql.*;
-import java.util.*;
-import java.util.concurrent.*;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Predicate;
-import java.util.stream.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.store.StoreConfigurationProperties;
-import org.factcast.store.internal.*;
-import org.factcast.store.internal.notification.*;
+import org.factcast.store.internal.PgConstants;
+import org.factcast.store.internal.PgMetrics;
+import org.factcast.store.internal.StoreMetrics;
+import org.factcast.store.internal.notification.BlacklistChangeNotification;
+import org.factcast.store.internal.notification.FactInsertionNotification;
+import org.factcast.store.internal.notification.NudgeNotification;
+import org.factcast.store.internal.notification.SchemaStoreChangeNotification;
+import org.factcast.store.internal.notification.StoreNotification;
 import org.postgresql.PGNotification;
 import org.postgresql.jdbc.PgConnection;
-import org.springframework.beans.factory.*;
+import org.springframework.beans.factory.DisposableBean;
+import org.springframework.beans.factory.InitializingBean;
 
 /**
  * Listens (sql LISTEN command) to a channel on Postgresql and passes a trigger on an EventBus.
@@ -92,6 +105,8 @@ public class PgListener implements InitializingBean, DisposableBean {
 
           while (running.get()) {
             PGNotification[] notifications = receiveNotifications(pc);
+            String notificationsDebugView = toString(notifications);
+            log.trace("received notifications " + notificationsDebugView);
             processNotifications(notifications);
           }
         } catch (Exception e) {
@@ -101,6 +116,21 @@ public class PgListener implements InitializingBean, DisposableBean {
           }
         }
       }
+    }
+
+    private String toString(PGNotification[] notifications) {
+      StringBuilder builder = new StringBuilder();
+      for (PGNotification n : notifications) {
+        builder
+            .append("(")
+            .append(n.getName())
+            .append(",")
+            .append(n.getPID())
+            .append(",")
+            .append(n.getParameter())
+            .append(") ");
+      }
+      return builder.toString();
     }
 
     @SneakyThrows
@@ -145,50 +175,32 @@ public class PgListener implements InitializingBean, DisposableBean {
   // make sure subscribers did not miss anything while we reconnected
   @VisibleForTesting
   protected void informSubscribersAboutFreshConnection() {
-    post(FactInsertionNotification.internal());
+    post(new NudgeNotification(0));
     post(BlacklistChangeNotification.internal());
     post(SchemaStoreChangeNotification.internal());
   }
 
   @VisibleForTesting
   protected void processNotifications(PGNotification[] notifications) {
-    Predicate<PGNotification> isNudge = n -> PgConstants.CHANNEL_NUDGE.equals(n.getName());
-    Predicate<PGNotification> isFactInsert =
-        n -> PgConstants.CHANNEL_FACT_INSERT.equals(n.getName());
-
     Map<String, List<PGNotification>> byName =
         Arrays.stream(notifications).collect(Collectors.groupingBy(PGNotification::getName));
 
     byName.forEach(
         (k, v) -> {
-          switch (k) {
-            case PgConstants.CHANNEL_NUDGE:
+          Stream<PGNotification> stream =
               v.stream()
-                  .limit(1)
-                  .map(NudgeNotification::createFrom)
-                  .filter(Objects::nonNull)
-                  .forEach(this::post);
-              break;
-            case PgConstants.CHANNEL_FACT_INSERT:
-              // this one we skip, as those notification might still occur (transition phase),
-              // but should no longer be processed
-              break;
-            default:
-              // if there are more than 1 blacklist_change notifications in the array, we need only
-              // the last one.
-              // note we filter BEFORE parsing to save some cpu cycles
+                  // this one we skip, as those notification might still occur (transition phase),
+                  // but should no longer be processed
+                  .filter(n -> !n.getName().equals(PgConstants.CHANNEL_FACT_INSERT));
 
-              if (k.equals(PgConstants.CHANNEL_BLACKLIST_CHANGE)) {
-                v = Lists.newArrayList(v.remove(v.size() - 1));
-              }
-
-              v.stream()
-                  .map(StoreNotification::createFrom)
-                  .filter(Objects::nonNull)
-                  .forEach(this::post);
-
-              break;
+          if (k.equals(PgConstants.CHANNEL_BLACKLIST_CHANGE)
+              || k.equals(PgConstants.CHANNEL_NUDGE)) {
+            // if there are more than 1 blacklist_change or nudge notifications in the array,
+            // we need only the last one.
+            stream = stream.limit(1);
           }
+
+          stream.map(StoreNotification::createFrom).filter(Objects::nonNull).forEach(this::post);
         });
   }
 

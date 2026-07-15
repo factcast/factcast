@@ -32,8 +32,7 @@ import org.springframework.jdbc.core.*;
 
 @Slf4j
 public class NudgeNotificationHandler implements DisposableBean {
-  private static final String BASE_EXISTS_SQL =
-      "SELECT (exists(select 1 from notification where ser=?))";
+  static final String BASE_EXISTS_SQL = "SELECT (exists(select 1 from notification where ser=?))";
   private final @NonNull EventBus bus;
   private final @NonNull JdbcTemplate jdbc;
   private final @NonNull StoreConfigurationProperties props;
@@ -129,13 +128,10 @@ public class NudgeNotificationHandler implements DisposableBean {
         final var timerSample = metrics.startSample();
 
         List<FetchNotificationTuple> tuples =
-            jdbc.queryForStream(
-                    "SELECT max(ser) as ser,ns,type FROM notification WHERE notification.ser > ? GROUP BY DISTINCT(ns,type) ORDER BY ser",
-                    (rs, rowNum) ->
-                        new FetchNotificationTuple(
-                            rs.getLong("ser"), rs.getString("ns"), rs.getString("type")),
-                    new Object[] {notificationSer.get()})
-                .toList();
+            jdbc.query(
+                "SELECT max(ser) as max,ns,type FROM notification WHERE notification.ser > ? GROUP BY DISTINCT(ns,type) ORDER BY max",
+                DataClassRowMapper.newInstance(FetchNotificationTuple.class),
+                notificationSer.get());
 
         timerSample.stop(metricsTimer);
         if (!tuples.isEmpty()) {

@@ -3,7 +3,8 @@ $$
 BEGIN
     INSERT INTO notification(ns, type)
     VALUES (NEW.header ->> 'ns', NEW.header ->> 'type')
-    ON CONFLICT DO NOTHING;
+    ON CONFLICT (tw, ns, type)
+        DO UPDATE set ser=nextval('notification_ser_seq');
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
