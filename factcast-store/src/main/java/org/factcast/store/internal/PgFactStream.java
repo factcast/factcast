@@ -67,7 +67,7 @@ public class PgFactStream {
   @Getter(AccessLevel.PROTECTED)
   final SubscriptionRequestTO request;
 
-  QueryExecutor condensedExecutor;
+  QueryExecutor queryExecutor;
 
   @VisibleForTesting
   @Getter(AccessLevel.PROTECTED)
@@ -156,11 +156,11 @@ public class PgFactStream {
         log.debug("{} entering follow mode", request);
         // signal follow
         telemetry.onFollow(request);
-        condensedExecutor = createQueryExecutor(request, query);
-        eventBus.register(condensedExecutor);
+        queryExecutor = createQueryExecutor(request, query);
+        eventBus.register(queryExecutor);
         // catchup phase 3 – make sure, we did not miss any fact due to
         // slow registration
-        condensedExecutor.trigger();
+        queryExecutor.trigger();
       } else {
         pipeline.process(Signal.complete());
         log.debug("{} completed", request);
@@ -241,10 +241,10 @@ public class PgFactStream {
   public synchronized void close() {
     log.trace("{} disconnecting ", request);
     disconnected.set(true);
-    if (condensedExecutor != null) {
-      eventBus.unregister(condensedExecutor);
-      condensedExecutor.cancel();
-      condensedExecutor = null;
+    if (queryExecutor != null) {
+      eventBus.unregister(queryExecutor);
+      queryExecutor.cancel();
+      queryExecutor = null;
     }
     statementHolder.close();
     log.debug("{} disconnected ", request);

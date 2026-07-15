@@ -59,7 +59,6 @@ class QueryExecutor {
   }
 
   public void trigger() {
-    // TODO recheck if needed
     if (Boolean.TRUE.equals(connectionStateSupplier.get())) {
       runTarget();
     }
@@ -96,5 +95,7 @@ class QueryExecutor {
     }
   }
 
-  public void cancel() {}
+  public void cancel() {
+    // hook for cleaning up, no longer needed
+  }
 }
