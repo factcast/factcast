@@ -104,10 +104,7 @@ public class PgListener implements InitializingBean, DisposableBean {
           connectionSetup(pc);
 
           while (running.get()) {
-            PGNotification[] notifications = receiveNotifications(pc);
-            String notificationsDebugView = toString(notifications);
-            log.trace("received notifications " + notificationsDebugView);
-            processNotifications(notifications);
+            processNotifications(receiveNotifications(pc));
           }
         } catch (Exception e) {
           if (running.get()) {
@@ -116,21 +113,6 @@ public class PgListener implements InitializingBean, DisposableBean {
           }
         }
       }
-    }
-
-    private String toString(PGNotification[] notifications) {
-      StringBuilder builder = new StringBuilder();
-      for (PGNotification n : notifications) {
-        builder
-            .append("(")
-            .append(n.getName())
-            .append(",")
-            .append(n.getPID())
-            .append(",")
-            .append(n.getParameter())
-            .append(") ");
-      }
-      return builder.toString();
     }
 
     @SneakyThrows
@@ -147,7 +129,7 @@ public class PgListener implements InitializingBean, DisposableBean {
 
   @VisibleForTesting
   protected void setupPostgresListeners(PgConnection pc) throws SQLException {
-    try (PreparedStatement ps1 = pc.prepareStatement(PgConstants.LISTEN_INSERT_CHANNEL_SQL);
+    try (PreparedStatement ps1 = pc.prepareStatement(PgConstants.LISTEN_NUDGE_CHANNEL_SQL);
         PreparedStatement ps2 = pc.prepareStatement(PgConstants.LISTEN_ROUNDTRIP_CHANNEL_SQL);
         PreparedStatement ps3 =
             pc.prepareStatement(PgConstants.LISTEN_BLACKLIST_CHANGE_CHANNEL_SQL);
@@ -158,8 +140,7 @@ public class PgListener implements InitializingBean, DisposableBean {
         PreparedStatement ps6 = pc.prepareStatement(PgConstants.LISTEN_TRUNCATION_CHANNEL_SQL);
         PreparedStatement ps7 = pc.prepareStatement(PgConstants.LISTEN_UPDATE_CHANNEL_SQL);
         PreparedStatement ps8 =
-            pc.prepareStatement(PgConstants.LISTEN_CACHE_INVALIDATE_ALL_CHANNEL_SQL);
-        PreparedStatement ps9 = pc.prepareStatement(PgConstants.LISTEN_NUDGE_CHANNEL_SQL)) {
+            pc.prepareStatement(PgConstants.LISTEN_CACHE_INVALIDATE_ALL_CHANNEL_SQL); ) {
       ps1.execute();
       ps2.execute();
       ps3.execute();
@@ -168,7 +149,6 @@ public class PgListener implements InitializingBean, DisposableBean {
       ps6.execute();
       ps7.execute();
       ps8.execute();
-      ps9.execute();
     }
   }
 

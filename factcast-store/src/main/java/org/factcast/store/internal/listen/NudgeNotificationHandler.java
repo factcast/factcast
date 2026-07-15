@@ -124,7 +124,6 @@ public class NudgeNotificationHandler implements DisposableBean {
     long lockStamp = lock.tryWriteLock();
     if (lockStamp != 0) {
       try {
-        log.trace("fetching notifications");
         final var timerSample = metrics.startSample();
 
         List<FetchNotificationTuple> tuples =
@@ -135,7 +134,7 @@ public class NudgeNotificationHandler implements DisposableBean {
 
         timerSample.stop(metricsTimer);
         if (!tuples.isEmpty()) {
-          log.trace("Found {} notifications", tuples.size());
+          log.trace("Fetched {} notifications", tuples.size());
           tuples.forEach(
               t -> {
                 bus.post(t.toFactInsertionNotification());
