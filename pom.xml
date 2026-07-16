@@ -129,11 +129,11 @@
     <mockk.version>1.14.11</mockk.version>
     <graaljs.version>25.1.3</graaljs.version>
     <redisson.version>4.6.1</redisson.version>
-    <aws-sdk.version>2.48.0</aws-sdk.version>
+    <aws-sdk.version>2.48.1</aws-sdk.version>
     <mongodb-driver.version>5.9.0</mongodb-driver.version>
     <shedlock.version>7.7.0</shedlock.version>
     <byte-buddy.version>1.18.11-jdk5</byte-buddy.version>
-    <rewrite-java.version>8.87.1</rewrite-java.version>
+    <rewrite-java.version>8.87.2</rewrite-java.version>
     <skipUnitTests>false</skipUnitTests>
     <postgres.version>15</postgres.version>
     <sonar.exclusions>**/src/test/java/**/*.java</sonar.exclusions>
