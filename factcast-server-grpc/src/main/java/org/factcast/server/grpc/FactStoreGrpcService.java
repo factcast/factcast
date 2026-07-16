@@ -141,7 +141,7 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
       facts = facts.stream().map(f -> tagFactSource(f, id)).toList();
     }
     log.debug("{}publish {} fact{}", clientIdPrefix(), size, size > 1 ? "s" : "");
-    store.publish(facts);
+    store.publishDeferrable(facts);
     responseObserver.onNext(MSG_Empty.getDefaultInstance());
     responseObserver.onCompleted();
   }

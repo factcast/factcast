@@ -350,7 +350,7 @@ class PgFactStoreTest {
       boolean b = underTest.publishIfUnchanged(Lists.newArrayList(fact), Optional.empty());
       verify(lock, never()).acquireExclusiveTXLock();
       assertThat(b).isTrue();
-      verify(underTest).publish(any(List.class));
+      verify(underTest).publishDeferrable(any());
     }
 
     @Test
@@ -391,7 +391,7 @@ class PgFactStoreTest {
           underTest.publishIfUnchanged(Lists.newArrayList(fact), Optional.of(optionalToken));
       verify(lock).acquireExclusiveTXLock();
       assertThat(b).isTrue();
-      verify(underTest).publish(any(List.class));
+      verify(underTest).publish(any());
     }
 
     @Test

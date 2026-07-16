@@ -15,19 +15,21 @@
  */
 package org.factcast.store.internal;
 
-import com.google.common.collect.Lists;
 import java.sql.*;
 import java.sql.Date;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
-import lombok.NonNull;
+import java.util.stream.Stream;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.*;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.*;
 import org.factcast.core.subscription.*;
 import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.util.ExceptionHelper;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.lock.FactTableWriteLock;
 import org.factcast.store.internal.query.*;
@@ -36,7 +38,7 @@ import org.factcast.store.registry.SchemaRegistry;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.dao.*;
 import org.springframework.jdbc.core.*;
-import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.*;
 import org.springframework.transaction.annotation.*;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -62,7 +64,9 @@ public class PgFactStore extends AbstractFactStore {
 
   @NonNull private final StoreConfigurationProperties props;
 
-  @NonNull private final PlatformTransactionManager platformTransactionManager;
+  private final UnconditionalPublishQueue queue;
+  private final @NonNull PlatformTransactionManager platformTransactionManager;
+  private final TransactionTemplate tx;
 
   public PgFactStore(
       @NonNull JdbcTemplate jdbcTemplate,
@@ -85,6 +89,9 @@ public class PgFactStore extends AbstractFactStore {
     this.metrics = metrics;
     this.factTransformerService = factTransformerService;
     this.props = props;
+
+    this.tx = new TransactionTemplate(platformTransactionManager);
+    this.queue = new UnconditionalPublishQueue();
     this.platformTransactionManager = platformTransactionManager;
   }
 
@@ -115,37 +122,25 @@ public class PgFactStore extends AbstractFactStore {
   }
 
   @Override
-  @Transactional(propagation = Propagation.REQUIRED)
+  public void publishDeferrable(@NonNull List<? extends Fact> factsToPublish) {
+    if (props.isReadOnlyModeEnabled()) {
+      throw new UnsupportedOperationException("Publishing is not allowed in read-only mode");
+    }
+    try {
+      queue.addAndFlush(factsToPublish).get();
+    } catch (InterruptedException e) {
+      throw new RuntimeException(e); // TODO
+    } catch (ExecutionException e) {
+      throw ExceptionHelper.toRuntime(e.getCause());
+    }
+  }
+
+  @Override
   public void publish(@NonNull List<? extends Fact> factsToPublish) {
     if (props.isReadOnlyModeEnabled()) {
       throw new UnsupportedOperationException("Publishing is not allowed in read-only mode");
     }
-
-    metrics.time(
-        StoreMetrics.OP.PUBLISH,
-        () -> {
-          try {
-
-            List<Fact> copiedListOfFacts = Lists.newArrayList(factsToPublish);
-            int numberOfFactsToPublish = factsToPublish.size();
-            log.trace("Inserting {} fact(s)", numberOfFactsToPublish);
-
-            lock.acquireSharedTXLock();
-            jdbcTemplate.batchUpdate(
-                PgConstants.INSERT_FACT,
-                copiedListOfFacts,
-                // batch limitation not necessary
-                Integer.MAX_VALUE,
-                (statement, fact) -> {
-                  statement.setString(1, fact.jsonHeader());
-                  statement.setString(2, fact.jsonPayload());
-                });
-            // adding serials to headers is done via trigger
-
-          } catch (DuplicateKeyException dupkey) {
-            throw new DuplicateFactException(dupkey.getMessage());
-          }
-        });
+    batchPublish(factsToPublish.stream());
   }
 
   private Fact extractFactFromResultSet(ResultSet resultSet, @SuppressWarnings("unused") int rowNum)
@@ -268,7 +263,7 @@ public class PgFactStore extends AbstractFactStore {
     if (optionalToken.isEmpty()) {
       // even though this fallback behavior already is present in super, we branch here to avoid
       // double (and unnecessarily exclusive) locking
-      publish(factsToPublish);
+      publishDeferrable(factsToPublish);
       return true;
     } else
       return metrics.time(
@@ -388,6 +383,74 @@ public class PgFactStore extends AbstractFactStore {
           Date.valueOf(date));
     } catch (EmptyResultDataAccessException noFactsAtAll) {
       return null;
+    }
+  }
+
+  private void batchPublish(Stream<? extends Fact> streamOfFacts) {
+    List<? extends Fact> copiedListOfFacts = streamOfFacts.toList();
+    int numberOfFactsToPublish = copiedListOfFacts.size();
+    log.trace("Inserting {} fact(s)", numberOfFactsToPublish);
+    try {
+      tx.execute(
+          ts -> {
+            metrics.time(
+                StoreMetrics.OP.PUBLISH,
+                () -> {
+                  try {
+                    lock.acquireSharedTXLock();
+                    jdbcTemplate.batchUpdate(
+                        PgConstants.INSERT_FACT,
+                        copiedListOfFacts,
+                        // batch limitation not necessary
+                        Integer.MAX_VALUE,
+                        (statement, fact) -> {
+                          statement.setString(1, fact.jsonHeader());
+                          statement.setString(2, fact.jsonPayload());
+                        });
+                    // adding serials to headers is done via trigger
+
+                  } catch (DuplicateKeyException dupkey) {
+                    throw new DuplicateFactException(dupkey.getMessage());
+                  }
+                });
+
+            return null;
+          });
+    } catch (TransactionException e) {
+      throw ExceptionHelper.toRuntime(e.getCause());
+    }
+  }
+
+  @RequiredArgsConstructor
+  class UnconditionalPublishQueue {
+
+    record Publication(List<? extends Fact> facts, CompletableFuture<Void> completion) {}
+
+    final Deque<Publication> queue = new ConcurrentLinkedDeque<>();
+
+    Future<Void> addAndFlush(List<? extends Fact> toPublish) throws DuplicateFactException {
+      CompletableFuture<Void> completion = new CompletableFuture<>();
+      queue.add(new Publication(toPublish, completion));
+      CompletableFuture.runAsync(this::flush); //
+      return completion;
+    }
+
+    void flush() {
+
+      /// TODO will batch here
+      Publication first = queue.pollFirst();
+      if (first != null) {
+        var streamOfFacts = first.facts().stream();
+
+        try {
+          batchPublish(streamOfFacts);
+        } catch (Exception e) {
+          // TODO special handling to decompose
+          first.completion().completeExceptionally(e);
+          return;
+        }
+      }
+      first.completion().complete(null);
     }
   }
 }
