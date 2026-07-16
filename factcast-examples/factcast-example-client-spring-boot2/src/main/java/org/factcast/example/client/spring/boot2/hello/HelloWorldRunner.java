@@ -64,7 +64,7 @@ public class HelloWorldRunner implements CommandLineRunner {
     ExecutorService es = Executors.newFixedThreadPool(1024);
     out.println("Publishing");
     Stopwatch sw = Stopwatch.createStarted();
-    facts.parallelStream().forEach(fact -> CompletableFuture.runAsync(() -> fc.publish(fact), es));
+    facts.forEach(fact -> CompletableFuture.runAsync(() -> fc.publish(fact), es));
     es.shutdown();
     es.awaitTermination(10, TimeUnit.MINUTES);
     long ms = sw.stop().elapsed().toMillis();

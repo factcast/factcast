@@ -432,7 +432,9 @@ public class PgFactStore extends AbstractFactStore {
     record Publication(
         long serial, List<? extends Fact> facts, CompletableFuture<Void> completion) {}
 
-    final Deque<Publication> queue = new ArrayDeque<>(2048);
+    // TODO can we dare unbounded deque here? If we use BlockingQueue instead, we'd need to rethink
+    // locking
+    final Queue<Publication> queue = new ArrayDeque<>(4096);
 
     Future<Void> addAndFlush(List<? extends Fact> toPublish) throws DuplicateFactException {
       CompletableFuture<Void> completion = new CompletableFuture<>();
@@ -456,6 +458,13 @@ public class PgFactStore extends AbstractFactStore {
 
       if ((!queue.isEmpty()) && (queue.peek().serial() <= ser)) {
         // collect all facts & futures
+
+        // This is a trade-off between efficiency and latency. The longer the batch gets,
+        // the longer it takes for the first publication to be completed.
+        // Also the number of conversations open is not infinite as well.
+        //
+        // 500 looks like a promising sweet spot.
+        // TODO make configurable?
         int maxTransactionsToCombine = 500;
         List<Publication> pubs = new ArrayList<>(maxTransactionsToCombine);
         List<Fact> facts = new ArrayList<>(maxTransactionsToCombine);
@@ -463,7 +472,7 @@ public class PgFactStore extends AbstractFactStore {
         // contentionless sync is said to be "virtually free"
         synchronized (queue) {
           Publication p;
-          while ((pubs.size() < maxTransactionsToCombine) && (p = queue.pollFirst()) != null) {
+          while ((pubs.size() < maxTransactionsToCombine) && (p = queue.poll()) != null) {
             pubs.add(p);
             facts.addAll(p.facts());
           }

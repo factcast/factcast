@@ -16,7 +16,6 @@
 package org.factcast.example.server;
 
 import lombok.extern.slf4j.Slf4j;
-import org.postgresql.Driver;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -35,19 +34,7 @@ public class ExampleServerWithPostgresContainer {
   public static void main(String[] args) {
     // you will want to replace this with RDS, a local pgsql database or
     // whatever your usecase is.
-    startPostgresContainer();
 
     SpringApplication.run(ExampleServerWithPostgresContainer.class, args);
-  }
-
-  private static void startPostgresContainer() {
-    log.info("Trying to start postgres testcontainer");
-    //    PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:15.2");
-    //    postgres.start();
-    //    String url = postgres.getJdbcUrl();
-    System.setProperty("spring.datasource.driver-class-name", Driver.class.getName());
-    System.setProperty("spring.datasource.url", "jdbc:postgresql://localhost/factcast");
-    System.setProperty("spring.datasource.username", "doc");
-    System.setProperty("spring.datasource.password", "doc");
   }
 }
