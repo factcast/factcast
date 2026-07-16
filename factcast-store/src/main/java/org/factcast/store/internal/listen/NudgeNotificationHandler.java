@@ -49,13 +49,23 @@ public class NudgeNotificationHandler implements DisposableBean {
       @NonNull JdbcTemplate jdbc,
       @NonNull StoreConfigurationProperties props,
       @NonNull PgMetrics metrics) {
+    this(bus, jdbc, props, metrics, true);
+  }
+
+  @VisibleForTesting
+  NudgeNotificationHandler(
+      @NonNull EventBus bus,
+      @NonNull JdbcTemplate jdbc,
+      @NonNull StoreConfigurationProperties props,
+      @NonNull PgMetrics metrics,
+      boolean scheduleCleanupTask) {
     this.bus = bus;
     this.jdbc = jdbc;
     this.props = props;
     this.metrics = metrics;
-
     bus.register(this);
-    timer.scheduleAtFixedRate(new ScheduledCleanup(), 0, Duration.ofMinutes(1).toMillis());
+    if (scheduleCleanupTask)
+      timer.scheduleAtFixedRate(new ScheduledCleanup(), 0, Duration.ofMinutes(1).toMillis());
     metricsTimer = metrics.timer(StoreMetrics.OP.SELECT_DISTINCT_NOTIFICATIONS);
   }
 

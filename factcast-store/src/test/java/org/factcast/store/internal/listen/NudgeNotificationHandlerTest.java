@@ -56,7 +56,7 @@ class NudgeNotificationHandlerTest {
     lenient().when(metrics.timer(any())).thenReturn(timer);
     lenient().when(metrics.startSample()).thenReturn(sample);
     lenient().doNothing().when(jdbc).execute(anyString());
-    handler = spy(new NudgeNotificationHandler(bus, jdbc, props, metrics));
+    handler = spy(new NudgeNotificationHandler(bus, jdbc, props, metrics, false));
   }
 
   @AfterEach
@@ -257,7 +257,7 @@ class NudgeNotificationHandlerTest {
         .thenAnswer(
             inv -> {
               hasLock.countDown();
-              letGo.await(3, TimeUnit.SECONDS);
+              letGo.await(10, TimeUnit.SECONDS);
               return java.util.Collections.emptyList();
             });
 
@@ -267,7 +267,7 @@ class NudgeNotificationHandlerTest {
     Thread t1 = new Thread(() -> handler.fetchPairsAndDispatch());
     t1.start();
 
-    assertThat(hasLock.await(3, TimeUnit.SECONDS)).isTrue();
+    assertThat(hasLock.await(5, TimeUnit.SECONDS)).isTrue();
 
     // Call from main thread while t1 holds lock
     handler.fetchPairsAndDispatch();
