@@ -3,9 +3,8 @@ CREATE OR REPLACE FUNCTION createNotificationOnFactInsert()
 $$
 BEGIN
     INSERT INTO notification(ns, type)
-    SELECT n.header ->> 'ns' as ns, n.header ->> 'type' as type
+    SELECT DISTINCT ON (ns,type) n.header ->> 'ns' as ns, n.header ->> 'type' as type
     FROM new_rows n
-    GROUP BY (ns, type)
     ON CONFLICT (tw, ns, type)
         DO UPDATE set ser=nextval('notification_ser_seq');
 
