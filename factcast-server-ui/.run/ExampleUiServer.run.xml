@@ -1,0 +1,17 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="ExampleUiServer" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+    <option name="FRAME_DEACTIVATION_UPDATE_POLICY" value="UpdateClassesAndResources" />
+    <module name="factcast-server-ui" />
+    <option name="SPRING_BOOT_MAIN_CLASS" value="org.factcast.server.ui.example.ExampleUiServer" />
+    <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$/factcast-server-ui" />
+    <extension name="coverage">
+      <pattern>
+        <option name="PATTERN" value="org.factcast.server.ui.example.*" />
+        <option name="ENABLED" value="true" />
+      </pattern>
+    </extension>
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
