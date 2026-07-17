@@ -649,7 +649,19 @@ databaseChangeLog:
       changes:
         - sqlFile:
             encoding: utf8
-            path: factcast/issue4757/cleanup_deprecations.sql
+            path: factcast/issue4757/notification_ser_index.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+  - changeSet:
+      id: issue4785
+      author: uweschaefer
+      runInTransaction: false
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue4785/notification_ser_index.sql
             relativeToChangelogFile: true
             splitStatements: false
             stripComments: true
