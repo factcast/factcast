@@ -653,3 +653,15 @@ databaseChangeLog:
             relativeToChangelogFile: true
             splitStatements: false
             stripComments: true
+
+  - changeSet:
+      id: issue4782
+      author: uweschaefer
+      runInTransaction: false
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue4782/date2serial_trigger.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
