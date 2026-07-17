@@ -64,7 +64,6 @@ class UnconditionalPublishQueue {
       // the longer it takes for the first publication to be completed.
       // Also the number of conversations open is not infinite as well.
       //
-      // 500 looks like a promising sweet spot.
       // TODO make configurable?
       int maxTransactionsToCombine = 500;
       List<Publication> pubs = new ArrayList<>(maxTransactionsToCombine);
@@ -81,7 +80,6 @@ class UnconditionalPublishQueue {
 
       // could still be empty due to concurrent access
       if (!pubs.isEmpty()) {
-        // if (pubs.size() > 1) log.trace("Combined publishing of {} transactions ", pubs.size());
         // try to publish as one
         try {
           pgFactStore.batchPublish(facts);
@@ -90,6 +88,8 @@ class UnconditionalPublishQueue {
         } catch (Exception e) {
           // ok, we need to go one by one then in order to throw the dup exception in the right
           // place(s)
+          //
+          // there is no need to log the exception, as it will resurface again below
           pubs.parallelStream()
               .forEach(
                   pub -> {

@@ -132,7 +132,8 @@ public class PgFactStore extends AbstractFactStore {
           try {
             queue.addAndFlush(factsToPublish).get();
           } catch (InterruptedException e) {
-            throw new RuntimeException(e); // TODO
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e);
           } catch (ExecutionException e) {
             throw ExceptionHelper.toRuntime(e.getCause());
           }
