@@ -20,6 +20,8 @@ import static org.mockito.Mockito.*;
 
 import java.sql.PreparedStatement;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.*;
 import java.util.function.*;
 import lombok.NonNull;
@@ -50,6 +52,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.*;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.PlatformTransactionManager;
 
 @SuppressWarnings("rawtypes")
@@ -78,7 +81,54 @@ class PgFactStoreTest {
     private final UUID ID = UUID.randomUUID();
 
     @BeforeEach
-    void setup() {}
+    void setup() {
+      configureMetricTimeSupplier();
+    }
+
+    @Test
+    void fetchesFact() {
+      Fact fact = mock(Fact.class);
+      when(jdbcTemplate.query(anyString(), any(RowMapper.class), anyString()))
+          .thenReturn(Lists.newArrayList(fact));
+
+      Optional<Fact> result = underTest.fetchById(ID);
+      assertThat(result).contains(fact);
+    }
+  }
+
+  @Nested
+  class WhenPublishingDeferrable {
+    @Mock private UnconditionalPublishQueue queue;
+    @Mock private Fact fact;
+
+    @BeforeEach
+    void setup() {
+      configureMetricTimeRunnable();
+      ReflectionTestUtils.setField(underTest, "queue", queue);
+    }
+
+    @Test
+    void handlesInterruptedException() throws Exception {
+      CompletableFuture<Void> future = mock(CompletableFuture.class);
+      when(queue.addAndFlush(anyList())).thenReturn(future);
+      when(future.get()).thenThrow(new InterruptedException());
+
+      assertThatThrownBy(() -> underTest.publishDeferrable(Collections.singletonList(fact)))
+          .isInstanceOf(RuntimeException.class)
+          .hasCauseInstanceOf(InterruptedException.class);
+
+      assertThat(Thread.interrupted()).isTrue();
+    }
+
+    @Test
+    void handlesExecutionException() throws Exception {
+      CompletableFuture<Void> future = mock(CompletableFuture.class);
+      when(queue.addAndFlush(anyList())).thenReturn(future);
+      when(future.get()).thenThrow(new ExecutionException(new RuntimeException("cause")));
+
+      assertThatThrownBy(() -> underTest.publishDeferrable(Collections.singletonList(fact)))
+          .isInstanceOf(RuntimeException.class);
+    }
   }
 
   private void configureMetricTimeSupplier() {
