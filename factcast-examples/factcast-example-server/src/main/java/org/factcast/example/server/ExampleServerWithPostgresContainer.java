@@ -36,7 +36,6 @@ public class ExampleServerWithPostgresContainer {
   public static void main(String[] args) {
     // you will want to replace this with RDS, a local pgsql database or
     // whatever your usecase is.
-    startPostgresContainer();
 
     SpringApplication.run(ExampleServerWithPostgresContainer.class, args);
   }
