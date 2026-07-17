@@ -65,7 +65,8 @@ public class StoreMetrics {
 
     NOTIFY_ROUNDTRIP("notifyRoundTripLatency"),
 
-    RESULT_STREAM_START("resultStreamStart");
+    RESULT_STREAM_START("resultStreamStart"),
+    SELECT_DISTINCT_NOTIFICATIONS("selectDistinctNotifications");
 
     @NonNull final String name;
 
