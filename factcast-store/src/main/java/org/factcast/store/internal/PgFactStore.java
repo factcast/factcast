@@ -21,7 +21,6 @@ import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Stream;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.*;
@@ -64,9 +63,9 @@ public class PgFactStore extends AbstractFactStore {
 
   @NonNull private final StoreConfigurationProperties props;
 
-  private final UnconditionalPublishQueue queue;
+  private final @NonNull UnconditionalPublishQueue queue;
   private final @NonNull PlatformTransactionManager platformTransactionManager;
-  private final TransactionTemplate tx;
+  private final @NonNull TransactionTemplate tx;
 
   public PgFactStore(
       @NonNull JdbcTemplate jdbcTemplate,
@@ -123,16 +122,21 @@ public class PgFactStore extends AbstractFactStore {
 
   @Override
   public void publishDeferrable(@NonNull List<? extends Fact> factsToPublish) {
+
     if (props.isReadOnlyModeEnabled()) {
       throw new UnsupportedOperationException("Publishing is not allowed in read-only mode");
     }
-    try {
-      queue.addAndFlush(factsToPublish).get();
-    } catch (InterruptedException e) {
-      throw new RuntimeException(e); // TODO
-    } catch (ExecutionException e) {
-      throw ExceptionHelper.toRuntime(e.getCause());
-    }
+    metrics.time(
+        StoreMetrics.OP.PUBLISH,
+        () -> {
+          try {
+            queue.addAndFlush(factsToPublish).get();
+          } catch (InterruptedException e) {
+            throw new RuntimeException(e); // TODO
+          } catch (ExecutionException e) {
+            throw ExceptionHelper.toRuntime(e.getCause());
+          }
+        });
   }
 
   @Override
@@ -140,7 +144,11 @@ public class PgFactStore extends AbstractFactStore {
     if (props.isReadOnlyModeEnabled()) {
       throw new UnsupportedOperationException("Publishing is not allowed in read-only mode");
     }
-    batchPublish(factsToPublish.stream());
+    metrics.time(
+        StoreMetrics.OP.PUBLISH,
+        () -> {
+          batchPublish(factsToPublish);
+        });
   }
 
   private Fact extractFactFromResultSet(ResultSet resultSet, @SuppressWarnings("unused") int rowNum)
@@ -386,33 +394,27 @@ public class PgFactStore extends AbstractFactStore {
     }
   }
 
-  private void batchPublish(Stream<? extends Fact> streamOfFacts) {
-    List<? extends Fact> copiedListOfFacts = streamOfFacts.toList();
-    int numberOfFactsToPublish = copiedListOfFacts.size();
+  private void batchPublish(List<? extends Fact> facts) {
+    int numberOfFactsToPublish = facts.size();
     log.trace("Inserting {} fact(s)", numberOfFactsToPublish);
     try {
       tx.execute(
           ts -> {
-            metrics.time(
-                StoreMetrics.OP.PUBLISH,
-                () -> {
-                  try {
-                    lock.acquireSharedTXLock();
-                    jdbcTemplate.batchUpdate(
-                        PgConstants.INSERT_FACT,
-                        copiedListOfFacts,
-                        // batch limitation not necessary
-                        Integer.MAX_VALUE,
-                        (statement, fact) -> {
-                          statement.setString(1, fact.jsonHeader());
-                          statement.setString(2, fact.jsonPayload());
-                        });
-                    // adding serials to headers is done via trigger
-
-                  } catch (DuplicateKeyException dupkey) {
-                    throw new DuplicateFactException(dupkey.getMessage());
-                  }
-                });
+            try {
+              lock.acquireSharedTXLock();
+              jdbcTemplate.batchUpdate(
+                  PgConstants.INSERT_FACT,
+                  facts,
+                  // batch limitation not necessary
+                  Integer.MAX_VALUE,
+                  (statement, fact) -> {
+                    statement.setString(1, fact.jsonHeader());
+                    statement.setString(2, fact.jsonPayload());
+                  });
+              // adding serials to headers is done via trigger
+            } catch (DuplicateKeyException dupkey) {
+              throw new DuplicateFactException(dupkey.getMessage());
+            }
 
             return null;
           });
@@ -424,33 +426,84 @@ public class PgFactStore extends AbstractFactStore {
   @RequiredArgsConstructor
   class UnconditionalPublishQueue {
 
-    record Publication(List<? extends Fact> facts, CompletableFuture<Void> completion) {}
+    private final ExecutorService flushingExecutor = Executors.newSingleThreadExecutor();
+    private final AtomicLong serialCounter = new AtomicLong(Long.MIN_VALUE);
 
-    final Deque<Publication> queue = new ConcurrentLinkedDeque<>();
+    record Publication(
+        long serial, List<? extends Fact> facts, CompletableFuture<Void> completion) {}
+
+    // TODO can we dare unbounded deque here? If we use BlockingQueue instead, we'd need to rethink
+    // locking
+    final Queue<Publication> queue = new ArrayDeque<>(4096);
 
     Future<Void> addAndFlush(List<? extends Fact> toPublish) throws DuplicateFactException {
       CompletableFuture<Void> completion = new CompletableFuture<>();
-      queue.add(new Publication(toPublish, completion));
-      CompletableFuture.runAsync(this::flush); //
+      AtomicLong serial = new AtomicLong(Long.MAX_VALUE);
+      // sync makes sure, that the order in the queue is maintained, so that we can early exit
+      // flush(ser) based on the ser
+      synchronized (queue) {
+        serial.set(serialCounter.incrementAndGet());
+        queue.add(new Publication(serial.get(), toPublish, completion));
+      }
+      flushingExecutor.submit(
+          () -> {
+            try {
+              flush(serial.get());
+            } catch (Exception e) {
+              log.error(e.getMessage(), e);
+            }
+          });
       return completion;
     }
 
-    void flush() {
+    void flush(long ser) {
 
-      /// TODO will batch here
-      Publication first = queue.pollFirst();
-      if (first != null) {
-        var streamOfFacts = first.facts().stream();
+      if ((!queue.isEmpty()) && (queue.peek().serial() <= ser)) {
+        // collect all facts & futures
 
-        try {
-          batchPublish(streamOfFacts);
-        } catch (Exception e) {
-          // TODO special handling to decompose
-          first.completion().completeExceptionally(e);
-          return;
+        // This is a trade-off between efficiency and latency. The longer the batch gets,
+        // the longer it takes for the first publication to be completed.
+        // Also the number of conversations open is not infinite as well.
+        //
+        // 500 looks like a promising sweet spot.
+        // TODO make configurable?
+        int maxTransactionsToCombine = 500;
+        List<Publication> pubs = new ArrayList<>(maxTransactionsToCombine);
+        List<Fact> facts = new ArrayList<>(maxTransactionsToCombine);
+
+        // contention-less sync is said to be "virtually free"
+        synchronized (queue) {
+          Publication p;
+          while ((pubs.size() < maxTransactionsToCombine) && (p = queue.poll()) != null) {
+            pubs.add(p);
+            facts.addAll(p.facts());
+          }
+        }
+
+        // could still be empty due to concurrent access
+        if (!pubs.isEmpty()) {
+          // if (pubs.size() > 1) log.trace("Combined publishing of {} transactions ", pubs.size());
+          // try to publish as one
+          try {
+            batchPublish(facts);
+            // since it worked, we can complete all
+            pubs.forEach(pub -> pub.completion().complete(null));
+          } catch (Exception e) {
+            // ok, we need to go one by one then in order to throw the dup exception in the right
+            // place(s)
+            pubs.parallelStream()
+                .forEach(
+                    pub -> {
+                      try {
+                        batchPublish(pub.facts());
+                        pub.completion().complete(null);
+                      } catch (Exception dupe) {
+                        pub.completion().completeExceptionally(dupe);
+                      }
+                    });
+          }
         }
       }
-      first.completion().complete(null);
     }
   }
 }

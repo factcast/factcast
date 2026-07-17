@@ -160,17 +160,17 @@ databaseChangeLog:
   #            splitStatements: true
   #            stripComments: true
 
-  - changeSet:
-      id: updateNotifyFactInsert_condensed_without_comment_corrected
-      runInTransaction: false
-      author: uweschaefer
-      changes:
-        - sqlFile:
-            encoding: utf8
-            path: factcast/issue1863/updateNotifyFactInsert_condensed_without_comment_corrected.sql
-            relativeToChangelogFile: true
-            splitStatements: false
-            stripComments: true
+  #  - changeSet:
+  #      id: updateNotifyFactInsert_condensed_without_comment_corrected
+  #      runInTransaction: false
+  #      author: uweschaefer
+  #      changes:
+  #        - sqlFile:
+  #            encoding: utf8
+  #            path: factcast/issue1863/updateNotifyFactInsert_condensed_without_comment_corrected.sql
+  #            relativeToChangelogFile: true
+  #            splitStatements: false
+  #            stripComments: true
 
   # fix_index_for_enum was removed.
 
@@ -614,6 +614,42 @@ databaseChangeLog:
         - sqlFile:
             encoding: utf8
             path: factcast/issue3999/fetchFactsFrom.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+  - changeSet:
+      id: issue4757-notification
+      author: uweschaefer
+      runInTransaction: false
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue4757/notification_table.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+  - changeSet:
+      id: issue4757-insert-trigger
+      author: uweschaefer
+      runInTransaction: false
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue4757/fact_insertion_notification_trigger.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+  - changeSet:
+      id: issue4757-cleanup
+      author: uweschaefer
+      runInTransaction: false
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue4757/cleanup_deprecations.sql
             relativeToChangelogFile: true
             splitStatements: false
             stripComments: true
