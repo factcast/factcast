@@ -439,6 +439,8 @@ public class PgFactStore extends AbstractFactStore {
     Future<Void> addAndFlush(List<? extends Fact> toPublish) throws DuplicateFactException {
       CompletableFuture<Void> completion = new CompletableFuture<>();
       AtomicLong serial = new AtomicLong(Long.MAX_VALUE);
+      // sync makes sure, that the order in the queue is maintained, so that we can early exit
+      // flush(ser) based on the ser
       synchronized (queue) {
         serial.set(serialCounter.incrementAndGet());
         queue.add(new Publication(serial.get(), toPublish, completion));
@@ -469,7 +471,7 @@ public class PgFactStore extends AbstractFactStore {
         List<Publication> pubs = new ArrayList<>(maxTransactionsToCombine);
         List<Fact> facts = new ArrayList<>(maxTransactionsToCombine);
 
-        // contentionless sync is said to be "virtually free"
+        // contention-less sync is said to be "virtually free"
         synchronized (queue) {
           Publication p;
           while ((pubs.size() < maxTransactionsToCombine) && (p = queue.poll()) != null) {
