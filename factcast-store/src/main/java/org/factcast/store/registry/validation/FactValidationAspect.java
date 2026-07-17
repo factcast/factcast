@@ -37,8 +37,7 @@ public class FactValidationAspect {
   private final FactValidator validator;
 
   @SuppressWarnings("unchecked")
-  @Around(
-      "execution(public void org.factcast.core.store.FactStore.publish(*)) || execution(public void org.factcast.core.store.FactStore.publishDeferrable(*))")
+  @Around("execution(public void org.factcast.core.store.FactStore.publish(*))")
   public Object interceptPublish(ProceedingJoinPoint joinPoint) throws Throwable {
     log.trace("intercepting publish()");
 

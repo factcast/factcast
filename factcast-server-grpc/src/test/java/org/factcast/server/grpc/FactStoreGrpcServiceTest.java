@@ -275,16 +275,16 @@ public class FactStoreGrpcServiceTest {
 
   @Test
   void testPublishNone() {
-    doNothing().when(backend).publishDeferrable(acFactList.capture());
+    doNothing().when(backend).publish(acFactList.capture());
     MSG_Facts r = MSG_Facts.newBuilder().build();
     uut.publish(r, mock(StreamObserver.class));
-    verify(backend).publishDeferrable(anyList());
+    verify(backend).publish(anyList());
     assertTrue(acFactList.getValue().isEmpty());
   }
 
   @Test
   void testPublishSome() {
-    doNothing().when(backend).publishDeferrable(acFactList.capture());
+    doNothing().when(backend).publish(acFactList.capture());
     Builder b = MSG_Facts.newBuilder();
     Fact f1 = Fact.builder().ns("test").build("{}");
     Fact f2 = Fact.builder().ns("test").build("{}");
@@ -293,7 +293,7 @@ public class FactStoreGrpcServiceTest {
     b.addAllFact(Arrays.asList(msg1, msg2));
     MSG_Facts r = b.build();
     uut.publish(r, mock(StreamObserver.class));
-    verify(backend).publishDeferrable(anyList());
+    verify(backend).publish(anyList());
     List<Fact> facts = acFactList.getValue();
     assertFalse(facts.isEmpty());
     assertEquals(2, facts.size());
@@ -305,7 +305,7 @@ public class FactStoreGrpcServiceTest {
   void testPublishTagging() {
     String clientId = "someApplication";
     when(grpcRequestMetadata.clientId()).thenReturn(Optional.of(clientId));
-    doNothing().when(backend).publishDeferrable(acFactList.capture());
+    doNothing().when(backend).publish(acFactList.capture());
 
     uut = new FactStoreGrpcService(backend, grpcRequestMetadataSupplier);
 
@@ -315,7 +315,7 @@ public class FactStoreGrpcServiceTest {
     b.addAllFact(List.of(msg1));
     MSG_Facts r = b.build();
     uut.publish(r, mock(StreamObserver.class));
-    verify(backend).publishDeferrable(acFactList.capture());
+    verify(backend).publish(acFactList.capture());
     List<Fact> facts = acFactList.getValue();
     assertFalse(facts.isEmpty());
     assertEquals(1, facts.size());
@@ -539,7 +539,7 @@ public class FactStoreGrpcServiceTest {
 
   @Test
   void testPublishThrows() {
-    doThrow(UnsupportedOperationException.class).when(backend).publishDeferrable(anyList());
+    doThrow(UnsupportedOperationException.class).when(backend).publish(anyList());
     List<Fact> toPublish = Lists.newArrayList(Fact.builder().build("{}"));
     StreamObserver so = mock(StreamObserver.class);
 
