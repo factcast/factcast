@@ -237,15 +237,13 @@ class PgChunkedCatchupTest {
       when(conn.createStatement()).thenReturn(stmt);
       when(stmt.execute(anyString())).thenReturn(true);
 
-      // spy the UUT to intercept helpers used inside fetch
-      doReturn(scds).when(underTest).createSingleDS(ds);
       // ensure there are matching serials, so the while-loop is reached
       doReturn(1).when(underTest).prepareTemporaryTable(any(), anyString());
       // cancel immediately so no query is executed and the method returns early
       when(statementHolder.wasCanceled()).thenReturn(true);
 
       // act
-      underTest.fetch(ds);
+      underTest.fetch(scds);
 
       // assert: temp table is dropped in finally and no facts are processed
       verify(stmt).execute(argThat(sql -> sql.toLowerCase().startsWith("drop table catchup_")));
@@ -308,15 +306,13 @@ class PgChunkedCatchupTest {
       // rs4: zero rows
       when(rs4.next()).thenReturn(false);
 
-      // Spy the UUT to intercept helpers used inside fetch
-      doReturn(scds).when(underTest).createSingleDS(ds);
       // ensure there are matching serials, so the while-loop is reached
       doReturn(1).when(underTest).prepareTemporaryTable(any(), anyString());
       // do not cancel during the loop
       when(statementHolder.wasCanceled()).thenReturn(false);
 
       // Act
-      underTest.fetch(ds);
+      underTest.fetch(scds);
 
       // Assert: query loop ran 4 iterations (3 with rows, 1 with 0 rows to finish)
       verify(stmt, atLeast(4)).executeQuery(anyString());
