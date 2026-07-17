@@ -120,8 +120,7 @@ public class PgFactStore extends AbstractFactStore {
                     new TransformationRequest(value, Collections.singleton(version))));
   }
 
-  @Override
-  public void publishDeferrable(@NonNull List<? extends Fact> factsToPublish) {
+  void publishBatchable(@NonNull List<? extends Fact> factsToPublish) {
 
     if (props.isReadOnlyModeEnabled()) {
       throw new UnsupportedOperationException("Publishing is not allowed in read-only mode");
@@ -145,6 +144,12 @@ public class PgFactStore extends AbstractFactStore {
     if (props.isReadOnlyModeEnabled()) {
       throw new UnsupportedOperationException("Publishing is not allowed in read-only mode");
     }
+
+    if (props.isPublishBatched()) publishBatchable(factsToPublish);
+    else publishDirectly(factsToPublish);
+  }
+
+  private void publishDirectly(@NonNull List<? extends Fact> factsToPublish) {
     metrics.time(
         StoreMetrics.OP.PUBLISH,
         () -> {
@@ -272,7 +277,7 @@ public class PgFactStore extends AbstractFactStore {
     if (optionalToken.isEmpty()) {
       // even though this fallback behavior already is present in super, we branch here to avoid
       // double (and unnecessarily exclusive) locking
-      publishDeferrable(factsToPublish);
+      publishBatchable(factsToPublish);
       return true;
     } else
       return metrics.time(

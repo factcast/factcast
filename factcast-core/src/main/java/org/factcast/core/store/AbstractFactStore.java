@@ -52,7 +52,7 @@ public abstract class AbstractFactStore implements FactStore {
       }
     } else {
       // publish unconditionally
-      publishDeferrable(factsToPublish);
+      publish(factsToPublish);
       return true;
     }
   }

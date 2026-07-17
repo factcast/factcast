@@ -41,10 +41,6 @@ public interface FactStore {
 
   void publish(@NonNull List<? extends Fact> factsToPublish);
 
-  default void publishDeferrable(@NonNull List<? extends Fact> factsToPublish) {
-    publish(factsToPublish);
-  }
-
   @NonNull
   Subscription subscribe(@NonNull SubscriptionRequestTO request, @NonNull FactObserver observer);
 

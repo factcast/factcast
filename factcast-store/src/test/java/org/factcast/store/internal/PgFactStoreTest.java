@@ -113,7 +113,7 @@ class PgFactStoreTest {
       when(queue.addAndFlush(anyList())).thenReturn(future);
       when(future.get()).thenThrow(new InterruptedException());
 
-      assertThatThrownBy(() -> underTest.publishDeferrable(Collections.singletonList(fact)))
+      assertThatThrownBy(() -> underTest.publishBatchable(Collections.singletonList(fact)))
           .isInstanceOf(RuntimeException.class)
           .hasCauseInstanceOf(InterruptedException.class);
 
@@ -126,7 +126,7 @@ class PgFactStoreTest {
       when(queue.addAndFlush(anyList())).thenReturn(future);
       when(future.get()).thenThrow(new ExecutionException(new RuntimeException("cause")));
 
-      assertThatThrownBy(() -> underTest.publishDeferrable(Collections.singletonList(fact)))
+      assertThatThrownBy(() -> underTest.publishBatchable(Collections.singletonList(fact)))
           .isInstanceOf(RuntimeException.class);
     }
   }
@@ -400,7 +400,7 @@ class PgFactStoreTest {
       boolean b = underTest.publishIfUnchanged(Lists.newArrayList(fact), Optional.empty());
       verify(lock, never()).acquireExclusiveTXLock();
       assertThat(b).isTrue();
-      verify(underTest).publishDeferrable(any());
+      verify(underTest).publishBatchable(any());
     }
 
     @Test

@@ -265,6 +265,8 @@ public class StoreConfigurationProperties implements InitializingBean {
 
   boolean catchupAsyncFetch = false; // might default to true in the future
 
+  boolean publishBatched = false; // might default to true in the future
+
   /**
    * When catching up, if production of a full notification of facts takes longer than this (10
    * seconds default, 2 seconds minimum), an additional flush is inserted into the pipelin in order
