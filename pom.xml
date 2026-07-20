@@ -115,6 +115,7 @@
     <!--suppress UnresolvedMavenProperty -->
     <etc>${session.executionRootDirectory}/src/etc</etc>
     <spring-boot.version>4.1.0</spring-boot.version>
+    <spring-boot-thin-layout.version>1.0.31.RELEASE</spring-boot-thin-layout.version>
     <!-- whenever updating spring-grpc make sure to align grpc.version accordingly. -->
     <spring-grpc.version>1.0.3</spring-grpc.version>
     <grpc.version>1.77.1</grpc.version>
