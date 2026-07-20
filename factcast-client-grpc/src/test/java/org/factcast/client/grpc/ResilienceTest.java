@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.time.Duration;
 import lombok.NonNull;
 import lombok.SneakyThrows;
+import nl.altindag.log.LogCaptor;
 import org.factcast.client.grpc.FactCastGrpcClientProperties.ResilienceConfiguration;
 import org.factcast.core.store.RetryableException;
 import org.junit.jupiter.api.*;
@@ -85,11 +86,33 @@ class ResilienceTest {
 
     @Test
     void deniesWhenExhausted() {
-      underTest.registerAttempt();
-      underTest.registerAttempt();
-      assertThat(underTest.shouldRetry(new RetryableException(new IOException()))).isTrue();
-      underTest.registerAttempt();
-      assertThat(underTest.shouldRetry(new RetryableException(new IOException()))).isFalse();
+      try (LogCaptor logCaptor = LogCaptor.forClass(Resilience.class)) {
+        underTest.registerAttempt();
+        underTest.registerAttempt();
+        assertThat(underTest.shouldRetry(new RetryableException(new IOException()))).isTrue();
+        assertThat(logCaptor.getWarnLogs()).isEmpty();
+
+        underTest.registerAttempt();
+        assertThat(underTest.shouldRetry(new RetryableException(new IOException()))).isFalse();
+        assertThat(logCaptor.getWarnLogs())
+            .singleElement()
+            .asString()
+            .contains("Allowed attempts in window are exhausted! Attempts: 3, allowed: 3.");
+      }
+    }
+
+    @Test
+    void deniesWhenNotRetryable() {
+      try (LogCaptor logCaptor = LogCaptor.forClass(Resilience.class)) {
+        logCaptor.setLogLevelToTrace();
+
+        assertThat(underTest.shouldRetry(new IllegalStateException())).isFalse();
+        assertThat(logCaptor.getLogs())
+            .singleElement()
+            .asString()
+            .isEqualTo(
+                "Exception of type class java.lang.IllegalStateException is not considered retryable.");
+      }
     }
 
     @Test

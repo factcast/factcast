@@ -19,7 +19,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.EventBus;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.AccessLevel;
@@ -68,7 +67,7 @@ public class PgFactStream {
   @Getter(AccessLevel.PROTECTED)
   final SubscriptionRequestTO request;
 
-  CondensedQueryExecutor condensedExecutor;
+  QueryExecutor queryExecutor;
 
   @VisibleForTesting
   @Getter(AccessLevel.PROTECTED)
@@ -157,32 +156,11 @@ public class PgFactStream {
         log.debug("{} entering follow mode", request);
         // signal follow
         telemetry.onFollow(request);
-        long delayInMs;
-        if (request.maxBatchDelayInMs() < 1) {
-          // ok, instant query after NOTIFY
-          delayInMs = 0;
-        } else {
-          // spread consumers, so that they query at different points
-          // in time, even if they get triggered at the same PIT, and
-          // share the same latency requirements
-          //
-          // ok, that is unlikely to be necessary, but easy to do, so...
-          // distributes delay between 75% and 100% of the maxDelay
-          delayInMs =
-              Math.round(
-                  request.maxBatchDelayInMs()
-                      * (0.75 + ThreadLocalRandom.current().nextDouble() * 0.25));
-          log.trace(
-              "{} setting delay to {}, maxDelay was {}",
-              request,
-              delayInMs,
-              request.maxBatchDelayInMs());
-        }
-        condensedExecutor = createCondensedExecutor(request, query, delayInMs);
-        eventBus.register(condensedExecutor);
+        queryExecutor = createQueryExecutor(request, query);
+        eventBus.register(queryExecutor);
         // catchup phase 3 – make sure, we did not miss any fact due to
         // slow registration
-        condensedExecutor.trigger();
+        queryExecutor.trigger();
       } else {
         pipeline.process(Signal.complete());
         log.debug("{} completed", request);
@@ -194,9 +172,9 @@ public class PgFactStream {
 
   @VisibleForTesting
   @NonNull
-  CondensedQueryExecutor createCondensedExecutor(
-      @NonNull SubscriptionRequest request, @NonNull PgSynchronizedQuery query, long delayInMs) {
-    return new CondensedQueryExecutor(delayInMs, query, this::isConnected, request.specs());
+  QueryExecutor createQueryExecutor(
+      @NonNull SubscriptionRequest request, @NonNull PgSynchronizedQuery query) {
+    return new QueryExecutor(query, this::isConnected, request.specs());
   }
 
   @VisibleForTesting
@@ -263,10 +241,10 @@ public class PgFactStream {
   public synchronized void close() {
     log.trace("{} disconnecting ", request);
     disconnected.set(true);
-    if (condensedExecutor != null) {
-      eventBus.unregister(condensedExecutor);
-      condensedExecutor.cancel();
-      condensedExecutor = null;
+    if (queryExecutor != null) {
+      eventBus.unregister(queryExecutor);
+      queryExecutor.cancel();
+      queryExecutor = null;
     }
     statementHolder.close();
     log.debug("{} disconnected ", request);
