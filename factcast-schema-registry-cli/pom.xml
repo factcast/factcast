@@ -292,7 +292,9 @@
           <dependency>
             <groupId>org.springframework.boot.experimental</groupId>
             <artifactId>spring-boot-thin-layout</artifactId>
-            <version>${spring-boot-thin-layout.version}</version>
+            <!-- for whatever reason during SOME builds the property does not seem
+              to resolver from the parent -->
+            <version>1.0.31.RELEASE</version>
           </dependency>
         </dependencies>
         <executions>
