@@ -23,4 +23,7 @@ import org.factcast.factus.projection.*;
 public interface FactSpecProvider {
   @NonNull
   Collection<FactSpec> forSnapshot(@NonNull Class<? extends SnapshotProjection> clazz);
+
+  @NonNull
+  Collection<FactSpec> forProjection(@NonNull Projection p);
 }

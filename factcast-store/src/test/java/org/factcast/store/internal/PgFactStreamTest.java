@@ -25,7 +25,6 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 import lombok.SneakyThrows;
-import org.apache.commons.lang3.Range;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.FactStreamPosition;
 import org.factcast.core.TestFactStreamPosition;
@@ -165,7 +164,7 @@ class PgFactStreamTest {
   @Nested
   class WhenFollowing {
     @Mock PgSynchronizedQuery query;
-    @Mock CondensedQueryExecutor condensedExecutor;
+    @Mock QueryExecutor queryExecutor;
 
     @Test
     void doesNothingIfNotConnected() {
@@ -179,18 +178,17 @@ class PgFactStreamTest {
     }
 
     @Test
-    void registersCondensedExecutorIfRequestIsContinuous() {
+    void registersQueryExecutorIfRequestIsContinuous() {
       var maxBatchDelay = 0L;
       doReturn(true).when(uut).isConnected();
-      doReturn(condensedExecutor).when(uut).createCondensedExecutor(reqTo, query, maxBatchDelay);
+      doReturn(queryExecutor).when(uut).createQueryExecutor(reqTo, query);
       when(reqTo.continuous()).thenReturn(true);
-      when(reqTo.maxBatchDelayInMs()).thenReturn(maxBatchDelay);
 
       uut.follow(reqTo, query);
 
       verify(telemetry, times(1)).onFollow(reqTo);
-      verify(eventBus, times(1)).register(condensedExecutor);
-      verify(condensedExecutor, times(1)).trigger();
+      verify(eventBus, times(1)).register(queryExecutor);
+      verify(queryExecutor, times(1)).trigger();
       verifyNoInteractions(pipeline);
     }
 
@@ -199,13 +197,10 @@ class PgFactStreamTest {
       var maxBatchDelay = 100L;
       doReturn(true).when(uut).isConnected();
       when(reqTo.continuous()).thenReturn(true);
-      when(reqTo.maxBatchDelayInMs()).thenReturn(maxBatchDelay);
 
       uut.follow(reqTo, query);
 
-      verify(uut)
-          .createCondensedExecutor(
-              eq(reqTo), eq(query), longThat(delay -> Range.of(75L, 100L).contains(delay)));
+      verify(uut).createQueryExecutor(eq(reqTo), eq(query));
       verifyNoInteractions(pipeline);
     }
 
