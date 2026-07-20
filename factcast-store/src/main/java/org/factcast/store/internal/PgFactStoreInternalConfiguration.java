@@ -337,4 +337,13 @@ public class PgFactStoreInternalConfiguration {
   public Transformer transformer() {
     return new JsTransformer();
   }
+
+  @Bean
+  public NudgeNotificationHandler nudgeHandler(
+      EventBus bus,
+      JdbcTemplate jdbcTemplate,
+      StoreConfigurationProperties props,
+      PgMetrics metrics) {
+    return new NudgeNotificationHandler(bus, jdbcTemplate, props, metrics);
+  }
 }

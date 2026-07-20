@@ -148,7 +148,7 @@ class PgFactStoreTest {
               eq(Lists.newArrayList(fact)),
               eq(Integer.MAX_VALUE),
               any(ParameterizedPreparedStatementSetter.class));
-      verify(lock).aquireExclusiveTXLock();
+      verify(lock).acquireSharedTXLock();
     }
 
     @Test
@@ -343,12 +343,12 @@ class PgFactStoreTest {
     }
 
     @Test
-    void noToken() {
+    void doesNotExclusivelyLockWithoutToken() {
 
       underTest = spy(underTest);
 
       boolean b = underTest.publishIfUnchanged(Lists.newArrayList(fact), Optional.empty());
-      verify(lock).aquireExclusiveTXLock();
+      verify(lock, never()).acquireExclusiveTXLock();
       assertThat(b).isTrue();
       verify(underTest).publish(any(List.class));
     }
@@ -368,7 +368,7 @@ class PgFactStoreTest {
 
       boolean b =
           underTest.publishIfUnchanged(Lists.newArrayList(fact), Optional.of(optionalToken));
-      verify(lock).aquireExclusiveTXLock();
+      verify(lock).acquireExclusiveTXLock();
       assertThat(b).isFalse();
       verify(underTest, never()).publish(any(List.class));
     }
@@ -389,7 +389,7 @@ class PgFactStoreTest {
 
       boolean b =
           underTest.publishIfUnchanged(Lists.newArrayList(fact), Optional.of(optionalToken));
-      verify(lock).aquireExclusiveTXLock();
+      verify(lock).acquireExclusiveTXLock();
       assertThat(b).isTrue();
       verify(underTest).publish(any(List.class));
     }
