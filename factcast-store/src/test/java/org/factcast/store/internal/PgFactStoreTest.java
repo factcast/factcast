@@ -65,29 +65,30 @@ import org.springframework.transaction.support.TransactionTemplate;
 @MockitoSettings(strictness = Strictness.LENIENT)
 class PgFactStoreTest {
 
-  @Mock private @NonNull JdbcTemplate jdbcTemplate;
-  @Mock private @NonNull PgSubscriptionFactory subscriptionFactory;
-  @Mock private @NonNull FactTableWriteLock lock;
-  @Mock private @NonNull FactTransformerService factTransformerService;
-  @Mock private @NonNull PgFactIdToSerialMapper pgFactIdToSerialMapper;
+  @Mock @NonNull JdbcTemplate jdbcTemplate;
+  @Mock @NonNull PgSubscriptionFactory subscriptionFactory;
+  @Mock @NonNull FactTableWriteLock lock;
+  @Mock @NonNull FactTransformerService factTransformerService;
+  @Mock @NonNull PgFactIdToSerialMapper pgFactIdToSerialMapper;
 
   @Mock(strictness = Mock.Strictness.LENIENT)
-  private @NonNull PgMetrics metrics;
+  @NonNull
+  PgMetrics metrics;
 
-  @Mock private @NonNull TokenStore tokenStore;
+  @Mock @NonNull TokenStore tokenStore;
 
-  @Mock(answer = Answers.RETURNS_DEEP_STUBS)
-  private StoreConfigurationProperties storeConfigurationProperties;
+  @Spy
+  StoreConfigurationProperties storeConfigurationProperties = new StoreConfigurationProperties();
 
   @Mock SchemaRegistry schemaRegistry;
 
-  @Mock private PlatformTransactionManager platformTransactionManager;
+  @Mock PlatformTransactionManager platformTransactionManager;
 
-  @InjectMocks private PgFactStore underTest;
+  @InjectMocks PgFactStore underTest;
 
   @Nested
   class WhenFetchingById {
-    private final UUID ID = UUID.randomUUID();
+    final UUID ID = UUID.randomUUID();
 
     @BeforeEach
     void setup() {
@@ -107,8 +108,8 @@ class PgFactStoreTest {
 
   @Nested
   class WhenPublishingDeferrable {
-    @Mock private UnconditionalPublishQueue queue;
-    @Mock private Fact fact;
+    @Mock UnconditionalPublishQueue queue;
+    @Mock Fact fact;
 
     @BeforeEach
     void setup() {
@@ -140,7 +141,7 @@ class PgFactStoreTest {
     }
   }
 
-  private void configureMetricTimeSupplier() {
+  void configureMetricTimeSupplier() {
     when(metrics.time(any(), any(Supplier.class)))
         .thenAnswer(
             i -> {
@@ -149,7 +150,7 @@ class PgFactStoreTest {
             });
   }
 
-  private void configureMetricTimeRunnable() {
+  void configureMetricTimeRunnable() {
     doAnswer(
             i -> {
               Runnable argument = i.getArgument(1);
@@ -162,8 +163,8 @@ class PgFactStoreTest {
 
   @Nested
   class WhenFetchingByIdAndVersion {
-    private final UUID ID = UUID.randomUUID();
-    private final int VERSION = 11;
+    final UUID ID = UUID.randomUUID();
+    final int VERSION = 11;
 
     @BeforeEach
     void setup() {
@@ -191,7 +192,7 @@ class PgFactStoreTest {
 
   @Nested
   class WhenPublishing {
-    @Mock private Fact fact;
+    @Mock Fact fact;
 
     @BeforeEach
     void setup() {
@@ -224,9 +225,9 @@ class PgFactStoreTest {
 
   @Nested
   class WhenSubscribing {
-    @Mock private @NonNull SubscriptionRequestTO request;
-    @Mock private @NonNull FactObserver observer;
-    @Mock private @NonNull Subscription sub;
+    @Mock @NonNull SubscriptionRequestTO request;
+    @Mock @NonNull FactObserver observer;
+    @Mock @NonNull Subscription sub;
 
     @BeforeEach
     void setup() {
@@ -243,7 +244,7 @@ class PgFactStoreTest {
 
   @Nested
   class WhenSerialingOf {
-    private final UUID FACT_ID = UUID.randomUUID();
+    final UUID FACT_ID = UUID.randomUUID();
 
     @BeforeEach
     void setup() {}
@@ -300,7 +301,7 @@ class PgFactStoreTest {
   @SuppressWarnings("unchecked")
   @Nested
   class WhenEnumeratingTypes {
-    private final String NS = "NS";
+    final String NS = "NS";
 
     @BeforeEach
     void setup() {}
@@ -342,8 +343,8 @@ class PgFactStoreTest {
   @SuppressWarnings("unchecked")
   @Nested
   class WhenEnumeratingVersions {
-    private final String NS = "NS";
-    private final String TYPE = "TYPE";
+    final String NS = "NS";
+    final String TYPE = "TYPE";
 
     @BeforeEach
     void setup() {}
@@ -392,9 +393,9 @@ class PgFactStoreTest {
 
   @Nested
   class WhenPublishingIfUnchanged {
-    @Mock private Fact fact;
-    @Mock private @NonNull StateToken optionalToken;
-    @Mock private State state;
+    @Mock Fact fact;
+    @Mock @NonNull StateToken optionalToken;
+    @Mock State state;
 
     @BeforeEach
     void setup() {
@@ -470,7 +471,7 @@ class PgFactStoreTest {
 
   @Nested
   class WhenGettingStateFor {
-    @Mock private FactSpec factSpec;
+    @Mock FactSpec factSpec;
 
     @BeforeEach
     void setup() {
@@ -502,8 +503,8 @@ class PgFactStoreTest {
 
   @Nested
   class WhenGettingStateForWithSerial {
-    private final long LAST_MATCHING_SERIAL = 43;
-    @Mock private FactSpec factSpec;
+    final long LAST_MATCHING_SERIAL = 43;
+    @Mock FactSpec factSpec;
 
     @BeforeEach
     void setup() {
@@ -534,7 +535,7 @@ class PgFactStoreTest {
 
   @Nested
   class WhenGettingCurrentStateFor {
-    @Mock private FactSpec factSpec;
+    @Mock FactSpec factSpec;
 
     @BeforeEach
     void setup() {
@@ -636,7 +637,7 @@ class PgFactStoreTest {
 
   @Nested
   class WhenEnumeratingNamespacesFromPg {
-    @Mock private TransactionTemplate tx;
+    @Mock TransactionTemplate tx;
 
     @BeforeEach
     void setup() {
@@ -693,8 +694,8 @@ class PgFactStoreTest {
 
   @Nested
   class WhenBatchPublishing {
-    @Mock private TransactionTemplate tx;
-    @Mock private FactTableWriteLock lock;
+    @Mock TransactionTemplate tx;
+    @Mock FactTableWriteLock lock;
 
     @BeforeEach
     void setup() {
