@@ -148,7 +148,7 @@ public class PgFactStore extends AbstractFactStore {
     else publishDirectly(factsToPublish);
   }
 
-  private void publishDirectly(@NonNull List<? extends Fact> factsToPublish) {
+  void publishDirectly(@NonNull List<? extends Fact> factsToPublish) {
     metrics.time(
         StoreMetrics.OP.PUBLISH,
         () -> {
@@ -156,20 +156,23 @@ public class PgFactStore extends AbstractFactStore {
         });
   }
 
-  private Fact extractFactFromResultSet(ResultSet resultSet, @SuppressWarnings("unused") int rowNum)
+  @VisibleForTesting
+  Fact extractFactFromResultSet(ResultSet resultSet, @SuppressWarnings("unused") int rowNum)
       throws SQLException {
     return PgFact.from(resultSet);
   }
 
   @NonNull
-  private String extractStringFromResultSet(
-      ResultSet resultSet, @SuppressWarnings("unused") int rowNum) throws SQLException {
+  @VisibleForTesting
+  String extractStringFromResultSet(ResultSet resultSet, @SuppressWarnings("unused") int rowNum)
+      throws SQLException {
     return resultSet.getString(1);
   }
 
   @NonNull
-  private Integer extractIntFromResultSet(
-      ResultSet resultSet, @SuppressWarnings("unused") int rowNum) throws SQLException {
+  @VisibleForTesting
+  Integer extractIntFromResultSet(ResultSet resultSet, @SuppressWarnings("unused") int rowNum)
+      throws SQLException {
     return resultSet.getInt(1);
   }
 
@@ -298,7 +301,8 @@ public class PgFactStore extends AbstractFactStore {
     return doGetState(specs, lastMatchingSerial);
   }
 
-  private State doGetState(@NotNull Collection<FactSpec> specs, long lastMatchingSerial) {
+  @VisibleForTesting
+  State doGetState(@NotNull Collection<FactSpec> specs, long lastMatchingSerial) {
     return metrics.time(
         StoreMetrics.OP.GET_STATE_FOR,
         () -> {

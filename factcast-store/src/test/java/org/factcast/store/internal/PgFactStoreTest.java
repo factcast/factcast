@@ -19,6 +19,8 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -746,6 +748,40 @@ class PgFactStoreTest {
 
       assertThatThrownBy(() -> underTest.batchPublishInTransaction(facts))
           .isInstanceOf(DuplicateFactException.class);
+    }
+  }
+
+  @Nested
+  class WhenExtractingFromResultSet {
+    @Test
+    void extractsString() throws SQLException {
+      ResultSet rs = mock(ResultSet.class);
+      when(rs.getString(1)).thenReturn("test");
+      assertThat(underTest.extractStringFromResultSet(rs, 0)).isEqualTo("test");
+    }
+
+    @Test
+    void extractsInt() throws SQLException {
+      ResultSet rs = mock(ResultSet.class);
+      when(rs.getInt(1)).thenReturn(42);
+      assertThat(underTest.extractIntFromResultSet(rs, 0)).isEqualTo(42);
+    }
+  }
+
+  @Nested
+  class WhenPublishingDirectly {
+    @Test
+    void publishes() {
+      configureMetricTimeRunnable();
+      Fact fact = mock(Fact.class);
+      List<Fact> facts = Lists.newArrayList(fact);
+
+      PgFactStore spy = spy(underTest);
+      doNothing().when(spy).batchPublish(anyList());
+
+      spy.publishDirectly(facts);
+
+      verify(spy).batchPublish(facts);
     }
   }
 }
