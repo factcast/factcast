@@ -71,6 +71,13 @@
         <configuration>
           <mainClass>org.factcast.example.client.mongodb.ExampleMongoDbManagedClient</mainClass>
         </configuration>
+        <dependencies>
+          <dependency>
+            <groupId>org.springframework.boot.experimental</groupId>
+            <artifactId>spring-boot-thin-layout</artifactId>
+            <version>${spring-boot-thin-layout.version}</version>
+          </dependency>
+        </dependencies>
         <executions>
           <execution>
             <goals>
