@@ -276,7 +276,7 @@ public class StoreConfigurationProperties implements InitializingBean {
     int maxBatchSize = 500;
   }
 
-  @Valid public PublishBatch publishBatch;
+  @Valid public PublishBatch publishBatch = new PublishBatch();
 
   /**
    * When catching up, if production of a full notification of facts takes longer than this (10
