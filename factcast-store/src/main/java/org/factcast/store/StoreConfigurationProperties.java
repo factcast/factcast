@@ -21,12 +21,13 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.ConsoleAppender;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
 import java.time.Duration;
 import java.util.Iterator;
-import lombok.Data;
+import lombok.*;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.store.internal.filter.FromScratchCatchupLogSuppressingTurboFilter;
@@ -265,7 +266,17 @@ public class StoreConfigurationProperties implements InitializingBean {
 
   boolean catchupAsyncFetch = false; // might default to true in the future
 
-  boolean publishBatched = false; // might default to true in the future
+  @Data
+  public static class PublishBatch {
+    boolean enabled = false;
+
+    @Positive
+    @Min(10)
+    @Max(10000)
+    int maxBatchSize = 500;
+  }
+
+  @Valid public PublishBatch publishBatch;
 
   /**
    * When catching up, if production of a full notification of facts takes longer than this (10

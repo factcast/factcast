@@ -39,7 +39,7 @@ class UnconditionalPublishQueueTest {
 
   @BeforeEach
   void setUp() {
-    underTest = new UnconditionalPublishQueue(pgFactStore);
+    underTest = new UnconditionalPublishQueue(pgFactStore, 500);
   }
 
   @Test

@@ -91,7 +91,7 @@ public class PgFactStore extends AbstractFactStore {
     this.props = props;
 
     this.tx = new TransactionTemplate(platformTransactionManager);
-    this.queue = new UnconditionalPublishQueue(this);
+    this.queue = new UnconditionalPublishQueue(this, props.getPublishBatch().getMaxBatchSize());
     this.platformTransactionManager = platformTransactionManager;
   }
 
@@ -146,7 +146,7 @@ public class PgFactStore extends AbstractFactStore {
       throw new UnsupportedOperationException("Publishing is not allowed in read-only mode");
     }
 
-    if (props.isPublishBatched()) publishBatchable(factsToPublish);
+    if (props.getPublishBatch().isEnabled()) publishBatchable(factsToPublish);
     else publishDirectly(factsToPublish);
   }
 

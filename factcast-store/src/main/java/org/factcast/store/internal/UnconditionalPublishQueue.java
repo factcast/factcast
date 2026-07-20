@@ -27,6 +27,7 @@ import org.factcast.core.*;
 class UnconditionalPublishQueue {
 
   private final PgFactStore pgFactStore;
+  private final int maxBatchSize;
   private final ExecutorService flushingExecutor = Executors.newSingleThreadExecutor();
   private final AtomicLong serialCounter = new AtomicLong(Long.MIN_VALUE);
 
@@ -64,15 +65,14 @@ class UnconditionalPublishQueue {
       // the longer it takes for the first publication to be completed.
       // Also the number of conversations open is not infinite as well.
       //
-      // TODO make configurable?
-      int maxTransactionsToCombine = 500;
-      List<Publication> pubs = new ArrayList<>(maxTransactionsToCombine);
-      List<Fact> facts = new ArrayList<>(maxTransactionsToCombine);
+
+      List<Publication> pubs = new ArrayList<>(maxBatchSize);
+      List<Fact> facts = new ArrayList<>(maxBatchSize);
 
       // contention-less sync is said to be "virtually free"
       synchronized (queue) {
         Publication p;
-        while ((pubs.size() < maxTransactionsToCombine) && (p = queue.poll()) != null) {
+        while ((pubs.size() < maxBatchSize) && (p = queue.poll()) != null) {
           pubs.add(p);
           facts.addAll(p.facts());
         }
