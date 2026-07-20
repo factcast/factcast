@@ -15,6 +15,7 @@
  */
 package org.factcast.store.internal;
 
+import com.google.common.annotations.VisibleForTesting;
 import java.sql.*;
 import java.sql.Date;
 import java.time.LocalDate;
@@ -205,21 +206,20 @@ public class PgFactStore extends AbstractFactStore {
   public @NonNull Set<String> enumerateNamespacesFromPg() {
     // wrap in TX to make SET LOCAL work properly (and auto revert on commit/rollback)
     final var result =
-        new TransactionTemplate(platformTransactionManager)
-            .execute(
-                status ->
-                    metrics.time(
-                        StoreMetrics.OP.ENUMERATE_NAMESPACES,
-                        () -> {
-                          // used because pg seems to favor the seq scan for even 80k rows over the
-                          // index
-                          jdbcTemplate.execute(PgConstants.DISABLE_SEQSCAN);
+        tx.execute(
+            status ->
+                metrics.time(
+                    StoreMetrics.OP.ENUMERATE_NAMESPACES,
+                    () -> {
+                      // used because pg seems to favor the seq scan for even 80k rows over the
+                      // index
+                      jdbcTemplate.execute(PgConstants.DISABLE_SEQSCAN);
 
-                          return new HashSet<>(
-                              jdbcTemplate.query(
-                                  PgConstants.SELECT_DISTINCT_NAMESPACE,
-                                  this::extractStringFromResultSet));
-                        }));
+                      return new HashSet<>(
+                          jdbcTemplate.query(
+                              PgConstants.SELECT_DISTINCT_NAMESPACE,
+                              this::extractStringFromResultSet));
+                    }));
 
     return Objects.requireNonNull(result);
   }
@@ -406,26 +406,31 @@ public class PgFactStore extends AbstractFactStore {
     try {
       tx.execute(
           ts -> {
-            try {
-              lock.acquireSharedTXLock();
-              jdbcTemplate.batchUpdate(
-                  PgConstants.INSERT_FACT,
-                  facts,
-                  // batch limitation not necessary
-                  Integer.MAX_VALUE,
-                  (statement, fact) -> {
-                    statement.setString(1, fact.jsonHeader());
-                    statement.setString(2, fact.jsonPayload());
-                  });
-              // adding serials to headers is done via trigger
-            } catch (DuplicateKeyException dupkey) {
-              throw new DuplicateFactException(dupkey.getMessage());
-            }
+            batchPublishInTransaction(facts);
 
             return null;
           });
     } catch (TransactionException e) {
       throw ExceptionHelper.toRuntime(e.getCause());
+    }
+  }
+
+  @VisibleForTesting
+  void batchPublishInTransaction(List<? extends Fact> facts) {
+    try {
+      lock.acquireSharedTXLock();
+      jdbcTemplate.batchUpdate(
+          PgConstants.INSERT_FACT,
+          facts,
+          // batch limitation not necessary
+          Integer.MAX_VALUE,
+          (statement, fact) -> {
+            statement.setString(1, fact.jsonHeader());
+            statement.setString(2, fact.jsonPayload());
+          });
+      // adding serials to headers is done via trigger
+    } catch (DuplicateKeyException dupkey) {
+      throw new DuplicateFactException(dupkey.getMessage());
     }
   }
 }
