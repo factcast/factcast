@@ -48,9 +48,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
@@ -77,7 +75,10 @@ class PgFactStoreTest {
   private @NonNull PgMetrics metrics;
 
   @Mock private @NonNull TokenStore tokenStore;
-  @Mock private StoreConfigurationProperties storeConfigurationProperties;
+
+  @Mock(answer = Answers.RETURNS_DEEP_STUBS)
+  private StoreConfigurationProperties storeConfigurationProperties;
+
   @Mock SchemaRegistry schemaRegistry;
 
   @Mock private PlatformTransactionManager platformTransactionManager;
