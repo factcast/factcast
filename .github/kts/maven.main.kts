@@ -92,7 +92,7 @@ workflow(
 
         run(
             name = "Sonar upload",
-            env = mapOf("SONAR" to expr { SONAR_2026 }),
+            env = mapOf(SONAR to expr { SONAR_2026 }),
             command = "./mvnw -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=factcast -Dsonar.organization=factcast -Dsonar.host.url=https://sonarcloud.io -Dsonar.token=$SONAR"
         )
 
