@@ -37,7 +37,7 @@ workflow(
     consistencyCheckJobConfig = ConsistencyCheckJobConfig.Disabled
 ) {
 
-    val SONAR_TOKEN by Contexts.secrets
+    val SONAR_2026 by Contexts.secrets
     val SONAR by Contexts.env
 
     job(
@@ -92,8 +92,8 @@ workflow(
 
         run(
             name = "Sonar upload",
-            env = mapOf("SONAR" to expr { SONAR_TOKEN }),
-            command = "./mvnw -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=factcast -Dsonar.organization=factcast -Dsonar.host.url=https://sonarcloud.io -Dsonar.token=$SONAR_TOKEN"
+            env = mapOf("SONAR" to expr { SONAR_2026 }),
+            command = "./mvnw -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=factcast -Dsonar.organization=factcast -Dsonar.host.url=https://sonarcloud.io -Dsonar.token=$SONAR"
         )
 
         run(
