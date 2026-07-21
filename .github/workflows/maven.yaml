@@ -47,7 +47,7 @@ jobs:
       name: 'Sonar upload'
       env:
         SONAR: '${{ secrets.SONAR_TOKEN }}'
-      run: './mvnw -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=factcast -Dsonar.organization=factcast -Dsonar.host.url=https://sonarcloud.io -Dsonar.token=env.SONAR'
+      run: './mvnw -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=factcast -Dsonar.organization=factcast -Dsonar.host.url=https://sonarcloud.io -Dsonar.token=secrets.SONAR_TOKEN'
     - id: 'step-7'
       name: 'Test - Integration'
       run: './mvnw -B verify -DskipUnitTests'
