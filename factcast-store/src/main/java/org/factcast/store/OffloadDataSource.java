@@ -20,6 +20,10 @@ import javax.annotation.Nonnull;
 import javax.sql.DataSource;
 import org.springframework.jdbc.datasource.DelegatingDataSource;
 
+/**
+ * exists mostly for clairty. As a sideeffect, we have the opportunity to fix it to only provide
+ * read-only connections.
+ */
 public class OffloadDataSource extends DelegatingDataSource {
 
   public OffloadDataSource(@Nonnull DataSource delegate) {

@@ -88,7 +88,7 @@ class PgFactStoreOffloadIntegrationTest {
   @SneakyThrows
   void phase1UsesSeparateReadOnlyDataSourceAndPhase2CatchesUpOnPrimary() {
     ConnectionCountingAndBlockingDataSource p1CatchupDataSource =
-        beanFactory.getBean(ConnectionCountingAndBlockingDataSource.class);
+        (ConnectionCountingAndBlockingDataSource) beanFactory.getBean(OffloadDataSource.class);
     DataSourceRecordingPgCatchupFactory catchupFactory =
         (DataSourceRecordingPgCatchupFactory) beanFactory.getBean(PgCatchupFactory.class);
 
@@ -141,7 +141,7 @@ class PgFactStoreOffloadIntegrationTest {
     static BeanPostProcessor wrapBeansForObservability() {
       return new BeanPostProcessor() {
         @Override
-        public Object postProcessAfterInitialization(
+        public Object postProcessBeforeInitialization(
             @NonNull Object bean, @NonNull String beanName) {
 
           if (bean instanceof OffloadDataSource dataSource
@@ -222,7 +222,12 @@ class PgFactStoreOffloadIntegrationTest {
               invocation -> {
                 String sql = invocation.getArgument(0);
                 PreparedStatement statement = connection.prepareStatement(sql);
-                return isCatchupQuery(sql) ? countAndBlockCatchupQuery(statement) : statement;
+                if (isCatchupQuery(sql)) {
+                  System.err.println("Matched catchup query: " + sql);
+                  return countAndBlockCatchupQuery(statement);
+                } else {
+                  return statement;
+                }
               })
           .when(countingConnection)
           .prepareStatement(anyString());

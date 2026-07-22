@@ -18,6 +18,7 @@ package org.factcast.store.internal;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.EventBus;
 import java.util.concurrent.*;
+import javax.annotation.Nullable;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.subscription.*;
@@ -53,30 +54,7 @@ public class PgSubscriptionFactory implements AutoCloseable {
 
   public PgSubscriptionFactory(
       PgConnectionSupplier connectionSupplier,
-      EventBus eventBus,
-      PgFactIdToSerialMapper idToSerialMapper,
-      StoreConfigurationProperties props,
-      PgCatchupFactory catchupFactory,
-      HighWaterMarkFetcher hwmFetcher,
-      ServerPipelineFactory pipelineFactory,
-      PgMetrics metrics,
-      PgStoreTelemetry telemetry) {
-    this(
-        connectionSupplier,
-        null,
-        eventBus,
-        idToSerialMapper,
-        props,
-        catchupFactory,
-        hwmFetcher,
-        pipelineFactory,
-        metrics,
-        telemetry);
-  }
-
-  public PgSubscriptionFactory(
-      PgConnectionSupplier connectionSupplier,
-      OffloadDataSource offloadDataSource,
+      @Nullable OffloadDataSource offloadDataSource,
       EventBus eventBus,
       PgFactIdToSerialMapper idToSerialMapper,
       StoreConfigurationProperties props,

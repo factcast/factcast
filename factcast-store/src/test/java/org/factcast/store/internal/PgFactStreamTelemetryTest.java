@@ -18,6 +18,7 @@ package org.factcast.store.internal;
 import static org.mockito.Mockito.*;
 
 import com.google.common.eventbus.EventBus;
+import java.util.Collections;
 import lombok.SneakyThrows;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
@@ -31,12 +32,9 @@ import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.telemetry.PgStoreTelemetry;
 import org.factcast.store.internal.transformation.FactTransformerService;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Answers;
-import org.mockito.InOrder;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -60,13 +58,19 @@ class PgFactStreamTelemetryTest {
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   PgConnectionSupplier connectionSupplier;
 
-  @InjectMocks PgFactStream uut;
+  @InjectMocks @Spy PgFactStream uut;
+
+  @BeforeEach
+  void setup() {
+    lenient().doReturn(Collections.emptyList()).when(uut).catchupConnectionModifiers(any());
+  }
 
   @Test
   void postsTelemetryOnCatchup() {
     when(req.debugInfo()).thenReturn("test");
     when(pgCatchupFactory.create(eq(req), eq(serverPipeline), any(), any(), any(), any()))
         .thenReturn(mock(PgCatchup.class));
+
     when(ffwdTarget.highWaterMark(any())).thenReturn(HighWaterMark.empty());
     uut.connect();
 
