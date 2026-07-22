@@ -181,7 +181,7 @@ class PgConnectionSupplierTest {
   void testTomcatDataSourceIsUsed() {
     org.apache.tomcat.jdbc.pool.DataSource ds = new org.apache.tomcat.jdbc.pool.DataSource();
     PgConnectionSupplier uut = new PgConnectionSupplier(ds);
-    assertThat(uut.ds).isSameAs(ds);
+    assertThat(uut.dataSource).isSameAs(ds);
   }
 
   @Test

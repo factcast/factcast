@@ -19,8 +19,7 @@ import com.google.common.annotations.VisibleForTesting;
 import java.sql.*;
 import java.util.*;
 import javax.sql.DataSource;
-import lombok.NonNull;
-import lombok.SneakyThrows;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tomcat.jdbc.pool.PoolConfiguration;
 import org.postgresql.jdbc.PgConnection;
@@ -29,7 +28,8 @@ import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 @Slf4j
 public class PgConnectionSupplier {
 
-  @NonNull @VisibleForTesting protected final org.apache.tomcat.jdbc.pool.DataSource ds;
+  @Getter @NonNull @VisibleForTesting protected final DataSource dataSource;
+
   @NonNull @VisibleForTesting protected final Properties props;
 
   public static final String APPLICATION_NAME = "ApplicationName";
@@ -37,8 +37,8 @@ public class PgConnectionSupplier {
 
   public PgConnectionSupplier(DataSource dataSource) {
     if (org.apache.tomcat.jdbc.pool.DataSource.class.isAssignableFrom(dataSource.getClass())) {
-      ds = (org.apache.tomcat.jdbc.pool.DataSource) dataSource;
-      props = buildPgConnectionProperties(ds);
+      this.dataSource = dataSource;
+      props = buildPgConnectionProperties((org.apache.tomcat.jdbc.pool.DataSource) this.dataSource);
       applicationName = Optional.ofNullable(props.getProperty(APPLICATION_NAME)).orElse("factcast");
     } else {
       throw new IllegalArgumentException(
@@ -59,7 +59,7 @@ public class PgConnectionSupplier {
   @SneakyThrows
   @SuppressWarnings("java:S2077")
   public Connection getPooledConnection(String clientId) {
-    Connection c = ds.getConnection();
+    Connection c = dataSource.getConnection();
     setConnectionApplicationName(clientId, c);
     return c;
   }
@@ -74,12 +74,13 @@ public class PgConnectionSupplier {
 
   @SuppressWarnings("resource")
   private PgConnection getConnectionFromDriverManager(Properties props) throws SQLException {
+    org.apache.tomcat.jdbc.pool.DataSource ds = (org.apache.tomcat.jdbc.pool.DataSource) dataSource;
+
+    String url = ds.getUrl();
     try {
-      return DriverManager.getDriver(ds.getUrl())
-          .connect(ds.getUrl(), props)
-          .unwrap(PgConnection.class);
+      return DriverManager.getDriver(url).connect(url, props).unwrap(PgConnection.class);
     } catch (SQLException e) {
-      String msg = "Cannot acquire Connection from DriverManager: " + ds.getUrl();
+      String msg = "Cannot acquire Connection from DriverManager: " + url;
       log.error(msg, e);
       throw e;
     }
@@ -142,6 +143,6 @@ public class PgConnectionSupplier {
   @SuppressWarnings("java:S2077")
   public SingleConnectionDataSource getPooledAsSingleDataSource(
       @NonNull List<ConnectionModifier> filterList) {
-    return new ModifiedSingleConnectionDataSource(ds.getConnection(), filterList);
+    return new ModifiedSingleConnectionDataSource(dataSource.getConnection(), filterList);
   }
 }

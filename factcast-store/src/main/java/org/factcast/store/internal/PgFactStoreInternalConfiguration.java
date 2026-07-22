@@ -47,7 +47,7 @@ import org.factcast.store.registry.*;
 import org.factcast.store.registry.transformation.cache.*;
 import org.factcast.store.registry.transformation.chains.*;
 import org.springframework.beans.factory.BeanFactory;
-import org.springframework.beans.factory.NoSuchBeanDefinitionException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.*;
 import org.springframework.boot.sql.init.dependency.DependsOnDatabaseInitialization;
 import org.springframework.context.annotation.*;
@@ -79,7 +79,6 @@ public class PgFactStoreInternalConfiguration {
   public static final int LISTENER_POOL_MAX_SIZE = 64;
   public static final int LISTENER_POOL_CORE_SIZE = LISTENER_POOL_MAX_SIZE;
   public static final long LISTENER_POOL_KEEP_ALIVE_SECONDS = 30;
-  public static final String P1_CATCHUP_DATASOURCE_BEAN_NAME = "p1CatchupDataSource";
 
   /**
    * may be overruled by defining a @Primary DeduplicatingEventBus in PgFactStoreAutoConfiguration
@@ -144,6 +143,7 @@ public class PgFactStoreInternalConfiguration {
   @Bean
   public PgSubscriptionFactory pgSubscriptionFactory(
       PgConnectionSupplier connectionSupplier,
+      @Autowired(required = false) OffloadDataSource offloadDataSource,
       EventBus eventBus,
       PgFactIdToSerialMapper pgFactIdToSerialMapper,
       StoreConfigurationProperties props,
@@ -162,18 +162,7 @@ public class PgFactStoreInternalConfiguration {
         hwmFetcher,
         pipelineFactory,
         metrics,
-        telemetry,
-        optionalP1CatchupDataSource(beanFactory));
-  }
-
-  private DataSource optionalP1CatchupDataSource(BeanFactory beanFactory) {
-    try {
-      return beanFactory.getBean(P1_CATCHUP_DATASOURCE_BEAN_NAME, DataSource.class);
-    } catch (NoSuchBeanDefinitionException ignored) {
-      log.info(
-          "No P1 catchup datasource configured, using primary datasource for phase 1 catchup as well");
-      return null;
-    }
+        telemetry);
   }
 
   @Bean
@@ -345,5 +334,12 @@ public class PgFactStoreInternalConfiguration {
       StoreConfigurationProperties props,
       PgMetrics metrics) {
     return new NudgeNotificationHandler(bus, jdbcTemplate, props, metrics);
+  }
+
+  @Bean
+  @ConditionalOnProperty(StoreConfigurationProperties.PROPERTIES_PREFIX + "offload.url")
+  public OffloadDataSource offloadDataSource(StoreConfigurationProperties props) {
+    log.info("Configuring offload datasource");
+    return new OffloadDataSource(props.getOffload().initializeDataSourceBuilder().build());
   }
 }

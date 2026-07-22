@@ -15,10 +15,13 @@
  */
 package org.factcast.store;
 
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.jdbc.autoconfigure.DataSourceProperties;
+import javax.annotation.Nonnull;
+import javax.sql.DataSource;
+import org.springframework.jdbc.datasource.DelegatingDataSource;
 
-@ConfigurationProperties(prefix = P1CatchupDataSourceProperties.PROPERTIES_PREFIX)
-public class P1CatchupDataSourceProperties extends DataSourceProperties {
-  public static final String PROPERTIES_PREFIX = "factcast.store.p1-catchup-datasource";
+public class OffloadDataSource extends DelegatingDataSource {
+
+  public OffloadDataSource(@Nonnull DataSource delegate) {
+    super(delegate);
+  }
 }

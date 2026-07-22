@@ -133,7 +133,7 @@ class FromScratchCatchupTraceSuppressingTurboFilterTest {
 
     @Test
     void allowsEventsUpToThreshold() {
-      FromScratchCatchupLogSuppressingTurboFilter.beginCatchup("threshold-test");
+      FromScratchCatchupLogSuppressingTurboFilter.beforeCatchup("threshold-test");
 
       // first 3 events should pass
       assertThat(uut.decide(null, null, Level.TRACE, null, null, null))
@@ -146,12 +146,12 @@ class FromScratchCatchupTraceSuppressingTurboFilterTest {
       // 4th event should be denied
       assertThat(uut.decide(null, null, Level.TRACE, null, null, null)).isEqualTo(FilterReply.DENY);
 
-      FromScratchCatchupLogSuppressingTurboFilter.endCatchup();
+      FromScratchCatchupLogSuppressingTurboFilter.afterCatchup();
     }
 
     @Test
     void eventsAtOrAboveMinLevelAreNotCounted() {
-      FromScratchCatchupLogSuppressingTurboFilter.beginCatchup("threshold-test-2");
+      FromScratchCatchupLogSuppressingTurboFilter.beforeCatchup("threshold-test-2");
 
       // DEBUG and above should always pass and not count toward threshold
       uut.decide(null, null, Level.DEBUG, null, null, null);
@@ -167,7 +167,7 @@ class FromScratchCatchupTraceSuppressingTurboFilterTest {
           .isEqualTo(FilterReply.NEUTRAL);
       assertThat(uut.decide(null, null, Level.TRACE, null, null, null)).isEqualTo(FilterReply.DENY);
 
-      FromScratchCatchupLogSuppressingTurboFilter.endCatchup();
+      FromScratchCatchupLogSuppressingTurboFilter.afterCatchup();
     }
   }
 
@@ -180,7 +180,7 @@ class FromScratchCatchupTraceSuppressingTurboFilterTest {
 
     @Test
     void allowsEveryNthEventAfterThreshold() {
-      FromScratchCatchupLogSuppressingTurboFilter.beginCatchup("sample-test");
+      FromScratchCatchupLogSuppressingTurboFilter.beforeCatchup("sample-test");
 
       // events 1 and 2 pass (within threshold)
       assertThat(uut.decide(null, null, Level.TRACE, null, null, null))
@@ -206,12 +206,12 @@ class FromScratchCatchupTraceSuppressingTurboFilterTest {
       assertThat(uut.decide(null, null, Level.TRACE, null, null, null))
           .isEqualTo(FilterReply.NEUTRAL);
 
-      FromScratchCatchupLogSuppressingTurboFilter.endCatchup();
+      FromScratchCatchupLogSuppressingTurboFilter.afterCatchup();
     }
 
     @Test
     void eventsAtOrAboveMinLevelAreUnaffectedBySampling() {
-      FromScratchCatchupLogSuppressingTurboFilter.beginCatchup("sample-test-2");
+      FromScratchCatchupLogSuppressingTurboFilter.beforeCatchup("sample-test-2");
 
       // exhaust threshold
       uut.decide(null, null, Level.TRACE, null, null, null);
@@ -223,7 +223,7 @@ class FromScratchCatchupTraceSuppressingTurboFilterTest {
       assertThat(uut.decide(null, null, Level.INFO, null, null, null))
           .isEqualTo(FilterReply.NEUTRAL);
 
-      FromScratchCatchupLogSuppressingTurboFilter.endCatchup();
+      FromScratchCatchupLogSuppressingTurboFilter.afterCatchup();
     }
   }
 
@@ -232,32 +232,32 @@ class FromScratchCatchupTraceSuppressingTurboFilterTest {
 
     @Test
     void beginCatchupSetsMdc() {
-      FromScratchCatchupLogSuppressingTurboFilter.beginCatchup("lifecycle-test");
+      FromScratchCatchupLogSuppressingTurboFilter.beforeCatchup("lifecycle-test");
 
       assertThat(MDC.get(FromScratchCatchupLogSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH))
           .isEqualTo("lifecycle-test");
 
-      FromScratchCatchupLogSuppressingTurboFilter.endCatchup();
+      FromScratchCatchupLogSuppressingTurboFilter.afterCatchup();
     }
 
     @Test
     void beginCatchupGeneratesFallbackIdWhenCatchupIdIsNull() {
       // null catchupId should generate a fallback UUID, not throw
-      FromScratchCatchupLogSuppressingTurboFilter.beginCatchup(null);
+      FromScratchCatchupLogSuppressingTurboFilter.beforeCatchup(null);
 
       assertThat(MDC.get(FromScratchCatchupLogSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH))
           .isNotNull();
 
-      FromScratchCatchupLogSuppressingTurboFilter.endCatchup();
+      FromScratchCatchupLogSuppressingTurboFilter.afterCatchup();
     }
 
     @Test
     void endCatchupRemovesMdcAndCounter() {
-      FromScratchCatchupLogSuppressingTurboFilter.beginCatchup("cleanup-test");
+      FromScratchCatchupLogSuppressingTurboFilter.beforeCatchup("cleanup-test");
       assertThat(MDC.get(FromScratchCatchupLogSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH))
           .isNotNull();
 
-      FromScratchCatchupLogSuppressingTurboFilter.endCatchup();
+      FromScratchCatchupLogSuppressingTurboFilter.afterCatchup();
       assertThat(MDC.get(FromScratchCatchupLogSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH))
           .isNull();
     }
@@ -265,7 +265,7 @@ class FromScratchCatchupTraceSuppressingTurboFilterTest {
     @Test
     void endCatchupIsNoOpWhenMdcNotSet() {
       // should not throw
-      FromScratchCatchupLogSuppressingTurboFilter.endCatchup();
+      FromScratchCatchupLogSuppressingTurboFilter.afterCatchup();
     }
   }
 }

@@ -15,14 +15,15 @@
  */
 package org.factcast.store.internal.listen;
 
+import com.google.common.annotations.VisibleForTesting;
 import java.sql.Connection;
 import java.util.*;
-import lombok.NonNull;
+import lombok.*;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
 public class ModifiedSingleConnectionDataSource extends SingleConnectionDataSource {
   private final Connection connection;
-  private final List<ConnectionModifier> modifiers;
+  @VisibleForTesting @Getter private final List<ConnectionModifier> modifiers;
 
   public ModifiedSingleConnectionDataSource(
       @NonNull Connection connection, @NonNull List<ConnectionModifier> modifiers) {
