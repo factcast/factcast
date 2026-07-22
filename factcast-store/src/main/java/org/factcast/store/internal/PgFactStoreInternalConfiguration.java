@@ -336,10 +336,12 @@ public class PgFactStoreInternalConfiguration {
     return new NudgeNotificationHandler(bus, jdbcTemplate, props, metrics);
   }
 
-  @Bean
-  @ConditionalOnProperty(StoreConfigurationProperties.PROPERTIES_PREFIX + "offload.url")
+  @Bean(defaultCandidate = false)
+  @ConditionalOnProperty(StoreConfigurationProperties.PROPERTIES_PREFIX + ".offload.url")
   public OffloadDataSource offloadDataSource(StoreConfigurationProperties props) {
     log.info("Configuring offload datasource");
-    return new OffloadDataSource(props.getOffload().initializeDataSourceBuilder().build());
+    OffloadDataSource offloadDataSource =
+        new OffloadDataSource(props.getOffload().initializeDataSourceBuilder().build());
+    return offloadDataSource;
   }
 }

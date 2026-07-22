@@ -25,9 +25,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -37,17 +35,21 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.factcast.core.Fact;
+import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
-import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.core.subscription.*;
 import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.store.OffloadDataSource;
 import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.test.IntegrationTest;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.datasource.DelegatingDataSource;
+import org.springframework.beans.factory.config.BeanPostProcessor;
+import org.springframework.context.annotation.*;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.jdbc.Sql;
@@ -57,15 +59,14 @@ import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 @SpringJUnitConfig(
     classes = {
       PgTestConfiguration.class,
-      // PgFactStoreP1OffloadIntegrationTest.P1OffloadTestConfig.class
+      PgFactStoreOffloadIntegrationTest.OffloadTestConfig.class
     })
-@TestPropertySource("/p1-catchup-datasource.properties")
+@TestPropertySource("/offload-datasource.properties")
 @Sql(scripts = "/wipe.sql", config = @SqlConfig(separator = "#"))
 @IntegrationTest
-class PgFactStoreP1OffloadIntegrationTest {
+class PgFactStoreOffloadIntegrationTest {
 
   static final String NS = "p1-offload";
-  private static final String PG_CATCHUP_FACTORY_BEAN_NAME = "pgCatchupFactory";
 
   // @TestPropertySource resolves placeholders before Spring instantiates PgTestConfiguration,
   // so trigger its static Testcontainers datasource setup before loading the P1 datasource file.
@@ -83,83 +84,79 @@ class PgFactStoreP1OffloadIntegrationTest {
 
   @Autowired DataSource primaryDataSource;
 
-  //
-  //  @Test
-  //  @SneakyThrows
-  //  void phase1UsesSeparateReadOnlyDataSourceAndPhase2CatchesUpOnPrimary() {
-  //    ConnectionCountingAndBlockingDataSource p1CatchupDataSource =
-  //        beanFactory.getBean(
-  //            OFFLOAD_DATASOURCE_BEAN_NAME, ConnectionCountingAndBlockingDataSource.class);
-  //    DataSourceRecordingPgCatchupFactory catchupFactory =
-  //        (DataSourceRecordingPgCatchupFactory) beanFactory.getBean(PgCatchupFactory.class);
-  //
-  //    assertThat(p1CatchupDataSource.opensReadOnlyConnections()).isTrue();
-  //
-  //    store.publish(
-  //        List.of(
-  //            Fact.builder().ns(NS).type("test").buildWithoutPayload(),
-  //            Fact.builder().ns(NS).type("test").buildWithoutPayload()));
-  //
-  //    p1CatchupDataSource.reset();
-  //    catchupFactory.reset();
-  //    CountingObserver observer = new CountingObserver();
-  //
-  //    CompletableFuture<Void> subscription =
-  //        CompletableFuture.runAsync(
-  //            () ->
-  //                store
-  //                    .subscribe(
-  //                        SubscriptionRequestTO.from(
-  //                            SubscriptionRequest.catchup(FactSpec.ns(NS)).fromScratch()),
-  //                        observer)
-  //                    .awaitComplete());
-  //
-  //    p1CatchupDataSource.awaitPhase1QueryStarted();
-  //
-  //    store.publish(List.of(Fact.builder().ns(NS).type("test").buildWithoutPayload()));
-  //    p1CatchupDataSource.releasePhase1Query();
-  //
-  //    subscription.get(10, TimeUnit.SECONDS);
-  //
-  //    assertThat(observer.facts()).hasValue(3);
-  //    assertThat(observer.catchups()).hasValue(1);
-  //    assertThat(observer.completes()).hasValue(1);
-  //    assertThat(observer.error()).hasNullValue();
-  //    assertThat(p1CatchupDataSource.target()).isNotSameAs(primaryDataSource);
-  //    assertThat(p1CatchupDataSource.connections()).hasPositiveValue();
-  //
-  //    List<CatchupPhaseDataSource> catchupDataSources = catchupFactory.catchupDataSources();
-  //    assertThat(catchupDataSources).hasSize(2);
-  //    assertThat(catchupDataSources.get(0).phase()).isEqualTo(PgCatchupFactory.Phase.PHASE_1);
-  //    assertThat(catchupDataSources.get(1).phase()).isEqualTo(PgCatchupFactory.Phase.PHASE_2);
-  //    assertThat(catchupDataSources.get(0).dataSource())
-  //        .isNotSameAs(catchupDataSources.get(1).dataSource());
-  //  }
+  @Test
+  @SneakyThrows
+  void phase1UsesSeparateReadOnlyDataSourceAndPhase2CatchesUpOnPrimary() {
+    ConnectionCountingAndBlockingDataSource p1CatchupDataSource =
+        beanFactory.getBean(ConnectionCountingAndBlockingDataSource.class);
+    DataSourceRecordingPgCatchupFactory catchupFactory =
+        (DataSourceRecordingPgCatchupFactory) beanFactory.getBean(PgCatchupFactory.class);
 
-  //  @Configuration
-  //  static class P1OffloadTestConfig {
-  //
-  //    @Bean
-  //    static BeanPostProcessor wrapBeansForObservability() {
-  //      return new BeanPostProcessor() {
-  //        @Override
-  //        public Object postProcessAfterInitialization(
-  //            @NonNull Object bean, @NonNull String beanName) {
-  //          if (OFFLOAD_DATASOURCE_BEAN_NAME.equals(beanName)
-  //              && bean instanceof DataSource dataSource
-  //              && !(bean instanceof ConnectionCountingAndBlockingDataSource)) {
-  //            return new ConnectionCountingAndBlockingDataSource(dataSource);
-  //          }
-  //          if (PG_CATCHUP_FACTORY_BEAN_NAME.equals(beanName)
-  //              && bean instanceof PgCatchupFactory catchupFactory
-  //              && !(bean instanceof DataSourceRecordingPgCatchupFactory)) {
-  //            return new DataSourceRecordingPgCatchupFactory(catchupFactory);
-  //          }
-  //          return bean;
-  //        }
-  //      };
-  //    }
-  //  }
+    assertThat(p1CatchupDataSource.opensReadOnlyConnections()).isTrue();
+
+    store.publish(
+        List.of(
+            Fact.builder().ns(NS).type("test").buildWithoutPayload(),
+            Fact.builder().ns(NS).type("test").buildWithoutPayload()));
+
+    p1CatchupDataSource.reset();
+    catchupFactory.reset();
+    CountingObserver observer = new CountingObserver();
+
+    CompletableFuture<Void> subscription =
+        CompletableFuture.runAsync(
+            () ->
+                store
+                    .subscribe(
+                        SubscriptionRequestTO.from(
+                            SubscriptionRequest.catchup(FactSpec.ns(NS)).fromScratch()),
+                        observer)
+                    .awaitComplete());
+
+    p1CatchupDataSource.awaitPhase1QueryStarted();
+
+    store.publish(List.of(Fact.builder().ns(NS).type("test").buildWithoutPayload()));
+    p1CatchupDataSource.releasePhase1Query();
+
+    subscription.get(10, TimeUnit.SECONDS);
+
+    assertThat(observer.facts()).hasValue(3);
+    assertThat(observer.catchups()).hasValue(1);
+    assertThat(observer.completes()).hasValue(1);
+    assertThat(observer.error()).hasNullValue();
+    assertThat(p1CatchupDataSource.target()).isNotSameAs(primaryDataSource);
+    assertThat(p1CatchupDataSource.connections()).hasPositiveValue();
+
+    List<CatchupPhaseDataSource> catchupDataSources = catchupFactory.catchupDataSources();
+    assertThat(catchupDataSources).hasSize(2);
+    assertThat(catchupDataSources.get(0).phase()).isEqualTo(PgCatchupFactory.Phase.PHASE_1);
+    assertThat(catchupDataSources.get(1).phase()).isEqualTo(PgCatchupFactory.Phase.PHASE_2);
+    assertThat(catchupDataSources.get(0).dataSource())
+        .isNotSameAs(catchupDataSources.get(1).dataSource());
+  }
+
+  @Configuration
+  static class OffloadTestConfig {
+    @Bean
+    static BeanPostProcessor wrapBeansForObservability() {
+      return new BeanPostProcessor() {
+        @Override
+        public Object postProcessAfterInitialization(
+            @NonNull Object bean, @NonNull String beanName) {
+
+          if (bean instanceof OffloadDataSource dataSource
+              && !(bean instanceof ConnectionCountingAndBlockingDataSource)) {
+            return new ConnectionCountingAndBlockingDataSource(dataSource);
+          }
+          if (bean instanceof PgCatchupFactory catchupFactory
+              && !(bean instanceof DataSourceRecordingPgCatchupFactory)) {
+            return new DataSourceRecordingPgCatchupFactory(catchupFactory);
+          }
+          return bean;
+        }
+      };
+    }
+  }
 
   record CatchupPhaseDataSource(
       PgCatchupFactory.Phase phase, SingleConnectionDataSource dataSource) {}
@@ -192,7 +189,7 @@ class PgFactStoreP1OffloadIntegrationTest {
     }
   }
 
-  static class ConnectionCountingAndBlockingDataSource extends DelegatingDataSource {
+  static class ConnectionCountingAndBlockingDataSource extends OffloadDataSource {
 
     @Getter private final DataSource target;
     @Getter private final AtomicInteger connections = new AtomicInteger();
@@ -237,18 +234,11 @@ class PgFactStoreP1OffloadIntegrationTest {
       PreparedStatement blockedStatement = mock(PreparedStatement.class, delegatesTo(statement));
       doAnswer(
               invocation -> {
-                try {
-                  Object result = statement.executeQuery();
-                  if (holdNextCatchupQuery.compareAndSet(true, false)) {
-                    phase1QueryStarted.countDown();
-                    releasePhase1Query.await(10, TimeUnit.SECONDS);
-                  }
-                  return result;
-                } catch (InterruptedException e) {
-                  Thread.currentThread().interrupt();
-                  queryBlockingFailure.set(e);
-                  throw new SQLException("Interrupted while holding phase 1 query", e);
+                if (holdNextCatchupQuery.compareAndSet(true, false)) {
+                  phase1QueryStarted.countDown();
+                  releasePhase1Query.await(10, TimeUnit.SECONDS);
                 }
+                return statement.executeQuery();
               })
           .when(blockedStatement)
           .executeQuery();

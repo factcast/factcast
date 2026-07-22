@@ -15,6 +15,7 @@
  */
 package org.factcast.store;
 
+import java.sql.*;
 import javax.annotation.Nonnull;
 import javax.sql.DataSource;
 import org.springframework.jdbc.datasource.DelegatingDataSource;
@@ -23,5 +24,21 @@ public class OffloadDataSource extends DelegatingDataSource {
 
   public OffloadDataSource(@Nonnull DataSource delegate) {
     super(delegate);
+  }
+
+  @Override
+  public Connection getConnection() throws SQLException {
+    Connection connection = super.getConnection();
+    // not a guarantee, better use separate RO user
+    connection.setReadOnly(true);
+    return connection;
+  }
+
+  @Override
+  public Connection getConnection(String username, String password) throws SQLException {
+    Connection connection = super.getConnection(username, password);
+    // not a guarantee, better use separate RO user
+    connection.setReadOnly(true);
+    return connection;
   }
 }

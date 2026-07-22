@@ -283,7 +283,7 @@ public class StoreConfigurationProperties implements InitializingBean {
   @Max(50)
   long maxNotificationPollLatencyInMillis = 25;
 
-  public static class OffloadDataSourceProperties extends DataSourceProperties {}
+  public class OffloadDataSourceProperties extends DataSourceProperties {}
 
   @Valid OffloadDataSourceProperties offload = new OffloadDataSourceProperties();
 
