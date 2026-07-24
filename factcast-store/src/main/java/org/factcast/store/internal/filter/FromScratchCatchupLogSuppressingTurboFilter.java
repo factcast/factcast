@@ -36,10 +36,10 @@ import org.slf4j.Marker;
  * sampleRate} suppressed events through, providing a steady trickle of diagnostic logs throughout
  * the entire catchup instead of complete silence.
  *
- * <p>The catchup thread calls {@link #beginCatchup(String)} before starting and {@link
- * #endCatchup()} when done. These methods manage the MDC attribute and a per-catchup event counter.
- * The counter is shared across all threads that inherit the same MDC (e.g. ForkJoinPool workers
- * that propagate MDC from the catchup thread).
+ * <p>The catchup thread calls {@link #beforeCatchup(String)} before starting and {@link
+ * #afterCatchup()} when done. These methods manage the MDC attribute and a per-catchup event
+ * counter. The counter is shared across all threads that inherit the same MDC (e.g. ForkJoinPool
+ * workers that propagate MDC from the catchup thread).
  */
 public class FromScratchCatchupLogSuppressingTurboFilter extends TurboFilter {
 
@@ -66,7 +66,7 @@ public class FromScratchCatchupLogSuppressingTurboFilter extends TurboFilter {
    * @param catchupId a unique identifier for this catchup (e.g. from {@code
    *     SubscriptionRequestTO.debugInfo()})
    */
-  public static void beginCatchup(String catchupId) {
+  public static void beforeCatchup(String catchupId) {
     if (catchupId == null) {
       catchupId = UUID.randomUUID().toString();
     }
@@ -76,9 +76,9 @@ public class FromScratchCatchupLogSuppressingTurboFilter extends TurboFilter {
 
   /**
    * Removes the from-scratch catchup marker and deregisters the event counter for the current
-   * thread. Safe to call even if {@link #beginCatchup(String)} was never called.
+   * thread. Safe to call even if {@link #beforeCatchup(String)} was never called.
    */
-  public static void endCatchup() {
+  public static void afterCatchup() {
     String catchupId = MDC.get(MDC_KEY_FROM_SCRATCH);
     if (catchupId != null) {
       counters.remove(catchupId);
