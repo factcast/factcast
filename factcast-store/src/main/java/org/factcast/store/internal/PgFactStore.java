@@ -15,19 +15,21 @@
  */
 package org.factcast.store.internal;
 
-import com.google.common.collect.Lists;
+import com.google.common.annotations.VisibleForTesting;
 import java.sql.*;
 import java.sql.Date;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
-import lombok.NonNull;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.*;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.*;
 import org.factcast.core.subscription.*;
 import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.util.ExceptionHelper;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.lock.FactTableWriteLock;
 import org.factcast.store.internal.query.*;
@@ -36,7 +38,7 @@ import org.factcast.store.registry.SchemaRegistry;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.dao.*;
 import org.springframework.jdbc.core.*;
-import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.*;
 import org.springframework.transaction.annotation.*;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -62,7 +64,8 @@ public class PgFactStore extends AbstractFactStore {
 
   @NonNull private final StoreConfigurationProperties props;
 
-  @NonNull private final PlatformTransactionManager platformTransactionManager;
+  private final @NonNull UnconditionalPublishQueue queue;
+  private final @NonNull TransactionTemplate tx;
 
   public PgFactStore(
       @NonNull JdbcTemplate jdbcTemplate,
@@ -85,7 +88,9 @@ public class PgFactStore extends AbstractFactStore {
     this.metrics = metrics;
     this.factTransformerService = factTransformerService;
     this.props = props;
-    this.platformTransactionManager = platformTransactionManager;
+
+    this.tx = new TransactionTemplate(platformTransactionManager);
+    this.queue = new UnconditionalPublishQueue(this, props.getPublishBatch().getMaxBatchSize());
   }
 
   @Override
@@ -114,54 +119,60 @@ public class PgFactStore extends AbstractFactStore {
                     new TransformationRequest(value, Collections.singleton(version))));
   }
 
+  void publishBatchable(@NonNull List<? extends Fact> factsToPublish) {
+
+    if (props.isReadOnlyModeEnabled()) {
+      throw new UnsupportedOperationException("Publishing is not allowed in read-only mode");
+    }
+    metrics.time(
+        StoreMetrics.OP.PUBLISH,
+        () -> {
+          try {
+            queue.addAndFlush(factsToPublish).get();
+          } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e);
+          } catch (ExecutionException e) {
+            throw ExceptionHelper.toRuntime(e.getCause());
+          }
+        });
+  }
+
   @Override
-  @Transactional(propagation = Propagation.REQUIRED)
   public void publish(@NonNull List<? extends Fact> factsToPublish) {
     if (props.isReadOnlyModeEnabled()) {
       throw new UnsupportedOperationException("Publishing is not allowed in read-only mode");
     }
 
+    if (props.getPublishBatch().isEnabled()) publishBatchable(factsToPublish);
+    else publishDirectly(factsToPublish);
+  }
+
+  void publishDirectly(@NonNull List<? extends Fact> factsToPublish) {
     metrics.time(
         StoreMetrics.OP.PUBLISH,
         () -> {
-          try {
-
-            List<Fact> copiedListOfFacts = Lists.newArrayList(factsToPublish);
-            int numberOfFactsToPublish = factsToPublish.size();
-            log.trace("Inserting {} fact(s)", numberOfFactsToPublish);
-
-            lock.acquireSharedTXLock();
-            jdbcTemplate.batchUpdate(
-                PgConstants.INSERT_FACT,
-                copiedListOfFacts,
-                // batch limitation not necessary
-                Integer.MAX_VALUE,
-                (statement, fact) -> {
-                  statement.setString(1, fact.jsonHeader());
-                  statement.setString(2, fact.jsonPayload());
-                });
-            // adding serials to headers is done via trigger
-
-          } catch (DuplicateKeyException dupkey) {
-            throw new DuplicateFactException(dupkey.getMessage());
-          }
+          batchPublish(factsToPublish);
         });
   }
 
-  private Fact extractFactFromResultSet(ResultSet resultSet, @SuppressWarnings("unused") int rowNum)
+  @VisibleForTesting
+  Fact extractFactFromResultSet(ResultSet resultSet, @SuppressWarnings("unused") int rowNum)
       throws SQLException {
     return PgFact.from(resultSet);
   }
 
   @NonNull
-  private String extractStringFromResultSet(
-      ResultSet resultSet, @SuppressWarnings("unused") int rowNum) throws SQLException {
+  @VisibleForTesting
+  String extractStringFromResultSet(ResultSet resultSet, @SuppressWarnings("unused") int rowNum)
+      throws SQLException {
     return resultSet.getString(1);
   }
 
   @NonNull
-  private Integer extractIntFromResultSet(
-      ResultSet resultSet, @SuppressWarnings("unused") int rowNum) throws SQLException {
+  @VisibleForTesting
+  Integer extractIntFromResultSet(ResultSet resultSet, @SuppressWarnings("unused") int rowNum)
+      throws SQLException {
     return resultSet.getInt(1);
   }
 
@@ -196,21 +207,20 @@ public class PgFactStore extends AbstractFactStore {
   public @NonNull Set<String> enumerateNamespacesFromPg() {
     // wrap in TX to make SET LOCAL work properly (and auto revert on commit/rollback)
     final var result =
-        new TransactionTemplate(platformTransactionManager)
-            .execute(
-                status ->
-                    metrics.time(
-                        StoreMetrics.OP.ENUMERATE_NAMESPACES,
-                        () -> {
-                          // used because pg seems to favor the seq scan for even 80k rows over the
-                          // index
-                          jdbcTemplate.execute(PgConstants.DISABLE_SEQSCAN);
+        tx.execute(
+            status ->
+                metrics.time(
+                    StoreMetrics.OP.ENUMERATE_NAMESPACES,
+                    () -> {
+                      // used because pg seems to favor the seq scan for even 80k rows over the
+                      // index
+                      jdbcTemplate.execute(PgConstants.DISABLE_SEQSCAN);
 
-                          return new HashSet<>(
-                              jdbcTemplate.query(
-                                  PgConstants.SELECT_DISTINCT_NAMESPACE,
-                                  this::extractStringFromResultSet));
-                        }));
+                      return new HashSet<>(
+                          jdbcTemplate.query(
+                              PgConstants.SELECT_DISTINCT_NAMESPACE,
+                              this::extractStringFromResultSet));
+                    }));
 
     return Objects.requireNonNull(result);
   }
@@ -268,7 +278,7 @@ public class PgFactStore extends AbstractFactStore {
     if (optionalToken.isEmpty()) {
       // even though this fallback behavior already is present in super, we branch here to avoid
       // double (and unnecessarily exclusive) locking
-      publish(factsToPublish);
+      publishBatchable(factsToPublish);
       return true;
     } else
       return metrics.time(
@@ -291,7 +301,8 @@ public class PgFactStore extends AbstractFactStore {
     return doGetState(specs, lastMatchingSerial);
   }
 
-  private State doGetState(@NotNull Collection<FactSpec> specs, long lastMatchingSerial) {
+  @VisibleForTesting
+  State doGetState(@NotNull Collection<FactSpec> specs, long lastMatchingSerial) {
     return metrics.time(
         StoreMetrics.OP.GET_STATE_FOR,
         () -> {
@@ -388,6 +399,40 @@ public class PgFactStore extends AbstractFactStore {
           Date.valueOf(date));
     } catch (EmptyResultDataAccessException noFactsAtAll) {
       return null;
+    }
+  }
+
+  void batchPublish(List<? extends Fact> facts) {
+    int numberOfFactsToPublish = facts.size();
+    log.trace("Inserting {} fact(s)", numberOfFactsToPublish);
+    try {
+      tx.execute(
+          ts -> {
+            batchPublishInTransaction(facts);
+
+            return null;
+          });
+    } catch (TransactionException e) {
+      throw ExceptionHelper.toRuntime(e.getCause());
+    }
+  }
+
+  @VisibleForTesting
+  void batchPublishInTransaction(List<? extends Fact> facts) {
+    try {
+      lock.acquireSharedTXLock();
+      jdbcTemplate.batchUpdate(
+          PgConstants.INSERT_FACT,
+          facts,
+          // batch limitation not necessary
+          Integer.MAX_VALUE,
+          (statement, fact) -> {
+            statement.setString(1, fact.jsonHeader());
+            statement.setString(2, fact.jsonPayload());
+          });
+      // adding serials to headers is done via trigger
+    } catch (DuplicateKeyException dupkey) {
+      throw new DuplicateFactException(dupkey.getMessage());
     }
   }
 }
