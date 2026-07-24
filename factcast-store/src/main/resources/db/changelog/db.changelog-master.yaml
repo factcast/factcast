@@ -677,3 +677,45 @@ databaseChangeLog:
             relativeToChangelogFile: true
             splitStatements: false
             stripComments: true
+
+  - changeSet:
+      id: issue4589_create_table
+      author: mamup11
+      comment: Create the new (fact_id, version)-keyed transformation cache table. Always runs - it is empty and cheap, and the code depends on it existing.
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue4589/01_create_table.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+  - changeSet:
+      id: issue4589_copy_data
+      author: mamup11
+      preConditions:
+        - onFail: MARK_RAN
+        - sqlCheck:
+            expectedResult: t
+            sql: SELECT count_estimate('SELECT * FROM transformationcache') < 10000000;
+      comment: If you have less than 10mio transformation results, existing entries are copied over - otherwise we kindly ask you to execute this script manually. If skipped, the new cache simply starts empty and repopulates on demand.
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue4589/02_copy_data.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+  - changeSet:
+      id: issue4589_create_index
+      author: mamup11
+      runInTransaction: false
+      comment: Create the created_at index concurrently (the PK already covers fact_id/version).
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue4589/03_create_index.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true

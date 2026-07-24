@@ -110,9 +110,8 @@ public class FactTransformerServiceImpl implements FactTransformerService, AutoC
 
     TransformationKey key = TransformationKey.of(e.ns(), e.type());
     TransformationChain chain = chains.get(key, sourceVersion, req.targetVersions());
-    String chainId = chain.id();
     TransformationCache.Key cacheKey =
-        TransformationCache.Key.of(e.id(), chain.toVersion(), chainId);
+        TransformationCache.Key.of(e.id(), chain.toVersion(), chain.id());
     return cache.find(cacheKey).orElseGet(() -> doTransform(e, chain));
   }
 
