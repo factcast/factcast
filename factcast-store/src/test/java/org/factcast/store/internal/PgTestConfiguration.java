@@ -63,7 +63,7 @@ public class PgTestConfiguration {
       System.setProperty("spring.datasource.maxActive", "20");
       System.setProperty("spring.datasource.tomcat.connectionProperties", "foo=bar;");
     } else {
-      log.info("Using predefined external postgres URL: " + url);
+      log.info("Using predefined external postgres URL: {}", url);
       // use predefined url
       System.setProperty("spring.datasource.driver-class-name", Driver.class.getName());
       System.setProperty("spring.datasource.url", url);
