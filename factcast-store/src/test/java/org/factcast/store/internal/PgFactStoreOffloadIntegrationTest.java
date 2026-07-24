@@ -62,7 +62,9 @@ import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
       PgFactStoreOffloadIntegrationTest.OffloadTestConfig.class
     })
 @TestPropertySource("/offload-datasource.properties")
-@Sql(scripts = "/wipe.sql", config = @SqlConfig(separator = "#"))
+@Sql(
+    scripts = {"/wipe.sql", "/add-readonly-user.sql"},
+    config = @SqlConfig(separator = "#"))
 @IntegrationTest
 class PgFactStoreOffloadIntegrationTest {
 
