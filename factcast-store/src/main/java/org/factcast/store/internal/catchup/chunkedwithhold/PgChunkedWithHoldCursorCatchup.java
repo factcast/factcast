@@ -20,17 +20,17 @@ import com.google.common.base.Preconditions;
 import java.sql.*;
 import java.time.Duration;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.*;
 import javax.annotation.*;
 import lombok.*;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.*;
 import org.factcast.store.internal.catchup.*;
+import org.factcast.store.internal.catchup.tools.fetching.FetchingQuery;
 import org.factcast.store.internal.pipeline.*;
 import org.factcast.store.internal.query.*;
 import org.factcast.store.internal.rowmapper.PgFactExtractor;
-import org.postgresql.util.PSQLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.datasource.*;
@@ -129,7 +129,6 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
       @NonNull Cursor cursor, @NonNull PgFactExtractor extractor) throws SQLException {
 
     while (!statementHolder.wasCanceled()) {
-      log.debug("{} catchup {}, fetching next chunk", req, phase);
       if (inTransaction(() -> cursor.fetchChunk(extractor)) < cursor.chunkSize())
         // early exit, as there are no more rows to fetch
         return;
@@ -214,9 +213,6 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
 
       Preconditions.checkArgument(chunkSize >= 1000, "chunkSize must be >= 1000");
 
-      log.trace(
-          "{} catchup {}, declaring cursor-with-hold after SER={}", req, phase, fromSerial.get());
-
       // ok, this is messy, but the only way i can think of to still use the preparedQuerySetter,
       // which is impossible to do, if we pass a string to a function...
       //
@@ -237,6 +233,13 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
                               """,
               name(), chunkSize, queryBuilder.createSQL());
 
+      log.trace(
+          "{} catchup {}, declaring cursor-with-hold after SER={}\n{}",
+          req,
+          phase,
+          fromSerial.get(),
+          sql);
+
       try (PreparedStatement declare = connection.prepareStatement(sql)) {
         queryBuilder.createStatementSetter(fromSerial).setValues(declare);
         declare.execute();
@@ -246,50 +249,41 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
 
     @VisibleForTesting
     int fetchChunk(@NonNull PgFactExtractor extractor) throws SQLException {
-      return fetchChunk(extractor, null);
+      return fetchChunk(extractor, () -> {});
     }
 
     @VisibleForTesting
     @SuppressWarnings("java:S1141")
-    int fetchChunk(@NonNull PgFactExtractor extractor, @Nullable Runnable callbackAfterExecution)
+    int fetchChunk(@NonNull PgFactExtractor extractor, @Nonnull Runnable callbackAfterExecution)
         throws SQLException {
-      @SuppressWarnings("ReassignedVariable")
-      int rows = 0;
-      try (Statement fetch = connection.createStatement()) {
+
+      final AtomicInteger rows = new AtomicInteger(0);
+      try (PreparedStatement fetch = connection.prepareStatement(fetchSql)) {
         fetch.setFetchSize(props.getPageSize());
         statementHolder.statement(fetch);
 
-        try (ResultSet rs = fetch.executeQuery(fetchSql)) {
+        log.debug(
+            "{} catchup {}, query next chunk of size {} by ser \n{}",
+            req,
+            phase,
+            chunkSize(),
+            fetchSql);
 
-          if (callbackAfterExecution != null) callbackAfterExecution.run();
+        FetchingQuery.create(props)
+            .executeAndProcess(
+                fetch,
+                rs -> {
+                  if (statementHolder.wasCanceled()) {
+                    log.trace("{} catchup {}, fetch chunk statement was cancelled", req, phase);
+                  } else {
+                    PgFact fact = extractor.mapRow(rs, rows.get());
+                    pipeline.process(Signal.of(fact));
+                    rows.incrementAndGet();
+                  }
+                },
+                callbackAfterExecution::run);
 
-          while (rs.next()) {
-            if (statementHolder.wasCanceled() || rs.isClosed()) {
-              return rows;
-            }
-
-            try {
-              PgFact fact = extractor.mapRow(rs, rows);
-              pipeline.process(Signal.of(fact));
-              rows++;
-            } catch (PSQLException e) {
-              if (statementHolder.wasCanceled()) {
-                log.trace("fetch chunk statement was cancelled", e);
-                return rows;
-              } else {
-                throw e;
-              }
-            }
-          }
-          return rows;
-        }
-      } catch (PSQLException e) {
-        if (statementHolder.wasCanceled()) {
-          log.trace("fetch chunk statement was cancelled", e);
-          return rows;
-        } else {
-          throw e;
-        }
+        return rows.get();
       }
     }
 
