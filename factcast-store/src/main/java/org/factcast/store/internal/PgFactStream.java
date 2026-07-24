@@ -255,7 +255,7 @@ public class PgFactStream {
 
       if (!isConnected()) return;
 
-      // It is essential to provide SCSD to the catchup strategies.
+      // It is essential to provide SCDS to the catchup strategies.
       // The supplier indirection is use in order to lazily create a pool from primary in order not
       // to block a connection during P1 if it was offloaded
       try (PrimaryDataSourceSupplier primary =
