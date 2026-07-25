@@ -315,16 +315,28 @@ public class PgFactStream {
   @VisibleForTesting
   long catchupPhaseOne(@NonNull SingleConnectionDataSource dataSourceToUseForP1) {
     HighWaterMark hwmForPhase1 = hwmFetcher.highWaterMark(dataSourceToUseForP1);
-    pgCatchupFactory
-        .create(
-            request,
-            pipeline,
-            serial,
-            statementHolder,
-            dataSourceToUseForP1,
-            PgCatchupFactory.Phase.PHASE_1)
-        .run();
-    return hwmForPhase1.targetSer();
+
+    long from = serial.get();
+    if (hwmForPhase1.targetSer() <= from) {
+      // it does not make any sense to try to query for data we know is not there.
+      // this may happen a lot, if the offload datasource has a considerable lag.
+      return from;
+    } else {
+
+      pgCatchupFactory
+          .create(
+              request,
+              pipeline,
+              serial,
+              statementHolder,
+              dataSourceToUseForP1,
+              PgCatchupFactory.Phase.PHASE_1)
+          .run();
+
+      // serial might be higher than hwm, because of concurrent inserts, but it also may be much smaller
+      // in which case, we want to continue from hwm, to not do unnecessary work
+      return Math.max(serial.get(),hwmForPhase1.targetSer());
+    }
   }
 
   @VisibleForTesting
