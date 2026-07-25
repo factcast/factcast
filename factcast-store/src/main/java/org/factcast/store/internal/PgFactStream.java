@@ -333,9 +333,10 @@ public class PgFactStream {
               PgCatchupFactory.Phase.PHASE_1)
           .run();
 
-      // serial might be higher than hwm, because of concurrent inserts, but it also may be much smaller
+      // serial might be higher than hwm, because of concurrent inserts, but it also may be much
+      // smaller
       // in which case, we want to continue from hwm, to not do unnecessary work
-      return Math.max(serial.get(),hwmForPhase1.targetSer());
+      return Math.max(serial.get(), hwmForPhase1.targetSer());
     }
   }
 
