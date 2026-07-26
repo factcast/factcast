@@ -100,8 +100,9 @@ class PgListenerIntegrationTest {
 
       @Override
       public void recordEvent(StoreNotification e) {
-        if (e instanceof FactInsertionNotification fin && fin.type() != null &&types.add(fin.type()))
-          super.recordEvent(e);
+        if (e instanceof FactInsertionNotification fin
+            && fin.type() != null
+            && types.add(fin.type())) super.recordEvent(e);
       }
     }
   }
