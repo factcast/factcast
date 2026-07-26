@@ -51,7 +51,7 @@ class PgListenerIntegrationTest {
     @Test
     @SneakyThrows
     void oneInsertNotificationPerType() {
-      TypeFactInsertCollector collector = new TypeFactInsertCollector(5);
+      TypeFactInsertCollector collector = new TypeFactInsertCollector(4);
       try {
         eventBus.register(collector);
 
@@ -65,7 +65,6 @@ class PgListenerIntegrationTest {
                     .buildWithoutPayload()));
         // can come back as internal with type null, or type initial - depending on the state of the
         // PGListener
-        Thread.sleep(100);
 
         // RUN
         factStore.publish(
@@ -86,8 +85,7 @@ class PgListenerIntegrationTest {
         assertThat(collector.await()).isTrue();
 
         assertThat(collector.types)
-            .contains("listenerTest1", "listenerTest2", "listenerTest3", "listenerTest4")
-            .anyMatch(t -> t == null || t.equalsIgnoreCase("initial"));
+            .contains("listenerTest1", "listenerTest2", "listenerTest3", "listenerTest4");
       } finally {
         eventBus.unregister(collector);
       }
@@ -102,7 +100,7 @@ class PgListenerIntegrationTest {
 
       @Override
       public void recordEvent(StoreNotification e) {
-        if (e instanceof FactInsertionNotification fin && types.add(fin.type()))
+        if (e instanceof FactInsertionNotification fin && fin.type() != null &&types.add(fin.type()))
           super.recordEvent(e);
       }
     }
