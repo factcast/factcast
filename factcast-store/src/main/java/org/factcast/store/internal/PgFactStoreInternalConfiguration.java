@@ -38,6 +38,7 @@ import org.factcast.store.internal.check.IndexCheck;
 import org.factcast.store.internal.filter.blacklist.*;
 import org.factcast.store.internal.listen.*;
 import org.factcast.store.internal.lock.*;
+import org.factcast.store.internal.logsuppression.*;
 import org.factcast.store.internal.pipeline.ServerPipelineFactory;
 import org.factcast.store.internal.query.*;
 import org.factcast.store.internal.tail.PGTailIndexingConfiguration;
@@ -148,7 +149,8 @@ public class PgFactStoreInternalConfiguration {
       HighWaterMarkFetcher hwmFetcher,
       PgStoreTelemetry telemetry,
       ServerPipelineFactory pipelineFactory,
-      PgMetrics metrics) {
+      PgMetrics metrics,
+      LogSuppression logsup) {
     return new PgSubscriptionFactory(
         connectionSupplier,
         eventBus,
@@ -158,7 +160,8 @@ public class PgFactStoreInternalConfiguration {
         hwmFetcher,
         pipelineFactory,
         metrics,
-        telemetry);
+        telemetry,
+        logsup);
   }
 
   @Bean
@@ -330,5 +333,19 @@ public class PgFactStoreInternalConfiguration {
       StoreConfigurationProperties props,
       PgMetrics metrics) {
     return new NudgeNotificationHandler(bus, jdbcTemplate, props, metrics);
+  }
+
+  @Bean
+  public LogSuppression logSuppression(StoreConfigurationProperties props) {
+    LogSuppressionProperties p = props.getLogSuppression();
+    if (p.isEnabled()) {
+      log.info(
+          "Conditional log suppression below {} during suppressed code paths is enabled (threshold={},"
+              + " sampleRate={})",
+          p.getMinLogLevel(),
+          p.getThreshold(),
+          p.getSampleRate());
+      return new DefaultLogSuppression(p);
+    } else return new NopLogSuppression();
   }
 }

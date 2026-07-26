@@ -33,9 +33,9 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.*;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.catchup.*;
-import org.factcast.store.internal.filter.FromScratchCatchupLogSuppressingTurboFilter;
 import org.factcast.store.internal.listen.ConnectionModifier;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
+import org.factcast.store.internal.logsuppression.LogSuppression;
 import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.pipeline.Signal;
 import org.factcast.store.internal.query.CurrentStatementHolder;
@@ -66,6 +66,8 @@ public class PgFactStream {
 
   @Getter(AccessLevel.PROTECTED)
   final SubscriptionRequestTO request;
+
+  final LogSuppression logSuppression;
 
   QueryExecutor queryExecutor;
 
@@ -209,10 +211,7 @@ public class PgFactStream {
 
   @VisibleForTesting
   void catchup(long highWaterMarkSerial, SingleConnectionDataSource ds) {
-    if (serial.get() <= 0 && props.getFromScratchCatchupMinLogLevel() != null) {
-      FromScratchCatchupLogSuppressingTurboFilter.beginCatchup(request.debugInfo());
-    }
-    try {
+    try (var suppression = logSuppression.forCatchup(request)) {
       if (isConnected()) {
         pgCatchupFactory
             .create(request, pipeline, serial, statementHolder, ds, PgCatchupFactory.Phase.PHASE_1)
@@ -228,8 +227,6 @@ public class PgFactStream {
         pgCatchup.fastForward(highWaterMarkSerial);
         pgCatchup.run();
       }
-    } finally {
-      FromScratchCatchupLogSuppressingTurboFilter.endCatchup();
     }
   }
 
