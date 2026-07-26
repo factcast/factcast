@@ -135,7 +135,7 @@ public class DefaultLogSuppression extends AbstractLifecycleBean implements LogS
               return FilterReply.DENY;
             } else {
               // we're below or equal threshold
-              if (count == threshold && context!=null) {
+              if (count == threshold && context != null) {
                 addInfo(
                     "Suppression '"
                         + suppressionId
