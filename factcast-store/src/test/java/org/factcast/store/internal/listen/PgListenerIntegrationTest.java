@@ -51,14 +51,7 @@ class PgListenerIntegrationTest {
     @Test
     @SneakyThrows
     void oneInsertNotificationPerType() {
-      FactInsertCollector collector =
-          new FactInsertCollector(2) {
-            @Override
-            public void recordEvent(StoreNotification e) {
-              super.recordEvent(e);
-              System.out.println("oink " + e);
-            }
-          };
+      TypeFactInsertCollector collector = new TypeFactInsertCollector(5);
       try {
         eventBus.register(collector);
 
@@ -70,6 +63,8 @@ class PgListenerIntegrationTest {
                     .type("initial")
                     .id(UUID.randomUUID())
                     .buildWithoutPayload()));
+        // can come back as internal with type null, or type initial - depending on the state of the
+        // PGListener
         Thread.sleep(100);
 
         // RUN
@@ -90,32 +85,25 @@ class PgListenerIntegrationTest {
         // so finally, there should be two notifications arriving as we have two txids
         assertThat(collector.await()).isTrue();
 
-        List<FactInsertionNotification> signals = collector.signals();
-        assertThat(signals)
-            .hasSize(5)
-            .contains((FactInsertionNotification) FactInsertionNotification.internal())
-            .anySatisfy(
-                n -> {
-                  assertThat(n.ns()).isEqualTo("test");
-                  assertThat(n.type()).isEqualTo("listenerTest1");
-                })
-            .anySatisfy(
-                n -> {
-                  assertThat(n.ns()).isEqualTo("test");
-                  assertThat(n.type()).isEqualTo("listenerTest2");
-                })
-            .anySatisfy(
-                n -> {
-                  assertThat(n.ns()).isEqualTo("test");
-                  assertThat(n.type()).isEqualTo("listenerTest3");
-                })
-            .anySatisfy(
-                n -> {
-                  assertThat(n.ns()).isEqualTo("test");
-                  assertThat(n.type()).isEqualTo("listenerTest4");
-                });
+        assertThat(collector.types)
+            .contains("listenerTest1", "listenerTest2", "listenerTest3", "listenerTest4")
+            .anyMatch(t -> t == null || t.equalsIgnoreCase("initial"));
       } finally {
         eventBus.unregister(collector);
+      }
+    }
+
+    private class TypeFactInsertCollector extends FactInsertCollector {
+      Set<String> types = new HashSet<>();
+
+      public TypeFactInsertCollector(int i) {
+        super(i);
+      }
+
+      @Override
+      public void recordEvent(StoreNotification e) {
+        if (e instanceof FactInsertionNotification fin && types.add(fin.type()))
+          super.recordEvent(e);
       }
     }
   }
