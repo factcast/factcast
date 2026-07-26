@@ -25,7 +25,7 @@ All nodes in this scenario need full read-write access to the factstore database
 
 As discussed in [UI deployment options](../UI/Setup/deployment-options.md), you might come across the wish to have
 instances, that - while still having read-write access to the database - disallow any write.
-This is achieved by setting `factcast.store.readOnlyModeEnabled=true`
+This is achieved by setting `factcast.store.read-only-mode-enabled=true`
 
 ### Extra read-only instance based on read replica
 
@@ -34,7 +34,7 @@ also make sense to not attach it to the main postgres instance, but to a read-re
 This ensures that load created by clients of this instance cannot interfere with the production system.
 
 Due to the way the postgres based FactStore communicates with the database (LISTEN), this cannot be achieved by
-only setting the `factcast.store.readOnlyModeEnabled=true`, because `LISTEN` is not allowed on read replicas.
+only setting the `factcast.store.read-only-mode-enabled=true`, because `LISTEN` is not allowed on read replicas.
 
 In order to substitute for this mechanism, there is an alternative channel where those notifications can be
 communicated. One node takes the role of the **emitter**, the instance(s) based on the
