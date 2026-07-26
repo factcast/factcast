@@ -50,30 +50,50 @@ class PgListenerIntegrationTest {
 
     @Test
     @SneakyThrows
-    void oneInsertNotificationPerTransaction() {
-      FactInsertCollector collector = new FactInsertCollector(2);
+    void oneInsertNotificationPerType() {
+      FactInsertCollector collector =
+          new FactInsertCollector(2) {
+            @Override
+            public void recordEvent(StoreNotification e) {
+              super.recordEvent(e);
+              System.out.println("oink " + e);
+            }
+          };
       try {
         eventBus.register(collector);
 
-        UUID id1 = UUID.randomUUID();
-        UUID id2 = UUID.randomUUID();
-        UUID id3 = UUID.randomUUID();
+        // this will trigger the first general FIN
+        factStore.publish(
+            Collections.singletonList(
+                Fact.builder()
+                    .ns("test")
+                    .type("initial")
+                    .id(UUID.randomUUID())
+                    .buildWithoutPayload()));
+        Thread.sleep(100);
 
         // RUN
-        // publish together, should have same tx id
         factStore.publish(
             List.of(
-                Fact.builder().ns("test").type("listenerTest1").id(id1).buildWithoutPayload(),
-                Fact.builder().ns("test").type("listenerTest1").id(id2).buildWithoutPayload()));
-        // separate, should have another tx id
-        factStore.publish(
-            List.of(Fact.builder().ns("test").type("listenerTest2").id(id3).buildWithoutPayload()));
+                Fact.builder().ns("test").type("listenerTest1").buildWithoutPayload(),
+                Fact.builder().ns("test").type("listenerTest2").buildWithoutPayload()));
 
+        factStore.publish(
+            List.of(
+                Fact.builder().ns("test").type("listenerTest3").buildWithoutPayload(),
+                Fact.builder().ns("test").type("listenerTest2").buildWithoutPayload()));
+        // the next should be pulled
+        Thread.sleep(75);
+        factStore.publish(
+            List.of(Fact.builder().ns("test").type("listenerTest4").buildWithoutPayload()));
+        //
         // so finally, there should be two notifications arriving as we have two txids
         assertThat(collector.await()).isTrue();
 
-        assertThat(collector.signals())
-            .hasSize(2)
+        List<FactInsertionNotification> signals = collector.signals();
+        assertThat(signals)
+            .hasSize(5)
+            .contains((FactInsertionNotification) FactInsertionNotification.internal())
             .anySatisfy(
                 n -> {
                   assertThat(n.ns()).isEqualTo("test");
@@ -83,6 +103,16 @@ class PgListenerIntegrationTest {
                 n -> {
                   assertThat(n.ns()).isEqualTo("test");
                   assertThat(n.type()).isEqualTo("listenerTest2");
+                })
+            .anySatisfy(
+                n -> {
+                  assertThat(n.ns()).isEqualTo("test");
+                  assertThat(n.type()).isEqualTo("listenerTest3");
+                })
+            .anySatisfy(
+                n -> {
+                  assertThat(n.ns()).isEqualTo("test");
+                  assertThat(n.type()).isEqualTo("listenerTest4");
                 });
       } finally {
         eventBus.unregister(collector);
