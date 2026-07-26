@@ -30,16 +30,6 @@ class LogSuppressionTest {
   class WithMinLevelDebugAndNoThreshold {
     DefaultLogSuppression uut = new DefaultLogSuppression(Level.DEBUG, 0, 0);
 
-    @BeforeEach
-    void setUp() {
-      uut.start();
-    }
-
-    @AfterEach
-    void tearDown() {
-      uut.stop();
-    }
-
     @Nested
     class WhenSuppressionIsActive {
 
@@ -72,16 +62,6 @@ class LogSuppressionTest {
     class WhenMdcIsNotSet {
       DefaultLogSuppression uut = new DefaultLogSuppression(Level.INFO, 0, 0);
 
-      @BeforeEach
-      void setUp() {
-        uut.start();
-      }
-
-      @AfterEach
-      void tearDown() {
-        uut.stop();
-      }
-
       @Test
       void allowsTrace() {
         assertThat(uut.filter().decide(null, null, Level.TRACE, null, null, null))
@@ -100,16 +80,6 @@ class LogSuppressionTest {
   class WithMinLevelInfoAndNoThreshold {
 
     DefaultLogSuppression uut = new DefaultLogSuppression(Level.INFO, 0, 0);
-
-    @BeforeEach
-    void setUp() {
-      uut.start();
-    }
-
-    @AfterEach
-    void tearDown() {
-      uut.stop();
-    }
 
     @Nested
     class WhenSuppressionIsActive {
@@ -152,16 +122,6 @@ class LogSuppressionTest {
   class WithThreshold {
 
     DefaultLogSuppression uut = new DefaultLogSuppression(Level.DEBUG, 3, 0);
-
-    @BeforeEach
-    void setUp() {
-      uut.start();
-    }
-
-    @AfterEach
-    void tearDown() {
-      uut.stop();
-    }
 
     @Test
     void allowsEventsUpToThreshold() {
@@ -208,16 +168,6 @@ class LogSuppressionTest {
 
     // threshold=2, sampleRate=5: allow first 2 events, then every 5th
     final DefaultLogSuppression uut = new DefaultLogSuppression(Level.DEBUG, 2, 5);
-
-    @BeforeEach
-    void setUp() {
-      uut.start();
-    }
-
-    @AfterEach
-    void tearDown() {
-      uut.stop();
-    }
 
     @Test
     void allowsEveryNthEventAfterThreshold() {
@@ -271,16 +221,6 @@ class LogSuppressionTest {
   @Nested
   class Lifecycle {
     final DefaultLogSuppression uut = new DefaultLogSuppression(Level.DEBUG, 2, 5);
-
-    @BeforeEach
-    void setUp() {
-      uut.start();
-    }
-
-    @AfterEach
-    void tearDown() {
-      uut.stop();
-    }
 
     @Test
     void suppressionForSetsMdc() {

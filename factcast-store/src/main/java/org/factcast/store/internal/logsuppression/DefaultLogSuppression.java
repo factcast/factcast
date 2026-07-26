@@ -65,12 +65,13 @@ public class DefaultLogSuppression extends AbstractLifecycleBean implements LogS
     this.minLevel = minLevel;
     this.threshold = threshold;
     this.sampleRate = sampleRate;
+
+    filter = new Filter();
+    filter.setName("factcast-log-suppression");
   }
 
   @Override
   protected void onStart() {
-    filter = new Filter();
-    filter.setName("factcast-log-suppression");
     filter.install();
   }
 
@@ -79,7 +80,6 @@ public class DefaultLogSuppression extends AbstractLifecycleBean implements LogS
     if (filter != null) {
       filter.uninstall();
     }
-    filter = null;
   }
 
   /**
@@ -110,8 +110,7 @@ public class DefaultLogSuppression extends AbstractLifecycleBean implements LogS
 
   @VisibleForTesting
   Filter filter() {
-    if (running) return filter;
-    else throw new IllegalStateException("Log suppression not running");
+    return filter;
   }
 
   public class Filter extends TurboFilter {
@@ -136,7 +135,7 @@ public class DefaultLogSuppression extends AbstractLifecycleBean implements LogS
               return FilterReply.DENY;
             } else {
               // we're below or equal threshold
-              if (count == threshold) {
+              if (count == threshold && context!=null) {
                 addInfo(
                     "Suppression '"
                         + suppressionId
