@@ -47,6 +47,7 @@ class PgListenerIntegrationTest {
 
   @Nested
   class FactInsertTrigger {
+    String NS = "NS";
 
     @Test
     @SneakyThrows
@@ -59,27 +60,31 @@ class PgListenerIntegrationTest {
         factStore.publish(
             Collections.singletonList(
                 Fact.builder()
-                    .ns("test")
+                    .ns("initial")
                     .type("initial")
                     .id(UUID.randomUUID())
                     .buildWithoutPayload()));
         // can come back as internal with type null, or type initial - depending on the state of the
         // PGListener
 
+        // we want to be sure, that the pglistener recieved to notification and set its current serial, before we go on.
+        // Otherwise we would still notify all subscribers, but might not see swallow explicit notifications for inserts to come.
+
+        Thread.sleep(50);
+
         // RUN
         factStore.publish(
             List.of(
-                Fact.builder().ns("test").type("listenerTest1").buildWithoutPayload(),
-                Fact.builder().ns("test").type("listenerTest2").buildWithoutPayload()));
+                Fact.builder().ns(NS).type("listenerTest1").buildWithoutPayload(),
+                Fact.builder().ns(NS).type("listenerTest2").buildWithoutPayload()));
 
         factStore.publish(
             List.of(
-                Fact.builder().ns("test").type("listenerTest3").buildWithoutPayload(),
-                Fact.builder().ns("test").type("listenerTest2").buildWithoutPayload()));
+                Fact.builder().ns(NS).type("listenerTest3").buildWithoutPayload(),
+                Fact.builder().ns(NS).type("listenerTest2").buildWithoutPayload()));
         // the next should be pulled
-        Thread.sleep(75);
         factStore.publish(
-            List.of(Fact.builder().ns("test").type("listenerTest4").buildWithoutPayload()));
+            List.of(Fact.builder().ns(NS).type("listenerTest4").buildWithoutPayload()));
         //
         // so finally, there should be two notifications arriving as we have two txids
         assertThat(collector.await()).isTrue();
@@ -100,8 +105,10 @@ class PgListenerIntegrationTest {
 
       @Override
       public void recordEvent(StoreNotification e) {
-        if (e instanceof FactInsertionNotification fin && fin.type() != null &&types.add(fin.type()))
-          super.recordEvent(e);
+        System.out.println("got " + e);
+        if (e instanceof FactInsertionNotification fin
+            && NS.equals(fin.ns())
+            && types.add(fin.type())) super.recordEvent(e);
       }
     }
   }
