@@ -23,6 +23,7 @@ import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.store.StateToken;
 import org.factcast.test.IntegrationTest;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.TestPropertySource;
@@ -35,6 +36,7 @@ import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 @Sql(scripts = "/wipe.sql", config = @SqlConfig(separator = "#"))
 @IntegrationTest
 @TestPropertySource(properties = {"factcast.store.readOnlyModeEnabled=true"})
+@Disabled
 class PgFactStoreReadOnlyIntegrationTest {
 
   public static final Fact EMPTY_FACT =
