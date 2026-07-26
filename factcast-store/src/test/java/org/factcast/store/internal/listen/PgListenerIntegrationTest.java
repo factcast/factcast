@@ -105,7 +105,6 @@ class PgListenerIntegrationTest {
 
       @Override
       public void recordEvent(StoreNotification e) {
-        System.out.println("got " + e);
         if (e instanceof FactInsertionNotification fin
             && NS.equals(fin.ns())
             && types.add(fin.type())) super.recordEvent(e);
