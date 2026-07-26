@@ -48,8 +48,7 @@ public class DefaultLogSuppression extends AbstractLifecycleBean implements LogS
   private final Level minLevel;
   private final int threshold;
   private final int sampleRate;
-  private Filter filter = null;
-  private boolean running;
+  private final Filter filter;
 
   public DefaultLogSuppression(@NonNull LogSuppressionProperties suppressionProps) {
     this(
