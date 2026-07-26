@@ -16,7 +16,6 @@
 package org.factcast.store;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
 
 import ch.qos.logback.classic.Level;
 import org.junit.jupiter.api.Test;

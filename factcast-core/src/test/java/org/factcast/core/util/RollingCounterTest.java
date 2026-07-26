@@ -43,5 +43,4 @@ class RollingCounterTest {
     // Should wrap to initial value (Long.MAX_VALUE - 1)
     assertThat(counter.getAndIncrement()).isEqualTo(Long.MAX_VALUE - 1);
   }
-
 }

@@ -42,7 +42,7 @@ class StoreConfigurationPropertiesTest {
   void testLogSuppressionField() {
     StoreConfigurationProperties props = new StoreConfigurationProperties();
     assertThat(props.getLogSuppression()).isNotNull();
-    
+
     LogSuppressionProperties logProps = new LogSuppressionProperties();
     props.setLogSuppression(logProps);
     assertThat(props.getLogSuppression()).isSameAs(logProps);
