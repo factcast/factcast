@@ -47,12 +47,20 @@ class PgListenerIntegrationTest {
 
   @Nested
   class FactInsertTrigger {
-    String NS = "NS";
+    String ns = "someNamespace";
 
     @Test
     @SneakyThrows
-    void oneInsertNotificationPerType() {
-      TypeFactInsertCollector collector = new TypeFactInsertCollector(4);
+    void atLeastOneInsertNotificationPerType() {
+      String t1 = "atLeastOneInsertNotificationPerType-1";
+      String t2 = "atLeastOneInsertNotificationPerType-2";
+      String t3 = "atLeastOneInsertNotificationPerType-3";
+      String t4 = "atLeastOneInsertNotificationPerType-4";
+      String t5 = "atLeastOneInsertNotificationPerType-5";
+      String t6 = "atLeastOneInsertNotificationPerType-6";
+
+      List<String> expectedTypes = List.of(t1, t2, t3, t4, t5, t6);
+      TypeFactInsertCollector collector = new TypeFactInsertCollector(expectedTypes.size());
       try {
         eventBus.register(collector);
 
@@ -72,27 +80,40 @@ class PgListenerIntegrationTest {
         // Otherwise we would still notify all subscribers, but might not see swallow explicit
         // notifications for inserts to come.
 
-        Thread.sleep(50);
+        collector.awaitInitalRetrieval();
 
         // RUN
         factStore.publish(
             List.of(
-                Fact.builder().ns(NS).type("listenerTest1").buildWithoutPayload(),
-                Fact.builder().ns(NS).type("listenerTest2").buildWithoutPayload()));
+                Fact.builder().ns(ns).type(t1).buildWithoutPayload(),
+                Fact.builder().ns(ns).type(t2).buildWithoutPayload()));
 
         factStore.publish(
             List.of(
-                Fact.builder().ns(NS).type("listenerTest3").buildWithoutPayload(),
-                Fact.builder().ns(NS).type("listenerTest2").buildWithoutPayload()));
+                Fact.builder().ns(ns).type(t3).buildWithoutPayload(),
+                Fact.builder().ns(ns).type(t2).buildWithoutPayload()));
         // the next should be pulled
+        factStore.publish(List.of(Fact.builder().ns(ns).type(t4).buildWithoutPayload()));
+
         factStore.publish(
-            List.of(Fact.builder().ns(NS).type("listenerTest4").buildWithoutPayload()));
+            List.of(
+                Fact.builder().ns(ns).type(t5).buildWithoutPayload(),
+                Fact.builder().ns(ns).type(t5).buildWithoutPayload(),
+                Fact.builder().ns(ns).type(t5).buildWithoutPayload(),
+                Fact.builder().ns(ns).type(t5).buildWithoutPayload(),
+                Fact.builder().ns(ns).type(t5).buildWithoutPayload(),
+                Fact.builder().ns(ns).type(t5).buildWithoutPayload(),
+                Fact.builder().ns(ns).type(t5).buildWithoutPayload(),
+                Fact.builder().ns(ns).type(t6).buildWithoutPayload(),
+                Fact.builder().ns(ns).type(t5).buildWithoutPayload(),
+                Fact.builder().ns(ns).type(t5).buildWithoutPayload(),
+                Fact.builder().ns(ns).type(t5).buildWithoutPayload(),
+                Fact.builder().ns(ns).type(t5).buildWithoutPayload()));
         //
         // so finally, there should be two notifications arriving as we have two txids
         assertThat(collector.await()).isTrue();
 
-        assertThat(collector.types)
-            .contains("listenerTest1", "listenerTest2", "listenerTest3", "listenerTest4");
+        assertThat(collector.types).containsAll(expectedTypes);
       } finally {
         eventBus.unregister(collector);
       }
@@ -100,6 +121,7 @@ class PgListenerIntegrationTest {
 
     private class TypeFactInsertCollector extends FactInsertCollector {
       Set<String> types = new HashSet<>();
+      CountDownLatch initial = new CountDownLatch(1);
 
       public TypeFactInsertCollector(int i) {
         super(i);
@@ -107,9 +129,18 @@ class PgListenerIntegrationTest {
 
       @Override
       public void recordEvent(StoreNotification e) {
-        if (e instanceof FactInsertionNotification fin
-            && NS.equals(fin.ns())
-            && types.add(fin.type())) super.recordEvent(e);
+        if (e instanceof FactInsertionNotification fin) {
+          initial.countDown();
+          if (ns.equals(fin.ns()) && types.add(fin.type())) super.recordEvent(e);
+        }
+      }
+
+      public void awaitInitalRetrieval() {
+        try {
+          initial.await(3, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+          throw new RuntimeException(e);
+        }
       }
     }
   }
