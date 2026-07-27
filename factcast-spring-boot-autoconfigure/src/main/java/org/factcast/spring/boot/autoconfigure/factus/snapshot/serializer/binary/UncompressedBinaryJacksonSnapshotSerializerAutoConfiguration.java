@@ -38,7 +38,8 @@ public class UncompressedBinaryJacksonSnapshotSerializerAutoConfiguration {
   public SnapshotSerializer snapshotSerializer(
       ObjectProvider<BinaryJacksonSnapshotSerializerCustomizer> customizers) {
     return new UncompressedBinaryJacksonSnapshotSerializer(
-        objectMapper -> customizers.forEach(customizer -> customizer.accept(objectMapper)));
+        objectMapper ->
+            customizers.orderedStream().forEach(customizer -> customizer.accept(objectMapper)));
   }
 
   @Bean
