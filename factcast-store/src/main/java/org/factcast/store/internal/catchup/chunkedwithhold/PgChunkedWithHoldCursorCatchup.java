@@ -269,20 +269,27 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
             chunkSize(),
             fetchSql);
 
-        FetchingQuery.create(props)
-            .executeAndProcess(
-                fetch,
-                rs -> {
-                  if (statementHolder.wasCanceled()) {
-                    log.trace("{} catchup {}, fetch chunk statement was cancelled", req, phase);
-                  } else {
-                    PgFact fact = extractor.mapRow(rs, rows.get());
-                    pipeline.process(Signal.of(fact));
-                    rows.incrementAndGet();
-                  }
-                },
-                callbackAfterExecution::run);
-
+        try {
+          FetchingQuery.create(props)
+              .executeAndProcess(
+                  fetch,
+                  rs -> {
+                    if (statementHolder.wasCanceled()) {
+                      log.trace("{} catchup {}, fetch chunk statement was cancelled", req, phase);
+                    } else {
+                      PgFact fact = extractor.mapRow(rs, rows.get());
+                      pipeline.process(Signal.of(fact));
+                      rows.incrementAndGet();
+                    }
+                  },
+                  callbackAfterExecution::run);
+        } catch (SQLException e) {
+          if (statementHolder.wasCanceled()) {
+            log.trace("{} catchup {}, fetch chunk was cancelled", req, phase, e);
+            return rows.get();
+          }
+          throw e;
+        }
         return rows.get();
       }
     }
