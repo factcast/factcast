@@ -38,7 +38,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.*;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
-import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class PgChunkedWithHoldCursorCatchupTest {
@@ -56,12 +55,13 @@ class PgChunkedWithHoldCursorCatchupTest {
   PgChunkedWithHoldCursorCatchup underTest;
 
   @BeforeEach
+  @SneakyThrows
   void setup() {
+    when(ds.getConnection()).thenReturn(connection);
     underTest =
         Mockito.spy(
             new PgChunkedWithHoldCursorCatchup(
                 props, metrics, req, pipeline, serial, statementHolder, ds, phase));
-    ReflectionTestUtils.setField(underTest, "connection", connection);
   }
 
   @Nested
@@ -178,12 +178,11 @@ class PgChunkedWithHoldCursorCatchupTest {
     @Mock PgQueryBuilder queryBuilder;
     @Mock PgFactExtractor extractor;
     @Mock PreparedStatementSetter pss;
+    @Mock ResultSetMetaData rsMetaData;
 
     @BeforeEach
     @SneakyThrows
-    void setupCursor() {
-      lenient().when(ds.getConnection()).thenReturn(connection);
-    }
+    void setupCursor() {}
 
     @Test
     @SneakyThrows
@@ -218,25 +217,28 @@ class PgChunkedWithHoldCursorCatchupTest {
     @Test
     @SneakyThrows
     void testFetchChunk() {
-      when(connection.createStatement()).thenReturn(statement);
-      when(statement.executeQuery(anyString())).thenReturn(rs);
+      when(connection.prepareStatement(anyString())).thenReturn(ps);
+      when(ps.executeQuery()).thenReturn(rs);
       when(rs.next()).thenReturn(false);
 
       PgChunkedWithHoldCursorCatchup.Cursor cursor = underTest.new Cursor(1000);
       int rows = cursor.fetchChunk(extractor);
 
       assertThat(rows).isEqualTo(0);
-      verify(statement).setFetchSize(anyInt());
-      verify(statementHolder).statement(statement);
+      verify(ps).setFetchSize(anyInt());
+      verify(statementHolder).statement(ps);
     }
 
     @Test
     @SneakyThrows
-    void testFetchChunk_MultipleRows() {
-      when(connection.createStatement()).thenReturn(statement);
-      when(statement.executeQuery(anyString())).thenReturn(rs);
+    void testFetchChunk_MultipleRows_sync() {
+      when(connection.prepareStatement(anyString())).thenReturn(ps);
+      when(ps.executeQuery()).thenReturn(rs);
       when(rs.next()).thenReturn(true, true, false); // 2 rows
+
       when(extractor.mapRow(any(), anyInt())).thenReturn(mock(PgFact.class));
+
+      when(props.isCatchupAsyncFetch()).thenReturn(false);
 
       PgChunkedWithHoldCursorCatchup.Cursor cursor = underTest.new Cursor(1000);
       int rows = cursor.fetchChunk(extractor);
@@ -247,26 +249,77 @@ class PgChunkedWithHoldCursorCatchupTest {
 
     @Test
     @SneakyThrows
-    void testFetchChunk_Canceled() {
-      when(connection.createStatement()).thenReturn(statement);
-      when(statement.executeQuery(anyString())).thenReturn(rs);
-      when(rs.next()).thenReturn(true, true, false);
-      when(statementHolder.wasCanceled()).thenReturn(false, true);
+    void testFetchChunk_MultipleRows_async_one_fetch() {
+      when(connection.prepareStatement(anyString())).thenReturn(ps);
+      when(connection.getAutoCommit()).thenReturn(false);
+
+      when(ps.executeQuery()).thenReturn(rs);
+      when(ps.getConnection()).thenReturn(connection);
+      when(ps.getFetchSize()).thenReturn(12);
+      when(rs.getMetaData()).thenReturn(rsMetaData);
+      when(rsMetaData.getColumnCount()).thenReturn(3);
+      when(rs.isClosed()).thenReturn(false);
+      when(rs.getFetchSize()).thenReturn(1000);
+      when(rs.next()).thenReturn(true, true, false); // 2 rows
       when(extractor.mapRow(any(), anyInt())).thenReturn(mock(PgFact.class));
+
+      when(props.isCatchupAsyncFetch()).thenReturn(true);
 
       PgChunkedWithHoldCursorCatchup.Cursor cursor = underTest.new Cursor(1000);
       int rows = cursor.fetchChunk(extractor);
 
-      assertThat(rows).isEqualTo(1);
+      assertThat(rows).isEqualTo(2);
+      verify(pipeline, times(2)).process(any());
+    }
+
+    @Test
+    @SneakyThrows
+    void testFetchChunk_MultipleRows_async_many_fetches() {
+      when(connection.prepareStatement(anyString())).thenReturn(ps);
+      when(connection.getAutoCommit()).thenReturn(false);
+
+      when(ps.executeQuery()).thenReturn(rs);
+      when(ps.getConnection()).thenReturn(connection);
+      when(ps.getFetchSize()).thenReturn(12);
+      when(rs.getMetaData()).thenReturn(rsMetaData);
+      when(rsMetaData.getColumnCount()).thenReturn(3);
+      when(rs.isClosed()).thenReturn(false);
+      when(rs.getFetchSize()).thenReturn(2);
+      when(rs.next())
+          .thenReturn(true, true, true, true, true, true, true, true, true, true, false); // 10 rows
+      when(extractor.mapRow(any(), anyInt())).thenReturn(mock(PgFact.class));
+
+      when(props.isCatchupAsyncFetch()).thenReturn(true);
+
+      PgChunkedWithHoldCursorCatchup.Cursor cursor = underTest.new Cursor(1000);
+      int rows = cursor.fetchChunk(extractor);
+
+      assertThat(rows).isEqualTo(10);
+      verify(pipeline, times(10)).process(any());
+    }
+
+    @Test
+    @SneakyThrows
+    void testFetchChunk_Canceled() {
+      when(connection.prepareStatement(anyString())).thenReturn(ps);
+      when(ps.executeQuery()).thenReturn(rs);
+      when(rs.next()).thenReturn(true);
+      when(ps.isClosed()).thenReturn(false, true);
+      when(extractor.mapRow(any(), anyInt())).thenReturn(mock(PgFact.class));
+
+      PgChunkedWithHoldCursorCatchup.Cursor cursor = underTest.new Cursor(1000);
+
+      assertThat(cursor.fetchChunk(extractor)).isEqualTo(1);
+
       verify(pipeline, times(1)).process(any());
     }
 
     @Test
     @SneakyThrows
     void testFetchChunk_Callback() {
-      when(connection.createStatement()).thenReturn(statement);
-      when(statement.executeQuery(anyString())).thenReturn(rs);
-      when(rs.next()).thenReturn(false);
+      when(connection.prepareStatement(anyString())).thenReturn(ps);
+      when(ps.executeQuery()).thenReturn(rs);
+      lenient().when(rs.next()).thenReturn(false);
 
       PgChunkedWithHoldCursorCatchup.Cursor cursor = underTest.new Cursor(1000);
       Runnable callback = mock(Runnable.class);
