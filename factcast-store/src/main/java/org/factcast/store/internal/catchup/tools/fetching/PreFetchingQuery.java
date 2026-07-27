@@ -30,7 +30,7 @@ public class PreFetchingQuery implements FetchingQuery {
   public int executeAndProcess(
       @NonNull PreparedStatement ps,
       @NonNull RowProcessor rowProcessor,
-      @NonNull CallbackAfterQueryFinished callbackBeforeProcessing)
+      @NonNull CallbackAfterQueryFinished onFinished)
       throws SQLException {
 
     @SuppressWarnings("ReassignedVariable")
@@ -51,12 +51,14 @@ public class PreFetchingQuery implements FetchingQuery {
     // and one waiting.
     ps.setFetchSize(Math.max(1, fetchSize / 2));
 
+    CompletableFuture<Void> producer = null;
+
     try (ps;
         ResultSet resultSet = ps.executeQuery()) {
-      callbackBeforeProcessing.afterQueryFinished();
+      onFinished.afterQueryFinished();
 
       // async producer, terminated by closing the rs
-      CompletableFuture.runAsync(() -> produce(resultSet, q));
+      producer = CompletableFuture.runAsync(() -> produce(resultSet, q));
 
       // sync consumer
       try {
@@ -82,9 +84,23 @@ public class PreFetchingQuery implements FetchingQuery {
       }
       return rows;
     } finally {
-      // as the statement is closed by now, this should unblock a producer, and give it the chance
-      // to terminate
+      // we want to be  extra-sure the resultset is closed, so that clearing the queue will make the
+      // producer terminate.
+      // this is guaranteed by ResultSet.close() being called from the try-with-resources.
+
+      // as the ResultSet is closed by now, this should unblock a producer, and give it the chance
+      // to terminate.
       q.clear();
+
+      // even though it does not help the producer much, we also cancel the future.
+      // note that CFuture says:
+      //
+      //     * @param mayInterruptIfRunning this value has no effect in this
+      //     * implementation because interrupts are not used to control
+      //     * processing.
+      //
+      // so that this is very likely to have no effect.
+      if (producer != null) producer.cancel(true);
     }
   }
 
