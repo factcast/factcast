@@ -15,6 +15,7 @@
  */
 package org.factcast.store.internal;
 
+import com.google.common.annotations.VisibleForTesting;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
@@ -29,9 +30,10 @@ class UnconditionalPublishQueue {
   private final PgFactStore pgFactStore;
   private final int maxBatchSize;
   private final ExecutorService flushingExecutor = Executors.newSingleThreadExecutor();
-  private final AtomicLong serialCounter = new AtomicLong(Long.MIN_VALUE);
+  private final AtomicLong ordinalCounter = new AtomicLong(Long.MIN_VALUE);
 
-  record Publication(long serial, List<? extends Fact> facts, CompletableFuture<Void> completion) {}
+  record Publication(
+      long ordinal, List<? extends Fact> facts, CompletableFuture<Void> completion) {}
 
   // TODO can we dare unbounded deque here? If we use BlockingQueue instead, we'd need to rethink
   // locking
@@ -43,7 +45,7 @@ class UnconditionalPublishQueue {
     // sync makes sure, that the order in the queue is maintained, so that we can early exit
     // flush(ser) based on the ser
     synchronized (queue) {
-      serial.set(serialCounter.incrementAndGet());
+      serial.set(ordinalCounter.incrementAndGet());
       queue.add(new Publication(serial.get(), toPublish, completion));
     }
     flushingExecutor.submit(
@@ -57,8 +59,19 @@ class UnconditionalPublishQueue {
     return completion;
   }
 
-  void flush(long ser) {
-    if ((!queue.isEmpty()) && (queue.peek().serial() <= ser)) {
+  /**
+   * this is not supposed to be called from somewhere else than the flushingExecutor, which in turn
+   * uses a single thread. Otherwise it would not be possible to guarantee that publications not
+   * longer in the queue are already flushed to the store.
+   *
+   * <p>To make this as explicit as possible, we also marked it as synchronized to ensure that only
+   * one thread can execute this method at a time.
+   *
+   * @param ordinal
+   */
+  @VisibleForTesting
+  synchronized void flush(long ordinal) {
+    if ((!queue.isEmpty()) && (queue.peek().ordinal() <= ordinal)) {
       // collect all facts & futures
 
       // This is a trade-off between efficiency and latency. The longer the batch gets,
@@ -78,7 +91,7 @@ class UnconditionalPublishQueue {
         }
       }
 
-      // could still be empty due to concurrent access
+      // could still be empty if some looney publishes empty lists
       if (!pubs.isEmpty()) {
         // try to publish as one
         try {

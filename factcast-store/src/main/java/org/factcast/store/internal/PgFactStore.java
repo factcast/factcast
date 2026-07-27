@@ -120,7 +120,6 @@ public class PgFactStore extends AbstractFactStore {
   }
 
   void publishBatchable(@NonNull List<? extends Fact> factsToPublish) {
-
     if (props.isReadOnlyModeEnabled()) {
       throw new UnsupportedOperationException("Publishing is not allowed in read-only mode");
     }
@@ -143,17 +142,14 @@ public class PgFactStore extends AbstractFactStore {
     if (props.isReadOnlyModeEnabled()) {
       throw new UnsupportedOperationException("Publishing is not allowed in read-only mode");
     }
+    var defensiveCopy = new ArrayList<>(factsToPublish);
 
-    if (props.getPublishBatch().isEnabled()) publishBatchable(factsToPublish);
-    else publishDirectly(factsToPublish);
+    if (props.getPublishBatch().isEnabled()) publishBatchable(defensiveCopy);
+    else publishDirectly(defensiveCopy);
   }
 
   void publishDirectly(@NonNull List<? extends Fact> factsToPublish) {
-    metrics.time(
-        StoreMetrics.OP.PUBLISH,
-        () -> {
-          batchPublish(factsToPublish);
-        });
+    metrics.time(StoreMetrics.OP.PUBLISH, () -> batchPublish(factsToPublish));
   }
 
   @VisibleForTesting
@@ -275,17 +271,19 @@ public class PgFactStore extends AbstractFactStore {
       throw new UnsupportedOperationException("Publishing is not allowed in read-only mode");
     }
 
+    var defensiveCopy = new ArrayList<>(factsToPublish);
+
     if (optionalToken.isEmpty()) {
       // even though this fallback behavior already is present in super, we branch here to avoid
       // double (and unnecessarily exclusive) locking
-      publishBatchable(factsToPublish);
+      publishBatchable(defensiveCopy);
       return true;
     } else
       return metrics.time(
           StoreMetrics.OP.PUBLISH_IF_UNCHANGED,
           () -> {
             lock.acquireExclusiveTXLock();
-            return PgFactStore.super.publishIfUnchanged(factsToPublish, optionalToken);
+            return PgFactStore.super.publishIfUnchanged(defensiveCopy, optionalToken);
           });
   }
 
@@ -337,6 +335,7 @@ public class PgFactStore extends AbstractFactStore {
         });
   }
 
+  @SuppressWarnings("DataFlowIssue")
   @Override
   public long currentTime() {
     return jdbcTemplate.queryForObject(PgConstants.CURRENT_TIME_MILLIS, Long.class);
@@ -372,7 +371,6 @@ public class PgFactStore extends AbstractFactStore {
   @Override
   public long lastSerialBefore(@NonNull LocalDate date) {
     try {
-      @SuppressWarnings("DataFlowIssue")
       // ^ as we know this will return a long and cannot be empty
       long lastSer =
           jdbcTemplate.queryForObject(
@@ -402,6 +400,7 @@ public class PgFactStore extends AbstractFactStore {
     }
   }
 
+  @VisibleForTesting
   void batchPublish(List<? extends Fact> facts) {
     int numberOfFactsToPublish = facts.size();
     log.trace("Inserting {} fact(s)", numberOfFactsToPublish);
