@@ -34,7 +34,8 @@ import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
     classes = {PgTestConfiguration.class, LiquibaseConfigurationForReadOnlyMode.class})
 @Sql(scripts = "/wipe.sql", config = @SqlConfig(separator = "#"))
 @IntegrationTest
-@TestPropertySource(properties = {"factcast.store.readOnlyModeEnabled=true"})
+@TestPropertySource(properties = {"factcast.store.read-only-mode-enabled=true"})
+// @TestPropertySource(properties = {"factcast.store.readOnlyModeEnabled=true"})
 class PgFactStoreReadOnlyIntegrationTest {
 
   public static final Fact EMPTY_FACT =

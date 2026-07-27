@@ -19,12 +19,35 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.*;
+import org.springframework.context.annotation.*;
+import org.springframework.core.env.Environment;
+import org.springframework.core.type.AnnotatedTypeMetadata;
+import org.springframework.lang.NonNull;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE, ElementType.METHOD})
-@ConditionalOnProperty(
-    prefix = StoreConfigurationProperties.PROPERTIES_PREFIX,
-    name = "readOnlyModeEnabled",
-    havingValue = "true")
-public @interface IsReadOnlyEnv {}
+@Conditional(IsReadOnlyEnv.AnyNotation.class)
+public @interface IsReadOnlyEnv {
+  final class AnyNotation extends SpringBootCondition {
+
+    @NonNull
+    @Override
+    public ConditionOutcome getMatchOutcome(
+        ConditionContext context, AnnotatedTypeMetadata metadata) {
+
+      Environment environment = context.getEnvironment();
+      String prefix = StoreConfigurationProperties.PROPERTIES_PREFIX + ".";
+
+      Boolean kebabCase = environment.getProperty(prefix + "read-only-mode-enabled", Boolean.class);
+
+      Boolean camelCase = environment.getProperty(prefix + "readOnlyModeEnabled", Boolean.class);
+
+      boolean readOnly = Boolean.TRUE.equals(kebabCase) || Boolean.TRUE.equals(camelCase);
+
+      return readOnly
+          ? ConditionOutcome.match("Read-only mode is enabled")
+          : ConditionOutcome.noMatch("Read-only mode is not enabled");
+    }
+  }
+}
