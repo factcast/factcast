@@ -67,8 +67,10 @@ class PgListenerIntegrationTest {
         // can come back as internal with type null, or type initial - depending on the state of the
         // PGListener
 
-        // we want to be sure, that the pglistener recieved to notification and set its current serial, before we go on.
-        // Otherwise we would still notify all subscribers, but might not see swallow explicit notifications for inserts to come.
+        // we want to be sure, that the pglistener recieved to notification and set its current
+        // serial, before we go on.
+        // Otherwise we would still notify all subscribers, but might not see swallow explicit
+        // notifications for inserts to come.
 
         Thread.sleep(50);
 
