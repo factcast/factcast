@@ -155,7 +155,7 @@ CREATE INDEX IF NOT EXISTS factcast_snapshot_last_accessed_index ON factcast_sna
 ```
 
 If your table name differs from the default one, please provide it via the new application property with the name:
-`factcast.snapshot.jdbc.snapshotAccessTableName`.
+`factcast.snapshot.jdbc.snapshot-access-table-name`.
 
 #### Cleanup
 
@@ -183,7 +183,7 @@ database before migrating to FactCast 0.8.0.
 Please note that, even though the max bulk size of a transaction in Factus can be configured per projection (by
 implementing maxBatchSizePerTransaction or by annotation), the maximum size of a transaction bulk is ultimately limited
 by the value of
-`factcast.grpc.client.maxInboundMessageSize`, which defaults to 3.5MB and can be configured up to 32MB max.
+`factcast.grpc.client.max-inbound-message-size`, which defaults to 3.5MB and can be configured up to 32MB max.
 
 ### @RedisTransactional
 
@@ -246,7 +246,7 @@ a simpler
 codec.
 
 The migration to new snapshots happens automatically. Old snapshots will remain in Redis for the duration specified by
-the `factcast.redis.deleteSnapshotStaleForDays` property (default: 90 days), even though they are no longer read. This
+the `factcast.redis.delete-snapshot-stale-for-days` property (default: 90 days), even though they are no longer read. This
 has two implications:
 
 1. You can roll back to the previous version of FactCast without losing any snapshots for a certain number of days.
