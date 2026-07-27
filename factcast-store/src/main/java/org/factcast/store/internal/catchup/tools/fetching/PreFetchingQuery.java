@@ -49,7 +49,7 @@ public class PreFetchingQuery implements FetchingQuery {
     // set to half the fetch size, so that we end up using the
     // same kind of heap memory, if we have one RS in processing
     // and one waiting.
-    ps.setFetchSize(fetchSize / 2);
+    ps.setFetchSize(Math.max(1, fetchSize / 2));
 
     try (ps;
         ResultSet resultSet = ps.executeQuery()) {
