@@ -32,8 +32,9 @@ import org.factcast.core.util.RollingCounter;
 @FieldDefaults(level = AccessLevel.PROTECTED)
 @Getter
 class FluentSubscriptionRequest implements SubscriptionRequest {
+  @SuppressWarnings("java:S2140")
+  private static final String INSTANCE_ID = Long.toHexString((long) (Math.random() * 0xffff));
 
-  private static final String HOST = Long.toHexString((long) (Math.random() * 32768));
   private static final RollingCounter REQUEST_ID = new RollingCounter(0);
 
   boolean ephemeral;
@@ -60,7 +61,7 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
     // this is no longer useful
     // debugInfo = createDebugInfo();
 
-    debugInfo = "req(" + HOST + ":" + Long.toHexString(REQUEST_ID.getAndIncrement()) + ")";
+    debugInfo = "req(" + INSTANCE_ID + ":" + Long.toHexString(REQUEST_ID.getAndIncrement()) + ")";
   }
 
   public static SpecBuilder builder() {

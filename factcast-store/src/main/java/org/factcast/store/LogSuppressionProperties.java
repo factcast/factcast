@@ -32,8 +32,7 @@ public class LogSuppressionProperties {
    * If set to a log level (e.g. "DEBUG", "INFO"), log events below that level are potentially
    * suppressed on threads running code marked for log supression. For example, setting this to
    * "DEBUG" suppresses TRACE logs; "INFO" suppresses both TRACE and DEBUG. Uses MDC + a Logback
-   * TurboFilter to selectively suppress only the affected threads. If unset (null), no filtering is
-   * applied.
+   * TurboFilter to selectively suppress only the affected threads. Defaults to INFO level.
    */
   Level minLogLevel = Level.INFO;
 

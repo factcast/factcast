@@ -76,9 +76,7 @@ public class DefaultLogSuppression extends AbstractLifecycleBean implements LogS
 
   @Override
   protected void onStop() {
-    if (filter != null) {
-      filter.uninstall();
-    }
+    filter.uninstall();
   }
 
   /**
