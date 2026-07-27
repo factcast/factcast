@@ -47,45 +47,67 @@ class PgListenerIntegrationTest {
 
   @Nested
   class FactInsertTrigger {
+    String NS = "NS";
 
     @Test
     @SneakyThrows
-    void oneInsertNotificationPerTransaction() {
-      FactInsertCollector collector = new FactInsertCollector(2);
+    void oneInsertNotificationPerType() {
+      TypeFactInsertCollector collector = new TypeFactInsertCollector(4);
       try {
         eventBus.register(collector);
 
-        UUID id1 = UUID.randomUUID();
-        UUID id2 = UUID.randomUUID();
-        UUID id3 = UUID.randomUUID();
+        // this will trigger the first general FIN
+        factStore.publish(
+            Collections.singletonList(
+                Fact.builder()
+                    .ns("initial")
+                    .type("initial")
+                    .id(UUID.randomUUID())
+                    .buildWithoutPayload()));
+        // can come back as internal with type null, or type initial - depending on the state of the
+        // PGListener
+
+        // we want to be sure, that the pglistener recieved to notification and set its current serial, before we go on.
+        // Otherwise we would still notify all subscribers, but might not see swallow explicit notifications for inserts to come.
+
+        Thread.sleep(50);
 
         // RUN
-        // publish together, should have same tx id
         factStore.publish(
             List.of(
-                Fact.builder().ns("test").type("listenerTest1").id(id1).buildWithoutPayload(),
-                Fact.builder().ns("test").type("listenerTest1").id(id2).buildWithoutPayload()));
-        // separate, should have another tx id
-        factStore.publish(
-            List.of(Fact.builder().ns("test").type("listenerTest2").id(id3).buildWithoutPayload()));
+                Fact.builder().ns(NS).type("listenerTest1").buildWithoutPayload(),
+                Fact.builder().ns(NS).type("listenerTest2").buildWithoutPayload()));
 
+        factStore.publish(
+            List.of(
+                Fact.builder().ns(NS).type("listenerTest3").buildWithoutPayload(),
+                Fact.builder().ns(NS).type("listenerTest2").buildWithoutPayload()));
+        // the next should be pulled
+        factStore.publish(
+            List.of(Fact.builder().ns(NS).type("listenerTest4").buildWithoutPayload()));
+        //
         // so finally, there should be two notifications arriving as we have two txids
         assertThat(collector.await()).isTrue();
 
-        assertThat(collector.signals())
-            .hasSize(2)
-            .anySatisfy(
-                n -> {
-                  assertThat(n.ns()).isEqualTo("test");
-                  assertThat(n.type()).isEqualTo("listenerTest1");
-                })
-            .anySatisfy(
-                n -> {
-                  assertThat(n.ns()).isEqualTo("test");
-                  assertThat(n.type()).isEqualTo("listenerTest2");
-                });
+        assertThat(collector.types)
+            .contains("listenerTest1", "listenerTest2", "listenerTest3", "listenerTest4");
       } finally {
         eventBus.unregister(collector);
+      }
+    }
+
+    private class TypeFactInsertCollector extends FactInsertCollector {
+      Set<String> types = new HashSet<>();
+
+      public TypeFactInsertCollector(int i) {
+        super(i);
+      }
+
+      @Override
+      public void recordEvent(StoreNotification e) {
+        if (e instanceof FactInsertionNotification fin
+            && NS.equals(fin.ns())
+            && types.add(fin.type())) super.recordEvent(e);
       }
     }
   }
