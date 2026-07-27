@@ -15,41 +15,25 @@
  */
 package org.factcast.store.internal;
 
-import liquibase.integration.spring.*;
+import javax.sql.DataSource;
+import liquibase.integration.spring.SpringLiquibase;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.boot.liquibase.autoconfigure.*;
+import org.springframework.boot.liquibase.autoconfigure.LiquibaseProperties;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 
 @Configuration
 @EnableConfigurationProperties(LiquibaseProperties.class)
 public class LiquibaseConfigurationForReadOnlyMode {
 
-  // TODO SB4
-
-  //  @Primary
-  //  @Bean
-  //  @SneakyThrows
-  //  public SpringLiquibase liquibase(
-  //      LiquibaseProperties props,
-  //      ObjectProvider<DataSource> dataSource,
-  //      ObjectProvider<Customizer<Liquibase>> customizers) {
-  //    // for some reason the factory method for the "liquibase" bean is package private while
-  // others
-  //    // are still public accessible
-  //    final var config = new LiquibaseAutoConfiguration.LiquibaseConfiguration();
-  //    final var creator =
-  //        config
-  //            .getClass()
-  //            .getDeclaredMethod(
-  //                "liquibase",
-  //                ObjectProvider.class,
-  //                ObjectProvider.class,
-  //                LiquibaseProperties.class,
-  //                ObjectProvider.class,
-  //                LiquibaseConnectionDetails.class);
-  //    creator.setAccessible(true);
-  //
-  //    return (SpringLiquibase)
-  //        creator.invoke(config, dataSource, dataSource, props, customizers, null);
-  //  }
+  @Primary
+  @Bean
+  public SpringLiquibase liquibase(DataSource dataSource, LiquibaseProperties props) {
+    final var liquibase = new SpringLiquibase();
+    liquibase.setDataSource(dataSource);
+    liquibase.setChangeLog(props.getChangeLog());
+    liquibase.setShouldRun(true);
+    return liquibase;
+  }
 }

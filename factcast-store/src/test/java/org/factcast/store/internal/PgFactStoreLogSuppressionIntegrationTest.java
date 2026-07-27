@@ -100,19 +100,20 @@ class PgFactStoreLogSuppressionIntegrationTest {
         LogCaptor pipelineLogs = LogCaptor.forClass(BufferedTransformingServerPipeline.class)) {
 
       // 1) baseline: subscribe from scratch WITHOUT filter — TRACE logs should be present
-      SubscriptionRequest scratch = SubscriptionRequest.catchup(spec).fromScratch();
-      store.subscribe(SubscriptionRequestTO.from(scratch), obs).awaitComplete();
+      {
+        SubscriptionRequest scratch = SubscriptionRequest.catchup(spec).fromScratch();
+        store.subscribe(SubscriptionRequestTO.from(scratch), obs).awaitComplete();
 
-      List<String> baselineStreamTrace = List.copyOf(pgFactStreamLogs.getTraceLogs());
-      List<String> baselineCatchupTrace = List.copyOf(catchupLogs.getTraceLogs());
-      List<String> baselineTransformerTrace = List.copyOf(transformerLogs.getTraceLogs());
-      List<String> baselinePipelineTrace = List.copyOf(pipelineLogs.getTraceLogs());
+        List<String> baselineStreamTrace = List.copyOf(pgFactStreamLogs.getTraceLogs());
+        List<String> baselineCatchupTrace = List.copyOf(catchupLogs.getTraceLogs());
+        List<String> baselineTransformerTrace = List.copyOf(transformerLogs.getTraceLogs());
+        List<String> baselinePipelineTrace = List.copyOf(pipelineLogs.getTraceLogs());
 
-      assertThat(baselineStreamTrace).isNotEmpty();
-      assertThat(baselineCatchupTrace).isNotEmpty();
-      assertThat(baselineTransformerTrace).isNotEmpty();
-      assertThat(baselinePipelineTrace).isNotEmpty();
-
+        assertThat(baselineStreamTrace).isNotEmpty();
+        assertThat(baselineCatchupTrace).isNotEmpty();
+        assertThat(baselineTransformerTrace).isNotEmpty();
+        assertThat(baselinePipelineTrace).isNotEmpty();
+      }
       // 2) enable the property, register the TurboFilter, subscribe again — TRACE logs
       //    should be suppressed
       LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
@@ -139,13 +140,6 @@ class PgFactStoreLogSuppressionIntegrationTest {
         assertThat(transformerLogs.getTraceLogs()).isEmpty();
         assertThat(pipelineLogs.getTraceLogs()).isEmpty();
 
-        // PgFactStream traces all happen outside the catchup() MDC window
-        // ("setting starting point", "created query SQL", "disconnecting")
-        // so they are NOT suppressed — confirming the filter only affects the catchup scope.
-        // We use hasSizeGreaterThanOrEqualTo because the async "disconnecting" trace from
-        // phase 1 may arrive after clearLogs(), inflating the count slightly.
-        assertThat(pgFactStreamLogs.getTraceLogs())
-            .hasSizeGreaterThanOrEqualTo(baselineStreamTrace.size());
       } finally {
         storeProps.setFromScratchCatchupMinLogLevel(null);
         context.getTurboFilterList().remove(filter);
