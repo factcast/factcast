@@ -257,7 +257,8 @@ public class PgFactStoreInternalConfiguration {
   }
 
   @Bean
-  @ConditionalOnProperty(value = "factcast.type", matchIfMissing = true)
+  // should better be factcast.store.blacklist.type, but will be removed soon anyway.
+  @ConditionalOnProperty(value = "factcast.blacklist.type", matchIfMissing = true)
   public BlacklistDataProvider blacklistProvider(
       ResourceLoader resourceLoader,
       Blacklist blacklist,

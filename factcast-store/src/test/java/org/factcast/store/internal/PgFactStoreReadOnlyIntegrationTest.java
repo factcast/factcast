@@ -26,18 +26,38 @@ import org.factcast.test.IntegrationTest;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.source.ConfigurationPropertySources;
+import org.springframework.context.ApplicationContextInitializer;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 @SpringJUnitConfig(
-    classes = {PgTestConfiguration.class, LiquibaseConfigurationForReadOnlyMode.class})
+    classes = {PgTestConfiguration.class, LiquibaseConfigurationForReadOnlyMode.class},
+    initializers = PgFactStoreReadOnlyIntegrationTest.BootPropertySourcesInitializer.class)
 @Sql(scripts = "/wipe.sql", config = @SqlConfig(separator = "#"))
 @IntegrationTest
+// @TestPropertySource(properties = {"factcast.store.read-only-mode-enabled=true"})
 @TestPropertySource(properties = {"factcast.store.readOnlyModeEnabled=true"})
 @Disabled
 class PgFactStoreReadOnlyIntegrationTest {
+
+  /**
+   * A SpringJunitConfig test does not create a full spring boot context, and so we miss some
+   * property voodoo that allows "readOnlyModeEnabled" and "read-only-mode-enabled" to be used even
+   * though org.factcast.store.IsReadAndWriteEnv specifies the camel case variant. Meaning, in a
+   * deployed version of factcast it should work with both variants in our application properties.
+   */
+  static class BootPropertySourcesInitializer
+      implements ApplicationContextInitializer<ConfigurableApplicationContext> {
+
+    @Override
+    public void initialize(ConfigurableApplicationContext context) {
+      ConfigurationPropertySources.attach(context.getEnvironment());
+    }
+  }
 
   public static final Fact EMPTY_FACT =
       Fact.of("{\"id\":\"550e8400-e29b-11d4-a716-446655440000\", \"ns\":\"foo\"}", "{}");
