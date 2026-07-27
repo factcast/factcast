@@ -37,16 +37,16 @@ class HighWaterMarkFetcherTest {
 
   @Nested
   class WhenOfing {
-    private final UUID ID = UUID.randomUUID();
-    private final long SER = 67;
     @Mock DataSource ds;
 
     @Test
     void passesValues() {
-      assertThat(HighWaterMarkFetcher.of(ID, SER))
+      final UUID ID = UUID.randomUUID();
+      final long SER = 67;
+      assertThat(HighWaterMarkFetcher.forTest(ID, SER))
           .extracting(f -> f.highWaterMark(ds).targetId())
           .isEqualTo(ID);
-      assertThat(HighWaterMarkFetcher.of(ID, SER))
+      assertThat(HighWaterMarkFetcher.forTest(ID, SER))
           .extracting(f -> f.highWaterMark(ds).targetSer())
           .isEqualTo(SER);
     }

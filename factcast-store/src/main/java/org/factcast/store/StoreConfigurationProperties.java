@@ -26,8 +26,10 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
 import java.time.Duration;
+import java.util.*;
 import java.util.Iterator;
 import lombok.*;
+import lombok.Data;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.store.internal.filter.FromScratchCatchupLogSuppressingTurboFilter;
@@ -35,6 +37,7 @@ import org.factcast.store.internal.pipeline.AutoFlushingServerPipeline;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.jdbc.autoconfigure.DataSourceProperties;
 import org.springframework.validation.annotation.Validated;
 
 @ConfigurationProperties(prefix = StoreConfigurationProperties.PROPERTIES_PREFIX)
@@ -293,6 +296,10 @@ public class StoreConfigurationProperties implements InitializingBean {
   @Min(5)
   @Max(50)
   long maxNotificationPollLatencyInMillis = 25;
+
+  public class OffloadDataSourceProperties extends DataSourceProperties {}
+
+  @Valid OffloadDataSourceProperties offload = new OffloadDataSourceProperties();
 
   @Override
   public void afterPropertiesSet() throws Exception {
