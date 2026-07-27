@@ -47,45 +47,100 @@ class PgListenerIntegrationTest {
 
   @Nested
   class FactInsertTrigger {
+    String ns = "someNamespace";
 
     @Test
     @SneakyThrows
-    void oneInsertNotificationPerTransaction() {
-      FactInsertCollector collector = new FactInsertCollector(2);
+    void atLeastOneInsertNotificationPerType() {
+      String t1 = "atLeastOneInsertNotificationPerType-1";
+      String t2 = "atLeastOneInsertNotificationPerType-2";
+      String t3 = "atLeastOneInsertNotificationPerType-3";
+      String t4 = "atLeastOneInsertNotificationPerType-4";
+      String t5 = "atLeastOneInsertNotificationPerType-5";
+      String t6 = "atLeastOneInsertNotificationPerType-6";
+
+      List<String> expectedTypes = List.of(t1, t2, t3, t4, t5, t6);
+      TypeFactInsertCollector collector = new TypeFactInsertCollector(expectedTypes.size());
       try {
         eventBus.register(collector);
 
-        UUID id1 = UUID.randomUUID();
-        UUID id2 = UUID.randomUUID();
-        UUID id3 = UUID.randomUUID();
+        // this will trigger the first general FIN
+        factStore.publish(
+            Collections.singletonList(
+                Fact.builder()
+                    .ns("initial")
+                    .type("initial")
+                    .id(UUID.randomUUID())
+                    .buildWithoutPayload()));
+        // can come back as internal with type null, or type initial - depending on the state of the
+        // PGListener
+
+        // we want to be sure, that the pglistener recieved to notification and set its current
+        // serial, before we go on.
+        // Otherwise we would still notify all subscribers, but might not see swallow explicit
+        // notifications for inserts to come.
+
+        collector.awaitInitalRetrieval();
 
         // RUN
-        // publish together, should have same tx id
         factStore.publish(
             List.of(
-                Fact.builder().ns("test").type("listenerTest1").id(id1).buildWithoutPayload(),
-                Fact.builder().ns("test").type("listenerTest1").id(id2).buildWithoutPayload()));
-        // separate, should have another tx id
-        factStore.publish(
-            List.of(Fact.builder().ns("test").type("listenerTest2").id(id3).buildWithoutPayload()));
+                Fact.builder().ns(ns).type(t1).buildWithoutPayload(),
+                Fact.builder().ns(ns).type(t2).buildWithoutPayload()));
 
+        factStore.publish(
+            List.of(
+                Fact.builder().ns(ns).type(t3).buildWithoutPayload(),
+                Fact.builder().ns(ns).type(t2).buildWithoutPayload()));
+        // the next should be pulled
+        factStore.publish(List.of(Fact.builder().ns(ns).type(t4).buildWithoutPayload()));
+
+        factStore.publish(
+            List.of(
+                Fact.builder().ns(ns).type(t5).buildWithoutPayload(),
+                Fact.builder().ns(ns).type(t5).buildWithoutPayload(),
+                Fact.builder().ns(ns).type(t5).buildWithoutPayload(),
+                Fact.builder().ns(ns).type(t5).buildWithoutPayload(),
+                Fact.builder().ns(ns).type(t5).buildWithoutPayload(),
+                Fact.builder().ns(ns).type(t5).buildWithoutPayload(),
+                Fact.builder().ns(ns).type(t5).buildWithoutPayload(),
+                Fact.builder().ns(ns).type(t6).buildWithoutPayload(),
+                Fact.builder().ns(ns).type(t5).buildWithoutPayload(),
+                Fact.builder().ns(ns).type(t5).buildWithoutPayload(),
+                Fact.builder().ns(ns).type(t5).buildWithoutPayload(),
+                Fact.builder().ns(ns).type(t5).buildWithoutPayload()));
+        //
         // so finally, there should be two notifications arriving as we have two txids
         assertThat(collector.await()).isTrue();
 
-        assertThat(collector.signals())
-            .hasSize(2)
-            .anySatisfy(
-                n -> {
-                  assertThat(n.ns()).isEqualTo("test");
-                  assertThat(n.type()).isEqualTo("listenerTest1");
-                })
-            .anySatisfy(
-                n -> {
-                  assertThat(n.ns()).isEqualTo("test");
-                  assertThat(n.type()).isEqualTo("listenerTest2");
-                });
+        assertThat(collector.types).containsAll(expectedTypes);
       } finally {
         eventBus.unregister(collector);
+      }
+    }
+
+    private class TypeFactInsertCollector extends FactInsertCollector {
+      Set<String> types = new HashSet<>();
+      CountDownLatch initial = new CountDownLatch(1);
+
+      public TypeFactInsertCollector(int i) {
+        super(i);
+      }
+
+      @Override
+      public void recordEvent(StoreNotification e) {
+        if (e instanceof FactInsertionNotification fin) {
+          initial.countDown();
+          if (ns.equals(fin.ns()) && types.add(fin.type())) super.recordEvent(e);
+        }
+      }
+
+      public void awaitInitalRetrieval() {
+        try {
+          initial.await(3, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+          throw new RuntimeException(e);
+        }
       }
     }
   }
