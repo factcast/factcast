@@ -20,7 +20,7 @@ import static org.mockito.Mockito.*;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
-import lombok.SneakyThrows;
+import lombok.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -51,6 +51,7 @@ class CurrentStatementHolderTest {
     @Test
     void cancelsStatement() {
       when(statement.getConnection()).thenReturn(connection);
+      when(connection.getAutoCommit()).thenReturn(false);
 
       underTest.statement(statement);
 

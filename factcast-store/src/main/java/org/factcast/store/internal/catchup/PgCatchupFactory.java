@@ -16,11 +16,11 @@
 package org.factcast.store.internal.catchup;
 
 import java.util.concurrent.atomic.*;
-import javax.sql.DataSource;
 import lombok.NonNull;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.query.CurrentStatementHolder;
+import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
 public interface PgCatchupFactory {
 
@@ -29,7 +29,7 @@ public interface PgCatchupFactory {
       @NonNull ServerPipeline pipeline,
       @NonNull AtomicLong serial,
       @NonNull CurrentStatementHolder holder,
-      @NonNull DataSource ds,
+      @NonNull SingleConnectionDataSource ds,
       @NonNull Phase phase);
 
   enum Phase {

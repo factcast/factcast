@@ -20,8 +20,10 @@ import java.util.Collections;
 import java.util.List;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.client.grpc.FactCastGrpcClientProperties.ResilienceConfiguration;
 
+@Slf4j
 @RequiredArgsConstructor
 class Resilience {
   @NonNull private final ResilienceConfiguration config;
@@ -45,9 +47,29 @@ class Resilience {
   }
 
   boolean shouldRetry(Throwable exception) {
-    return config.isEnabled()
-        && ClientExceptionHelper.isRetryable(exception)
-        && !attemptsExhausted();
+    if (config.isEnabled()) {
+
+      boolean exhausted = attemptsExhausted();
+      if (exhausted) {
+        log.warn(
+            "Allowed attempts in window are exhausted! Attempts: {}, allowed: {}.",
+            numberOfAttemptsInWindow(),
+            config.getAttempts());
+        return false;
+      }
+
+      boolean retryable = ClientExceptionHelper.isRetryable(exception);
+      if (retryable) {
+        log.debug("Exception of type {} is considered retryable.", exception.getClass(), exception);
+        return true;
+      } else {
+        log.debug(
+            "Exception of type {} is not considered retryable.", exception.getClass(), exception);
+      }
+    } else {
+      log.trace("Resilience is disabled.");
+    }
+    return false;
   }
 
   void sleepForInterval() {

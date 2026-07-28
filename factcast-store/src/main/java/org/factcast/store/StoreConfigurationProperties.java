@@ -15,25 +15,19 @@
  */
 package org.factcast.store;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.LoggerContext;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.Appender;
-import ch.qos.logback.core.ConsoleAppender;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
 import java.time.Duration;
-import java.util.Iterator;
-import lombok.Data;
+import java.util.*;
+import lombok.*;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.store.internal.filter.FromScratchCatchupLogSuppressingTurboFilter;
 import org.factcast.store.internal.pipeline.AutoFlushingServerPipeline;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.jdbc.autoconfigure.DataSourceProperties;
 import org.springframework.validation.annotation.Validated;
 
 @ConfigurationProperties(prefix = StoreConfigurationProperties.PROPERTIES_PREFIX)
@@ -213,34 +207,22 @@ public class StoreConfigurationProperties implements InitializingBean {
   boolean readOnlyModeEnabled;
 
   /**
+   * Size of a chunk, that is used to fetch events from the store during CHUNKED_WITH_HOLD catchup
+   * strategy.
+   */
+  @Positive
+  @Max(1_000_000)
+  @Min(1000)
+  int chunkSize = 10000;
+
+  /**
    * used to direct the enumerateTypes/Namespaces calls against the store directly, thus bypass the
    * schema-registry even it is configured. This is useful, if you want to see ns/types that are not
    * yet found in the registry, but exist in the factStore.
    */
   boolean enumerationDirectModeEnabled;
 
-  /**
-   * If set to a log level (e.g. "DEBUG", "INFO"), log events below that level are suppressed on
-   * threads performing a "from scratch" catchup. For example, setting this to "DEBUG" suppresses
-   * TRACE logs; "INFO" suppresses both TRACE and DEBUG. Uses MDC + a Logback TurboFilter to
-   * selectively suppress only the affected threads. If unset (null), no filtering is applied.
-   */
-  String fromScratchCatchupMinLogLevel;
-
-  /**
-   * Number of log events (below the configured min level) to allow through before suppression kicks
-   * in during a from-scratch catchup. This gives developers initial debugging context while still
-   * protecting downstream log aggregators from being overwhelmed. Defaults to 1000. Only effective
-   * when {@link #fromScratchCatchupMinLogLevel} is set.
-   */
-  int fromScratchCatchupLogSuppressionThreshold = 1000;
-
-  /**
-   * After the threshold is exceeded, allow 1 out of every N suppressed log events through instead
-   * of suppressing all. 0 disables sampling (full suppression after threshold). Defaults to 50.
-   * Only effective when {@link #fromScratchCatchupMinLogLevel} is set.
-   */
-  int fromScratchCatchupLogSuppressionSampleRate = 50;
+  @Valid LogSuppressionProperties logSuppression = new LogSuppressionProperties();
 
   public boolean isSchemaRegistryConfigured() {
     return schemaRegistryUrl != null;
@@ -248,10 +230,25 @@ public class StoreConfigurationProperties implements InitializingBean {
 
   public enum CatchupStrategy {
     CURSOR,
-    CHUNKED
+    CHUNKED,
+    CHUNKED_WITH_HOLD
   }
 
   CatchupStrategy catchupStrategy = CatchupStrategy.CURSOR;
+
+  boolean catchupAsyncFetch = false; // might default to true in the future
+
+  @Data
+  public static class PublishBatch {
+    boolean enabled = false;
+
+    @Positive
+    @Min(10)
+    @Max(10000)
+    int maxBatchSize = 500;
+  }
+
+  @Valid public PublishBatch publishBatch = new PublishBatch();
 
   /**
    * When catching up, if production of a full notification of facts takes longer than this (10
@@ -264,6 +261,15 @@ public class StoreConfigurationProperties implements InitializingBean {
   @Min(AutoFlushingServerPipeline.AUTOFLUSH_CHECK_INTERVAL)
   int autoFlushDelay = 10000; // 10 seconds default
 
+  @Positive
+  @Min(5)
+  @Max(50)
+  long maxNotificationPollLatencyInMillis = 25;
+
+  public static class OffloadDataSourceProperties extends DataSourceProperties {}
+
+  @Valid OffloadDataSourceProperties offload = new OffloadDataSourceProperties();
+
   @Override
   public void afterPropertiesSet() throws Exception {
     if (integrationTestMode) {
@@ -272,30 +278,6 @@ public class StoreConfigurationProperties implements InitializingBean {
               + "this would be a good time to panic. (See "
               + PROPERTIES_PREFIX
               + ".integrationTestMode) ****");
-    }
-
-    if (fromScratchCatchupMinLogLevel != null) {
-      Level parsedLevel = Level.toLevel(fromScratchCatchupMinLogLevel, null);
-      if (parsedLevel != null) {
-        registerCatchupTraceTurboFilter(
-            parsedLevel,
-            fromScratchCatchupLogSuppressionThreshold,
-            fromScratchCatchupLogSuppressionSampleRate);
-        log.info(
-            "Log suppression below {} during from-scratch catchup is enabled (threshold={},"
-                + " sampleRate={}) (see "
-                + PROPERTIES_PREFIX
-                + ".fromScratchCatchupMinLogLevel)",
-            parsedLevel,
-            fromScratchCatchupLogSuppressionThreshold,
-            fromScratchCatchupLogSuppressionSampleRate);
-      } else {
-        log.warn(
-            "Invalid log level '{}' for "
-                + PROPERTIES_PREFIX
-                + ".fromScratchCatchupMinLogLevel — ignoring",
-            fromScratchCatchupMinLogLevel);
-      }
     }
 
     if (!isSchemaRegistryConfigured()) {
@@ -308,28 +290,6 @@ public class StoreConfigurationProperties implements InitializingBean {
         log.warn(
             "**** SchemaRegistry-mode is enabled but validation of Facts is disabled. This is"
                 + " discouraged for production environments. You have been warned. ****");
-      }
-    }
-  }
-
-  private void registerCatchupTraceTurboFilter(Level minLevel, int threshold, int sampleRate) {
-    LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
-    var filter = new FromScratchCatchupLogSuppressingTurboFilter(minLevel, threshold, sampleRate);
-    filter.setName("factcast-catchup-trace-suppressor");
-    filter.start();
-    context.addTurboFilter(filter);
-  }
-
-  private void adjustLogbackAppender() {
-    LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
-    for (Logger logger : context.getLoggerList()) {
-      Iterator<Appender<ILoggingEvent>> iter = logger.iteratorForAppenders();
-      while (iter.hasNext()) {
-        Appender<ILoggingEvent> appender = iter.next();
-        if (appender instanceof ConsoleAppender) {
-          log.debug("Setting {} to immediate flush", appender.getClass());
-          ((ConsoleAppender<?>) appender).setImmediateFlush(true);
-        }
       }
     }
   }

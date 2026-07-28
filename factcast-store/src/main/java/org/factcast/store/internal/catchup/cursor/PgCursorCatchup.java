@@ -16,10 +16,9 @@
 package org.factcast.store.internal.catchup.cursor;
 
 import com.google.common.annotations.VisibleForTesting;
-import io.micrometer.core.instrument.Timer;
+import java.sql.*;
 import java.time.Duration;
 import java.util.concurrent.atomic.*;
-import javax.sql.DataSource;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -30,14 +29,15 @@ import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.StoreMetrics;
 import org.factcast.store.internal.catchup.AbstractPgCatchup;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
+import org.factcast.store.internal.catchup.tools.fetching.FetchingQuery;
 import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.pipeline.Signal;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.query.PgQueryBuilder;
 import org.factcast.store.internal.rowmapper.PgFactExtractor;
 import org.postgresql.util.PSQLException;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowCallbackHandler;
+import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
 @Slf4j
 public class PgCursorCatchup extends AbstractPgCatchup {
@@ -49,7 +49,7 @@ public class PgCursorCatchup extends AbstractPgCatchup {
       @NonNull ServerPipeline pipeline,
       @NonNull AtomicLong serial,
       @NonNull CurrentStatementHolder statementHolder,
-      @NonNull DataSource ds,
+      @NonNull SingleConnectionDataSource ds,
       PgCatchupFactory.@NonNull Phase phase) {
     super(props, metrics, req, pipeline, serial, statementHolder, ds, phase);
   }
@@ -58,43 +58,39 @@ public class PgCursorCatchup extends AbstractPgCatchup {
   @Override
   public void run() {
     try {
-      var jdbc = new JdbcTemplate(ds);
-      fetch(jdbc);
+
+      final var b = new PgQueryBuilder(req.specs(), statementHolder);
+      final var extractor = new PgFactExtractor(serial);
+      final var fromSerial = serial.get() < fastForward ? new AtomicLong(fastForward) : serial;
+      final var catchupSQL = b.createSQL();
+      final var isFromScratch = (fromSerial.get() <= 0);
+      log.trace("{} catchup {} - facts starting with SER={}", req, phase, fromSerial.get());
+
+      try (Connection conn = ds.getConnection();
+          PreparedStatement prep = conn.prepareStatement(catchupSQL); ) {
+        // this needs to be transactional for fetch-size to have any effect whatsoever.
+        conn.setAutoCommit(false);
+        prep.setFetchSize(props.getPageSize());
+        prep.setQueryTimeout(0);
+
+        b.createStatementSetter(fromSerial).setValues(prep);
+
+        final var timer = metrics.timer(StoreMetrics.OP.RESULT_STREAM_START, isFromScratch);
+        final var timerSample = metrics.startSample();
+
+        RowCallbackHandler rowCallbackHandler = createRowCallbackHandler(extractor);
+        FetchingQuery.create(props)
+            .executeAndProcess(
+                prep,
+                rowCallbackHandler::processRow,
+                () -> logIfAboveThreshold(Duration.ofNanos(timerSample.stop(timer))));
+      }
     } finally {
       statementHolder.clear();
 
       log.trace("Done fetching, flushing.");
       pipeline.process(Signal.flush());
     }
-  }
-
-  @VisibleForTesting
-  void fetch(JdbcTemplate jdbc) {
-    jdbc.setFetchSize(props.getPageSize());
-    jdbc.setQueryTimeout(0); // disable query timeout
-    final var b = new PgQueryBuilder(req.specs(), statementHolder);
-    final var extractor = new PgFactExtractor(serial);
-    final var fromSerial = serial.get() < fastForward ? new AtomicLong(fastForward) : serial;
-    final var catchupSQL = b.createSQL();
-    final var isFromScratch = (fromSerial.get() <= 0);
-    final var timer = metrics.timer(StoreMetrics.OP.RESULT_STREAM_START, isFromScratch);
-    final var rowCallbackHandler = createTimedRowCallbackHandler(extractor, timer);
-    log.trace("{} catchup {} - facts starting with SER={}", req, phase, fromSerial.get());
-    jdbc.query(catchupSQL, b.createStatementSetter(fromSerial), rowCallbackHandler);
-  }
-
-  @VisibleForTesting
-  RowCallbackHandler createTimedRowCallbackHandler(PgFactExtractor extractor, Timer timer) {
-    final var isFirstRow = new AtomicBoolean(true);
-    final var timerSample = metrics.startSample();
-    final var handler = createRowCallbackHandler(extractor);
-    return rs -> {
-      if (isFirstRow.getAndSet(false)) {
-        final var elapsed = Duration.ofNanos(timerSample.stop(timer));
-        logIfAboveThreshold(elapsed);
-      }
-      handler.processRow(rs);
-    };
   }
 
   private void logIfAboveThreshold(Duration elapsed) {
