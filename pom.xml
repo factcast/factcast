@@ -389,6 +389,7 @@
         <artifactId>maven-jar-plugin</artifactId>
         <executions>
           <execution>
+            <id>test-jar</id>
             <goals>
               <goal>test-jar</goal>
             </goals>
@@ -715,6 +716,21 @@
       </distributionManagement>
       <build>
         <plugins>
+          <!-- when active we disable the test-jar goal -->
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-jar-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>test-jar</id>
+                <goals>
+                  <goal>test-jar</goal>
+                </goals>
+                <phase>none</phase>
+              </execution>
+            </executions>
+          </plugin>
+
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-gpg-plugin</artifactId>
@@ -737,7 +753,8 @@
             <configuration>
               <publishingServerId>central</publishingServerId>
               <autoPublish>false</autoPublish>
-              <waitUntil>published</waitUntil>
+              <waitUntil>validated</waitUntil>
+              <checksums>required</checksums>
             </configuration>
           </plugin>
           <plugin>
