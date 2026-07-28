@@ -95,12 +95,12 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
   }
 
   @Override
-  public void put(@NonNull TransformationCache.Key key, @NonNull PgFact f) {
+  public void put(@NonNull TransformationCache.Key key, @NonNull Fact f) {
     registerWrite(key, f);
   }
 
   @Override
-  public Optional<PgFact> find(Key key) {
+  public Optional<Fact> find(Key key) {
 
     PgFact factFromBuffer = buffer.get(key);
     if (factFromBuffer != null) {
@@ -120,7 +120,7 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
   }
 
   @Override
-  public Set<PgFact> findAll(Collection<Key> keysToFind) {
+  public Set<Fact> findAll(Collection<Key> keysToFind) {
 
     ArrayList<Key> keys = Lists.newArrayList(keysToFind);
 
@@ -171,8 +171,8 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
   }
 
   @VisibleForTesting
-  CompletableFuture<Void> registerWrite(@NonNull TransformationCache.Key key, @NonNull PgFact f) {
-    buffer.put(key, f);
+  CompletableFuture<Void> registerWrite(@NonNull TransformationCache.Key key, @NonNull Fact f) {
+    buffer.put(key, (PgFact) f);
     return flushIfNecessary();
   }
 

@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.map.LRUMap;
-import org.factcast.store.internal.PgFact;
+import org.factcast.core.Fact;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 
 @Slf4j
@@ -31,7 +31,7 @@ public class InMemTransformationCache implements TransformationCache {
   // very low, but ok for tests
   private static final int DEFAULT_CAPACITY = 100;
 
-  private final Map<Key, PgFact> cache;
+  private final Map<Key, Fact> cache;
 
   public InMemTransformationCache(RegistryMetrics registryMetrics) {
     this(DEFAULT_CAPACITY, registryMetrics);
@@ -43,13 +43,13 @@ public class InMemTransformationCache implements TransformationCache {
   }
 
   @Override
-  public void put(@NonNull TransformationCache.Key key, @NonNull PgFact f) {
+  public void put(@NonNull TransformationCache.Key key, @NonNull Fact f) {
     cache.put(key, f);
   }
 
   @Override
-  public Optional<PgFact> find(@NonNull TransformationCache.Key key) {
-    Optional<PgFact> cached = Optional.ofNullable(cache.get(key));
+  public Optional<Fact> find(@NonNull TransformationCache.Key key) {
+    Optional<Fact> cached = Optional.ofNullable(cache.get(key));
     registryMetrics.count(
         cached.isPresent()
             ? RegistryMetrics.EVENT.TRANSFORMATION_CACHE_HIT
@@ -58,11 +58,11 @@ public class InMemTransformationCache implements TransformationCache {
   }
 
   @Override
-  public Set<PgFact> findAll(Collection<Key> keys) {
-    Set<PgFact> found = new HashSet<>(keys.size());
+  public Set<Fact> findAll(Collection<Key> keys) {
+    Set<Fact> found = new HashSet<>(keys.size());
     keys.forEach(
         k -> {
-          PgFact fact = cache.get(k);
+          Fact fact = cache.get(k);
           if (fact != null) {
             found.add(fact);
           }

@@ -150,6 +150,7 @@ public class FactTransformerServiceImpl implements FactTransformerService, AutoC
                   // parallel stream below
                   Map<UUID, PgFact> found =
                       cache.findAll(keys).stream()
+                          .map(x -> (PgFact) x)
                           .collect(Collectors.toConcurrentMap(PgFact::id, f -> f));
                   log.trace(
                       "batch lookup found {} out of {} pre transformed facts",

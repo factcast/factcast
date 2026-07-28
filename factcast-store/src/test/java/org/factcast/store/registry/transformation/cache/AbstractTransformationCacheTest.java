@@ -48,7 +48,7 @@ public abstract class AbstractTransformationCacheTest {
 
   @Test
   void testEmptyFind() {
-    Optional<PgFact> fact = uut.find(TransformationCache.Key.of(UUID.randomUUID(), 1, "[1, 2, 3]"));
+    Optional<Fact> fact = uut.find(TransformationCache.Key.of(UUID.randomUUID(), 1, "[1, 2, 3]"));
 
     assertThat(fact.isPresent()).isFalse();
 
@@ -88,7 +88,7 @@ public abstract class AbstractTransformationCacheTest {
 
     uut.put(TransformationCache.Key.of(fact.id(), 1, "[1, 2, 3]"), fact);
 
-    Optional<PgFact> found =
+    Optional<Fact> found =
         uut.find(TransformationCache.Key.of(fact.id(), fact.version(), "[1, 2, 3]"));
 
     assertThat(found.isPresent()).isTrue();

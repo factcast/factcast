@@ -21,17 +21,17 @@ import java.util.Set;
 import java.util.UUID;
 import lombok.NonNull;
 import lombok.Value;
-import org.factcast.store.internal.PgFact;
+import org.factcast.core.Fact;
 
 public interface TransformationCache {
 
   // maybe optimize by passing header and payload separately as
   // string/jsonnode?
-  void put(@NonNull TransformationCache.Key key, @NonNull PgFact f);
+  void put(@NonNull TransformationCache.Key key, @NonNull Fact f);
 
-  Optional<PgFact> find(Key key);
+  Optional<Fact> find(Key key);
 
-  Set<PgFact> findAll(Collection<Key> keys);
+  Set<Fact> findAll(Collection<Key> keys);
 
   void invalidateTransformationFor(String ns, String type);
 
