@@ -29,6 +29,9 @@ public class TransformationChain implements Transformation {
 
   @NonNull String id;
 
+  // the ordered version path of this chain, e.g. [1, 2, 3]
+  @NonNull List<Integer> versionPath;
+
   @NonNull TransformationKey key;
 
   int fromVersion;
@@ -38,7 +41,10 @@ public class TransformationChain implements Transformation {
   @ToString.Exclude @NonNull Optional<String> transformationCode;
 
   public static TransformationChain of(
-      @NonNull TransformationKey key, @NonNull List<Transformation> orderedListOfSteps, String id) {
+      @NonNull TransformationKey key,
+      @NonNull List<Transformation> orderedListOfSteps,
+      String id,
+      @NonNull List<Integer> versionPath) {
 
     Preconditions.checkArgument(!orderedListOfSteps.isEmpty());
     Preconditions.checkArgument(orderedListOfSteps.stream().allMatch(t -> key.equals(t.key())));
@@ -47,7 +53,7 @@ public class TransformationChain implements Transformation {
     int to = orderedListOfSteps.get(orderedListOfSteps.size() - 1).toVersion();
     String compositeJson = createCompositeJS(orderedListOfSteps);
 
-    return new TransformationChain(id, key, from, to, Optional.of(compositeJson));
+    return new TransformationChain(id, versionPath, key, from, to, Optional.of(compositeJson));
   }
 
   private static String createCompositeJS(List<Transformation> list) {

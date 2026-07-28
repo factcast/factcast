@@ -16,6 +16,7 @@
 package org.factcast.store.registry.transformation.cache;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -46,11 +47,11 @@ public interface TransformationCache {
 
     int version;
 
-    // the transformation chain path (chain id), e.g. "[1, 2, 3]"
-    @NonNull String path;
+    // the transformation chain version path, e.g. [1, 2, 3]
+    @NonNull List<Integer> path;
 
-    public static Key of(@NonNull UUID id, int version, @NonNull String transformationChainId) {
-      return new Key(id, version, transformationChainId);
+    public static Key of(@NonNull UUID id, int version, @NonNull List<Integer> path) {
+      return new Key(id, version, path);
     }
   }
 }

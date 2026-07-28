@@ -28,11 +28,11 @@ class KeyTest {
   void of() {
     Fact fact = Fact.builder().ns("ns").type("type").id(UUID.randomUUID()).version(1).build("{}");
 
-    var key = TransformationCache.Key.of(fact.id(), fact.version(), "[1, 2, 3]");
+    var key = TransformationCache.Key.of(fact.id(), fact.version(), List.of(1, 2, 3));
 
     assertEquals(fact.id(), key.factId());
     assertEquals(fact.version(), key.version());
-    assertEquals("[1, 2, 3]", key.path());
+    assertEquals(List.of(1, 2, 3), key.path());
   }
 
   @Test
@@ -41,7 +41,7 @@ class KeyTest {
 
     // different chain path => distinct cache entry
     assertNotEquals(
-        TransformationCache.Key.of(factId, 1, "[1, 2]"),
-        TransformationCache.Key.of(factId, 1, "[1, 3]"));
+        TransformationCache.Key.of(factId, 1, List.of(1, 2)),
+        TransformationCache.Key.of(factId, 1, List.of(1, 3)));
   }
 }

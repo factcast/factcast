@@ -63,6 +63,7 @@ class PgTransformationCacheTest {
   class WhenSelectingByKeys {
     @Mock private Connection con;
     @Mock private PreparedStatement ps;
+    @Mock private Array sqlArray;
 
     @Test
     void createsStatement() throws SQLException {
@@ -70,8 +71,10 @@ class PgTransformationCacheTest {
       UUID id2 = UUID.randomUUID();
       List<TransformationCache.Key> keys =
           List.of(
-              TransformationCache.Key.of(id1, 1, "[1]"), TransformationCache.Key.of(id2, 2, "[2]"));
+              TransformationCache.Key.of(id1, 1, List.of(1)),
+              TransformationCache.Key.of(id2, 2, List.of(2)));
       when(con.prepareStatement(anyString())).thenReturn(ps);
+      when(con.createArrayOf(eq("int4"), any())).thenReturn(sqlArray);
 
       PreparedStatementCreator pc = PgTransformationCache.selectByKeys(keys);
       PreparedStatement result = pc.createPreparedStatement(con);
@@ -79,13 +82,13 @@ class PgTransformationCacheTest {
       assertThat(result).isSameAs(ps);
       verify(con)
           .prepareStatement(
-              "SELECT header, payload FROM transformation_cache WHERE (fact_id, version, path) IN ((?, ?, ?), (?, ?, ?))");
+              "SELECT header, payload FROM transformation_cache WHERE (fact_id, version, path) IN ((?, ?, ?::int[]), (?, ?, ?::int[]))");
       verify(ps).setObject(1, id1);
       verify(ps).setInt(2, 1);
-      verify(ps).setString(3, "[1]");
+      verify(ps).setArray(3, sqlArray);
       verify(ps).setObject(4, id2);
       verify(ps).setInt(5, 2);
-      verify(ps).setString(6, "[2]");
+      verify(ps).setArray(6, sqlArray);
     }
   }
 
@@ -377,7 +380,7 @@ class PgTransformationCacheTest {
     @Test
     void logsException() {
       underTest.registerWrite(key, f);
-      when(jdbcTemplate.batchUpdate(anyString(), any(List.class)))
+      when(jdbcTemplate.batchUpdate(anyString(), any(BatchPreparedStatementSetter.class)))
           .thenThrow(IllegalArgumentException.class);
       LogCaptor logCaptor = LogCaptor.forClass(PgTransformationCache.class);
 
@@ -418,12 +421,10 @@ class PgTransformationCacheTest {
         PgFact fact =
             PgFact.from(
                 Fact.builder().ns("ns").type("type").id(UUID.randomUUID()).version(1).build("{}"));
-        String chainId = String.valueOf(i);
-
         // not flush happened yet
         assertThat(wasFlushed.getCount()).isEqualTo(1);
 
-        underTest.put(TransformationCache.Key.of(fact.id(), fact.version(), chainId), fact);
+        underTest.put(TransformationCache.Key.of(fact.id(), fact.version(), List.of(i)), fact);
       }
 
       // flush should have been triggered
@@ -464,14 +465,14 @@ class PgTransformationCacheTest {
 
       underTest.flush();
 
-      @SuppressWarnings("unchecked")
-      ArgumentCaptor<List<Object[]>> m = ArgumentCaptor.forClass(List.class);
+      ArgumentCaptor<BatchPreparedStatementSetter> m =
+          ArgumentCaptor.forClass(BatchPreparedStatementSetter.class);
       Mockito.verify(jdbcTemplate).execute("LOCK TABLE transformation_cache IN EXCLUSIVE MODE");
 
       Mockito.verify(jdbcTemplate)
           .batchUpdate(matches("INSERT INTO transformation_cache .*"), m.capture());
 
-      assertThat(m.getValue()).hasSize(3);
+      assertThat(m.getValue().getBatchSize()).isEqualTo(3);
     }
   }
 

@@ -155,7 +155,7 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
           new StringBuilder(
               "SELECT header, payload FROM transformation_cache WHERE (fact_id, version, path) IN (");
       for (int i = 0; i < keys.size(); i++) {
-        sql.append(i == 0 ? "(?, ?, ?)" : ", (?, ?, ?)");
+        sql.append(i == 0 ? "(?, ?, ?::int[])" : ", (?, ?, ?::int[])");
       }
       sql.append(")");
 
@@ -164,7 +164,7 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
       for (Key key : keys) {
         ps.setObject(idx++, key.factId());
         ps.setInt(idx++, key.version());
-        ps.setString(idx++, key.path());
+        ps.setArray(idx++, con.createArrayOf("int4", key.path().toArray(new Integer[0])));
       }
       return ps;
     };
@@ -256,7 +256,8 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
         // will join an existing tx, or create and commit a new one
         .execute(
             status -> {
-              // we're using share mode here in order not to block reads from happening
+              // EXCLUSIVE mode serializes writers against each other (see #3279) while still
+              // allowing reads (ACCESS SHARE) to proceed - it only conflicts with non-read locks.
               jdbcTemplate.execute("LOCK TABLE transformation_cache IN EXCLUSIVE MODE");
               o.run();
               return null;
@@ -265,21 +266,10 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
 
   @VisibleForTesting
   void insertBufferedTransformations(Map<Key, Fact> copy) {
-    List<Object[]> parameters =
-        copy.entrySet().stream()
-            .filter(e -> e.getValue() != null)
-            .map(
-                p ->
-                    new Object[] {
-                      p.getKey().factId(),
-                      p.getKey().version(),
-                      p.getKey().path(),
-                      p.getValue().jsonHeader(),
-                      p.getValue().jsonPayload()
-                    })
-            .toList();
+    List<Map.Entry<Key, Fact>> entries =
+        copy.entrySet().stream().filter(e -> e.getValue() != null).toList();
 
-    if (!parameters.isEmpty()) {
+    if (!entries.isEmpty()) {
       new TransactionTemplate(platformTransactionManager)
           // will join an existing tx, or create and commit a new one
           .execute(
@@ -289,7 +279,25 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
                 jdbcTemplate.batchUpdate(
                     "INSERT INTO transformation_cache (fact_id, version, path, header, payload) VALUES (?, ?, ?, ? :: JSONB, ? ::"
                         + " JSONB) ON CONFLICT(fact_id, version, path) DO NOTHING",
-                    parameters);
+                    new BatchPreparedStatementSetter() {
+                      @Override
+                      public void setValues(PreparedStatement ps, int i) throws SQLException {
+                        Map.Entry<Key, Fact> e = entries.get(i);
+                        ps.setObject(1, e.getKey().factId());
+                        ps.setInt(2, e.getKey().version());
+                        ps.setArray(
+                            3,
+                            ps.getConnection()
+                                .createArrayOf("int4", e.getKey().path().toArray(new Integer[0])));
+                        ps.setString(4, e.getValue().jsonHeader());
+                        ps.setString(5, e.getValue().jsonPayload());
+                      }
+
+                      @Override
+                      public int getBatchSize() {
+                        return entries.size();
+                      }
+                    });
 
                 return null;
               });

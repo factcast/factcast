@@ -5,7 +5,7 @@
 CREATE TABLE IF NOT EXISTS transformation_cache(
     fact_id    uuid                     NOT NULL,
     version    int                      NOT NULL,
-    path       text COLLATE "C"         NOT NULL,
+    path       int[]                    NOT NULL,
     header     jsonb                    NOT NULL,
     payload    jsonb                    NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
