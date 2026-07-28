@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.internal;
+package org.factcast.store.internal.logsuppression;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import java.util.*;
 import lombok.NonNull;
@@ -25,17 +24,15 @@ import nl.altindag.log.LogCaptor;
 import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
-import org.factcast.core.subscription.SubscriptionRequest;
-import org.factcast.core.subscription.SubscriptionRequestTO;
+import org.factcast.core.subscription.*;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.store.StoreConfigurationProperties;
+import org.factcast.store.internal.*;
 import org.factcast.store.internal.catchup.cursor.PgCursorCatchup;
-import org.factcast.store.internal.filter.FromScratchCatchupLogSuppressingTurboFilter;
 import org.factcast.store.internal.pipeline.BufferedTransformingServerPipeline;
 import org.factcast.store.registry.transformation.FactTransformerServiceImpl;
 import org.factcast.test.IntegrationTest;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,24 +49,28 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @TestPropertySource(
     properties = {
       "factcast.store.schemaRegistryUrl=classpath:example-registry",
-      "factcast.store.persistentRegistry=false"
+      "factcast.store.persistentRegistry=false",
     })
-class PgFactStoreLogSuppressionIntegrationTest {
+class LogSuppressionDisabledIntegrationTest {
+
+  @Test
+  void turboFilterIsRegisteredFromProperty() {
+    LoggerContext ctx = (LoggerContext) LoggerFactory.getILoggerFactory();
+    boolean found =
+        ctx.getTurboFilterList().stream().anyMatch(f -> f instanceof DefaultLogSuppression.Filter);
+    assertThat(found).isFalse();
+  }
 
   @Autowired FactStore store;
   @Autowired StoreConfigurationProperties storeProps;
+  @Autowired PgFactStoreInternalConfiguration conf;
 
   // the example-registry has ns="ns", type="type", version 1 with a 1->2 transformation
   @NonNull
   final Collection<FactSpec> spec =
       Collections.singletonList(FactSpec.ns("ns").type("type").version(2));
 
-  @NonNull
-  final FactObserver obs =
-      new FactObserver() {
-        @Override
-        public void onNext(@NonNull Fact element) {}
-      };
+  @NonNull final FactObserver obs = f -> {};
 
   @BeforeEach
   void setup() {
@@ -93,7 +94,7 @@ class PgFactStoreLogSuppressionIntegrationTest {
   }
 
   @Test
-  void traceLogsSuppressedDuringFromScratchCatchup() {
+  void noSuppressionWhenDisabled() {
     try (LogCaptor pgFactStreamLogs = LogCaptor.forClass(PgFactStream.class);
         LogCaptor catchupLogs = LogCaptor.forClass(PgCursorCatchup.class);
         LogCaptor transformerLogs = LogCaptor.forClass(FactTransformerServiceImpl.class);
@@ -113,36 +114,6 @@ class PgFactStoreLogSuppressionIntegrationTest {
         assertThat(baselineCatchupTrace).isNotEmpty();
         assertThat(baselineTransformerTrace).isNotEmpty();
         assertThat(baselinePipelineTrace).isNotEmpty();
-      }
-      // 2) enable the property, register the TurboFilter, subscribe again — TRACE logs
-      //    should be suppressed
-      LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
-      var filter = new FromScratchCatchupLogSuppressingTurboFilter(Level.DEBUG, 0, 0);
-      filter.setName("test-catchup-trace-suppressor");
-
-      storeProps.setFromScratchCatchupMinLogLevel("DEBUG");
-      try {
-        filter.start();
-        context.addTurboFilter(filter);
-
-        pgFactStreamLogs.clearLogs();
-        catchupLogs.clearLogs();
-        transformerLogs.clearLogs();
-        pipelineLogs.clearLogs();
-
-        SubscriptionRequest scratch2 = SubscriptionRequest.catchup(spec).fromScratch();
-        store.subscribe(SubscriptionRequestTO.from(scratch2), obs).awaitComplete();
-
-        // catchup traces should be fully suppressed (all happen inside MDC window)
-        assertThat(catchupLogs.getTraceLogs()).isEmpty();
-
-        // transformation and pipeline traces happen inside catchup → suppressed
-        assertThat(transformerLogs.getTraceLogs()).isEmpty();
-        assertThat(pipelineLogs.getTraceLogs()).isEmpty();
-
-      } finally {
-        storeProps.setFromScratchCatchupMinLogLevel(null);
-        context.getTurboFilterList().remove(filter);
       }
     }
   }

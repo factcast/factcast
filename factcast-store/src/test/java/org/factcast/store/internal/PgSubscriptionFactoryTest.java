@@ -29,6 +29,7 @@ import org.factcast.core.subscription.observer.HighWaterMarkFetcher;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
+import org.factcast.store.internal.logsuppression.*;
 import org.factcast.store.internal.pipeline.ServerPipelineFactory;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.telemetry.PgStoreTelemetry;
@@ -57,6 +58,7 @@ class PgSubscriptionFactoryTest {
   @Mock private PgConnectionSupplier connectionSupplier;
 
   @Spy private ExecutorService executorService = Executors.newSingleThreadExecutor();
+  @Spy private LogSuppression logsup = new NopLogSuppression();
   private PgSubscriptionFactory underTest;
 
   @BeforeEach
@@ -74,7 +76,8 @@ class PgSubscriptionFactoryTest {
             target,
             pipelineFactory,
             metrics,
-            telemetry);
+            telemetry,
+            logsup);
   }
 
   @Nested

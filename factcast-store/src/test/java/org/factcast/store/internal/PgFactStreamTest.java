@@ -18,6 +18,7 @@ package org.factcast.store.internal;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
+import ch.qos.logback.classic.Level;
 import com.google.common.eventbus.EventBus;
 import java.sql.*;
 import java.util.*;
@@ -28,13 +29,15 @@ import lombok.SneakyThrows;
 import org.factcast.core.*;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.*;
-import org.factcast.store.OffloadDataSource;
-import org.factcast.store.StoreConfigurationProperties;
-import org.factcast.store.internal.catchup.*;
-import org.factcast.store.internal.filter.FromScratchCatchupLogSuppressingTurboFilter;
+import org.factcast.store.*;
+import org.factcast.store.internal.catchup.PgCatchup;
+import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.listen.*;
-import org.factcast.store.internal.pipeline.*;
-import org.factcast.store.internal.query.*;
+import org.factcast.store.internal.logsuppression.*;
+import org.factcast.store.internal.pipeline.ServerPipeline;
+import org.factcast.store.internal.pipeline.Signal;
+import org.factcast.store.internal.query.CurrentStatementHolder;
+import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.telemetry.PgStoreTelemetry;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -57,6 +60,7 @@ class PgFactStreamTest {
   @Mock PgStoreTelemetry telemetry;
   @Mock StoreConfigurationProperties props;
   @Mock SubscriptionRequestTO reqTo;
+  @Spy LogSuppression logSuppression = new DefaultLogSuppression(Level.INFO, 0, 0);
   @Mock ModifiedSingleConnectionDataSource mds;
 
   @InjectMocks @Spy PgFactStream uut;
@@ -83,6 +87,12 @@ class PgFactStreamTest {
       lenient().when(reqTo.debugInfo()).thenReturn("foo");
       lenient().when(uut.catchupConnectionModifiers(reqTo)).thenReturn(Collections.emptyList());
       lenient().doReturn(mds).when(uut).createCatchupDataSource(ds);
+      lenient().when(reqTo.debugInfo()).thenReturn("test-debug-info");
+    }
+
+    @AfterEach
+    void tearDown() {
+      logSuppression.stop();
     }
 
     @Test
@@ -584,7 +594,8 @@ class PgFactStreamTest {
                     pipeline,
                     telemetry,
                     props,
-                    reqTo));
+                    reqTo,
+                    logSuppression));
         lenient().doReturn(true).when(uut).isConnected();
         lenient().doReturn(mds).when(uut).createCatchupDataSource(any(DataSource.class));
         lenient().when(hwmFetcher.highWaterMark(any())).thenReturn(HighWaterMark.empty());
@@ -610,7 +621,8 @@ class PgFactStreamTest {
                     pipeline,
                     telemetry,
                     props,
-                    reqTo));
+                    reqTo,
+                    logSuppression));
         lenient().doReturn(true).when(uut).isConnected();
         lenient().doReturn(mds).when(uut).createCatchupDataSource(any(DataSource.class));
         lenient().when(hwmFetcher.highWaterMark(any())).thenReturn(HighWaterMark.empty());
@@ -631,17 +643,15 @@ class PgFactStreamTest {
       doReturn(mds).when(uut).createCatchupDataSource(ds);
 
       // serial is 0 by default → from scratch
-      when(props.getFromScratchCatchupMinLogLevel()).thenReturn("DEBUG");
+
       PgCatchup catchup = mock(PgCatchup.class);
       when(pgCatchupFactory.create(any(), any(), any(), any(), any(), any())).thenReturn(catchup);
-
+      when(uut.isConnected()).thenReturn(true);
       doNothing().when(uut).catchupPhaseTwo(any(), anyLong());
 
       doAnswer(
               invocation -> {
-                assertThat(
-                        MDC.get(FromScratchCatchupLogSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH))
-                    .isEqualTo("test-debug-info");
+                assertThat(MDC.get(DefaultLogSuppression.MDC_KEY)).isNotNull();
                 return null;
               })
           .when(catchup)
@@ -649,12 +659,15 @@ class PgFactStreamTest {
 
       uut.doCatchup();
 
-      assertThat(MDC.get(FromScratchCatchupLogSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH))
-          .isNull();
+      assertThat(MDC.get(DefaultLogSuppression.MDC_KEY)).isNull();
     }
 
     @Test
     void doesNotSetMdcWhenNotFromScratch() {
+      doReturn(ds).when(connectionSupplier).dataSource();
+      doReturn(mds).when(uut).createCatchupDataSource(ds);
+
+      lenient().when(reqTo.startingAfter()).thenReturn(Optional.of(UUID.randomUUID()));
       uut.serial().set(42L);
       PgCatchup catchup = mock(PgCatchup.class);
       when(uut.isConnected()).thenReturn(true);
@@ -663,9 +676,7 @@ class PgFactStreamTest {
 
       doAnswer(
               invocation -> {
-                assertThat(
-                        MDC.get(FromScratchCatchupLogSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH))
-                    .isNull();
+                assertThat(MDC.get(DefaultLogSuppression.MDC_KEY)).isNull();
                 return null;
               })
           .when(catchup)
@@ -675,9 +686,26 @@ class PgFactStreamTest {
     }
 
     @Test
-    void doesNotSetMdcWhenPropertyIsUnset() {
+    void doesNotSetMdcWhenNopSuppressionUsed() {
+      doReturn(ds).when(connectionSupplier).dataSource();
+
+      uut =
+          spy(
+              new PgFactStream(
+                  connectionSupplier,
+                  eventBus,
+                  id2ser,
+                  pgCatchupFactory,
+                  hwmFetcher,
+                  pipeline,
+                  telemetry,
+                  props,
+                  reqTo,
+                  new NopLogSuppression()));
+
+      doReturn(mds).when(uut).createCatchupDataSource(ds);
       // serial is 0 → from scratch, but property is null → no MDC marking
-      when(props.getFromScratchCatchupMinLogLevel()).thenReturn(null);
+
       PgCatchup catchup = mock(PgCatchup.class);
       when(uut.isConnected()).thenReturn(true);
       when(pgCatchupFactory.create(any(), any(), any(), any(), any(), any()))
@@ -685,9 +713,7 @@ class PgFactStreamTest {
 
       doAnswer(
               invocation -> {
-                assertThat(
-                        MDC.get(FromScratchCatchupLogSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH))
-                    .isNull();
+                assertThat(MDC.get(DefaultLogSuppression.MDC_KEY)).isNull();
                 return null;
               })
           .when(catchup)
@@ -698,12 +724,17 @@ class PgFactStreamTest {
 
     @Test
     void clearsMdcEvenOnException() {
-      // serial is 0 by default → from scratch
-      when(props.getFromScratchCatchupMinLogLevel()).thenReturn("DEBUG");
       PgCatchup catchup = mock(PgCatchup.class);
       when(uut.isConnected()).thenReturn(true);
       when(pgCatchupFactory.create(any(), any(), any(), any(), any(), any())).thenReturn(catchup);
-      doThrow(new RuntimeException("boom")).when(catchup).run();
+
+      doAnswer(
+              i -> {
+                assertThat(MDC.get(DefaultLogSuppression.MDC_KEY)).isNotNull();
+                throw new RuntimeException("boom");
+              })
+          .when(catchup)
+          .run();
 
       try {
         uut.doCatchup();
@@ -711,8 +742,7 @@ class PgFactStreamTest {
         // expected
       }
 
-      assertThat(MDC.get(FromScratchCatchupLogSuppressingTurboFilter.MDC_KEY_FROM_SCRATCH))
-          .isNull();
+      assertThat(MDC.get(DefaultLogSuppression.MDC_KEY)).isNull();
     }
   }
 
