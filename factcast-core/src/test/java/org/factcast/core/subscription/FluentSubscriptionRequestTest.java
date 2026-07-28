@@ -88,7 +88,7 @@ public class FluentSubscriptionRequestTest {
   void testDebugInfo() {
     String debugInfo = SubscriptionRequest.catchup(FactSpec.ns("foo")).fromScratch().debugInfo();
     assertNotNull(debugInfo);
-    // format: req(hostId:requestId)
+    // format: req(instanceId:requestId)
     assertThat(debugInfo).matches("^req\\([0-9a-f]+:[0-9a-f]+\\)$");
   }
 

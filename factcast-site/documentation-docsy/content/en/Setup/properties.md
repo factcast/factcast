@@ -70,6 +70,8 @@ description: Properties you can use to configure FactCast
 | factcast.store.offload.generate-unique-name                         | same as any DataSource                                                                                                                                                                                                                                                                                                                                                                                                                              |                                          |
 | factcast.store.offload.name                                         | same as any DataSource                                                                                                                                                                                                                                                                                                                                                                                                                              |                                          |
 
+---
+
 ### Snapshots
 
 #### InMem-Snapshots
