@@ -17,6 +17,7 @@ package org.factcast.store.internal.catchup;
 
 import java.util.concurrent.atomic.*;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgMetrics;
@@ -27,6 +28,7 @@ import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
+@Slf4j
 public class PgCatchUpFactoryImpl implements PgCatchupFactory {
 
   @NonNull final StoreConfigurationProperties props;
@@ -52,6 +54,7 @@ public class PgCatchUpFactoryImpl implements PgCatchupFactory {
       return new PgCursorCatchup(props, metrics, request, pipeline, serial, holder, ds, phase);
     }
 
+    log.debug("Using catchup strategy {}", props.getCatchupStrategy());
     return switch (props.getCatchupStrategy()) {
       case CHUNKED ->
           new PgChunkedCatchup(props, metrics, request, pipeline, serial, holder, ds, phase);

@@ -21,11 +21,14 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.ConsoleAppender;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
 import java.time.Duration;
+import java.util.*;
 import java.util.Iterator;
+import lombok.*;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +37,7 @@ import org.factcast.store.internal.pipeline.AutoFlushingServerPipeline;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.jdbc.autoconfigure.DataSourceProperties;
 import org.springframework.validation.annotation.Validated;
 
 @ConfigurationProperties(prefix = StoreConfigurationProperties.PROPERTIES_PREFIX)
@@ -257,6 +261,18 @@ public class StoreConfigurationProperties implements InitializingBean {
 
   boolean catchupAsyncFetch = false; // might default to true in the future
 
+  @Data
+  public static class PublishBatch {
+    boolean enabled = false;
+
+    @Positive
+    @Min(10)
+    @Max(10000)
+    int maxBatchSize = 500;
+  }
+
+  @Valid public PublishBatch publishBatch = new PublishBatch();
+
   /**
    * When catching up, if production of a full notification of facts takes longer than this (10
    * seconds default, 2 seconds minimum), an additional flush is inserted into the pipelin in order
@@ -267,6 +283,15 @@ public class StoreConfigurationProperties implements InitializingBean {
   @Max(60000)
   @Min(AutoFlushingServerPipeline.AUTOFLUSH_CHECK_INTERVAL)
   int autoFlushDelay = 10000; // 10 seconds default
+
+  @Positive
+  @Min(5)
+  @Max(50)
+  long maxNotificationPollLatencyInMillis = 25;
+
+  public class OffloadDataSourceProperties extends DataSourceProperties {}
+
+  @Valid OffloadDataSourceProperties offload = new OffloadDataSourceProperties();
 
   @Override
   public void afterPropertiesSet() throws Exception {

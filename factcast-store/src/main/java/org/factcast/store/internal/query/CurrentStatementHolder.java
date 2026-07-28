@@ -47,6 +47,7 @@ public class CurrentStatementHolder implements Closeable {
         log.info("Canceling statement {}", statement);
         try {
           statement.cancel();
+          statement.close();
         } catch (SQLException e) {
           log.debug("Exception while cancelling statement {}:", statement, e);
         } finally {

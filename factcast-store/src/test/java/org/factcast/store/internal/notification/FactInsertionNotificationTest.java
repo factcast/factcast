@@ -18,7 +18,6 @@ package org.factcast.store.internal.notification;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.assertj.core.api.Assertions;
-import org.factcast.store.internal.PgConstants;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -35,7 +34,7 @@ class FactInsertionNotificationTest {
     @Test
     void happyPath() {
       FactInsertionNotification probe = new FactInsertionNotification("ns", "type", 1L);
-      Assertions.assertThat(probe.uniqueId()).isEqualTo(PgConstants.CHANNEL_FACT_INSERT + "-1");
+      Assertions.assertThat(probe.uniqueId()).isEqualTo("fact_insert" + "-1");
     }
 
     @Test
@@ -65,17 +64,13 @@ class FactInsertionNotificationTest {
 
     @Test
     void failsOnMissingSerial() {
-      Notification n1 =
-          new Notification(
-              PgConstants.CHANNEL_FACT_INSERT, 1, "{\"ns\":\"ns1\",\"type\":\"type1\"}");
+      Notification n1 = new Notification("", 1, "{\"ns\":\"ns1\",\"type\":\"type1\"}");
       assertThat(FactInsertionNotification.from(n1)).isNull();
     }
 
     @Test
     void happyPath() {
-      Notification n1 =
-          new Notification(
-              PgConstants.CHANNEL_FACT_INSERT, 1, "{\"ns\":\"ns1\",\"type\":\"type1\",\"ser\":1}");
+      Notification n1 = new Notification("", 1, "{\"ns\":\"ns1\",\"type\":\"type1\",\"ser\":1}");
       assertThat(FactInsertionNotification.from(n1))
           .isEqualTo(new FactInsertionNotification("ns1", "type1", 1L));
     }

@@ -17,24 +17,24 @@ package org.factcast.store.internal;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.EventBus;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
+import javax.sql.DataSource;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.FactStreamPosition;
 import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.*;
-import org.factcast.store.StoreConfigurationProperties;
+import org.factcast.store.*;
 import org.factcast.store.internal.catchup.*;
 import org.factcast.store.internal.filter.FromScratchCatchupLogSuppressingTurboFilter;
 import org.factcast.store.internal.listen.ConnectionModifier;
+import org.factcast.store.internal.listen.ModifiedSingleConnectionDataSource;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.pipeline.Signal;
@@ -43,8 +43,9 @@ import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgQueryBuilder;
 import org.factcast.store.internal.telemetry.PgStoreTelemetry;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.jdbc.core.PreparedStatementSetter;
-import org.springframework.jdbc.datasource.SingleConnectionDataSource;
+import org.springframework.jdbc.datasource.*;
 
 /**
  * Creates and maintains a subscription.
@@ -52,11 +53,10 @@ import org.springframework.jdbc.datasource.SingleConnectionDataSource;
  * @author <uwe.schaefer@prisma-capacity.eu>
  */
 @Slf4j
-@RequiredArgsConstructor
 public class PgFactStream {
 
-  private static final long DEFAULT_MAX_BATCH_DELAY = 10;
   final PgConnectionSupplier connectionSupplier;
+  final OffloadDataSource offloadDataSource;
   final EventBus eventBus;
   final PgFactIdToSerialMapper idToSerMapper;
   final PgCatchupFactory pgCatchupFactory;
@@ -68,7 +68,7 @@ public class PgFactStream {
   @Getter(AccessLevel.PROTECTED)
   final SubscriptionRequestTO request;
 
-  CondensedQueryExecutor condensedExecutor;
+  QueryExecutor queryExecutor;
 
   @VisibleForTesting
   @Getter(AccessLevel.PROTECTED)
@@ -78,27 +78,76 @@ public class PgFactStream {
 
   final CurrentStatementHolder statementHolder = new CurrentStatementHolder();
 
+  @SuppressWarnings("java:S107")
+  public PgFactStream(
+      PgConnectionSupplier connectionSupplier,
+      EventBus eventBus,
+      PgFactIdToSerialMapper idToSerMapper,
+      PgCatchupFactory pgCatchupFactory,
+      HighWaterMarkFetcher hwmFetcher,
+      ServerPipeline pipeline,
+      PgStoreTelemetry telemetry,
+      StoreConfigurationProperties props,
+      SubscriptionRequestTO request) {
+    this(
+        connectionSupplier,
+        null,
+        eventBus,
+        idToSerMapper,
+        pgCatchupFactory,
+        hwmFetcher,
+        pipeline,
+        telemetry,
+        props,
+        request);
+  }
+
+  @SuppressWarnings("java:S107")
+  public PgFactStream(
+      PgConnectionSupplier connectionSupplier,
+      @Nullable OffloadDataSource offloadDataSource,
+      EventBus eventBus,
+      PgFactIdToSerialMapper idToSerMapper,
+      PgCatchupFactory pgCatchupFactory,
+      HighWaterMarkFetcher hwmFetcher,
+      ServerPipeline pipeline,
+      PgStoreTelemetry telemetry,
+      StoreConfigurationProperties props,
+      SubscriptionRequestTO request) {
+    this.connectionSupplier = connectionSupplier;
+    this.eventBus = eventBus;
+    this.idToSerMapper = idToSerMapper;
+    this.pgCatchupFactory = pgCatchupFactory;
+    this.hwmFetcher = hwmFetcher;
+    this.pipeline = pipeline;
+    this.telemetry = telemetry;
+    this.props = props;
+    this.offloadDataSource = offloadDataSource;
+    this.request = request;
+  }
+
   void connect() {
     log.debug("{} connect subscription {}", request, request.dump());
     // signal connect
     telemetry.onConnect(request);
     initializeSerialToStartAfter();
 
-    // using a single datasource for both fetching the hwm and catchup (#4124)
-    try (final var ds = createSingleDataSource(request)) {
-      // we need to copy and preserve the current highwatermark **before** starting the query
-      // in order not to lose facts by the ffTarget being updated after the phase 2 query, but
-      // before the sending of the ffwd signal (#3722)
-      final var initialHwm = hwmFetcher.highWaterMark(ds);
-      if (request.streamInfo()) {
-        FactStreamInfo factStreamInfo = new FactStreamInfo(serial.get(), initialHwm.targetSer());
-        pipeline.process(Signal.of(factStreamInfo));
-      }
-      catchupAndFastForward(request, initialHwm, ds);
+    if (request.ephemeral()) {
+      // just fast forward to the latest event published by now
+      serial.set(hwmFetcher.highWaterMark(connectionSupplier.dataSource()).targetSer());
+    } else {
+      doCatchup();
     }
 
-    PgSynchronizedQuery query = createPgSynchronizedQuery();
-    follow(request, query);
+    // propagate catchup signal
+    if (isConnected()) {
+      log.debug("{} signaling catchup", request);
+      // signal catchup
+      telemetry.onCatchup(request);
+      pipeline.process(Signal.catchup());
+    }
+
+    follow(request, createPgSynchronizedQuery());
   }
 
   @VisibleForTesting
@@ -129,27 +178,6 @@ public class PgFactStream {
   }
 
   @VisibleForTesting
-  void catchupAndFastForward(
-      @NonNull SubscriptionRequestTO request,
-      @NonNull HighWaterMark hwm,
-      @NonNull SingleConnectionDataSource datasource) {
-    if (request.ephemeral()) {
-      // just fast forward to the latest event published by now
-      serial.set(hwm.targetSer());
-    } else {
-      catchup(hwm.targetSer(), datasource);
-    }
-    fastForward(hwm);
-    // propagate catchup
-    if (isConnected()) {
-      log.debug("{} signaling catchup", request);
-      // signal catchup
-      telemetry.onCatchup(request);
-      pipeline.process(Signal.catchup());
-    }
-  }
-
-  @VisibleForTesting
   @SuppressWarnings("java:S2245")
   void follow(@NonNull SubscriptionRequestTO request, @NonNull PgSynchronizedQuery query) {
     if (isConnected()) {
@@ -157,11 +185,11 @@ public class PgFactStream {
         log.debug("{} entering follow mode", request);
         // signal follow
         telemetry.onFollow(request);
-        condensedExecutor = createCondensedExecutor(request, query);
-        eventBus.register(condensedExecutor);
+        queryExecutor = createQueryExecutor(request, query);
+        eventBus.register(queryExecutor);
         // catchup phase 3 – make sure, we did not miss any fact due to
         // slow registration
-        condensedExecutor.trigger();
+        queryExecutor.trigger();
       } else {
         pipeline.process(Signal.complete());
         log.debug("{} completed", request);
@@ -173,15 +201,15 @@ public class PgFactStream {
 
   @VisibleForTesting
   @NonNull
-  CondensedQueryExecutor createCondensedExecutor(
+  QueryExecutor createQueryExecutor(
       @NonNull SubscriptionRequest request, @NonNull PgSynchronizedQuery query) {
-    return new CondensedQueryExecutor(query, this::isConnected, request.specs());
+    return new QueryExecutor(query, this::isConnected, request.specs());
   }
 
   @VisibleForTesting
   @NonNull
-  SingleConnectionDataSource createSingleDataSource(@NonNull SubscriptionRequest request) {
-    return connectionSupplier.getPooledAsSingleDataSource(
+  List<ConnectionModifier> catchupConnectionModifiers(@NonNull SubscriptionRequest request) {
+    return List.of(
         ConnectionModifier.withCustomPlanForced(),
         ConnectionModifier.withAutoCommitDisabled(),
         ConnectionModifier.withApplicationName(request.debugInfo()));
@@ -208,29 +236,107 @@ public class PgFactStream {
     }
   }
 
+  @SneakyThrows
   @VisibleForTesting
-  void catchup(long highWaterMarkSerial, SingleConnectionDataSource ds) {
-    if (serial.get() <= 0 && props.getFromScratchCatchupMinLogLevel() != null) {
-      FromScratchCatchupLogSuppressingTurboFilter.beginCatchup(request.debugInfo());
-    }
+  void doCatchup() {
     try {
-      if (isConnected()) {
-        pgCatchupFactory
-            .create(request, pipeline, serial, statementHolder, ds, PgCatchupFactory.Phase.PHASE_1)
-            .run();
+      if (!isConnected()) return;
+
+      if (serial.get() <= 0 && props.getFromScratchCatchupMinLogLevel() != null) {
+        FromScratchCatchupLogSuppressingTurboFilter.beforeCatchup(request.debugInfo());
       }
-      if (isConnected()) {
-        // if we did not find anything in phase1,
-        // in order to prevent us from scanning the whole bunch again, we rather start at
-        // the highwatermark BEFORE phase1 started
-        PgCatchup pgCatchup =
-            pgCatchupFactory.create(
-                request, pipeline, serial, statementHolder, ds, PgCatchupFactory.Phase.PHASE_2);
-        pgCatchup.fastForward(highWaterMarkSerial);
-        pgCatchup.run();
+
+      HighWaterMark highWaterMark = hwmFetcher.highWaterMark(connectionSupplier.dataSource());
+      // send FactStreamInfo if requested
+      if (request.streamInfo()) {
+        FactStreamInfo factStreamInfo = new FactStreamInfo(serial.get(), highWaterMark.targetSer());
+        pipeline.process(Signal.of(factStreamInfo));
+      }
+
+      if (!isConnected()) return;
+
+      // It is essential to provide SCDS to the catchup strategies.
+      // The supplier indirection is use in order to lazily create a pool from primary in order not
+      // to block a connection during P1 if it was offloaded
+      try (PrimaryDataSourceSupplier primary =
+          new PrimaryDataSourceSupplier(
+              () -> createCatchupDataSource(connectionSupplier.dataSource()))) {
+
+        // Phase 1
+        long phase1HighwaterMark = -1;
+
+        if (offloadDataSource != null) {
+          // we're creating a SCDS for offload, that we destroy right after
+          try (SingleConnectionDataSource secondary = createCatchupDataSource(offloadDataSource)) {
+            phase1HighwaterMark = catchupPhaseOne(secondary);
+          }
+        } else {
+          phase1HighwaterMark = catchupPhaseOne(primary.get());
+        }
+
+        if (!isConnected()) return;
+
+        catchupPhaseTwo(primary, phase1HighwaterMark);
+
+        // now that phase 1&2 are done, we can ffwd to the initial HWM on the primary
+        fastForward(highWaterMark);
       }
     } finally {
-      FromScratchCatchupLogSuppressingTurboFilter.endCatchup();
+      FromScratchCatchupLogSuppressingTurboFilter.afterCatchup();
+    }
+  }
+
+  @VisibleForTesting
+  void catchupPhaseTwo(PrimaryDataSourceSupplier primary, long phase1HighwaterMark) {
+    // proceed to phase 2 on the primary
+    PgCatchup pgCatchup =
+        pgCatchupFactory.create(
+            request,
+            pipeline,
+            serial,
+            statementHolder,
+            primary.get(),
+            PgCatchupFactory.Phase.PHASE_2);
+    // before starting to run phase2, we'll ffwd to what phase1 found as HWM.
+    // while this might seem to be a minor optimization, it matters when phase1 found no
+    // matching fact at all. Without ffwd, we would need to recheck all facts from ser
+    // *again*.
+    pgCatchup.fastForward(phase1HighwaterMark);
+    pgCatchup.run();
+  }
+
+  @SneakyThrows
+  @VisibleForTesting
+  ModifiedSingleConnectionDataSource createCatchupDataSource(@NonNull DataSource ds) {
+    return new ModifiedSingleConnectionDataSource(
+        ds.getConnection(), catchupConnectionModifiers(request));
+  }
+
+  @VisibleForTesting
+  long catchupPhaseOne(@NonNull SingleConnectionDataSource dataSourceToUseForP1) {
+    HighWaterMark hwmForPhase1 = hwmFetcher.highWaterMark(dataSourceToUseForP1);
+
+    long from = serial.get();
+    if (hwmForPhase1.targetSer() <= from) {
+      // it does not make any sense to try to query for data we know is not there.
+      // this may happen a lot, if the offload datasource has a considerable lag.
+      return from;
+    } else {
+
+      pgCatchupFactory
+          .create(
+              request,
+              pipeline,
+              serial,
+              statementHolder,
+              dataSourceToUseForP1,
+              PgCatchupFactory.Phase.PHASE_1)
+          .run();
+
+      // serial might be higher than hwm, because of concurrent inserts, but it also may be much
+      // smaller
+      // in which case, we want to continue from hwm, to not do unnecessary work
+      return Math.max(serial.get(), hwmForPhase1.targetSer());
     }
   }
 
@@ -242,10 +348,10 @@ public class PgFactStream {
   public synchronized void close() {
     log.trace("{} disconnecting ", request);
     disconnected.set(true);
-    if (condensedExecutor != null) {
-      eventBus.unregister(condensedExecutor);
-      condensedExecutor.cancel();
-      condensedExecutor = null;
+    if (queryExecutor != null) {
+      eventBus.unregister(queryExecutor);
+      queryExecutor.cancel();
+      queryExecutor = null;
     }
     statementHolder.close();
     log.debug("{} disconnected ", request);
