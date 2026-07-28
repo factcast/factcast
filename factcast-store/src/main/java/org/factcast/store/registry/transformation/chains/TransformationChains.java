@@ -128,7 +128,7 @@ public class TransformationChains implements TransformationStoreListener {
       // choose the shortest path with bias to later versions
       List<Edge> finalPath = pickFinalPath(possiblePaths);
       List<Transformation> steps = map(finalPath, Edge::transformation);
-      return TransformationChain.of(key, steps, toString(finalPath), versionPath(finalPath));
+      return TransformationChain.of(key, steps, toString(finalPath));
     }
   }
 
@@ -142,16 +142,6 @@ public class TransformationChains implements TransformationStoreListener {
           + finalPath.stream().map(Edge::toVersion).map(s -> ", " + s).collect(Collectors.joining())
           + "]";
     }
-  }
-
-  private List<Integer> versionPath(@NonNull List<Edge> finalPath) {
-    if (finalPath.isEmpty()) {
-      return List.of();
-    }
-    List<Integer> path = new ArrayList<>();
-    path.add(finalPath.get(0).fromVersion());
-    finalPath.forEach(e -> path.add(e.toVersion()));
-    return path;
   }
 
   @SuppressWarnings("OptionalGetWithoutIsPresent")
