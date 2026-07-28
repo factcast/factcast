@@ -22,11 +22,11 @@ import com.google.common.collect.Sets;
 import jakarta.annotation.Nullable;
 import java.lang.reflect.*;
 import java.util.*;
-import lombok.Data;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.FactStreamPosition;
+import org.factcast.core.spec.FactSpec;
 import org.factcast.factus.*;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.projection.*;
@@ -113,127 +113,18 @@ class ReflectionUtilsTest {
     assertEquals(String.class, ReflectionUtils.getTypeParameter(new TxAware()));
   }
 
-  @Data
-  static class FilterEvent implements EventObject {
-    UUID userId;
-    String name;
-    Ref ref;
-
-    @Override
-    public Set<UUID> aggregateIds() {
-      return Sets.newHashSet(userId);
-    }
-  }
-
-  @Data
-  static class Ref {
-    UUID nestedId;
-  }
-
   static class SomeUnrelatedClass {
-    @FilterByAggIdProperty("userId")
-    public void foo(FilterEvent e) {}
-  }
-
-  static class ValidAggregate extends Aggregate {
-    @Handler
-    @FilterByAggIdProperty("userId")
-    void apply(FilterEvent e) {}
-
-    void unannotated(FilterEvent e) {}
-  }
-
-  static class NestedPathAggregate extends Aggregate {
-    @Handler
-    @FilterByAggIdProperty("ref.nestedId")
-    void apply(FilterEvent e) {}
-  }
-
-  static class NonUuidPropertyAggregate extends Aggregate {
-    @Handler
-    @FilterByAggIdProperty("name")
-    void apply(FilterEvent e) {}
-  }
-
-  static class UnknownPropertyAggregate extends Aggregate {
-    @Handler
-    @FilterByAggIdProperty("doesNotExist")
-    void apply(FilterEvent e) {}
-  }
-
-  static class HandlerForAggregate extends Aggregate {
-    @HandlerFor(ns = "test", type = "FilterEvent")
-    @FilterByAggIdProperty("userId")
-    void apply(FilterEvent e) {}
+    @FilterByAggIdProperty("narf")
+    public void foo() {}
   }
 
   @SneakyThrows
   @Test
-  void discoverAggIdPropertyFilterRejectsNonAggregate() {
+  void checkFilterByAggIdProperty() {
     Assertions.assertThatThrownBy(
             () ->
-                ReflectionUtils.discoverAggIdPropertyFilter(
-                    SomeUnrelatedClass.class.getMethod("foo", FilterEvent.class)))
+                ReflectionUtils.checkFilterByAggIdProperty(
+                    SomeUnrelatedClass.class.getMethod("foo"), FactSpec.ns("foo")))
         .isInstanceOf(IllegalAnnotationForTargetClassException.class);
-  }
-
-  @SneakyThrows
-  @Test
-  void discoverAggIdPropertyFilterRejectsHandlerForCombination() {
-    Assertions.assertThatThrownBy(
-            () ->
-                ReflectionUtils.discoverAggIdPropertyFilter(
-                    HandlerForAggregate.class.getDeclaredMethod("apply", FilterEvent.class)))
-        .isInstanceOf(InvalidHandlerDefinition.class);
-  }
-
-  @SneakyThrows
-  @Test
-  void discoverAggIdPropertyFilterRejectsUnknownProperty() {
-    Assertions.assertThatThrownBy(
-            () ->
-                ReflectionUtils.discoverAggIdPropertyFilter(
-                    UnknownPropertyAggregate.class.getDeclaredMethod("apply", FilterEvent.class)))
-        .isInstanceOf(IllegalAggregateIdPropertyPathException.class);
-  }
-
-  @SneakyThrows
-  @Test
-  void discoverAggIdPropertyFilterRejectsNonUuidProperty() {
-    Assertions.assertThatThrownBy(
-            () ->
-                ReflectionUtils.discoverAggIdPropertyFilter(
-                    NonUuidPropertyAggregate.class.getDeclaredMethod("apply", FilterEvent.class)))
-        .isInstanceOf(IllegalAggregateIdPropertyPathException.class);
-  }
-
-  @SneakyThrows
-  @Test
-  void discoverAggIdPropertyFilterReturnsNullWhenNotAnnotated() {
-    assertNull(
-        ReflectionUtils.discoverAggIdPropertyFilter(
-            ValidAggregate.class.getDeclaredMethod("unannotated", FilterEvent.class)));
-  }
-
-  @SneakyThrows
-  @Test
-  void discoverAggIdPropertyFilterResolvesSimplePath() {
-    AggregateIdPropertyFilter filter =
-        ReflectionUtils.discoverAggIdPropertyFilter(
-            ValidAggregate.class.getDeclaredMethod("apply", FilterEvent.class));
-    assertNotNull(filter);
-    assertEquals("userId", filter.path());
-    assertEquals(1, filter.fieldChain().size());
-  }
-
-  @SneakyThrows
-  @Test
-  void discoverAggIdPropertyFilterResolvesNestedPath() {
-    AggregateIdPropertyFilter filter =
-        ReflectionUtils.discoverAggIdPropertyFilter(
-            NestedPathAggregate.class.getDeclaredMethod("apply", FilterEvent.class));
-    assertNotNull(filter);
-    assertEquals("ref.nestedId", filter.path());
-    assertEquals(2, filter.fieldChain().size());
   }
 }

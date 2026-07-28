@@ -60,7 +60,7 @@ class DispatcherTest {
     ProjectorImpl.TargetObjectResolver resolver = p -> ((MyProjection) p).nested;
     FactSpec spec = FactSpec.ns("ns").type("type").version(1);
 
-    Dispatcher underTest = new Dispatcher(m, transformer, resolver, spec, null);
+    Dispatcher underTest = new Dispatcher(m, transformer, resolver, spec);
 
     // act
     underTest.invoke(ser, projection, fact);
@@ -84,7 +84,7 @@ class DispatcherTest {
     ProjectorImpl.TargetObjectResolver resolver = p -> ((MyProjection) p).nested;
     FactSpec spec = FactSpec.ns("ns").type("type").version(1);
 
-    Dispatcher underTest = new Dispatcher(m, transformer, resolver, spec, null);
+    Dispatcher underTest = new Dispatcher(m, transformer, resolver, spec);
 
     // act/assert
     assertThatThrownBy(() -> underTest.invoke(ser, projection, fact))
@@ -104,7 +104,7 @@ class DispatcherTest {
     ProjectorImpl.TargetObjectResolver resolver = p -> ((MyProjection) p).nested;
     FactSpec spec = FactSpec.ns("ns").type("type").version(1);
 
-    Dispatcher underTest = new Dispatcher(m, transformer, resolver, spec, null);
+    Dispatcher underTest = new Dispatcher(m, transformer, resolver, spec);
 
     // act/assert
     assertThatThrownBy(() -> underTest.invoke(ser, projection, fact))
