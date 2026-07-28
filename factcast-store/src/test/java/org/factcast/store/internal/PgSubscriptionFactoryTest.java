@@ -68,6 +68,7 @@ class PgSubscriptionFactoryTest {
     underTest =
         new PgSubscriptionFactory(
             connectionSupplier,
+            null,
             eventBus,
             idToSerialMapper,
             props,

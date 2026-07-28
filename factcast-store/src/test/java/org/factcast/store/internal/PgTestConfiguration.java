@@ -51,7 +51,8 @@ public class PgTestConfiguration {
     if (url == null) {
       String version = PostgresVersion.get();
       log.info("Trying to start postgres testcontainer version {}", version);
-      PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:" + version);
+      PostgreSQLContainer postgres =
+          new PostgreSQLContainer("postgres:" + version).withDatabaseName("fc");
       postgres.start();
       url = postgres.getJdbcUrl();
       System.setProperty("spring.datasource.driver-class-name", Driver.class.getName());
@@ -62,7 +63,7 @@ public class PgTestConfiguration {
       System.setProperty("spring.datasource.maxActive", "20");
       System.setProperty("spring.datasource.tomcat.connectionProperties", "foo=bar;");
     } else {
-      log.info("Using predefined external postgres URL: " + url);
+      log.info("Using predefined external postgres URL: {}", url);
       // use predefined url
       System.setProperty("spring.datasource.driver-class-name", Driver.class.getName());
       System.setProperty("spring.datasource.url", url);
