@@ -35,8 +35,7 @@ class UnconditionalPublishQueue {
   record Publication(
       long ordinal, List<? extends Fact> facts, CompletableFuture<Void> completion) {}
 
-  // TODO can we dare unbounded deque here? If we use BlockingQueue instead, we'd need to rethink
-  // locking
+  // Non-concurrent ArrayDeque is safe as it is only accessed while synchronized
   final Queue<Publication> queue = new ArrayDeque<>(4096);
 
   Future<Void> addAndFlush(List<? extends Fact> toPublish) throws DuplicateFactException {
@@ -71,49 +70,52 @@ class UnconditionalPublishQueue {
    */
   @VisibleForTesting
   synchronized void flush(long ordinal) {
-    if ((!queue.isEmpty()) && (queue.peek().ordinal() <= ordinal)) {
+    List<Publication> pubs;
+    List<Fact> facts;
+
+    // contention-less sync is said to be "virtually free"
+    synchronized (queue) {
+      if (queue.isEmpty() || queue.peek().ordinal() > ordinal) {
+        return;
+      }
+
       // collect all facts & futures
 
       // This is a trade-off between efficiency and latency. The longer the batch gets,
       // the longer it takes for the first publication to be completed.
       // Also the number of conversations open is not infinite as well.
-      //
+      pubs = new ArrayList<>(maxBatchSize);
+      facts = new ArrayList<>(maxBatchSize);
 
-      List<Publication> pubs = new ArrayList<>(maxBatchSize);
-      List<Fact> facts = new ArrayList<>(maxBatchSize);
-
-      // contention-less sync is said to be "virtually free"
-      synchronized (queue) {
-        Publication p;
-        while ((pubs.size() < maxBatchSize) && (p = queue.poll()) != null) {
-          pubs.add(p);
-          facts.addAll(p.facts());
-        }
+      Publication p;
+      while ((pubs.size() < maxBatchSize) && (p = queue.poll()) != null) {
+        pubs.add(p);
+        facts.addAll(p.facts());
       }
+    }
 
-      // could still be empty if some looney publishes empty lists
-      if (!pubs.isEmpty()) {
-        // try to publish as one
-        try {
-          pgFactStore.batchPublish(facts);
-          // since it worked, we can complete all
-          pubs.forEach(pub -> pub.completion().complete(null));
-        } catch (Exception e) {
-          // ok, we need to go one by one then in order to throw the dup exception in the right
-          // place(s)
-          //
-          // there is no need to log the exception, as it will resurface again below
-          pubs.parallelStream()
-              .forEach(
-                  pub -> {
-                    try {
-                      pgFactStore.batchPublish(pub.facts());
-                      pub.completion().complete(null);
-                    } catch (Exception dupe) {
-                      pub.completion().completeExceptionally(dupe);
-                    }
-                  });
-        }
+    // could still be empty if some looney publishes empty lists
+    if (!pubs.isEmpty()) {
+      // try to publish as one
+      try {
+        pgFactStore.batchPublish(facts);
+        // since it worked, we can complete all
+        pubs.forEach(pub -> pub.completion().complete(null));
+      } catch (Exception e) {
+        // ok, we need to go one by one then in order to throw the dup exception in the right
+        // place(s)
+        //
+        // there is no need to log the exception, as it will resurface again below
+        pubs.parallelStream()
+            .forEach(
+                pub -> {
+                  try {
+                    pgFactStore.batchPublish(pub.facts());
+                    pub.completion().complete(null);
+                  } catch (Exception dupe) {
+                    pub.completion().completeExceptionally(dupe);
+                  }
+                });
       }
     }
   }
