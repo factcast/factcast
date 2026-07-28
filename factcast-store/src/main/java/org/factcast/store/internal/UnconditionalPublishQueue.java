@@ -99,7 +99,7 @@ class UnconditionalPublishQueue {
       } else break;
     }
 
-    // really whould not be empty, but better safe than sorry.
+    // really should not be empty, but better safe than sorry.
     if (!pubs.isEmpty()) {
       // try to publish as one
       try {
