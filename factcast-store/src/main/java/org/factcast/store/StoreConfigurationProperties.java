@@ -22,7 +22,6 @@ import jakarta.validation.constraints.Positive;
 import java.time.Duration;
 import java.util.*;
 import lombok.*;
-import lombok.Data;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.store.internal.pipeline.AutoFlushingServerPipeline;
@@ -267,7 +266,7 @@ public class StoreConfigurationProperties implements InitializingBean {
   @Max(50)
   long maxNotificationPollLatencyInMillis = 25;
 
-  public class OffloadDataSourceProperties extends DataSourceProperties {}
+  public static class OffloadDataSourceProperties extends DataSourceProperties {}
 
   @Valid OffloadDataSourceProperties offload = new OffloadDataSourceProperties();
 
