@@ -18,7 +18,6 @@ package org.factcast.factus.projector;
 import static java.util.Collections.emptySet;
 
 import com.google.common.annotations.VisibleForTesting;
-import jakarta.annotation.Nullable;
 import java.lang.reflect.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -238,9 +237,10 @@ public class ReflectionUtils {
               + m);
     }
 
-    List<Field> fieldChain =
-        resolveUuidPropertyFieldChain(annotation.value(), findEventObjectParameterType(m));
-    return new AggregateIdPropertyFilter(annotation.value(), fieldChain);
+    Class<? extends EventObject> eventType = findEventObjectParameterType(m);
+    List<Field> fieldChain = resolveUuidPropertyFieldChain(annotation.value(), eventType);
+    int eventParameterIndex = Arrays.asList(m.getParameterTypes()).indexOf(eventType);
+    return new AggregateIdPropertyFilter(fieldChain, eventParameterIndex);
   }
 
   @VisibleForTesting
@@ -412,7 +412,7 @@ public class ReflectionUtils {
     List<Field> fieldChain = new ArrayList<>(path.length);
     Class<?> type = eventObjectType;
     for (String segment : path) {
-      Field field = findField(type, segment);
+      Field field = org.springframework.util.ReflectionUtils.findField(type, segment);
       if (field == null) {
         throw new IllegalAggregateIdPropertyPathException(
             "Cannot resolve property "
@@ -435,18 +435,6 @@ public class ReflectionUtils {
           "Encountered non-UUID type at " + value + " on type " + type);
     }
     return fieldChain;
-  }
-
-  @Nullable
-  private static Field findField(@NonNull Class<?> type, @NonNull String name) {
-    for (Class<?> c = type; c != null && c != Object.class; c = c.getSuperclass()) {
-      try {
-        return c.getDeclaredField(name);
-      } catch (NoSuchFieldException ignored) {
-        // try superclass
-      }
-    }
-    return null;
   }
 
   private static FactSpec filterByMetaDoesNotExist(@NonNull Method m, @NonNull FactSpec spec) {

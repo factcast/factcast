@@ -244,6 +244,24 @@ class ProjectorImplTest {
       // ASSERT
       assertThat(aggregate.applied()).isFalse();
     }
+
+    @Test
+    void skipsWhenPropertyIsNull() {
+      // INIT
+      UUID recommendedByUserId = UUID.randomUUID();
+      // the filtered property is null (optional reference not set on this fact)
+      FilterByAggIdPropertyEvent event = new FilterByAggIdPropertyEvent(null, recommendedByUserId);
+      Fact fact = eventConverter.toFact(event);
+
+      FilterByAggIdPropertyAggregate aggregate =
+          new FilterByAggIdPropertyAggregate(recommendedByUserId);
+
+      // RUN
+      new ProjectorImpl<>(aggregate, eventSerializer).apply(Collections.singletonList(fact));
+
+      // ASSERT: a null property never matches, so the fact is skipped
+      assertThat(aggregate.applied()).isFalse();
+    }
   }
 
   @Nested

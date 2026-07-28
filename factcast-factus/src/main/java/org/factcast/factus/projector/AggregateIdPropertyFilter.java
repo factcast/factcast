@@ -31,14 +31,14 @@ import org.factcast.factus.projection.Projection;
  *
  * <p>Unlike the static filter annotations (which are turned into {@code FactSpec} entries and
  * evaluated server-side), the aggregate id to match against is only known per fetched instance.
- * Therefore this filter cannot be expressed in the FactSpec and is instead evaluated right before
- * the handler is invoked: the {@code UUID} found at the configured property path of the event is
- * compared against the aggregate's id, and the handler is skipped on mismatch.
+ * Expressing it server-side would require a per-instance {@code FactSpec.filterScript}, which is
+ * store-specific; to keep the feature portable it is deliberately evaluated client-side instead,
+ * right before the handler is invoked: non-matching facts are still transferred and deserialized,
+ * but the handler is skipped when the {@code UUID} found at the configured property path of the
+ * event does not equal the aggregate's id.
  */
 @Value
 class AggregateIdPropertyFilter {
-  @NonNull String path;
-
   /**
    * the resolved chain of fields leading to the UUID property, made accessible. Fields are used
    * rather than getters so this is independent of the accessor style (JavaBeans or fluent Lombok
@@ -46,15 +46,24 @@ class AggregateIdPropertyFilter {
    */
   @NonNull List<Field> fieldChain;
 
+  /** index of the handler's {@link EventObject} parameter, determined at discovery time. */
+  int eventParameterIndex;
+
   /**
    * @return true if the event should be applied, i.e. the property value equals the aggregate id
    */
   boolean matches(@NonNull Projection projection, @NonNull Object[] parameters) {
     if (!(projection instanceof Aggregate aggregate)) {
-      // discovery-time validation guarantees an Aggregate; be defensive and do not filter otherwise
-      return true;
+      // discovery-time validation guarantees an Aggregate declaring class, but the root projection
+      // instance could differ (e.g. nested projections); fail loudly rather than filter wrongly
+      throw new IllegalStateException(
+          "@FilterByAggIdProperty is only supported on Aggregate projections, but was evaluated"
+              + " against "
+              + projection.getClass().getName());
     }
-    return Objects.equals(AggregateUtil.aggregateId(aggregate), extractFrom(findEvent(parameters)));
+    return Objects.equals(
+        AggregateUtil.aggregateId(aggregate),
+        extractFrom((EventObject) parameters[eventParameterIndex]));
   }
 
   @Nullable
@@ -71,16 +80,5 @@ class AggregateIdPropertyFilter {
       }
     }
     return (UUID) current;
-  }
-
-  @NonNull
-  private static EventObject findEvent(@NonNull Object[] parameters) {
-    for (Object p : parameters) {
-      if (p instanceof EventObject e) {
-        return e;
-      }
-    }
-    throw new IllegalStateException(
-        "No EventObject parameter present to evaluate @FilterByAggIdProperty");
   }
 }

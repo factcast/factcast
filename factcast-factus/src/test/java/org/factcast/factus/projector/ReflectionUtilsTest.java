@@ -222,8 +222,9 @@ class ReflectionUtilsTest {
         ReflectionUtils.discoverAggIdPropertyFilter(
             ValidAggregate.class.getDeclaredMethod("apply", FilterEvent.class));
     assertNotNull(filter);
-    assertEquals("userId", filter.path());
     assertEquals(1, filter.fieldChain().size());
+    assertEquals("userId", filter.fieldChain().get(0).getName());
+    assertEquals(0, filter.eventParameterIndex());
   }
 
   @SneakyThrows
@@ -233,7 +234,24 @@ class ReflectionUtilsTest {
         ReflectionUtils.discoverAggIdPropertyFilter(
             NestedPathAggregate.class.getDeclaredMethod("apply", FilterEvent.class));
     assertNotNull(filter);
-    assertEquals("ref.nestedId", filter.path());
     assertEquals(2, filter.fieldChain().size());
+    assertEquals("ref", filter.fieldChain().get(0).getName());
+    assertEquals("nestedId", filter.fieldChain().get(1).getName());
+  }
+
+  @SneakyThrows
+  @Test
+  void filterSkipsOnNullIntermediateInNestedPath() {
+    AggregateIdPropertyFilter filter =
+        ReflectionUtils.discoverAggIdPropertyFilter(
+            NestedPathAggregate.class.getDeclaredMethod("apply", FilterEvent.class));
+    assertNotNull(filter);
+
+    NestedPathAggregate aggregate = new NestedPathAggregate();
+    AggregateUtil.aggregateId(aggregate, UUID.randomUUID());
+    // ref is null, so the nested path cannot be resolved: no NPE, fact simply does not match
+    FilterEvent event = new FilterEvent();
+
+    assertFalse(filter.matches(aggregate, new Object[] {event}));
   }
 }

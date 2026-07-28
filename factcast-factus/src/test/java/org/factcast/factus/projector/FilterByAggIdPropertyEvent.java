@@ -36,7 +36,10 @@ public class FilterByAggIdPropertyEvent implements EventObject {
 
   @Override
   public Set<UUID> aggregateIds() {
-    // both ids end up in the fact header, so a plain aggId filter cannot tell them apart
-    return Sets.newHashSet(recommendedUserId, recommendedByUserId);
+    // both ids end up in the fact header, so a plain aggId filter cannot tell them apart.
+    // a null property (optional reference) is not published as aggId.
+    Set<UUID> ids = Sets.newHashSet(recommendedUserId, recommendedByUserId);
+    ids.remove(null);
+    return ids;
   }
 }
