@@ -35,7 +35,8 @@ public class CurrentStatementHolder implements Closeable {
       }
 
       if (wasCanceled) {
-        log.trace("statement was already cancelled, so no closing necessary. Duplicate call to close()?");
+        log.trace(
+            "statement was already cancelled, so no closing necessary. Duplicate call to close()?");
         return;
       }
 
@@ -68,9 +69,7 @@ public class CurrentStatementHolder implements Closeable {
           }
         } catch (SQLException e) {
           log.debug(
-              "Exception while rolling back transaction for cancelled statement {}:",
-              statement,
-              e);
+              "Exception while rolling back transaction for cancelled statement {}:", statement, e);
         }
       }
     }
