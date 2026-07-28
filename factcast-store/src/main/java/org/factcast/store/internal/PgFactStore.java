@@ -400,7 +400,6 @@ public class PgFactStore extends AbstractFactStore {
     }
   }
 
-  @VisibleForTesting
   void batchPublish(List<? extends Fact> facts) {
     int numberOfFactsToPublish = facts.size();
     log.trace("Inserting {} fact(s)", numberOfFactsToPublish);
@@ -416,7 +415,6 @@ public class PgFactStore extends AbstractFactStore {
     }
   }
 
-  @VisibleForTesting
   void batchPublishInTransaction(List<? extends Fact> facts) {
     try {
       lock.acquireSharedTXLock();

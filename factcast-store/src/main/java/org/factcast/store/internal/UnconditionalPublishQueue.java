@@ -35,15 +35,15 @@ class UnconditionalPublishQueue {
   record Publication(
       long ordinal, List<? extends Fact> facts, CompletableFuture<Void> completion) {}
 
-  // Non-concurrent ArrayDeque is safe as it is only accessed while synchronized
+  // Non-concurrent ArrayDeque is safe as it is only accessed while synchronized on
   final Queue<Publication> queue = new ArrayDeque<>(4096);
 
   Future<Void> addAndFlush(List<? extends Fact> toPublish) throws DuplicateFactException {
     CompletableFuture<Void> completion = new CompletableFuture<>();
     AtomicLong serial = new AtomicLong(Long.MAX_VALUE);
-    // sync makes sure, that the order in the queue is maintained, so that we can early exit
-    // flush(ser) based on the ser
     synchronized (queue) {
+      // sync makes sure, that the order in the queue is maintained, so that we can early exit
+      // flush(ser) based on the ser
       serial.set(ordinalCounter.incrementAndGet());
       queue.add(new Publication(serial.get(), toPublish, completion));
     }
@@ -59,8 +59,8 @@ class UnconditionalPublishQueue {
   }
 
   /**
-   * this is not supposed to be called from somewhere else than the flushingExecutor, which in turn
-   * uses a single thread. Otherwise it would not be possible to guarantee that publications not
+   * This is not supposed to be called from somewhere else than the flushingExecutor, which in turn
+   * uses a single thread. Otherwise it would not be possible to guarantee that publications no
    * longer in the queue are already flushed to the store.
    *
    * <p>To make this as explicit as possible, we also marked it as synchronized to ensure that only
@@ -70,31 +70,36 @@ class UnconditionalPublishQueue {
    */
   @VisibleForTesting
   synchronized void flush(long ordinal) {
-    List<Publication> pubs;
-    List<Fact> facts;
-
     // contention-less sync is said to be "virtually free"
     synchronized (queue) {
       if (queue.isEmpty() || queue.peek().ordinal() > ordinal) {
+        // nothing to do for this ordinal, as it already has been flushed by an earlier flush
         return;
-      }
-
-      // collect all facts & futures
-
-      // This is a trade-off between efficiency and latency. The longer the batch gets,
-      // the longer it takes for the first publication to be completed.
-      // Also the number of conversations open is not infinite as well.
-      pubs = new ArrayList<>(maxBatchSize);
-      facts = new ArrayList<>(maxBatchSize);
-
-      Publication p;
-      while ((pubs.size() < maxBatchSize) && (p = queue.poll()) != null) {
-        pubs.add(p);
-        facts.addAll(p.facts());
       }
     }
 
-    // could still be empty if some looney publishes empty lists
+    // This is a trade-off between efficiency and latency. The longer the batch gets,
+    // the longer it takes for the first publication to be completed.
+    // Also the number of conversations open is not infinite as well.
+    List<Publication> pubs = new ArrayList<>(maxBatchSize);
+    List<Fact> facts = new ArrayList<>(maxBatchSize);
+
+    // collect all facts & futures currently in the queue, regardless if there are more/later
+    // publications already
+    Publication p;
+    while (pubs.size() < maxBatchSize) {
+      // trying to keep the lock as short as possible, in order not to block additions to the queue
+      synchronized (queue) {
+        p = queue.poll();
+      }
+
+      if (p != null) {
+        pubs.add(p);
+        facts.addAll(p.facts());
+      } else break;
+    }
+
+    // really whould not be empty, but better safe than sorry.
     if (!pubs.isEmpty()) {
       // try to publish as one
       try {
@@ -102,7 +107,7 @@ class UnconditionalPublishQueue {
         // since it worked, we can complete all
         pubs.forEach(pub -> pub.completion().complete(null));
       } catch (Exception e) {
-        // ok, we need to go one by one then in order to throw the dup exception in the right
+        // ok, we need to go one by one then to throw the dup exception in the right
         // place(s)
         //
         // there is no need to log the exception, as it will resurface again below
