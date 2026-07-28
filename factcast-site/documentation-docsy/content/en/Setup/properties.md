@@ -20,10 +20,10 @@ description: Properties you can use to configure FactCast
 
 ### Transformation-Registry
 
-| Property                                             | Description                                                                                                                                                                                                                                                                                                        | Default                     |
-| ---------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------- |
-| factcast.store.persistent-transformation-cache       | if Transformed Fact payloads are persistently cached into Postgres.                                                                                                                                                                                                                                                | false                       |
-| factcast.store.in-mem-transformation-cache-capacity  | when using the inmem impl of the transformation cache, this is the max number of entries cached. The minimum value here is 100.                                                                                                                                                                                    | 100                         |
+| Property                                            | Description                                                                                                                     | Default |
+| --------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------ | :------ |
+| factcast.store.persistent-transformation-cache      | if Transformed Fact payloads are persistently cached into Postgres.                                                             | false   |
+| factcast.store.in-mem-transformation-cache-capacity | when using the inmem impl of the transformation cache, this is the max number of entries cached. The minimum value here is 100. | 100     |
 
 ---
 
