@@ -30,8 +30,23 @@ public class CurrentStatementHolder implements Closeable {
   public void close() {
     synchronized (mutex) {
       if (statement == null) {
-        log.trace("statement is null, so no closing necessary. Duplicate call to close()?");
+        log.trace("statement is null, so no closing necessary.");
         return;
+      }
+
+      if (wasCanceled) {
+        log.trace("statement was already cancelled, so no closing necessary. Duplicate call to close()?");
+        return;
+      }
+
+      log.info("Canceling statement {}", statement);
+      try {
+        statement.cancel();
+        statement.close();
+      } catch (SQLException e) {
+        log.debug("Exception while cancelling statement {}:", statement, e);
+      } finally {
+        wasCanceled = true;
       }
 
       // not elegant, but plenty of different things can go wrong
@@ -43,31 +58,20 @@ public class CurrentStatementHolder implements Closeable {
         log.debug("While fetching connection from statement to cancel: {}", statement, e);
       }
 
-      if (statement != null) {
-        log.info("Canceling statement {}", statement);
+      if (c != null) {
         try {
-          statement.cancel();
-          statement.close();
-        } catch (SQLException e) {
-          log.debug("Exception while cancelling statement {}:", statement, e);
-        } finally {
-          wasCanceled = true;
-        }
-
-        if (c != null)
-          try {
-            if (!c.getAutoCommit()) {
-              // we have to roll back the tx on the underlying connection
-              // if we do not end the transaction, statements are canceled but still "idle in
-              // transaction" and so block further actions like wiping between tests
-              c.rollback();
-            }
-          } catch (SQLException e) {
-            log.debug(
-                "Exception while rolling back transaction for cancelled statement {}:",
-                statement,
-                e);
+          if (!c.getAutoCommit()) {
+            // we have to roll back the tx on the underlying connection
+            // if we do not end the transaction, statements are canceled but still "idle in
+            // transaction" and so block further actions like wiping between tests
+            c.rollback();
           }
+        } catch (SQLException e) {
+          log.debug(
+              "Exception while rolling back transaction for cancelled statement {}:",
+              statement,
+              e);
+        }
       }
     }
   }
