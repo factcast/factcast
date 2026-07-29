@@ -52,11 +52,6 @@ public class PgQueryBuilder {
     factSpecs = specs;
   }
 
-  public PgQueryBuilder(
-      @NonNull Collection<FactSpec> specs, @NonNull CurrentStatementHolder holder) {
-    factSpecs = specs;
-  }
-
   public PreparedStatementSetter createStatementSetter(@NonNull AtomicLong serial) {
     return p -> {
       int count = 0;
