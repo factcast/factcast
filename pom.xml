@@ -393,6 +393,9 @@
             <goals>
               <goal>test-jar</goal>
             </goals>
+            <configuration>
+              <attach>${attachTestJar}</attach>
+            </configuration>
           </execution>
         </executions>
       </plugin>
@@ -726,7 +729,9 @@
                 <goals>
                   <goal>test-jar</goal>
                 </goals>
-                <phase>none</phase>
+                <configuration>
+                  <attach>false</attach>
+                </configuration>
               </execution>
             </executions>
           </plugin>
