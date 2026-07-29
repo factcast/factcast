@@ -121,24 +121,22 @@ Properties you can use to configure gRPC:
 
 #### gRPC Client
 
-| Property                                                       | Description                                                                                                                                  | Default | Example                     |
-| -------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------- | :------ | :-------------------------- |
-| grpc.client.factstore.credentials                              | Deprecated. Please use `factcast.grpc.client.user` and `factcast.grpc.client.password` instead                                               | none    | myUserName:mySecretPassword |
-| spring.grpc.client.channels.factstore.address                  | the address(es) fo the factcast server                                                                                                       | none    | static://localhost:9090     |
-| spring.grpc.client.channels.factstore.negotiation-type         | Usage of TLS or Plaintext?                                                                                                                   | TLS     | PLAINTEXT                   |
-| spring.grpc.client.channels.factstore.enable-keep-alive        | Configures whether keepAlive should be enabled. Recommended for long running (follow) subscriptions                                          | false   | true                        |
-| spring.grpc.client.channels.factstore.keep-alive-time          | The default delay before sending keepAlives. Defaults to 60s. Please note that shorter intervals increase the network burden for the server. |         | 300                         |
-| spring.grpc.client.channels.factstore.keep-alive-without-calls | Configures whether keepAlive will be performed when there are no outstanding RPCs on a connection.                                           | false   | true                        |
+| Property                                                     | Description                                                                                                                                  | Default | Example                     |
+| ------------------------------------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------- | :------ | :-------------------------- |
+| grpc.client.factstore.credentials                            | Deprecated. Please use `factcast.grpc.client.user` and `factcast.grpc.client.password` instead                                               | none    | myUserName:mySecretPassword |
+| spring.grpc.client.channel.factstore.target                  | the address(es) fo the factcast server                                                                                                       | none    | static://localhost:9090     |
+| spring.grpc.client.channel.factstore.ssl.enabled             | Enables or disables SSL                                                                                                                      | false   | true                        |
+| spring.grpc.client.channel.factstore.keepalive.time          | The default delay before sending keepAlives. Defaults to 60s. Please note that shorter intervals increase the network burden for the server. |         | 300                         |
+| spring.grpc.client.channel.factstore.keepalive.without-calls | Configures whether keepAlive will be performed when there are no outstanding RPCs on a connection.                                           | false   | true                        |
 
 #### gRPC Client recommended settings
 
 ```
-spring.grpc.client.channels.factstore.enable-keep-alive=true
-spring.grpc.client.channels.factstore.keep-alive-time=300
-spring.grpc.client.channels.factstore.keep-alive-without-calls=true
+spring.grpc.client.channel.factstore.keepalive.time=300
+spring.grpc.client.channel.factstore.keepalive.without-calls=true
 ```
 
-Further details can be found here : `org.springframework.grpc.autoconfigure.client.GrpcClientProperties`.
+Further details can be found here : `org.springframework.boot.grpc.client.autoconfigure.GrpcClientProperties`.
 
 #### FactCast client specific
 
@@ -202,4 +200,4 @@ spring.grpc.server.keep-alive.permit-time=100
 | factcast.ui.report.store.path | The path under which reports are stored if no external ReportStore is configured.                                            | /tmp/factcast-ui/report |
 | factcast.ui.report.store.s3   | The name of the S3 Bucket in which the reports are stored by the S3ReportStore. This overrides factcast.ui.report.store.path |                         |
 
-Further details can be found here : `org.springframework.grpc.autoconfigure.server.GrpcServerProperties`.
+Further details can be found here : `org.springframework.boot.grpc.server.autoconfigure.GrpcServerProperties`.
