@@ -29,14 +29,14 @@ public class CurrentStatementHolder implements Closeable {
   @Override
   public void close() {
     synchronized (mutex) {
-      if (statement == null) {
-        log.trace("statement is null, so no closing necessary.");
-        return;
-      }
-
       if (wasCanceled) {
         log.trace(
             "statement was already cancelled, so no closing necessary. Duplicate call to close()?");
+        return;
+      }
+
+      if (statement == null) {
+        log.trace("statement is null, so no closing necessary.");
         return;
       }
 

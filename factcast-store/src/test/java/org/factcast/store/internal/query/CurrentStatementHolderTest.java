@@ -15,12 +15,14 @@
  */
 package org.factcast.store.internal.query;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import lombok.*;
+import nl.altindag.log.LogCaptor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -67,6 +69,35 @@ class CurrentStatementHolderTest {
       doThrow(SQLException.class).when(statement).cancel();
       underTest.close();
       verify(statement).cancel();
+    }
+
+    @SneakyThrows
+    @Test
+    void skipsIfWasCanceled() {
+      LogCaptor logCaptor = LogCaptor.forClass(underTest.getClass());
+      underTest.statement(statement);
+      when(statement.getConnection()).thenReturn(connection);
+      when(connection.getAutoCommit()).thenReturn(false);
+      underTest.close();
+
+      underTest.close();
+
+      verify(statement, atMostOnce()).cancel();
+      verify(connection, atMostOnce()).rollback();
+      assertThat(logCaptor.getTraceLogs())
+          .contains("statement was already cancelled, so no closing necessary. Duplicate call to close()?");
+    }
+
+    @SneakyThrows
+    @Test
+    void skipsIfStatementIsNull() {
+      LogCaptor logCaptor = LogCaptor.forClass(underTest.getClass());
+      underTest.clear();
+
+      underTest.close();
+
+      assertThat(logCaptor.getTraceLogs())
+          .contains("statement is null, so no closing necessary.");
     }
   }
 }
