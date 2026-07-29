@@ -131,6 +131,7 @@ class UnconditionalPublishQueueTest {
     // make sure, everything is quiet
     assertThat(cdl.await(50, TimeUnit.MILLISECONDS)).isFalse();
 
+<<<<<<< Updated upstream
     // Act
     Future<Future<Void>> future1 = CompletableFuture.supplyAsync(() -> q.addAndFlush(facts1));
     Future<Future<Void>> future2 = CompletableFuture.supplyAsync(() -> q.addAndFlush(facts2));
@@ -140,6 +141,13 @@ class UnconditionalPublishQueueTest {
     assertThat(cdl.await(50, TimeUnit.MILLISECONDS)).isFalse();
 
     cdl.countDown(); // GO!
+=======
+    while (uut.queueSize() < 3) {
+      Thread.sleep(10);
+    }
+
+    cdl.countDown();
+>>>>>>> Stashed changes
 
     // Assert
     ExecutionException executionException1 =
