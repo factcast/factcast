@@ -159,7 +159,7 @@ public class PgFactStream {
   @VisibleForTesting
   @NotNull
   PgSynchronizedQuery createPgSynchronizedQuery() {
-    PgQueryBuilder q = new PgQueryBuilder(request.specs(), statementHolder);
+    PgQueryBuilder q = new PgQueryBuilder(request.specs());
     String sql = q.createSQL();
     log.trace("created query SQL for {} - SQL={}", request.specs(), sql);
     PreparedStatementSetter setter = q.createStatementSetter(serial);

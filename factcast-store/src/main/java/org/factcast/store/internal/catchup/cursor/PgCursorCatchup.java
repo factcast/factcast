@@ -59,7 +59,7 @@ public class PgCursorCatchup extends AbstractPgCatchup {
   public void run() {
     try {
 
-      final var b = new PgQueryBuilder(req.specs(), statementHolder);
+      final var b = new PgQueryBuilder(req.specs());
       final var extractor = new PgFactExtractor(serial);
       final var fromSerial = serial.get() < fastForward ? new AtomicLong(fastForward) : serial;
       final var catchupSQL = b.createSQL();

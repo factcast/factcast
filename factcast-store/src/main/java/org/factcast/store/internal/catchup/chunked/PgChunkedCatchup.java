@@ -145,7 +145,7 @@ public class PgChunkedCatchup extends AbstractPgCatchup {
   int prepareTemporaryTable(JdbcTemplate jdbc, String tempTableName) {
     createTempTable(jdbc, tempTableName);
 
-    final var b = new PgQueryBuilder(req.specs(), statementHolder);
+    final var b = new PgQueryBuilder(req.specs());
     b.useTempTable(tempTableName);
 
     final var fromSerial = new AtomicLong(Math.max(serial.get(), fastForward));
