@@ -61,8 +61,6 @@ public class PgChunkedCatchup extends AbstractPgCatchup {
     try {
       fetch(ds);
     } finally {
-      statementHolder.clear();
-
       log.trace("Done fetching, flushing.");
       pipeline.process(Signal.flush());
     }
@@ -97,7 +95,8 @@ public class PgChunkedCatchup extends AbstractPgCatchup {
           }
 
           log.trace("{} catchup {} - fetching chunk {}", req, phase, ++chunkCount);
-          List<PgFact> facts = jdbc.query(chunkQuery, extractor);
+          List<PgFact> facts =
+              jdbc.query(con -> statementHolder.prepareStatement(con, chunkQuery), extractor);
           rowsToProcess = facts.size();
           log.trace(
               "{} catchup {} - processing chunk {} - found {} rows",

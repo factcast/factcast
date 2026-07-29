@@ -84,9 +84,8 @@ class CurrentStatementHolderTest {
 
       verify(statement, atMostOnce()).cancel();
       verify(connection, atMostOnce()).rollback();
-      assertThat(logCaptor.getTraceLogs())
-          .contains(
-              "statement was already cancelled, so no closing necessary. Duplicate call to close()?");
+      // no longer complains
+      assertThat(logCaptor.getTraceLogs()).isEmpty();
     }
 
     @SneakyThrows
@@ -97,7 +96,7 @@ class CurrentStatementHolderTest {
 
       underTest.close();
 
-      assertThat(logCaptor.getTraceLogs()).contains("statement is null, so no closing necessary.");
+      assertThat(logCaptor.getTraceLogs()).isEmpty();
     }
   }
 }

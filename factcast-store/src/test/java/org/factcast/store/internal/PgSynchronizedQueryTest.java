@@ -57,7 +57,8 @@ class PgSynchronizedQueryTest {
 
   @Mock AtomicLong serialToContinueFrom;
 
-  @Mock CurrentStatementHolder statementHolder;
+  @Spy CurrentStatementHolder statementHolder = new CurrentStatementHolder();
+
   @Mock BufferedTransformingServerPipeline pipeline;
   @Mock PgConnectionSupplier connectionSupplier;
 

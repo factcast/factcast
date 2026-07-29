@@ -45,19 +45,16 @@ public class PgQueryBuilder {
   public static final String CONTAINS_JSONB = " @> ?::jsonb ";
 
   private final @NonNull Collection<FactSpec> factSpecs;
-  private final CurrentStatementHolder statementHolder;
   private String tempTableName = null;
   private boolean serialsOnly = false;
 
   public PgQueryBuilder(@NonNull Collection<FactSpec> specs) {
     factSpecs = specs;
-    statementHolder = null;
   }
 
   public PgQueryBuilder(
       @NonNull Collection<FactSpec> specs, @NonNull CurrentStatementHolder holder) {
     factSpecs = specs;
-    this.statementHolder = holder;
   }
 
   public PreparedStatementSetter createStatementSetter(@NonNull AtomicLong serial) {
@@ -74,10 +71,6 @@ public class PgQueryBuilder {
       }
 
       p.setLong(++count, serial.get());
-
-      if (statementHolder != null) {
-        statementHolder.statement(p);
-      }
     };
   }
 

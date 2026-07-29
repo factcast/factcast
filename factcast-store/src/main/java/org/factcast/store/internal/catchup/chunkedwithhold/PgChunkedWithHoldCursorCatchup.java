@@ -23,6 +23,7 @@ import java.util.UUID;
 import java.util.concurrent.atomic.*;
 import javax.annotation.*;
 import lombok.*;
+import lombok.experimental.Accessors;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.*;
@@ -35,6 +36,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.datasource.*;
 
+@Accessors(fluent = true)
 public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
 
   private static final Logger log = LoggerFactory.getLogger(PgChunkedWithHoldCursorCatchup.class);
@@ -99,28 +101,24 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
 
     if (statementHolder.wasCanceled()) return false;
 
-    try {
-      Boolean moreToFetch =
-          inTransaction(() -> declareAndFetchFirst(cursor, queryBuilder, fromSerial, extractor));
+    Boolean moreToFetch =
+        inTransaction(() -> declareAndFetchFirst(cursor, queryBuilder, fromSerial, extractor));
 
-      if (moreToFetch == null) {
-        // no rows fetched whatsoever
-        return false;
-      } else {
-        if (moreToFetch) {
-          log.trace("{} catchup {}, fetching further rows from held cursor", req, phase);
+    if (moreToFetch == null) {
+      // no rows fetched whatsoever
+      return false;
+    } else {
+      if (moreToFetch) {
+        log.trace("{} catchup {}, fetching further rows from held cursor", req, phase);
 
-          // thing is, we still need another transaction around, so that setFetchSize continues to
-          // work
-          //
-          // also we want to keep the transaction boundaries to one chunk only, in order not to
-          // block the index maintenance on the fact table
-          continueFetchingUntilExhausted(cursor, extractor);
-        }
-        return true;
+        // thing is, we still need another transaction around, so that setFetchSize continues to
+        // work
+        //
+        // also we want to keep the transaction boundaries to one chunk only, in order not to
+        // block the index maintenance on the fact table
+        continueFetchingUntilExhausted(cursor, extractor);
       }
-    } finally {
-      statementHolder.clear();
+      return true;
     }
   }
 
@@ -186,10 +184,11 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
   }
 
   @VisibleForTesting
+  @Getter
   protected class Cursor implements AutoCloseable {
-    @Getter private final int chunkSize;
-    @Getter private final String name = "catchup_" + UUID.randomUUID().toString().replace("-", "");
-    private final @NonNull String fetchSql;
+    private final int chunkSize;
+    private final String name = "catchup_" + UUID.randomUUID().toString().replace("-", "");
+    @NonNull String fetchSql;
 
     public Cursor(int chunkSize) {
       this.chunkSize = chunkSize;
@@ -231,7 +230,7 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
                                   )
                                   SELECT array_agg(ser ORDER BY rn) FROM numbered GROUP BY grp ORDER BY grp ASC
                               """,
-              name(), chunkSize, queryBuilder.createSQL());
+              name(), chunkSize(), queryBuilder.createSQL());
 
       log.trace(
           "{} catchup {}, declaring cursor-with-hold after SER={}\n{}",
@@ -258,9 +257,9 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
         throws SQLException {
 
       final AtomicInteger rows = new AtomicInteger(0);
-      try (PreparedStatement fetch = connection.prepareStatement(fetchSql)) {
+      try (PreparedStatement fetch =
+          statementHolder.register(connection.prepareStatement(fetchSql))) {
         fetch.setFetchSize(props.getPageSize());
-        statementHolder.statement(fetch);
 
         log.debug(
             "{} catchup {}, query next chunk of size {} by ser \n{}",
@@ -298,7 +297,7 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
       return "SELECT "
           + PgConstants.PROJECTION_FACT
           + " FROM fetchFactsFromCursorWithHold('"
-          + name()
+          + name
           + "')";
     }
   }

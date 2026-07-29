@@ -67,12 +67,11 @@ public class PgCursorCatchup extends AbstractPgCatchup {
       log.trace("{} catchup {} - facts starting with SER={}", req, phase, fromSerial.get());
 
       try (Connection conn = ds.getConnection();
-          PreparedStatement prep = conn.prepareStatement(catchupSQL); ) {
+          PreparedStatement prep = statementHolder.register(conn.prepareStatement(catchupSQL)); ) {
         // this needs to be transactional for fetch-size to have any effect whatsoever.
         conn.setAutoCommit(false);
         prep.setFetchSize(props.getPageSize());
         prep.setQueryTimeout(0);
-
         b.createStatementSetter(fromSerial).setValues(prep);
 
         final var timer = metrics.timer(StoreMetrics.OP.RESULT_STREAM_START, isFromScratch);
@@ -86,8 +85,6 @@ public class PgCursorCatchup extends AbstractPgCatchup {
                 () -> logIfAboveThreshold(Duration.ofNanos(timerSample.stop(timer))));
       }
     } finally {
-      statementHolder.clear();
-
       log.trace("Done fetching, flushing.");
       pipeline.process(Signal.flush());
     }

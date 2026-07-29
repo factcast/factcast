@@ -105,13 +105,7 @@ class PgSynchronizedQuery {
     try (SingleConnectionDataSource ds = connectionSupplier.getPooledAsSingleDataSource(filters)) {
       long latest = hwmFetcher.highWaterMark(ds).targetSer();
       new JdbcTemplate(ds)
-          .query(
-              sql,
-              ps -> {
-                statementHolder.statement(ps);
-                setter.setValues(ps);
-              },
-              rowHandler);
+          .query(con -> statementHolder.prepareStatement(con, sql, setter), rowHandler);
 
       // shift to max(retrievedLatestSer, and ser as updated in
       // rowHandler)
@@ -125,7 +119,6 @@ class PgSynchronizedQuery {
       }
     } finally {
       try {
-        statementHolder.clear();
         // involves transformation & IO, so can throw exception
         pipe.process(Signal.flush());
       } catch (Throwable e) {
