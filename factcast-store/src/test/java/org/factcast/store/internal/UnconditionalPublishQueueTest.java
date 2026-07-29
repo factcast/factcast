@@ -15,12 +15,14 @@
  */
 package org.factcast.store.internal;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.assertj.core.api.Assertions;
 import org.factcast.core.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -89,14 +91,15 @@ class UnconditionalPublishQueueTest {
 
     CountDownLatch cdl = new CountDownLatch(1);
 
-    UnconditionalPublishQueue uut = spy(underTest);
+    // should not make any difference, but being cautious
+    UnconditionalPublishQueue q = spy(new UnconditionalPublishQueue(pgFactStore, 100));
 
     doAnswer(
             i -> {
               cdl.await();
               return i.callRealMethod();
             })
-        .when(uut)
+        .when(q)
         .flush(anyLong());
 
     // Arrange
@@ -117,7 +120,7 @@ class UnconditionalPublishQueueTest {
               if (facts.size() == 3) {
                 throw new DuplicateFactException("Batch failure");
               }
-              if (facts.equals(facts1) || facts.equals(facts3)) {
+              if (facts == facts1 || facts == facts3) {
                 throw new DuplicateFactException("Duplicate fact");
               }
               return null;
@@ -125,17 +128,31 @@ class UnconditionalPublishQueueTest {
         .when(pgFactStore)
         .batchPublish(anyList());
 
-    // Act
-    Future<Future<Void>> future1 = CompletableFuture.supplyAsync(() -> uut.addAndFlush(facts1));
-    Future<Future<Void>> future2 = CompletableFuture.supplyAsync(() -> uut.addAndFlush(facts2));
-    Future<Future<Void>> future3 = CompletableFuture.supplyAsync(() -> uut.addAndFlush(facts3));
+    // make sure, everything is quiet
+    assertThat(cdl.await(50, TimeUnit.MILLISECONDS)).isFalse();
 
-    cdl.countDown();
+    // Act
+    Future<Future<Void>> future1 = CompletableFuture.supplyAsync(() -> q.addAndFlush(facts1));
+    Future<Future<Void>> future2 = CompletableFuture.supplyAsync(() -> q.addAndFlush(facts2));
+    Future<Future<Void>> future3 = CompletableFuture.supplyAsync(() -> q.addAndFlush(facts3));
+
+    // make sure, everything is quiet
+    assertThat(cdl.await(50, TimeUnit.MILLISECONDS)).isFalse();
+
+    cdl.countDown(); // GO!
 
     // Assert
-    assertThrows(ExecutionException.class, () -> future1.get().get());
-    future2.get().get(); // Should succeed
-    assertThrows(ExecutionException.class, () -> future3.get().get());
+    ExecutionException executionException1 =
+        assertThrows(ExecutionException.class, () -> future1.get().get());
+    Assertions.assertThat(executionException1.getCause())
+        .isInstanceOf(DuplicateFactException.class);
+
+    assertDoesNotThrow(() -> future2.get().get());
+
+    ExecutionException executionException3 =
+        assertThrows(ExecutionException.class, () -> future3.get().get());
+    Assertions.assertThat(executionException3.getCause())
+        .isInstanceOf(DuplicateFactException.class);
 
     // this one failed:
     verify(pgFactStore, times(1)).batchPublish(argThat(l -> l.containsAll(allFacts)));
