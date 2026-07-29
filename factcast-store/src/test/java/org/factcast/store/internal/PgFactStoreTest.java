@@ -19,13 +19,18 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.*;
 import java.util.function.*;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.util.Lists;
+import org.factcast.core.DuplicateFactException;
 import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.State;
@@ -45,43 +50,100 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.*;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.TransactionCallback;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @SuppressWarnings("rawtypes")
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class PgFactStoreTest {
 
-  @Mock private @NonNull JdbcTemplate jdbcTemplate;
-  @Mock private @NonNull PgSubscriptionFactory subscriptionFactory;
-  @Mock private @NonNull FactTableWriteLock lock;
-  @Mock private @NonNull FactTransformerService factTransformerService;
-  @Mock private @NonNull PgFactIdToSerialMapper pgFactIdToSerialMapper;
+  @Mock @NonNull JdbcTemplate jdbcTemplate;
+  @Mock @NonNull PgSubscriptionFactory subscriptionFactory;
+  @Mock @NonNull FactTableWriteLock lock;
+  @Mock @NonNull FactTransformerService factTransformerService;
+  @Mock @NonNull PgFactIdToSerialMapper pgFactIdToSerialMapper;
 
   @Mock(strictness = Mock.Strictness.LENIENT)
-  private @NonNull PgMetrics metrics;
+  @NonNull
+  PgMetrics metrics;
 
-  @Mock private @NonNull TokenStore tokenStore;
-  @Mock private StoreConfigurationProperties storeConfigurationProperties;
+  @Mock @NonNull TokenStore tokenStore;
+
+  @Spy
+  StoreConfigurationProperties storeConfigurationProperties = new StoreConfigurationProperties();
+
   @Mock SchemaRegistry schemaRegistry;
 
-  @Mock private PlatformTransactionManager platformTransactionManager;
+  @Mock PlatformTransactionManager platformTransactionManager;
 
-  @InjectMocks private PgFactStore underTest;
+  @InjectMocks PgFactStore underTest;
 
   @Nested
   class WhenFetchingById {
-    private final UUID ID = UUID.randomUUID();
+    final UUID ID = UUID.randomUUID();
 
     @BeforeEach
-    void setup() {}
+    void setup() {
+      configureMetricTimeSupplier();
+    }
+
+    @Test
+    void fetchesFact() {
+      Fact fact = mock(Fact.class);
+      when(jdbcTemplate.query(anyString(), any(RowMapper.class), anyString()))
+          .thenReturn(Lists.newArrayList(fact));
+
+      Optional<Fact> result = underTest.fetchById(ID);
+      assertThat(result).contains(fact);
+    }
   }
 
-  private void configureMetricTimeSupplier() {
+  @Nested
+  class WhenPublishingDeferrable {
+    @Mock UnconditionalPublishQueue queue;
+    @Mock Fact fact;
+
+    @BeforeEach
+    void setup() {
+      configureMetricTimeRunnable();
+      ReflectionTestUtils.setField(underTest, "queue", queue);
+    }
+
+    @Test
+    void handlesInterruptedException() throws Exception {
+      CompletableFuture<Void> future = mock(CompletableFuture.class);
+      when(queue.addAndFlush(anyList())).thenReturn(future);
+      when(future.get()).thenThrow(new InterruptedException());
+
+      assertThatThrownBy(() -> underTest.publishBatchable(Collections.singletonList(fact)))
+          .isInstanceOf(RuntimeException.class)
+          .hasCauseInstanceOf(InterruptedException.class);
+
+      assertThat(Thread.interrupted()).isTrue();
+    }
+
+    @Test
+    void handlesExecutionException() throws Exception {
+      CompletableFuture<Void> future = mock(CompletableFuture.class);
+      when(queue.addAndFlush(anyList())).thenReturn(future);
+      when(future.get()).thenThrow(new ExecutionException(new RuntimeException("cause")));
+
+      assertThatThrownBy(() -> underTest.publishBatchable(Collections.singletonList(fact)))
+          .isInstanceOf(RuntimeException.class);
+    }
+  }
+
+  void configureMetricTimeSupplier() {
     when(metrics.time(any(), any(Supplier.class)))
         .thenAnswer(
             i -> {
@@ -90,7 +152,7 @@ class PgFactStoreTest {
             });
   }
 
-  private void configureMetricTimeRunnable() {
+  void configureMetricTimeRunnable() {
     doAnswer(
             i -> {
               Runnable argument = i.getArgument(1);
@@ -103,8 +165,8 @@ class PgFactStoreTest {
 
   @Nested
   class WhenFetchingByIdAndVersion {
-    private final UUID ID = UUID.randomUUID();
-    private final int VERSION = 11;
+    final UUID ID = UUID.randomUUID();
+    final int VERSION = 11;
 
     @BeforeEach
     void setup() {
@@ -132,7 +194,7 @@ class PgFactStoreTest {
 
   @Nested
   class WhenPublishing {
-    @Mock private Fact fact;
+    @Mock Fact fact;
 
     @BeforeEach
     void setup() {
@@ -165,9 +227,9 @@ class PgFactStoreTest {
 
   @Nested
   class WhenSubscribing {
-    @Mock private @NonNull SubscriptionRequestTO request;
-    @Mock private @NonNull FactObserver observer;
-    @Mock private @NonNull Subscription sub;
+    @Mock @NonNull SubscriptionRequestTO request;
+    @Mock @NonNull FactObserver observer;
+    @Mock @NonNull Subscription sub;
 
     @BeforeEach
     void setup() {
@@ -184,7 +246,7 @@ class PgFactStoreTest {
 
   @Nested
   class WhenSerialingOf {
-    private final UUID FACT_ID = UUID.randomUUID();
+    final UUID FACT_ID = UUID.randomUUID();
 
     @BeforeEach
     void setup() {}
@@ -241,7 +303,7 @@ class PgFactStoreTest {
   @SuppressWarnings("unchecked")
   @Nested
   class WhenEnumeratingTypes {
-    private final String NS = "NS";
+    final String NS = "NS";
 
     @BeforeEach
     void setup() {}
@@ -283,8 +345,8 @@ class PgFactStoreTest {
   @SuppressWarnings("unchecked")
   @Nested
   class WhenEnumeratingVersions {
-    private final String NS = "NS";
-    private final String TYPE = "TYPE";
+    final String NS = "NS";
+    final String TYPE = "TYPE";
 
     @BeforeEach
     void setup() {}
@@ -333,9 +395,9 @@ class PgFactStoreTest {
 
   @Nested
   class WhenPublishingIfUnchanged {
-    @Mock private Fact fact;
-    @Mock private @NonNull StateToken optionalToken;
-    @Mock private State state;
+    @Mock Fact fact;
+    @Mock @NonNull StateToken optionalToken;
+    @Mock State state;
 
     @BeforeEach
     void setup() {
@@ -350,7 +412,7 @@ class PgFactStoreTest {
       boolean b = underTest.publishIfUnchanged(Lists.newArrayList(fact), Optional.empty());
       verify(lock, never()).acquireExclusiveTXLock();
       assertThat(b).isTrue();
-      verify(underTest).publish(any(List.class));
+      verify(underTest).publishBatchable(any());
     }
 
     @Test
@@ -391,7 +453,7 @@ class PgFactStoreTest {
           underTest.publishIfUnchanged(Lists.newArrayList(fact), Optional.of(optionalToken));
       verify(lock).acquireExclusiveTXLock();
       assertThat(b).isTrue();
-      verify(underTest).publish(any(List.class));
+      verify(underTest).publish(any());
     }
 
     @Test
@@ -411,7 +473,7 @@ class PgFactStoreTest {
 
   @Nested
   class WhenGettingStateFor {
-    @Mock private FactSpec factSpec;
+    @Mock FactSpec factSpec;
 
     @BeforeEach
     void setup() {
@@ -443,8 +505,8 @@ class PgFactStoreTest {
 
   @Nested
   class WhenGettingStateForWithSerial {
-    private final long LAST_MATCHING_SERIAL = 43;
-    @Mock private FactSpec factSpec;
+    final long LAST_MATCHING_SERIAL = 43;
+    @Mock FactSpec factSpec;
 
     @BeforeEach
     void setup() {
@@ -475,7 +537,7 @@ class PgFactStoreTest {
 
   @Nested
   class WhenGettingCurrentStateFor {
-    @Mock private FactSpec factSpec;
+    @Mock FactSpec factSpec;
 
     @BeforeEach
     void setup() {
@@ -496,6 +558,74 @@ class PgFactStoreTest {
   }
 
   @Nested
+  class WhenFetchingBySerial {
+    @BeforeEach
+    void setup() {
+      configureMetricTimeSupplier();
+    }
+
+    @Test
+    void fetchesFact() {
+      Fact fact = mock(Fact.class);
+      when(jdbcTemplate.queryForObject(
+              eq(PgConstants.SELECT_BY_SER), any(RowMapper.class), anyLong()))
+          .thenReturn(fact);
+
+      Optional<Fact> result = underTest.fetchBySerial(123L);
+      assertThat(result).contains(fact);
+    }
+  }
+
+  @Nested
+  class WhenFetchingLatestSerial {
+    @BeforeEach
+    void setup() {
+      configureMetricTimeSupplier();
+    }
+
+    @Test
+    void fetchesSerial() {
+      when(jdbcTemplate.queryForObject(eq(PgConstants.HIGHWATER_SERIAL), (RowMapper<Long>) any()))
+          .thenReturn(123L);
+      assertThat(underTest.latestSerial()).isEqualTo(123L);
+    }
+  }
+
+  @Nested
+  class WhenFetchingLastSerialBefore {
+    @BeforeEach
+    void setup() {
+      configureMetricTimeSupplier();
+    }
+
+    @Test
+    void fetchesSerial() {
+      java.sql.Date date = java.sql.Date.valueOf("2020-01-01");
+      when(jdbcTemplate.queryForObject(
+              eq(PgConstants.LAST_SERIAL_BEFORE_DATE), any(RowMapper.class), eq(date)))
+          .thenReturn(123L);
+      assertThat(underTest.lastSerialBefore(date.toLocalDate())).isEqualTo(123L);
+    }
+  }
+
+  @Nested
+  class WhenFetchingFirstSerialAfter {
+    @BeforeEach
+    void setup() {
+      configureMetricTimeSupplier();
+    }
+
+    @Test
+    void fetchesSerial() {
+      java.sql.Date date = java.sql.Date.valueOf("2020-01-01");
+      when(jdbcTemplate.queryForObject(
+              eq(PgConstants.FIRST_SERIAL_AFTER_DATE), any(RowMapper.class), eq(date)))
+          .thenReturn(123L);
+      assertThat(underTest.firstSerialAfter(date.toLocalDate())).isEqualTo(123L);
+    }
+  }
+
+  @Nested
   class WhenCurrentingTime {
 
     @SneakyThrows
@@ -504,6 +634,154 @@ class PgFactStoreTest {
       when(jdbcTemplate.queryForObject(PgConstants.CURRENT_TIME_MILLIS, Long.class))
           .thenReturn(123L);
       assertThat(underTest.currentTime()).isEqualTo(123L);
+    }
+  }
+
+  @Nested
+  class WhenEnumeratingNamespacesFromPg {
+    @Mock TransactionTemplate tx;
+
+    @BeforeEach
+    void setup() {
+      configureMetricTimeRunnable();
+      when(metrics.time(any(StoreMetrics.OP.class), any(Supplier.class)))
+          .thenAnswer(
+              inv -> {
+                Supplier<Set<String>> supplier = inv.getArgument(1);
+                return supplier.get();
+              });
+      ReflectionTestUtils.setField(underTest, "tx", tx);
+    }
+
+    @Test
+    void enumerates() {
+      Set<String> ns = new HashSet<>(Set.of("a", "b"));
+      when(jdbcTemplate.query(eq(PgConstants.SELECT_DISTINCT_NAMESPACE), any(RowMapper.class)))
+          .thenReturn(Lists.newArrayList("a", "b"));
+      when(tx.execute(any()))
+          .thenAnswer(
+              inv -> {
+                TransactionCallback<Set<String>> callback = inv.getArgument(0);
+                return callback.doInTransaction(mock(TransactionStatus.class));
+              });
+      assertThat(underTest.enumerateNamespacesFromPg()).containsExactlyInAnyOrder("a", "b");
+      verify(jdbcTemplate).execute(PgConstants.DISABLE_SEQSCAN);
+      verify(jdbcTemplate).query(eq(PgConstants.SELECT_DISTINCT_NAMESPACE), any(RowMapper.class));
+    }
+  }
+
+  @Nested
+  class WhenEnumeratingTypesFromPg {
+    @Test
+    void enumerates() {
+      configureMetricTimeSupplier();
+      Set<String> types = Set.of("a", "b");
+      when(jdbcTemplate.query(anyString(), any(RowMapper.class), anyString()))
+          .thenReturn(Lists.newArrayList("a", "b"));
+      assertThat(underTest.enumerateTypesFromPg("ns")).isEqualTo(types);
+    }
+  }
+
+  @Nested
+  class WhenEnumeratingVersionsFromPg {
+    @Test
+    void enumerates() {
+      configureMetricTimeSupplier();
+      Set<Integer> versions = Set.of(1, 2);
+      when(jdbcTemplate.query(anyString(), any(RowMapper.class), anyString(), anyString()))
+          .thenReturn(Lists.newArrayList(1, 2));
+      assertThat(underTest.enumerateVersionsFromPg("ns", "type")).isEqualTo(versions);
+    }
+  }
+
+  @Nested
+  class WhenBatchPublishing {
+    @Mock TransactionTemplate tx;
+    @Mock FactTableWriteLock lock;
+
+    @BeforeEach
+    void setup() {
+      configureMetricTimeRunnable();
+      ReflectionTestUtils.setField(underTest, "tx", tx);
+      ReflectionTestUtils.setField(underTest, "lock", lock);
+    }
+
+    @Test
+    void publishes() {
+      Fact fact = mock(Fact.class);
+      List<Fact> facts = Lists.newArrayList(fact);
+
+      when(tx.execute(any()))
+          .thenAnswer(
+              inv -> {
+                TransactionCallback<Void> callback = inv.getArgument(0);
+                return callback.doInTransaction(mock(TransactionStatus.class));
+              });
+
+      underTest.batchPublish(facts);
+
+      verify(lock).acquireSharedTXLock();
+      verify(jdbcTemplate).batchUpdate(eq(PgConstants.INSERT_FACT), any(), anyInt(), any());
+    }
+  }
+
+  @Nested
+  class WhenBatchPublishingInTransaction {
+
+    @Test
+    void publishes() {
+      Fact fact = mock(Fact.class);
+      List<Fact> facts = Lists.newArrayList(fact);
+
+      underTest.batchPublishInTransaction(facts);
+
+      verify(lock).acquireSharedTXLock();
+      verify(jdbcTemplate).batchUpdate(eq(PgConstants.INSERT_FACT), any(), anyInt(), any());
+    }
+
+    @Test
+    void throwsDuplicateFactExceptionOnDuplicateKey() {
+      Fact fact = mock(Fact.class);
+      List<Fact> facts = Lists.newArrayList(fact);
+      when(jdbcTemplate.batchUpdate(anyString(), any(), anyInt(), any()))
+          .thenThrow(new DuplicateKeyException("duplicate"));
+
+      assertThatThrownBy(() -> underTest.batchPublishInTransaction(facts))
+          .isInstanceOf(DuplicateFactException.class);
+    }
+  }
+
+  @Nested
+  class WhenExtractingFromResultSet {
+    @Test
+    void extractsString() throws SQLException {
+      ResultSet rs = mock(ResultSet.class);
+      when(rs.getString(1)).thenReturn("test");
+      assertThat(underTest.extractStringFromResultSet(rs, 0)).isEqualTo("test");
+    }
+
+    @Test
+    void extractsInt() throws SQLException {
+      ResultSet rs = mock(ResultSet.class);
+      when(rs.getInt(1)).thenReturn(42);
+      assertThat(underTest.extractIntFromResultSet(rs, 0)).isEqualTo(42);
+    }
+  }
+
+  @Nested
+  class WhenPublishingDirectly {
+    @Test
+    void publishes() {
+      configureMetricTimeRunnable();
+      Fact fact = mock(Fact.class);
+      List<Fact> facts = Lists.newArrayList(fact);
+
+      PgFactStore spy = spy(underTest);
+      doNothing().when(spy).batchPublish(anyList());
+
+      spy.publishDirectly(facts);
+
+      verify(spy).batchPublish(facts);
     }
   }
 }

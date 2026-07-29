@@ -15,10 +15,10 @@
  */
 package org.factcast.spring.boot.autoconfigure.factus.snapshot.serializer.binary;
 
-import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.serializer.SnapshotSerializer;
 import org.factcast.factus.serializer.binary.*;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.*;
 import org.springframework.boot.autoconfigure.condition.*;
 import org.springframework.context.annotation.Bean;
@@ -35,9 +35,10 @@ public class BinaryJacksonSnapshotSerializerAutoConfiguration {
   @Bean
   @ConditionalOnMissingBean(SnapshotSerializer.class)
   public SnapshotSerializer snapshotSerializer(
-      List<BinaryJacksonSnapshotSerializerCustomizer> customizers) {
+      ObjectProvider<BinaryJacksonSnapshotSerializerCustomizer> customizers) {
     return new CompressedBinaryJacksonSnapshotSerializer(
-        objectMapper -> customizers.forEach(customizer -> customizer.accept(objectMapper)));
+        objectMapper ->
+            customizers.orderedStream().forEach(customizer -> customizer.accept(objectMapper)));
   }
 
   @Bean
