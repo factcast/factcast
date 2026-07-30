@@ -20,7 +20,6 @@ import org.factcast.server.grpc.*;
 import org.springframework.boot.autoconfigure.*;
 import org.springframework.boot.autoconfigure.condition.*;
 import org.springframework.boot.grpc.server.autoconfigure.GrpcServerAutoConfiguration;
-import org.springframework.boot.grpc.server.autoconfigure.GrpcServerFactoryAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 
@@ -28,7 +27,7 @@ import org.springframework.context.annotation.Import;
 @Import({FactCastGrpcServerConfiguration.class, FactCastSecurityConfiguration.class})
 @ConditionalOnClass(FactStoreGrpcService.class)
 @ConditionalOnMissingBean(FactStoreGrpcService.class)
-@AutoConfigureBefore({GrpcServerAutoConfiguration.class, GrpcServerFactoryAutoConfiguration.class})
+@AutoConfigureBefore({GrpcServerAutoConfiguration.class})
 public class FactCastGrpcServerAutoConfiguration {
   // simple noop codec for the handshake without compression
   @Bean

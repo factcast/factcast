@@ -141,7 +141,7 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
 
     ProxiedEndpoint fcProxy = containers.fcProxy().get();
     String address = "static://" + fcProxy.host() + ":" + fcProxy.port();
-    System.setProperty("spring.grpc.client.channels.factstore.address", address);
+    System.setProperty("spring.grpc.client.channel.factstore.target", address);
 
     System.setProperty("spring.datasource.url", containers.db().getJdbcUrl());
     System.setProperty("spring.datasource.username", containers.db().getUsername());

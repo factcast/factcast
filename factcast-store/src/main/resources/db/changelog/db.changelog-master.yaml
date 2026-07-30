@@ -667,6 +667,18 @@ databaseChangeLog:
             stripComments: true
 
   - changeSet:
+      id: issue4782
+      author: uweschaefer
+      runInTransaction: false
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue4782/date2serial_trigger.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+  - changeSet:
       id: issue4785
       author: uweschaefer
       runInTransaction: false
@@ -674,6 +686,18 @@ databaseChangeLog:
         - sqlFile:
             encoding: utf8
             path: factcast/issue4785/notification_ser_index.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+  - changeSet:
+      id: issue4781
+      author: uweschaefer
+      runInTransaction: false
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue4781/create_published_versions_trigger.sql
             relativeToChangelogFile: true
             splitStatements: false
             stripComments: true
