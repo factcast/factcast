@@ -37,9 +37,8 @@ community looks forward to your contributions. 🎉
 ## Code of Conduct
 
 This project and everyone participating in it is governed by the
-[FactCast Code of Conduct](https://github.com/factcast/factcast/blob/main/CODE_OF_CONDUCT.md).
-By participating, you are expected to uphold this code. Please report unacceptable behavior
-to <contact@factcast.org>.
+[FactCast Code of Conduct](https://github.com/factcast/factcast/blob/main/CODE_OF_CONDUCT.md). By participating, you are
+expected to uphold this code. Please report unacceptable behavior to <contact@factcast.org>.
 
 ## I Have a Question
 
@@ -192,8 +191,8 @@ If you want to change any content of a page in the docs, there is a link in the 
 on github and lets you edit it directly.
 
 In case you want to change the markdown locally, maybe rearrange or create pages, you can edit the markdown within
-factcast-site/documentation-docsy/content. If you want to see you changes, feel free to use `bash serve.sh` in there
-to fire up a local server and inspect your changes.
+factcast-site/documentation-docsy/content. If you want to see you changes, feel free to use `bash serve.sh` in there to
+fire up a local server and inspect your changes.
 
 ## Styleguides
 
@@ -233,6 +232,9 @@ git co <release version>
 mvn clean install
 mvn deploy -Dcentral
 ```
+
+Please note, that activating the central profile will disable attachment of the test-jar so that it is supposed to be
+used for publishing only.
 
 <!-- omit in toc -->
 
