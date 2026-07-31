@@ -221,7 +221,8 @@ https://central.sonatype.org/publish/publish-portal-maven/
 To actually publish, for snapshots just do
 
 ```shell
-mvn clean deploy -Dcentral
+mvn clean install
+mvn deploy -Dcentral
 ```
 
 for releases, you'd want to
@@ -229,7 +230,8 @@ for releases, you'd want to
 ```shell
 mvn gitflow:release -B
 git co <release version>
-mvn clean deploy -Dcentral
+mvn clean install
+mvn deploy -Dcentral
 ```
 
 <!-- omit in toc -->
