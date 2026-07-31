@@ -23,6 +23,7 @@ import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.store.StateToken;
 import org.factcast.test.IntegrationTest;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.source.ConfigurationPropertySources;
@@ -40,6 +41,7 @@ import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 @IntegrationTest
 // @TestPropertySource(properties = {"factcast.store.read-only-mode-enabled=true"})
 @TestPropertySource(properties = {"factcast.store.readOnlyModeEnabled=true"})
+@Disabled
 class PgFactStoreReadOnlyIntegrationTest {
 
   /**

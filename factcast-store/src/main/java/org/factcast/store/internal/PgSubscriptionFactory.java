@@ -27,6 +27,7 @@ import org.factcast.core.subscription.observer.*;
 import org.factcast.store.*;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
+import org.factcast.store.internal.logsuppression.LogSuppression;
 import org.factcast.store.internal.pipeline.*;
 import org.factcast.store.internal.query.*;
 import org.factcast.store.internal.telemetry.PgStoreTelemetry;
@@ -51,6 +52,7 @@ public class PgSubscriptionFactory implements AutoCloseable {
   final StoreConfigurationProperties props;
   final OffloadDataSource offloadDataSource;
   private final int maxPipelineBufferSize;
+  private final LogSuppression logSuppression;
 
   public PgSubscriptionFactory(
       PgConnectionSupplier connectionSupplier,
@@ -62,7 +64,8 @@ public class PgSubscriptionFactory implements AutoCloseable {
       HighWaterMarkFetcher hwmFetcher,
       ServerPipelineFactory pipelineFactory,
       PgMetrics metrics,
-      PgStoreTelemetry telemetry) {
+      PgStoreTelemetry telemetry,
+      LogSuppression logSuppression) {
     this.connectionSupplier = connectionSupplier;
     this.eventBus = eventBus;
     this.idToSerialMapper = idToSerialMapper;
@@ -73,6 +76,8 @@ public class PgSubscriptionFactory implements AutoCloseable {
     this.props = props;
     this.offloadDataSource = offloadDataSource;
     this.maxPipelineBufferSize = props.getTransformationCachePageSize();
+    this.logSuppression = logSuppression;
+
     this.es =
         metrics.monitor(
             Executors.newFixedThreadPool(props.getSizeOfThreadPoolForSubscriptions()),
@@ -95,7 +100,8 @@ public class PgSubscriptionFactory implements AutoCloseable {
             pipe,
             telemetry,
             props,
-            req);
+            req,
+            logSuppression);
 
     // when closing the subscription, also close the PgFactStream
     subscription.onClose(pgsub::close);
