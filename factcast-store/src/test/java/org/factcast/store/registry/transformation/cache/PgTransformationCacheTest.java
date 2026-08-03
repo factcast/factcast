@@ -441,6 +441,9 @@ class PgTransformationCacheTest {
 
     @Mock private TransformationCache.@NonNull Key key;
     @Mock private @NonNull Fact f;
+    @Mock private Connection con;
+    @Mock private PreparedStatement ps;
+    @Mock private Array sqlArray;
     private PgTransformationCache underTest;
 
     @BeforeEach
@@ -473,6 +476,36 @@ class PgTransformationCacheTest {
           .batchUpdate(matches("INSERT INTO transformation_cache .*"), m.capture());
 
       assertThat(m.getValue().getBatchSize()).isEqualTo(3);
+    }
+
+    @Test
+    void setsValuesOnPreparedStatement() throws SQLException {
+      UUID factId = UUID.randomUUID();
+      PgFact fact =
+          PgFact.from(
+              Fact.builder().ns("ns").type("type").id(factId).version(2).build("{\"a\":1}"));
+      // only one entry, as the flushed buffer is a HashMap and hence the batch order of several
+      // entries would be undefined
+      buffer.put(TransformationCache.Key.of(factId, 2, List.of(1, 2)), fact);
+
+      underTest.flush();
+
+      ArgumentCaptor<BatchPreparedStatementSetter> m =
+          ArgumentCaptor.forClass(BatchPreparedStatementSetter.class);
+      Mockito.verify(jdbcTemplate)
+          .batchUpdate(matches("INSERT INTO transformation_cache .*"), m.capture());
+
+      when(ps.getConnection()).thenReturn(con);
+      when(con.createArrayOf(eq("int4"), any())).thenReturn(sqlArray);
+
+      m.getValue().setValues(ps, 0);
+
+      Mockito.verify(ps).setObject(1, factId);
+      Mockito.verify(ps).setInt(2, 2);
+      Mockito.verify(con).createArrayOf("int4", new Integer[] {1, 2});
+      Mockito.verify(ps).setArray(3, sqlArray);
+      Mockito.verify(ps).setString(4, fact.jsonHeader());
+      Mockito.verify(ps).setString(5, fact.jsonPayload());
     }
   }
 
