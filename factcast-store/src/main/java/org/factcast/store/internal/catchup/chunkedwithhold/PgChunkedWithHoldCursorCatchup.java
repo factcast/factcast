@@ -257,8 +257,7 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
         throws SQLException {
 
       final AtomicInteger rows = new AtomicInteger(0);
-      try (PreparedStatement fetch =
-          statementHolder.register(connection.prepareStatement(fetchSql))) {
+      try (PreparedStatement fetch = connection.prepareStatement(fetchSql)) {
         fetch.setFetchSize(props.getPageSize());
 
         log.debug(
@@ -286,7 +285,7 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
           if (statementHolder.wasCanceled()) {
             log.trace("{} catchup {}, fetch chunk was cancelled", req, phase, e);
             return rows.get();
-          }
+          } else statementHolder.cancel();
           throw e;
         }
         return rows.get();

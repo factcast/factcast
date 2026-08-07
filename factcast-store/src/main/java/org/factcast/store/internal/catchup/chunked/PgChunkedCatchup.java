@@ -95,8 +95,7 @@ public class PgChunkedCatchup extends AbstractPgCatchup {
           }
 
           log.trace("{} catchup {} - fetching chunk {}", req, phase, ++chunkCount);
-          List<PgFact> facts =
-              jdbc.query(con -> statementHolder.prepareStatement(con, chunkQuery), extractor);
+          List<PgFact> facts = jdbc.query(chunkQuery, extractor);
           rowsToProcess = facts.size();
           log.trace(
               "{} catchup {} - processing chunk {} - found {} rows",
@@ -112,6 +111,9 @@ public class PgChunkedCatchup extends AbstractPgCatchup {
       } else {
         log.trace("{} catchup {} - no matching serials found", req, phase);
       }
+    } catch (Exception e) {
+      if (!statementHolder.wasCanceled()) statementHolder.cancel();
+      throw e;
     } finally {
       // tmp table is not needed anymore. As we reuse the connection, it'd be good to drop it.
       try {

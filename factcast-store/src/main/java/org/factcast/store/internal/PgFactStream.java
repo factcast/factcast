@@ -309,7 +309,7 @@ public class PgFactStream {
   @VisibleForTesting
   ModifiedSingleConnectionDataSource createCatchupDataSource(@NonNull DataSource ds) {
     return new ModifiedSingleConnectionDataSource(
-        ds.getConnection(), catchupConnectionModifiers(request));
+        statementHolder.track(ds.getConnection()), catchupConnectionModifiers(request));
   }
 
   @VisibleForTesting
@@ -353,7 +353,7 @@ public class PgFactStream {
       queryExecutor.cancel();
       queryExecutor = null;
     }
-    statementHolder.close();
+    statementHolder.destroy();
     log.debug("{} disconnected ", request);
 
     // free pipeline resources

@@ -102,10 +102,12 @@ class PgSynchronizedQuery {
       // the latest facts
       filters.add(ConnectionModifier.withCustomPlanForced());
     }
+
+    // it does not make much sense to track the statement here, as we expect this to be executed
+    // quickly, as we're in  afloow scenarion
     try (SingleConnectionDataSource ds = connectionSupplier.getPooledAsSingleDataSource(filters)) {
       long latest = hwmFetcher.highWaterMark(ds).targetSer();
-      new JdbcTemplate(ds)
-          .query(con -> statementHolder.prepareStatement(con, sql, setter), rowHandler);
+      new JdbcTemplate(ds).query(sql, setter, rowHandler);
 
       // shift to max(retrievedLatestSer, and ser as updated in
       // rowHandler)

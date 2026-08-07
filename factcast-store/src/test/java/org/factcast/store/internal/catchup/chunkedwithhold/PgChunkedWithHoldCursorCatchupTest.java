@@ -226,7 +226,6 @@ class PgChunkedWithHoldCursorCatchupTest {
 
       assertThat(rows).isEqualTo(0);
       verify(ps).setFetchSize(anyInt());
-      verify(statementHolder).register(ps);
     }
 
     @Test

@@ -265,11 +265,11 @@ class PgChunkedCatchupTest {
 
       when(scds.getConnection()).thenReturn(conn);
       when(conn.createStatement()).thenReturn(stmt);
-      when(conn.prepareStatement(any())).thenReturn(stmt);
+
       // drop table succeeds
       when(stmt.execute(anyString())).thenReturn(true);
       // query returns 1 row, then 1 row, then 1 row, then 0 rows
-      when(stmt.executeQuery()).thenReturn(rs1, rs2, rs3, rs4);
+      when(stmt.executeQuery(startsWith("with"))).thenReturn(rs1, rs2, rs3, rs4);
 
       // Configure the rows for PgFactExtractor/PgFact.from
       // rs1: one row
@@ -315,7 +315,7 @@ class PgChunkedCatchupTest {
       underTest.fetch(scds);
 
       // Assert: query loop ran 4 iterations (3 with rows, 1 with 0 rows to finish)
-      verify(stmt, atLeast(4)).executeQuery();
+      verify(stmt, atLeast(4)).executeQuery(startsWith("with"));
       // And the pipeline processed at least three facts (one per iteration)
       verify(pipeline, atLeast(3)).process(any());
     }

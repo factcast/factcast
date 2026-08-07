@@ -19,7 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import lombok.*;
@@ -31,7 +30,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.jdbc.core.PreparedStatementSetter;
 
 @ExtendWith(MockitoExtension.class)
 class CurrentStatementHolderTest {
@@ -48,7 +46,7 @@ class CurrentStatementHolderTest {
 
     @Test
     void ignoresNull() {
-      underTest.close();
+      underTest.destroy();
     }
 
     @SneakyThrows
@@ -57,9 +55,9 @@ class CurrentStatementHolderTest {
       when(statement.getConnection()).thenReturn(connection);
       when(connection.getAutoCommit()).thenReturn(false);
 
-      underTest.statement(statement);
+      underTest.register(statement);
 
-      underTest.close();
+      underTest.destroy();
       verify(statement).cancel();
       verify(connection).rollback();
     }
@@ -67,9 +65,9 @@ class CurrentStatementHolderTest {
     @SneakyThrows
     @Test
     void cancelsStatementAndCatchesException() {
-      underTest.statement(statement);
+      underTest.register(statement);
       doThrow(SQLException.class).when(statement).cancel();
-      underTest.close();
+      underTest.destroy();
       verify(statement).cancel();
     }
 
@@ -77,12 +75,12 @@ class CurrentStatementHolderTest {
     @Test
     void skipsIfWasCanceled() {
       LogCaptor logCaptor = LogCaptor.forClass(underTest.getClass());
-      underTest.statement(statement);
+      underTest.register(statement);
       when(statement.getConnection()).thenReturn(connection);
       when(connection.getAutoCommit()).thenReturn(false);
-      underTest.close();
+      underTest.destroy();
 
-      underTest.close();
+      underTest.destroy();
 
       verify(statement, atMostOnce()).cancel();
       verify(connection, atMostOnce()).rollback();
@@ -94,9 +92,7 @@ class CurrentStatementHolderTest {
     @Test
     void skipsIfStatementIsNull() {
       LogCaptor logCaptor = LogCaptor.forClass(underTest.getClass());
-      underTest.clear();
-
-      underTest.close();
+      underTest.destroy();
 
       assertThat(logCaptor.getTraceLogs()).isEmpty();
     }
@@ -104,151 +100,181 @@ class CurrentStatementHolderTest {
 
   @Nested
   class AdditionalCoverageTests {
-    @SneakyThrows
-    @Test
-    void contextPreparedStatementDelegatesCloseAndClears() {
-      PreparedStatement ps = mock(PreparedStatement.class);
-      PreparedStatement contextPs = underTest.register(ps);
-      underTest.statement(statement);
-      contextPs.close();
-      verify(ps).close();
-      assertThat(underTest.statement()).isNull();
-    }
-
-    @SneakyThrows
-    @Test
-    void contextPreparedStatementDelegatesCloseOnCompletionAndClears() {
-      PreparedStatement ps = mock(PreparedStatement.class);
-      PreparedStatement contextPs = underTest.register(ps);
-      underTest.statement(statement);
-      contextPs.closeOnCompletion();
-      verify(ps).closeOnCompletion();
-      assertThat(underTest.statement()).isNull();
-    }
 
     @Test
-    void doubleWrappingContextPreparedStatementLogsWarning() {
-      LogCaptor logCaptor = LogCaptor.forClass(underTest.getClass());
-      PreparedStatement ps = mock(PreparedStatement.class);
-      PreparedStatement wrapped = underTest.register(ps);
-      underTest.register(wrapped);
-      assertThat(logCaptor.getWarnLogs())
-          .contains("Double wrapping of ContextPreparedStatement prevented. This is a bug.");
-    }
-
-    @SneakyThrows
-    @Test
-    void prepareStatementWithSqlAndCon() {
-      Connection con = mock(Connection.class);
-      PreparedStatement ps = mock(PreparedStatement.class);
-      when(con.prepareStatement("SELECT 1")).thenReturn(ps);
-
-      PreparedStatement result = underTest.prepareStatement(con, "SELECT 1");
-      assertThat(result).isNotNull();
-      assertThat(underTest.statement()).isNotNull();
-    }
-
-    @SneakyThrows
-    @Test
-    void prepareStatementWithSetter() {
-      Connection con = mock(Connection.class);
-      PreparedStatement ps = mock(PreparedStatement.class);
-      when(con.prepareStatement("SELECT 1")).thenReturn(ps);
-      PreparedStatementSetter setter = mock(PreparedStatementSetter.class);
-
-      PreparedStatement result = underTest.prepareStatement(con, "SELECT 1", setter);
-      assertThat(result).isNotNull();
-      verify(setter).setValues(any(PreparedStatement.class));
-    }
-
-    @Test
-    void cancelWhenStatementIsNullLogsTrace() {
-      LogCaptor logCaptor = LogCaptor.forClass(underTest.getClass());
-      underTest.clear();
-      underTest.cancel();
-      assertThat(logCaptor.getTraceLogs())
-          .contains("Statement not set, so no canceling necessary. This is a bug.");
-    }
-
-    @SneakyThrows
-    @Test
-    void tryRollbackWithNullConnectionDoesNothing() {
-      underTest.tryRollback(null);
-    }
-
-    @SneakyThrows
-    @Test
-    void tryRollbackWhenAutoCommitIsTrue() {
-      Connection c = mock(Connection.class);
-      when(c.getAutoCommit()).thenReturn(true);
-      underTest.tryRollback(c);
-      verify(c, never()).rollback();
-      verify(c).close();
-    }
-
-    @SneakyThrows
-    @Test
-    void tryRollbackCatchesSQLException() {
-      Connection c = mock(Connection.class);
-      when(c.getAutoCommit()).thenThrow(SQLException.class);
-      underTest.tryRollback(c);
-      verify(c).close();
-    }
-
-    @SneakyThrows
-    @Test
-    void tryCloseCatchesSQLException() {
-      Connection c = mock(Connection.class);
-      doThrow(SQLException.class).when(c).close();
-      CurrentStatementHolder.tryClose(c);
-    }
-
-    @SneakyThrows
-    @Test
-    void cancelStatementCatchesSQLException() {
-      Statement st = mock(Statement.class);
-      doThrow(SQLException.class).when(st).cancel();
-      underTest.cancelStatement(st);
-      assertThat(underTest.wasCanceled()).isTrue();
-    }
-
-    @SneakyThrows
-    @Test
-    void getConnectionFromCatchesSQLException() {
-      Statement st = mock(Statement.class);
-      when(st.getConnection()).thenThrow(SQLException.class);
-      Connection c = underTest.getConnectionFrom(st);
-      assertThat(c).isNull();
-    }
-
-    @SneakyThrows
-    @Test
-    void overwritingRunningStatementLogsWarning() {
-      LogCaptor logCaptor = LogCaptor.forClass(underTest.getClass());
-      Statement st1 = mock(Statement.class);
-      Statement st2 = mock(Statement.class);
-      underTest.statement(st1);
-      underTest.statement(st2);
-      assertThat(logCaptor.getWarnLogs())
-          .contains("Overwriting a running statement? This is a bug.");
-    }
-
-    @SneakyThrows
-    @Test
-    void statementAlreadyCanceledLogsWarningAndCompensates() {
-      LogCaptor logCaptor = LogCaptor.forClass(underTest.getClass());
-      Statement st = mock(Statement.class);
-      when(st.getConnection()).thenReturn(connection);
-      when(connection.getAutoCommit()).thenReturn(true);
-      underTest.statement(st);
-      underTest.cancel();
-      assertThat(underTest.wasCanceled()).isTrue();
-
-      Statement st2 = mock(Statement.class);
-      underTest.statement(st2);
-      assertThat(logCaptor.getWarnLogs())
-          .contains("Statement was already canceled, compensating. This is a bug.");
+    void testGettersAndStateFlags() {
       assertThat(underTest.wasCanceled()).isFalse();
+      assertThat(underTest.wasDestroyed()).isFalse();
+
+      underTest.destroy();
+      assertThat(underTest.wasDestroyed()).isTrue();
+    }
+
+    @Test
+    void testTrackConnection() {
+      Connection tracked = underTest.track(connection);
+      assertThat(tracked).isNotNull().isInstanceOf(StatementTrackingConnection.class);
+    }
+
+    @SneakyThrows
+    @Test
+    void testRegisterReplacement() {
+      Statement statement2 = mock(Statement.class);
+      doThrow(SQLException.class).when(statement).cancel();
+
+      underTest.register(statement);
+      underTest.register(statement2);
+
+      verify(statement).cancel();
+      assertThat(underTest.statement()).isEqualTo(statement2);
+    }
+
+    @SneakyThrows
+    @Test
+    void testUnregisterWarnings() {
+      try (LogCaptor logCaptor = LogCaptor.forClass(CurrentStatementHolder.class)) {
+        // Unregister when null (unnecessary clear)
+        underTest.unregister(statement);
+        assertThat(logCaptor.getWarnLogs()).anyMatch(log -> log.contains("Unnecessary clear"));
+
+        // Statement confusion (unregistering wrong statement)
+        underTest.register(statement);
+        Statement other = mock(Statement.class);
+        underTest.unregister(other);
+        assertThat(logCaptor.getWarnLogs()).anyMatch(log -> log.contains("Statement confusion"));
+      }
+    }
+
+    @SneakyThrows
+    @Test
+    void testCancelWhenStatementIsNull() {
+      try (LogCaptor logCaptor = LogCaptor.forClass(CurrentStatementHolder.class)) {
+        underTest.cancel();
+        assertThat(logCaptor.getTraceLogs()).anyMatch(log -> log.contains("Statement not set"));
+      }
+    }
+
+    @SneakyThrows
+    @Test
+    void testCancelWithAutoCommitTrue() {
+      when(statement.getConnection()).thenReturn(connection);
+      when(connection.getAutoCommit()).thenReturn(true);
+
+      underTest.register(statement);
+      underTest.cancel();
+
+      verify(connection, never()).rollback();
+      verify(connection).close();
+      verify(statement).cancel();
+      verify(statement).close();
+      assertThat(underTest.wasCanceled()).isTrue();
+    }
+
+    @SneakyThrows
+    @Test
+    void testTryRollbackSQLException() {
+      when(statement.getConnection()).thenReturn(connection);
+      when(connection.getAutoCommit()).thenThrow(SQLException.class);
+
+      underTest.register(statement);
+      underTest.cancel();
+
+      verify(connection, never()).rollback();
+      verify(connection).close();
+    }
+
+    @SneakyThrows
+    @Test
+    void testRollbackThrowsSQLException() {
+      when(statement.getConnection()).thenReturn(connection);
+      when(connection.getAutoCommit()).thenReturn(false);
+      doThrow(SQLException.class).when(connection).rollback();
+
+      underTest.register(statement);
+      underTest.cancel();
+
+      verify(connection).rollback();
+      verify(connection).close();
+    }
+
+    @SneakyThrows
+    @Test
+    void testTryCloseSQLException() {
+      when(statement.getConnection()).thenReturn(connection);
+      when(connection.getAutoCommit()).thenReturn(true);
+      doThrow(SQLException.class).when(connection).close();
+
+      underTest.register(statement);
+      underTest.cancel();
+
+      verify(connection).close();
+    }
+
+    @SneakyThrows
+    @Test
+    void testCancelStatementSQLException() {
+      when(statement.getConnection()).thenReturn(connection);
+      doThrow(SQLException.class).when(statement).cancel();
+
+      underTest.register(statement);
+      underTest.cancel();
+
+      verify(statement).cancel();
+    }
+
+    @SneakyThrows
+    @Test
+    void testGetConnectionFromSQLException() {
+      when(statement.getConnection()).thenThrow(SQLException.class);
+
+      underTest.register(statement);
+      underTest.cancel();
+
+      verify(statement).cancel();
+    }
+
+    @Test
+    void testCheckStateDestroyedThrowsIllegalStateException() {
+      underTest.destroy();
+
+      org.assertj.core.api.Assertions.assertThatThrownBy(() -> underTest.register(statement))
+          .isInstanceOf(IllegalStateException.class)
+          .hasMessageContaining("already closed");
+
+      org.assertj.core.api.Assertions.assertThatThrownBy(() -> underTest.unregister(statement))
+          .isInstanceOf(IllegalStateException.class)
+          .hasMessageContaining("already closed");
+
+      org.assertj.core.api.Assertions.assertThatThrownBy(() -> underTest.cancel())
+          .isInstanceOf(IllegalStateException.class)
+          .hasMessageContaining("already closed");
+
+      org.assertj.core.api.Assertions.assertThatThrownBy(() -> underTest.track(connection))
+          .isInstanceOf(IllegalStateException.class)
+          .hasMessageContaining("already closed");
+    }
+
+    @SneakyThrows
+    @Test
+    void testCheckStateCanceledThrowsIllegalStateException() {
+      underTest.register(statement);
+      underTest.cancel();
+
+      org.assertj.core.api.Assertions.assertThatThrownBy(() -> underTest.register(statement))
+          .isInstanceOf(IllegalStateException.class)
+          .hasMessageContaining("already canceled");
+
+      org.assertj.core.api.Assertions.assertThatThrownBy(() -> underTest.unregister(statement))
+          .isInstanceOf(IllegalStateException.class)
+          .hasMessageContaining("already canceled");
+
+      org.assertj.core.api.Assertions.assertThatThrownBy(() -> underTest.cancel())
+          .isInstanceOf(IllegalStateException.class)
+          .hasMessageContaining("already canceled");
+
+      org.assertj.core.api.Assertions.assertThatThrownBy(() -> underTest.track(connection))
+          .isInstanceOf(IllegalStateException.class)
+          .hasMessageContaining("already canceled");
     }
   }
 }

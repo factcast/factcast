@@ -66,8 +66,8 @@ public class PgCursorCatchup extends AbstractPgCatchup {
       final var isFromScratch = (fromSerial.get() <= 0);
       log.trace("{} catchup {} - facts starting with SER={}", req, phase, fromSerial.get());
 
-      try (Connection conn = ds.getConnection();
-          PreparedStatement prep = statementHolder.register(conn.prepareStatement(catchupSQL)); ) {
+      try (Connection conn = statementHolder.track(ds.getConnection());
+          PreparedStatement prep = conn.prepareStatement(catchupSQL); ) {
         // this needs to be transactional for fetch-size to have any effect whatsoever.
         conn.setAutoCommit(false);
         prep.setFetchSize(props.getPageSize());
@@ -112,6 +112,7 @@ public class PgCursorCatchup extends AbstractPgCatchup {
           // then we just swallow the exception
           log.trace("Swallowing because statement was cancelled", psql);
         } else {
+          statementHolder.cancel();
           throw psql;
         }
       }

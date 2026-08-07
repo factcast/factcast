@@ -22,6 +22,7 @@ import javax.sql.DataSource;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tomcat.jdbc.pool.PoolConfiguration;
+import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.postgresql.jdbc.PgConnection;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
@@ -134,15 +135,16 @@ public class PgConnectionSupplier {
 
   @SneakyThrows
   @SuppressWarnings("java:S2077")
-  public SingleConnectionDataSource getPooledAsSingleDataSource(ConnectionModifier... modifiers) {
-    return getPooledAsSingleDataSource(
-        modifiers != null ? Arrays.asList(modifiers) : Collections.emptyList());
+  public SingleConnectionDataSource getPooledAsSingleDataSource(
+      @NonNull List<ConnectionModifier> filterList) {
+    return new ModifiedSingleConnectionDataSource(dataSource.getConnection(), filterList);
   }
 
   @SneakyThrows
   @SuppressWarnings("java:S2077")
-  public SingleConnectionDataSource getPooledAsSingleDataSource(
-      @NonNull List<ConnectionModifier> filterList) {
-    return new ModifiedSingleConnectionDataSource(dataSource.getConnection(), filterList);
+  public SingleConnectionDataSource getStatementTrackingDataSource(
+      @NonNull CurrentStatementHolder holder, @NonNull List<ConnectionModifier> filterList) {
+    return new ModifiedSingleConnectionDataSource(
+        holder.track(dataSource.getConnection()), filterList);
   }
 }

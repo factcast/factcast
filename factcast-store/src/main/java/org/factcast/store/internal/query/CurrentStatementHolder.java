@@ -16,12 +16,11 @@
 package org.factcast.store.internal.query;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import java.sql.*;
 import java.util.concurrent.atomic.*;
 import lombok.*;
-import lombok.experimental.Delegate;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.jdbc.core.*;
 import org.springframework.lang.Nullable;
 
 /**
@@ -31,70 +30,72 @@ import org.springframework.lang.Nullable;
  */
 @Slf4j
 public class CurrentStatementHolder {
+  // TODO maybe open @VisibleForTesting
+  private final AtomicReference<Statement> statement = new AtomicReference<>();
+  private final AtomicBoolean wasCanceled = new AtomicBoolean(false);
+  private final AtomicBoolean wasDestroyed = new AtomicBoolean(false);
 
-  public void close() {
-    // if we still have a statement, we need to cancel it
-    Statement st = statement.get();
-    if (st != null) {
-      cancel();
+  public boolean wasCanceled() {
+    return this.wasCanceled.get();
+  }
+
+  public boolean wasDestroyed() {
+    return this.wasDestroyed.get();
+  }
+
+  /** wraps given connection into one that registers statements to the holder. */
+  public @NonNull Connection track(@NonNull Connection connection) {
+    checkState();
+    return new StatementTrackingConnection(connection, this);
+  }
+
+  // this is called destroy rather than close to make obvious that it can no longer be used at all
+  public void destroy() {
+    if (!wasDestroyed()) {
+      // if we still have a statement, we need to cancel it.
+      // note that cancelling a statement involves closing the connection, which is fine, as it
+      // happens only at the end of a PGStream usage.
+      Statement st = statement.get();
+      if (st != null) {
+        log.warn("cancelling statement on destroy {}. This is a bug.", st);
+        cancel();
+      }
     }
     // otherwise, there is nothing to do. Actually, it would be the expected state and behavior.
+    wasDestroyed.set(true);
+  }
+
+  /// ----------------- package private and testing from here on
+
+  @VisibleForTesting
+  public void register(@NonNull Statement s) {
+    checkState();
+
+    Statement oldStatement = statement.getAndSet(s);
+    if (oldStatement != null) {
+      log.warn("Registration of Statement canceling an older one. This is a bug.");
+      try {
+        oldStatement.cancel();
+      } catch (SQLException ignore) {
+        log.warn("While canceling orphaned statement:", ignore);
+      }
+    }
   }
 
   @VisibleForTesting
-  void clear() {
-    statement.set(null);
+  public void unregister(Statement st) {
+    checkState();
+
+    Statement oldStatement = statement.getAndSet(null);
+    if (oldStatement == null) log.warn("Unnecessary clear of statement holder. This is a bug.");
+    if (oldStatement != st)
+      log.warn(
+          "Statement confusion: We're unregistering a statement that is not currently registered. This is a bug.");
   }
-
-  @RequiredArgsConstructor
-  class ContextPreparedStatement implements PreparedStatement {
-    @Delegate final PreparedStatement delegate;
-
-    @Override
-    public void close() throws SQLException {
-      try {
-        delegate.close();
-      } finally {
-        CurrentStatementHolder.this.clear();
-      }
-    }
-
-    @Override
-    public void closeOnCompletion() throws SQLException {
-      try {
-        delegate.closeOnCompletion();
-      } finally {
-        CurrentStatementHolder.this.clear();
-      }
-    }
-  }
-
-  public PreparedStatement prepareStatement(@NonNull Connection con, @NonNull String sql)
-      throws SQLException {
-    PreparedStatement preparedStatement = con.prepareStatement(sql);
-    statement(preparedStatement);
-    return register(preparedStatement);
-  }
-
-  public PreparedStatement prepareStatement(
-      @NonNull Connection con, @NonNull String sql, @NonNull PreparedStatementSetter setter)
-      throws SQLException {
-    PreparedStatement preparedStatement = prepareStatement(con, sql);
-    setter.setValues(preparedStatement);
-    return preparedStatement;
-  }
-
-  public PreparedStatement register(@NonNull PreparedStatement preparedStatement) {
-    statement.set(preparedStatement);
-    if (preparedStatement instanceof ContextPreparedStatement)
-      log.warn("Double wrapping of ContextPreparedStatement prevented. This is a bug.");
-    return new ContextPreparedStatement(preparedStatement);
-  }
-
-  private final AtomicReference<Statement> statement = new AtomicReference<>();
-  private final AtomicBoolean wasCanceled = new AtomicBoolean(false);
 
   public void cancel() {
+    checkState();
+
     Statement st = statement.get();
     if (st != null) {
       // not elegant, but plenty of different things can go wrong
@@ -102,11 +103,12 @@ public class CurrentStatementHolder {
         Connection c = getConnectionFrom(st);
         cancelStatement(st);
         tryRollback(c);
+        unregister(st);
       } finally {
-        clear();
+        wasCanceled.set(true);
       }
     } else {
-      log.trace("Statement not set, so no canceling necessary. This is a bug.");
+      log.trace("Statement not set, so no canceling necessary.");
     }
   }
 
@@ -115,6 +117,7 @@ public class CurrentStatementHolder {
     if (c != null)
       try {
         if (!c.getAutoCommit()) {
+          // TODO recheck
           // we have to roll back the tx on the underlying connection
           // if we do not end the transaction, statements are canceled but still "idle in
           // transaction" and so block further actions like wiping between tests
@@ -145,12 +148,10 @@ public class CurrentStatementHolder {
       st.close();
     } catch (SQLException e) {
       log.debug("Exception while cancelling statement {}:", statement, e);
-    } finally {
-      wasCanceled.set(true);
     }
   }
 
-  @Nullable
+  @jakarta.annotation.Nullable
   @VisibleForTesting
   Connection getConnectionFrom(Statement st) {
     Connection c = null;
@@ -162,26 +163,13 @@ public class CurrentStatementHolder {
     return c;
   }
 
-  @Nullable
+  @VisibleForTesting
   public Statement statement() {
     return statement.get();
   }
 
-  @VisibleForTesting
-  void statement(@NonNull Statement statement) {
-    if (this.statement.getAndSet(statement) != null) {
-      log.warn("Overwriting a running statement? This is a bug.");
-    }
-
-    if (wasCanceled.get()) {
-      log.warn("Statement was already canceled, compensating. This is a bug.");
-      wasCanceled.set(false);
-    }
-
-    this.statement.set(statement);
-  }
-
-  public boolean wasCanceled() {
-    return this.wasCanceled.get();
+  private void checkState() {
+    Preconditions.checkState(!wasDestroyed.get(), "already closed");
+    Preconditions.checkState(!wasCanceled.get(), "already canceled");
   }
 }
