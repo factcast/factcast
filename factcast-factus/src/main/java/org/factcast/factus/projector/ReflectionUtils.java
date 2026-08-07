@@ -32,7 +32,6 @@ import org.factcast.factus.event.EventObject;
 import org.factcast.factus.projection.*;
 import org.factcast.factus.projection.parameter.*;
 import org.factcast.factus.projection.tx.OpenTransactionAware;
-import org.springframework.util.StringUtils;
 
 @Slf4j
 @UtilityClass
@@ -188,8 +187,6 @@ public class ReflectionUtils {
     spec = filterByMetaDoesNotExist(m, spec);
     spec = filterByAggIds(m, spec);
     spec = filterByScript(m, spec);
-
-    checkFilterByAggIdProperty(m, spec);
     return spec;
   }
 
@@ -212,32 +209,38 @@ public class ReflectionUtils {
   }
 
   /**
-   * this will only check for applicability of the FilterByAggIdProperty annotation. The actual pair
-   * needs to be created from the instance, rather than statically, as the value (the aggregate id)
-   * is dynamic.
+   * Discovers the client-side {@link AggregateIdPropertyFilter} for a handler method, if it carries
+   * the {@link FilterByAggIdProperty} annotation. The actual aggregate id to match against is
+   * dynamic (known only per fetched instance), so unlike the static filters this cannot be baked
+   * into the {@link FactSpec}; instead the resolved property path is captured here and evaluated by
+   * the {@link Dispatcher} right before invoking the handler.
+   *
+   * @return the filter, or {@code null} if the method is not annotated
    */
   @VisibleForTesting
-  static void checkFilterByAggIdProperty(@NonNull Method m, @NonNull FactSpec spec) {
+  static AggregateIdPropertyFilter discoverAggIdPropertyFilter(@NonNull Method m) {
     FilterByAggIdProperty annotation = m.getAnnotation(FilterByAggIdProperty.class);
-    if (annotation != null) {
-
-      if (!Aggregate.class.isAssignableFrom(m.getDeclaringClass())) {
-        throw new IllegalAnnotationForTargetClassException(
-            "FilterByAggIdProperty can only be used on classes extending Aggregate, but was found on "
-                + m.toString());
-      }
-
-      if (m.getAnnotation(HandlerFor.class) != null) {
-        log.warn(
-            "Using FilterByAggIdProperty on HandlerFor method "
-                + m.toString()
-                + " which means the property cannot be verified.");
-        return;
-      }
-
-      // check applicability if param is eventObject
-      verifyUuidPropertyExpressionAgainstClass(annotation.value(), findEventObjectParameterType(m));
+    if (annotation == null) {
+      return null;
     }
+
+    if (!Aggregate.class.isAssignableFrom(m.getDeclaringClass())) {
+      throw new IllegalAnnotationForTargetClassException(
+          "FilterByAggIdProperty can only be used on classes extending Aggregate, but was found on "
+              + m);
+    }
+
+    if (m.getAnnotation(HandlerFor.class) != null) {
+      throw new InvalidHandlerDefinition(
+          "FilterByAggIdProperty requires a typed EventObject parameter and cannot be combined with"
+              + " @HandlerFor, but was found on "
+              + m);
+    }
+
+    Class<? extends EventObject> eventType = findEventObjectParameterType(m);
+    List<Field> fieldChain = resolveUuidPropertyFieldChain(annotation.value(), eventType);
+    int eventParameterIndex = Arrays.asList(m.getParameterTypes()).indexOf(eventType);
+    return new AggregateIdPropertyFilter(fieldChain, eventParameterIndex);
   }
 
   @VisibleForTesting
@@ -304,7 +307,8 @@ public class ReflectionUtils {
                             m,
                             HandlerParameterTransformer.forCalling(m, c),
                             callTarget.resolver(),
-                            fs);
+                            fs,
+                            ReflectionUtils.discoverAggIdPropertyFilter(m));
                     Dispatcher before = map.put(key, dispatcher);
                     if (before != null) {
                       throw new InvalidHandlerDefinition(
@@ -387,42 +391,50 @@ public class ReflectionUtils {
   }
 
   /**
-   * resolves the path through the Object graph starting from the eventObjectType to make sure that
-   * the path is valid and the resulting return type is UUID.
+   * resolves the path through the Object graph starting from the eventObjectType, making sure that
+   * the path is valid and the resulting type is UUID. The resolved fields are returned (made
+   * accessible) so the value can be extracted from an event instance at runtime. Resolution is done
+   * via fields rather than getters, so it is independent of the accessor style (JavaBeans or fluent
+   * Lombok accessors) used by the event.
    *
    * @param value the path in dot-notation, case-sensitive
    * @param eventObjectType the root pojo to resolve the path on
+   * @return the ordered chain of fields leading from the event to the UUID property
    * @throws IllegalAggregateIdPropertyPathException when path does not exist, or does not resolve
    *     to UUID type
    */
   @VisibleForTesting
-  static void verifyUuidPropertyExpressionAgainstClass(
+  @SuppressWarnings("java:S3011")
+  static List<Field> resolveUuidPropertyFieldChain(
       @NonNull String value, @NonNull Class<? extends EventObject> eventObjectType)
       throws IllegalAggregateIdPropertyPathException {
     String[] path = value.split("\\.");
+    List<Field> fieldChain = new ArrayList<>(path.length);
     Class<?> type = eventObjectType;
-    for (int i = 0; i <= path.length - 1; i++) {
-      try {
-        // we're expecting JavaBeans-specification-type getters here
-        type = type.getMethod("get" + StringUtils.capitalize(path[i])).getReturnType();
-      } catch (NoSuchMethodException e) {
+    for (String segment : path) {
+      Field field = org.springframework.util.ReflectionUtils.findField(type, segment);
+      if (field == null) {
         throw new IllegalAggregateIdPropertyPathException(
             "Cannot resolve property "
-                + path[i]
+                + segment
                 + " on type "
                 + type
                 + " (full path='"
                 + value
                 + "' from "
-                + type
+                + eventObjectType
                 + ")");
       }
+      field.setAccessible(true);
+      fieldChain.add(field);
+      type = field.getType();
     }
 
     if (!UUID.class.isAssignableFrom(type)) {
       throw new IllegalAggregateIdPropertyPathException(
           "Encountered non-UUID type at " + value + " on type " + type);
     }
+    return fieldChain;
   }
 
   private static FactSpec filterByMetaDoesNotExist(@NonNull Method m, @NonNull FactSpec spec) {

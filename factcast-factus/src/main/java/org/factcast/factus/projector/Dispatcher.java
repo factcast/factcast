@@ -15,9 +15,11 @@
  */
 package org.factcast.factus.projector;
 
+import jakarta.annotation.Nullable;
 import java.lang.reflect.*;
 import lombok.NonNull;
 import lombok.Value;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.util.ExceptionHelper;
@@ -25,6 +27,7 @@ import org.factcast.factus.event.EventSerializer;
 import org.factcast.factus.projection.Projection;
 import org.factcast.factus.projection.parameter.HandlerParameterTransformer;
 
+@Slf4j
 @Value
 class Dispatcher {
 
@@ -35,12 +38,20 @@ class Dispatcher {
 
   @NonNull FactSpec spec;
 
+  /** client-side filter for @FilterByAggIdProperty, or null if the handler is not annotated. */
+  @Nullable AggregateIdPropertyFilter aggIdPropertyFilter;
+
   void invoke(
       @NonNull EventSerializer deserializer, @NonNull Projection projection, @NonNull Fact f) {
     // choose the target object (nested)
     Object targetObject = objectResolver.apply(projection);
     // create actual parameters
     Object[] parameters = transformer.apply(deserializer, f, projection);
+    // client-side @FilterByAggIdProperty: skip facts whose property does not match the aggregate id
+    if (aggIdPropertyFilter != null && !aggIdPropertyFilter.matches(projection, parameters)) {
+      log.trace("Skipping fact {} due to @FilterByAggIdProperty mismatch", f.id());
+      return;
+    }
     // fire
     try {
       dispatchMethod.invoke(targetObject, parameters);
