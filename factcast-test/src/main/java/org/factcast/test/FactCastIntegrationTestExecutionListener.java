@@ -186,10 +186,11 @@ public class FactCastIntegrationTestExecutionListener implements TestExecutionLi
                         "Target container must have a network alias: .withNetworkAliases(\"some-name\")"));
 
     int listenPort = BASE_PROXY_PORT + NEXT.getAndIncrement();
+    String uniqueProxyName = proxyName + "-" + sanitizeProxyName(alias);
 
     Proxy proxy =
         client.createProxy(
-            proxyName, // arbitrary name
+            uniqueProxyName, // must be unique within the toxiproxy instance
             "0.0.0.0:" + listenPort, // toxiproxy listens here (inside toxiproxy container)
             alias + ":" + port // target address (inside docker network)
             );
@@ -200,6 +201,10 @@ public class FactCastIntegrationTestExecutionListener implements TestExecutionLi
         toxiProxy.getMappedPort(listenPort),
         TOXIPROXY_NETWORK_ALIAS,
         listenPort);
+  }
+
+  private static String sanitizeProxyName(String value) {
+    return value.replaceAll("[^a-zA-Z0-9_.-]", "_");
   }
 
   public record ProxiedEndpoint(
