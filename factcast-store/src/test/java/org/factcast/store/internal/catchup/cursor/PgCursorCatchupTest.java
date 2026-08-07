@@ -103,7 +103,7 @@ class PgCursorCatchupTest {
                   ds,
                   PgCatchupFactory.Phase.PHASE_1));
       uut.run();
-      assertThat(statementHolder.statement()).isNull();
+      assertThat(statementHolder.hasStatement()).isFalse();
     }
   }
 
