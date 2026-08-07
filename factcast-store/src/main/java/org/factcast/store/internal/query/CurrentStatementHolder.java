@@ -21,7 +21,6 @@ import java.sql.*;
 import java.util.concurrent.atomic.*;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.lang.Nullable;
 
 /**
  * Holder for a current statement. This is used to cancel the statement in case of a timeout or to
@@ -64,7 +63,7 @@ public class CurrentStatementHolder {
     wasDestroyed.set(true);
   }
 
-  /// ----------------- package private and testing from here on
+  // ----------------- package private and testing from here on
 
   void register(@NonNull Statement s) {
     checkState();
@@ -97,35 +96,18 @@ public class CurrentStatementHolder {
     if (st != null) {
       // not elegant, but plenty of different things can go wrong
       try {
-        Connection c = getConnectionFrom(st);
         cancelStatement(st);
-        tryRollback(c);
-        unregister(st);
+        // before, we rolled the tx back, if the associated connection had one.
+        // As Transaction management is non of our business, and this is used for catching up only
+        // (so that transactions do not have any changes), we stop messing with what is out of our
+        // scope here. The connection will be recycled before returning it to the pool.
       } finally {
+        unregister(st);
         wasCanceled.set(true);
       }
     } else {
       log.trace("Statement not set, so no canceling necessary.");
     }
-  }
-
-  @VisibleForTesting
-  void tryRollback(@Nullable Connection c) {
-    if (c != null)
-      try {
-        if (!c.getAutoCommit()) {
-          // TODO recheck
-          // we have to roll back the tx on the underlying connection
-          // if we do not end the transaction, statements are canceled but still "idle in
-          // transaction" and so block further actions like wiping between tests
-          c.rollback();
-        }
-      } catch (SQLException e) {
-        log.debug(
-            "Exception while rolling back transaction for cancelled statement {}:", statement, e);
-      } finally {
-        tryClose(c);
-      }
   }
 
   @VisibleForTesting
@@ -146,18 +128,6 @@ public class CurrentStatementHolder {
     } catch (SQLException e) {
       log.debug("Exception while cancelling statement {}:", statement, e);
     }
-  }
-
-  @jakarta.annotation.Nullable
-  @VisibleForTesting
-  Connection getConnectionFrom(Statement st) {
-    Connection c = null;
-    try {
-      c = st.getConnection();
-    } catch (SQLException e) {
-      log.debug("While fetching connection from statement to cancel: {}", statement, e);
-    }
-    return c;
   }
 
   @VisibleForTesting
