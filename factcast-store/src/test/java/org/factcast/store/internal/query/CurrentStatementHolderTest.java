@@ -23,13 +23,13 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import lombok.*;
 import nl.altindag.log.LogCaptor;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.*;
 
 @ExtendWith(MockitoExtension.class)
 class CurrentStatementHolderTest {
@@ -40,10 +40,7 @@ class CurrentStatementHolderTest {
   @Spy private CurrentStatementHolder underTest;
 
   @Nested
-  class WhenClosing {
-    @BeforeEach
-    void setup() {}
-
+  class WhenDestroying {
     @Test
     void ignoresNull() {
       underTest.destroy();
@@ -52,14 +49,10 @@ class CurrentStatementHolderTest {
     @SneakyThrows
     @Test
     void cancelsStatement() {
-      when(statement.getConnection()).thenReturn(connection);
-      when(connection.getAutoCommit()).thenReturn(false);
-
       underTest.register(statement);
 
       underTest.destroy();
       verify(statement).cancel();
-      verify(connection).rollback();
     }
 
     @SneakyThrows
@@ -76,14 +69,10 @@ class CurrentStatementHolderTest {
     void skipsIfWasCanceled() {
       LogCaptor logCaptor = LogCaptor.forClass(underTest.getClass());
       underTest.register(statement);
-      when(statement.getConnection()).thenReturn(connection);
-      when(connection.getAutoCommit()).thenReturn(false);
+      underTest.destroy();
       underTest.destroy();
 
-      underTest.destroy();
-
-      verify(statement, atMostOnce()).cancel();
-      verify(connection, atMostOnce()).rollback();
+      verify(statement, times(1)).cancel();
       // no longer complains
       assertThat(logCaptor.getTraceLogs()).isEmpty();
     }
@@ -149,71 +138,26 @@ class CurrentStatementHolderTest {
     @Test
     void testCancelWhenStatementIsNull() {
       try (LogCaptor logCaptor = LogCaptor.forClass(CurrentStatementHolder.class)) {
-        underTest.cancel();
+        new CurrentStatementHolder().cancel();
         assertThat(logCaptor.getTraceLogs()).anyMatch(log -> log.contains("Statement not set"));
       }
     }
 
     @SneakyThrows
     @Test
-    void testCancelWithAutoCommitTrue() {
-      when(statement.getConnection()).thenReturn(connection);
-      when(connection.getAutoCommit()).thenReturn(true);
+    void testCancel() {
 
       underTest.register(statement);
       underTest.cancel();
 
-      verify(connection, never()).rollback();
-      verify(connection).close();
       verify(statement).cancel();
-      verify(statement).close();
       assertThat(underTest.wasCanceled()).isTrue();
-    }
-
-    @SneakyThrows
-    @Test
-    void testTryRollbackSQLException() {
-      when(statement.getConnection()).thenReturn(connection);
-      when(connection.getAutoCommit()).thenThrow(SQLException.class);
-
-      underTest.register(statement);
-      underTest.cancel();
-
-      verify(connection, never()).rollback();
-      verify(connection).close();
-    }
-
-    @SneakyThrows
-    @Test
-    void testRollbackThrowsSQLException() {
-      when(statement.getConnection()).thenReturn(connection);
-      when(connection.getAutoCommit()).thenReturn(false);
-      doThrow(SQLException.class).when(connection).rollback();
-
-      underTest.register(statement);
-      underTest.cancel();
-
-      verify(connection).rollback();
-      verify(connection).close();
-    }
-
-    @SneakyThrows
-    @Test
-    void testTryCloseSQLException() {
-      when(statement.getConnection()).thenReturn(connection);
-      when(connection.getAutoCommit()).thenReturn(true);
-      doThrow(SQLException.class).when(connection).close();
-
-      underTest.register(statement);
-      underTest.cancel();
-
-      verify(connection).close();
+      Assertions.assertThat(underTest.hasStatement()).isFalse();
     }
 
     @SneakyThrows
     @Test
     void testCancelStatementSQLException() {
-      when(statement.getConnection()).thenReturn(connection);
       doThrow(SQLException.class).when(statement).cancel();
 
       underTest.register(statement);
@@ -225,7 +169,6 @@ class CurrentStatementHolderTest {
     @SneakyThrows
     @Test
     void testGetConnectionFromSQLException() {
-      when(statement.getConnection()).thenThrow(SQLException.class);
 
       underTest.register(statement);
       underTest.cancel();

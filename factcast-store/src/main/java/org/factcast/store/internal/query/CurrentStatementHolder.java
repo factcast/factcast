@@ -109,7 +109,7 @@ public class CurrentStatementHolder {
 
     Statement oldStatement = statement.getAndSet(null);
     if (oldStatement == null) log.warn("Unnecessary unregister of {}. This is a bug.", st);
-    if (oldStatement != st)
+    else if (oldStatement != st)
       log.warn(
           "Statement confusion: We're unregistering a statement that is not currently registered. This is a bug.");
   }
