@@ -41,6 +41,10 @@ public class CurrentStatementHolder {
     return this.wasDestroyed.get();
   }
 
+  public boolean hasStatement() {
+    return statement.get() != null;
+  }
+
   /** wraps given connection into one that registers statements to the holder. */
   public @NonNull Connection track(@NonNull Connection connection) {
     checkState();
@@ -61,6 +65,27 @@ public class CurrentStatementHolder {
     }
     // otherwise, there is nothing to do. Actually, it would be the expected state and behavior.
     wasDestroyed.set(true);
+  }
+
+  public void cancel() {
+    checkState();
+
+    Statement st = statement.get();
+    if (st != null) {
+      // not elegant, but plenty of different things can go wrong
+      try {
+        cancelStatement(st);
+        // before, we rolled the tx back, if the associated connection had one.
+        // As Transaction management is non of our business, and this is used for catching up only
+        // (so that transactions do not have any changes), we stop messing with what is out of our
+        // scope here. The connection will be recycled before returning it to the pool.
+      } finally {
+        unregister(st);
+        wasCanceled.set(true);
+      }
+    } else {
+      log.trace("Statement not set, so no canceling necessary.");
+    }
   }
 
   // ----------------- package private and testing from here on
@@ -89,36 +114,6 @@ public class CurrentStatementHolder {
           "Statement confusion: We're unregistering a statement that is not currently registered. This is a bug.");
   }
 
-  public void cancel() {
-    checkState();
-
-    Statement st = statement.get();
-    if (st != null) {
-      // not elegant, but plenty of different things can go wrong
-      try {
-        cancelStatement(st);
-        // before, we rolled the tx back, if the associated connection had one.
-        // As Transaction management is non of our business, and this is used for catching up only
-        // (so that transactions do not have any changes), we stop messing with what is out of our
-        // scope here. The connection will be recycled before returning it to the pool.
-      } finally {
-        unregister(st);
-        wasCanceled.set(true);
-      }
-    } else {
-      log.trace("Statement not set, so no canceling necessary.");
-    }
-  }
-
-  @VisibleForTesting
-  static void tryClose(@NonNull Connection c) {
-    try {
-      c.close();
-    } catch (SQLException e) {
-      log.debug("Exception while closing connection {}:", c, e);
-    }
-  }
-
   @VisibleForTesting
   void cancelStatement(@NonNull Statement st) {
     log.info("Canceling statement {}", st);
@@ -131,7 +126,7 @@ public class CurrentStatementHolder {
   }
 
   @VisibleForTesting
-  public Statement statement() {
+  Statement statement() {
     return statement.get();
   }
 

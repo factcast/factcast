@@ -133,7 +133,7 @@ class PgChunkedCatchupTest {
       doNothing().when(uut).fetch(any());
       uut.run();
 
-      Assertions.assertThat(statementHolder.statement()).isNull();
+      Assertions.assertThat(statementHolder.hasStatement()).isFalse();
     }
   }
 
