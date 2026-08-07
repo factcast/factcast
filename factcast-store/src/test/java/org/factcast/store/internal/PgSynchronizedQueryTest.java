@@ -88,8 +88,7 @@ class PgSynchronizedQueryTest {
             setter,
             () -> true,
             serialToContinueFrom,
-            fetcher,
-            statementHolder);
+            fetcher);
 
     uut.run(true);
 
@@ -119,8 +118,7 @@ class PgSynchronizedQueryTest {
             setter,
             () -> true,
             serialToContinueFrom,
-            fetcher,
-            statementHolder);
+            fetcher);
     uut.run(false);
     assertThat(cap.getValue()).contains(ConnectionModifier.withBitmapScanDisabled());
   }
@@ -137,8 +135,7 @@ class PgSynchronizedQueryTest {
             setter,
             () -> true,
             serialToContinueFrom,
-            fetcher,
-            statementHolder);
+            fetcher);
     SingleConnectionDataSource ds = Mockito.mock(SingleConnectionDataSource.class);
     Connection con = Mockito.mock(Connection.class);
     PreparedStatement p = mock(PreparedStatement.class);
@@ -169,8 +166,7 @@ class PgSynchronizedQueryTest {
             setter,
             () -> true,
             serialToContinueFrom,
-            fetcher,
-            statementHolder);
+            fetcher);
 
     SingleConnectionDataSource ds = Mockito.mock(SingleConnectionDataSource.class);
     Connection con = Mockito.mock(Connection.class);
@@ -358,8 +354,7 @@ class PgSynchronizedQueryTest {
                 setter,
                 () -> true,
                 serialToContinueFrom,
-                fetcher,
-                statementHolder);
+                fetcher);
 
         // lets assume a random exception during flush
         doNothing().when(pipeline).process(any(Signal.FactSignal.class));

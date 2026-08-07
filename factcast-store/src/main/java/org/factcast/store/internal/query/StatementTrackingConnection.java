@@ -16,6 +16,7 @@
 package org.factcast.store.internal.query;
 
 import java.sql.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.*;
 import lombok.experimental.Delegate;
 
@@ -124,24 +125,32 @@ class StatementTrackingConnection implements Connection {
     return new ContextCallableStatement(statement);
   }
 
-  void closeAndClear(Statement s) throws SQLException {
-    try {
-      s.close();
-    } finally {
-      currentStatementHolder.unregister(s);
-    }
-  }
+  abstract class AbstractContextStatement implements Statement {
+    // unfortunately, tomcat jdbc relies of calling close more than once, so that we'll have to
+    // guard here
+    final AtomicBoolean closed = new AtomicBoolean(false);
 
-  void closeOnCompletionAndClear(Statement s) throws SQLException {
-    try {
-      s.closeOnCompletion();
-    } finally {
-      currentStatementHolder.unregister(s);
+    void closeAndClear(Statement s) throws SQLException {
+      if (!closed.getAndSet(true))
+        try {
+          s.close();
+        } finally {
+          currentStatementHolder.unregister(s);
+        }
+    }
+
+    void closeOnCompletionAndClear(Statement s) throws SQLException {
+      if (!closed.getAndSet(true))
+        try {
+          s.closeOnCompletion();
+        } finally {
+          currentStatementHolder.unregister(s);
+        }
     }
   }
 
   @RequiredArgsConstructor
-  class ContextStatement implements Statement {
+  class ContextStatement extends AbstractContextStatement {
     @Getter(AccessLevel.PROTECTED)
     @Delegate
     final Statement delegate;
@@ -158,7 +167,7 @@ class StatementTrackingConnection implements Connection {
   }
 
   @RequiredArgsConstructor
-  class ContextPreparedStatement implements PreparedStatement {
+  class ContextPreparedStatement extends AbstractContextStatement implements PreparedStatement {
     @Getter(AccessLevel.PROTECTED)
     @Delegate
     final PreparedStatement delegate;
@@ -175,7 +184,7 @@ class StatementTrackingConnection implements Connection {
   }
 
   @RequiredArgsConstructor
-  class ContextCallableStatement implements CallableStatement {
+  class ContextCallableStatement extends AbstractContextStatement implements CallableStatement {
     @Getter(AccessLevel.PROTECTED)
     @Delegate
     final CallableStatement delegate;

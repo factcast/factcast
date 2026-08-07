@@ -66,7 +66,7 @@ public class PgCursorCatchup extends AbstractPgCatchup {
       final var isFromScratch = (fromSerial.get() <= 0);
       log.trace("{} catchup {} - facts starting with SER={}", req, phase, fromSerial.get());
 
-      try (Connection conn = statementHolder.track(ds.getConnection());
+      try (Connection conn = ds.getConnection();
           PreparedStatement prep = conn.prepareStatement(catchupSQL); ) {
         // this needs to be transactional for fetch-size to have any effect whatsoever.
         conn.setAutoCommit(false);

@@ -30,7 +30,6 @@ import org.springframework.lang.Nullable;
  */
 @Slf4j
 public class CurrentStatementHolder {
-  // TODO maybe open @VisibleForTesting
   private final AtomicReference<Statement> statement = new AtomicReference<>();
   private final AtomicBoolean wasCanceled = new AtomicBoolean(false);
   private final AtomicBoolean wasDestroyed = new AtomicBoolean(false);
@@ -67,8 +66,7 @@ public class CurrentStatementHolder {
 
   /// ----------------- package private and testing from here on
 
-  @VisibleForTesting
-  public void register(@NonNull Statement s) {
+  void register(@NonNull Statement s) {
     checkState();
 
     Statement oldStatement = statement.getAndSet(s);
@@ -82,12 +80,11 @@ public class CurrentStatementHolder {
     }
   }
 
-  @VisibleForTesting
-  public void unregister(Statement st) {
+  void unregister(Statement st) {
     checkState();
 
     Statement oldStatement = statement.getAndSet(null);
-    if (oldStatement == null) log.warn("Unnecessary clear of statement holder. This is a bug.");
+    if (oldStatement == null) log.warn("Unnecessary unregister of {}. This is a bug.", st);
     if (oldStatement != st)
       log.warn(
           "Statement confusion: We're unregistering a statement that is not currently registered. This is a bug.");

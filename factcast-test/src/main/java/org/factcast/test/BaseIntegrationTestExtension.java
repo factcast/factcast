@@ -120,6 +120,7 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
                       .withEnv("spring_datasource_url", jdbcUrl)
                       .withEnv("spring_datasource_username", db.getUsername())
                       .withEnv("spring_datasource_password", db.getPassword())
+                      .withEnv("logging.level.org.factcast", config.serverLogLevel().name())
                       .withNetwork(FactCastIntegrationTestExecutionListener._docker_network)
                       .dependsOn(db)
                       .withLogConsumer(
@@ -127,6 +128,7 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
                               LoggerFactory.getLogger(AbstractFactCastIntegrationTest.class)))
                       .waitingFor(
                           new HostPortWaitStrategy().withStartupTimeout(Duration.ofSeconds(180)));
+
               fc.start();
               ProxiedEndpoint fcProxy =
                   FactCastIntegrationTestExecutionListener.createProxy("factcast", fc, FC_PORT);

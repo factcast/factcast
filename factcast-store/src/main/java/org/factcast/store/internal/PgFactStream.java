@@ -63,7 +63,6 @@ public class PgFactStream {
   final HighWaterMarkFetcher hwmFetcher;
   final ServerPipeline pipeline;
   final PgStoreTelemetry telemetry;
-  final StoreConfigurationProperties props;
 
   @Getter(AccessLevel.PROTECTED)
   final SubscriptionRequestTO request;
@@ -89,7 +88,6 @@ public class PgFactStream {
       HighWaterMarkFetcher hwmFetcher,
       ServerPipeline pipeline,
       PgStoreTelemetry telemetry,
-      StoreConfigurationProperties props,
       SubscriptionRequestTO request,
       LogSuppression logSuppression) {
     this(
@@ -101,7 +99,6 @@ public class PgFactStream {
         hwmFetcher,
         pipeline,
         telemetry,
-        props,
         request,
         logSuppression);
   }
@@ -116,7 +113,6 @@ public class PgFactStream {
       HighWaterMarkFetcher hwmFetcher,
       ServerPipeline pipeline,
       PgStoreTelemetry telemetry,
-      StoreConfigurationProperties props,
       SubscriptionRequestTO request,
       LogSuppression logSuppression) {
     this.connectionSupplier = connectionSupplier;
@@ -126,7 +122,6 @@ public class PgFactStream {
     this.hwmFetcher = hwmFetcher;
     this.pipeline = pipeline;
     this.telemetry = telemetry;
-    this.props = props;
     this.offloadDataSource = offloadDataSource;
     this.request = request;
     this.logSuppression = logSuppression;
@@ -171,8 +166,7 @@ public class PgFactStream {
         setter,
         this::isConnected,
         serial,
-        hwmFetcher,
-        statementHolder);
+        hwmFetcher);
   }
 
   @VisibleForTesting
