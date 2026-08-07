@@ -135,7 +135,7 @@ class CurrentStatementHolderTest {
       try (LogCaptor logCaptor = LogCaptor.forClass(CurrentStatementHolder.class)) {
         // Unregister when null (unnecessary clear)
         underTest.unregister(statement);
-        assertThat(logCaptor.getWarnLogs()).anyMatch(log -> log.contains("Unnecessary clear"));
+        assertThat(logCaptor.getWarnLogs()).anyMatch(log -> log.contains("Unnecessary unregister"));
 
         // Statement confusion (unregistering wrong statement)
         underTest.register(statement);
