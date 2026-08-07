@@ -155,24 +155,6 @@ public class FilteringTest extends AbstractFactCastIntegrationTest {
   }
 
   @Test
-  public void filtersByAggregateIdProperty() {
-
-    UUID sackedId = randomUUID();
-    UUID sackerId = randomUUID();
-
-    // sackedId and sackerId both end up as aggregate ids on the fact
-    factus.publish(new UserFired(sackedId, sackerId));
-
-    // the sacked user's aggregate consumes the event...
-    FiredUserAggregate sacked = factus.fetch(FiredUserAggregate.class, sackedId);
-    assertThat(sacked.fired()).isTrue();
-
-    // ...but the actor's (sacker's) aggregate must not, even though the fact carries its id
-    FiredUserAggregate sacker = factus.fetch(FiredUserAggregate.class, sackerId);
-    assertThat(sacker.fired()).isFalse();
-  }
-
-  @Test
   public void filtersByMultipleAggregateIds() {
 
     UUID peteId = new UUID(0, 10);

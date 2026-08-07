@@ -54,6 +54,7 @@ description: Properties you can use to configure FactCast
 | factcast.store.enumeration-direct-mode-enabled                      | Despite of a Schema-Registry being defined or not, if set to true, enumeration of types or namespace will examine the data in the store directly, so that you only see data from already published facts.                                                                                                                                                                                                                                           | false                                    |
 | factcast.store.auto-flush-delay                                     | When catching up, if production of a full notification of facts takes longer than this value (in milliseconds), an additional flush is inserted into the pipelin in order to send the notification as is to the client. This is done in order to balance parallelization vs. network/compression efficiency.                                                                                                                                        | <nobr>10000</nobr>                       |
 | factcast.store.catchup-strategy                                     | Available: CURSOR and CHUNKED_WITH_HOLD. Cursor does the catchup query in one go and keeps the cursor open until the facts are sent to the client. CHUNKED_WITH_HOLD first partitions serials into chunks and then fetched each chunk in a single query. Note that page-size still applies.                                                                                                                                                         | CURSOR                                   |
+| factcast.store.catchup-async-fetch                                  | if true, fetching from the database happens async by splitting the page size in half and keep fetching one page ahead                                                                                                                                                                                                                                                                                                                               | false                                    |
 | factcast.store.log-suppression.enabled                              | In some situations logging can be overwhelming, when clients to rare, but expectedly long-running things like catching up from scratch. If enabled, this option limits the number of loglines created by that process.                                                                                                                                                                                                                              | false                                    |
 | factcast.store.log-suppression.min-log-level                        | Level to which the root log-level is raised during the operation: everything with this or above will be logged unaltered.                                                                                                                                                                                                                                                                                                                           | INFO                                     |
 | factcast.store.log-suppression.threshold                            | Number of logevents that will be regularly logged, before the suppresion kicks in.                                                                                                                                                                                                                                                                                                                                                                  | 1000                                     |
@@ -121,24 +122,22 @@ Properties you can use to configure gRPC:
 
 #### gRPC Client
 
-| Property                                                       | Description                                                                                                                                  | Default | Example                     |
-| -------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------- | :------ | :-------------------------- |
-| grpc.client.factstore.credentials                              | Deprecated. Please use `factcast.grpc.client.user` and `factcast.grpc.client.password` instead                                               | none    | myUserName:mySecretPassword |
-| spring.grpc.client.channels.factstore.address                  | the address(es) fo the factcast server                                                                                                       | none    | static://localhost:9090     |
-| spring.grpc.client.channels.factstore.negotiation-type         | Usage of TLS or Plaintext?                                                                                                                   | TLS     | PLAINTEXT                   |
-| spring.grpc.client.channels.factstore.enable-keep-alive        | Configures whether keepAlive should be enabled. Recommended for long running (follow) subscriptions                                          | false   | true                        |
-| spring.grpc.client.channels.factstore.keep-alive-time          | The default delay before sending keepAlives. Defaults to 60s. Please note that shorter intervals increase the network burden for the server. |         | 300                         |
-| spring.grpc.client.channels.factstore.keep-alive-without-calls | Configures whether keepAlive will be performed when there are no outstanding RPCs on a connection.                                           | false   | true                        |
+| Property                                                     | Description                                                                                                                                  | Default | Example                     |
+| ------------------------------------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------- | :------ | :-------------------------- |
+| grpc.client.factstore.credentials                            | Deprecated. Please use `factcast.grpc.client.user` and `factcast.grpc.client.password` instead                                               | none    | myUserName:mySecretPassword |
+| spring.grpc.client.channel.factstore.target                  | the address(es) fo the factcast server                                                                                                       | none    | static://localhost:9090     |
+| spring.grpc.client.channel.factstore.ssl.enabled             | Enables or disables SSL                                                                                                                      | false   | true                        |
+| spring.grpc.client.channel.factstore.keepalive.time          | The default delay before sending keepAlives. Defaults to 60s. Please note that shorter intervals increase the network burden for the server. |         | 300                         |
+| spring.grpc.client.channel.factstore.keepalive.without-calls | Configures whether keepAlive will be performed when there are no outstanding RPCs on a connection.                                           | false   | true                        |
 
 #### gRPC Client recommended settings
 
 ```
-spring.grpc.client.channels.factstore.enable-keep-alive=true
-spring.grpc.client.channels.factstore.keep-alive-time=300
-spring.grpc.client.channels.factstore.keep-alive-without-calls=true
+spring.grpc.client.channel.factstore.keepalive.time=300
+spring.grpc.client.channel.factstore.keepalive.without-calls=true
 ```
 
-Further details can be found here : `org.springframework.grpc.autoconfigure.client.GrpcClientProperties`.
+Further details can be found here : `org.springframework.boot.grpc.client.autoconfigure.GrpcClientProperties`.
 
 #### FactCast client specific
 
@@ -202,4 +201,4 @@ spring.grpc.server.keep-alive.permit-time=100
 | factcast.ui.report.store.path | The path under which reports are stored if no external ReportStore is configured.                                            | /tmp/factcast-ui/report |
 | factcast.ui.report.store.s3   | The name of the S3 Bucket in which the reports are stored by the S3ReportStore. This overrides factcast.ui.report.store.path |                         |
 
-Further details can be found here : `org.springframework.grpc.autoconfigure.server.GrpcServerProperties`.
+Further details can be found here : `org.springframework.boot.grpc.server.autoconfigure.GrpcServerProperties`.

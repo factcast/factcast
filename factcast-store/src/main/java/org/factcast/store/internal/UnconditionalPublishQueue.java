@@ -38,6 +38,13 @@ class UnconditionalPublishQueue {
   // Non-concurrent ArrayDeque is safe as it is only accessed while synchronized on
   final Queue<Publication> queue = new ArrayDeque<>(4096);
 
+  @VisibleForTesting
+  int queueSize() {
+    synchronized (queue) {
+      return queue.size();
+    }
+  }
+
   Future<Void> addAndFlush(List<? extends Fact> toPublish) throws DuplicateFactException {
     CompletableFuture<Void> completion = new CompletableFuture<>();
     AtomicLong serial = new AtomicLong(Long.MAX_VALUE);

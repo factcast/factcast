@@ -20,7 +20,7 @@ import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.fury.Fury;
-import org.apache.fury.config.Language;
+import org.apache.fury.config.*;
 import org.apache.fury.io.FuryInputStream;
 import org.factcast.factus.projection.SnapshotProjection;
 import org.factcast.factus.serializer.*;
@@ -32,7 +32,12 @@ public class FurySnapshotSerializer implements SnapshotSerializer {
   public static final Fury fury;
 
   static {
-    fury = Fury.builder().withLanguage(Language.JAVA).requireClassRegistration(false).build();
+    fury =
+        Fury.builder()
+            .withLanguage(Language.JAVA)
+            .requireClassRegistration(false)
+            .withCompatibleMode(CompatibleMode.COMPATIBLE)
+            .build();
   }
 
   // acceptable coverage miss:

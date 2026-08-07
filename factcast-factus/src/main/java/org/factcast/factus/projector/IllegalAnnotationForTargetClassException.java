@@ -19,7 +19,5 @@ package org.factcast.factus.projector;
  * this exception is supposed to fail the application start, thats why it is a runtime exception.
  */
 public class IllegalAnnotationForTargetClassException extends RuntimeException {
-  public IllegalAnnotationForTargetClassException(String s) {
-    super(s);
-  }
+  public IllegalAnnotationForTargetClassException(String s) {}
 }

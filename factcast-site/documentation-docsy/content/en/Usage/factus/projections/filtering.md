@@ -85,19 +85,13 @@ protected void apply(UserRecommended event) {
 }
 ```
 
-Only those Facts will be applied, that have a payload that contains a path 'recommendedByUserId' that has a UUID value
+This will add the additional filter defined by the `@FilterByAggIdProperty` annotation to `FactSpec`.
+Only those Facts will be returned, that have a payload that contains a path 'recommendedByUserId' that has a UUID value
 which
 matches the current Aggregate's ID. This is the reason, this kind of filter is only valid on Aggregate projections.
 Note that you could also define a dot-separated path like 'references.recommendedByUserId' if that matches your
 EventObject.
 The use of Array expressions is not allowed here.
-
-Unlike the other filter annotations, the aggregate id to match against is only known per fetched
-instance and therefore cannot be expressed in the `FactSpec`. This filter is hence evaluated
-**client-side**, right before the handler is invoked: matching Facts are still transferred, but the
-handler is skipped on mismatch. For this reason the annotated handler must declare a typed
-`EventObject` parameter (the property is resolved against it); combining `@FilterByAggIdProperty`
-with `@HandlerFor` is not supported.
 
 This filter is particularly useful, if you want to process events that reference your Aggregate, but only if your
 Aggregate has a particular role.
