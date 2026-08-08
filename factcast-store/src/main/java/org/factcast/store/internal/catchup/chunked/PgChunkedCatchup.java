@@ -61,8 +61,6 @@ public class PgChunkedCatchup extends AbstractPgCatchup {
     try {
       fetch(ds);
     } finally {
-      statementHolder.clear();
-
       log.trace("Done fetching, flushing.");
       pipeline.process(Signal.flush());
     }
@@ -113,6 +111,9 @@ public class PgChunkedCatchup extends AbstractPgCatchup {
       } else {
         log.trace("{} catchup {} - no matching serials found", req, phase);
       }
+    } catch (Exception e) {
+      if (!statementHolder.wasCanceled()) statementHolder.cancel();
+      throw e;
     } finally {
       // tmp table is not needed anymore. As we reuse the connection, it'd be good to drop it.
       try {
@@ -146,7 +147,7 @@ public class PgChunkedCatchup extends AbstractPgCatchup {
   int prepareTemporaryTable(JdbcTemplate jdbc, String tempTableName) {
     createTempTable(jdbc, tempTableName);
 
-    final var b = new PgQueryBuilder(req.specs(), statementHolder);
+    final var b = new PgQueryBuilder(req.specs());
     b.useTempTable(tempTableName);
 
     final var fromSerial = new AtomicLong(Math.max(serial.get(), fastForward));

@@ -284,5 +284,39 @@ class PgConnectionSupplierTest {
       inOrder.verify(cm2).beforeReturn(c);
       inOrder.verify(cm1).beforeReturn(c);
     }
+
+    @Test
+    @SneakyThrows
+    void rollsBackOrphanedTransactionOnDestroy() {
+      when(c.getAutoCommit()).thenReturn(false);
+      var uut = new ModifiedSingleConnectionDataSource(c, List.of(cm1));
+      uut.destroy();
+
+      verify(c).rollback();
+      verify(cm1).beforeReturn(c);
+    }
+
+    @Test
+    @SneakyThrows
+    void doesNotRollBackWhenAutoCommitOnDestroy() {
+      when(c.getAutoCommit()).thenReturn(true);
+      var uut = new ModifiedSingleConnectionDataSource(c, List.of(cm1));
+      uut.destroy();
+
+      verify(c, never()).rollback();
+      verify(cm1).beforeReturn(c);
+    }
+
+    @Test
+    @SneakyThrows
+    void handlesSqlExceptionOnDestroy() {
+      when(c.getAutoCommit()).thenReturn(false);
+      doThrow(new SQLException("fail")).when(c).rollback();
+      var uut = new ModifiedSingleConnectionDataSource(c, List.of(cm1));
+      uut.destroy();
+
+      verify(c).rollback();
+      verify(cm1).beforeReturn(c);
+    }
   }
 }

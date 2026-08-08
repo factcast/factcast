@@ -329,31 +329,6 @@ class PgFactStreamTest {
 
     @Test
     @SneakyThrows
-    void swallowsExceptionAfterCancel() {
-      when(isConnectedSupplier.get()).thenReturn(true);
-      when(statementHolder.wasCanceled()).thenReturn(true);
-
-      // it should appear open,
-      when(rs.isClosed()).thenReturn(false);
-      // until
-      PSQLException mockException = new PSQLException(new ServerErrorMessage("och"));
-      when(rs.getString(anyString())).thenThrow(mockException);
-      uut.processRow(rs);
-      verifyNoMoreInteractions(factPipeline);
-    }
-
-    @Test
-    @SneakyThrows
-    void returnsIfCancelled() {
-      when(isConnectedSupplier.get()).thenReturn(true);
-      when(statementHolder.wasCanceled()).thenReturn(true);
-      when(rs.isClosed()).thenReturn(true);
-      uut.processRow(rs);
-      verifyNoMoreInteractions(factPipeline);
-    }
-
-    @Test
-    @SneakyThrows
     void notifiesErrorWhenNotCanceled() {
       when(isConnectedSupplier.get()).thenReturn(true);
 
@@ -372,7 +347,7 @@ class PgFactStreamTest {
 
     @Test
     @SneakyThrows
-    void notifiesErrorWhenCanceledButUnexpectedException() {
+    void notifiesErrorWhenUnexpectedException() {
       when(isConnectedSupplier.get()).thenReturn(true);
       // it should appear open,
       when(rs.isClosed()).thenReturn(false);
@@ -593,7 +568,6 @@ class PgFactStreamTest {
                     hwmFetcher,
                     pipeline,
                     telemetry,
-                    props,
                     reqTo,
                     logSuppression));
         lenient().doReturn(true).when(uut).isConnected();
@@ -620,7 +594,6 @@ class PgFactStreamTest {
                     hwmFetcher,
                     pipeline,
                     telemetry,
-                    props,
                     reqTo,
                     logSuppression));
         lenient().doReturn(true).when(uut).isConnected();
@@ -699,7 +672,6 @@ class PgFactStreamTest {
                   hwmFetcher,
                   pipeline,
                   telemetry,
-                  props,
                   reqTo,
                   new NopLogSuppression()));
 

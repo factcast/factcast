@@ -24,7 +24,7 @@ import java.util.*;
 import java.util.concurrent.atomic.*;
 import java.util.function.*;
 import lombok.SneakyThrows;
-import nl.altindag.log.LogCaptor;
+import org.assertj.core.api.Assertions;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.HighWaterMarkFetcher;
@@ -38,7 +38,6 @@ import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.quality.Strictness;
 import org.postgresql.util.PSQLException;
-import org.postgresql.util.ServerErrorMessage;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.RowCallbackHandler;
@@ -57,7 +56,8 @@ class PgSynchronizedQueryTest {
 
   @Mock AtomicLong serialToContinueFrom;
 
-  @Mock CurrentStatementHolder statementHolder;
+  @Spy CurrentStatementHolder statementHolder = new CurrentStatementHolder();
+
   @Mock BufferedTransformingServerPipeline pipeline;
   @Mock PgConnectionSupplier connectionSupplier;
 
@@ -87,8 +87,7 @@ class PgSynchronizedQueryTest {
             setter,
             () -> true,
             serialToContinueFrom,
-            fetcher,
-            statementHolder);
+            fetcher);
 
     uut.run(true);
 
@@ -118,8 +117,7 @@ class PgSynchronizedQueryTest {
             setter,
             () -> true,
             serialToContinueFrom,
-            fetcher,
-            statementHolder);
+            fetcher);
     uut.run(false);
     assertThat(cap.getValue()).contains(ConnectionModifier.withBitmapScanDisabled());
   }
@@ -136,14 +134,12 @@ class PgSynchronizedQueryTest {
             setter,
             () -> true,
             serialToContinueFrom,
-            fetcher,
-            statementHolder);
+            fetcher);
     SingleConnectionDataSource ds = Mockito.mock(SingleConnectionDataSource.class);
     Connection con = Mockito.mock(Connection.class);
     PreparedStatement p = mock(PreparedStatement.class);
     DataAccessResourceFailureException exc = new DataAccessResourceFailureException("oh my");
 
-    when(statementHolder.wasCanceled()).thenReturn(false);
     when(connectionSupplier.getPooledAsSingleDataSource(any(List.class))).thenReturn(ds);
     when(ds.getConnection()).thenReturn(con);
     when(con.prepareStatement(anyString())).thenReturn(p);
@@ -152,43 +148,6 @@ class PgSynchronizedQueryTest {
     assertThatThrownBy(() -> uut.run(false))
         // should be thrown unchanged
         .isSameAs(exc);
-  }
-
-  @Test
-  @SneakyThrows
-  void test_exception_during_query_after_cancel() {
-    LogCaptor logCaptor = LogCaptor.forClass(PgSynchronizedQuery.class);
-
-    uut =
-        new PgSynchronizedQuery(
-            "test",
-            pipeline,
-            connectionSupplier,
-            sql,
-            setter,
-            () -> true,
-            serialToContinueFrom,
-            fetcher,
-            statementHolder);
-
-    SingleConnectionDataSource ds = Mockito.mock(SingleConnectionDataSource.class);
-    Connection con = Mockito.mock(Connection.class);
-    PreparedStatement p = mock(PreparedStatement.class);
-    DataAccessResourceFailureException exc = new DataAccessResourceFailureException("oh my");
-
-    when(statementHolder.wasCanceled()).thenReturn(true);
-    when(connectionSupplier.getPooledAsSingleDataSource(any(List.class))).thenReturn(ds);
-    when(ds.getConnection()).thenReturn(con);
-    when(con.prepareStatement(anyString())).thenReturn(p);
-    when(p.executeQuery()).thenThrow(exc);
-
-    uut.run(false);
-
-    // make sure suppressed exception was trace-logged
-    assertThat(logCaptor.getLogs()).hasSize(1);
-    assertThat(logCaptor.getLogEvents().stream())
-        .anyMatch(l -> Objects.equals(l.getLevel(), "TRACE"))
-        .isNotEmpty();
   }
 
   @Nested
@@ -231,27 +190,11 @@ class PgSynchronizedQueryTest {
 
     @Test
     @SneakyThrows
-    void swallowsExceptionAfterCancel() {
+    void throwsIfResultSetClosed() {
       when(isConnectedSupplier.get()).thenReturn(true);
-      when(statementHolder.wasCanceled()).thenReturn(true);
-
-      // it should appear open,
-      when(rs.isClosed()).thenReturn(false);
-      // until
-      PSQLException mockException = new PSQLException(new ServerErrorMessage("broken"));
-      when(rs.getString(anyString())).thenThrow(mockException);
-      uut.processRow(rs);
-      verifyNoMoreInteractions(subscription);
-    }
-
-    @Test
-    @SneakyThrows
-    void returnsIfCancelled() {
-      when(isConnectedSupplier.get()).thenReturn(true);
-      when(statementHolder.wasCanceled()).thenReturn(true);
       when(rs.isClosed()).thenReturn(true);
-      uut.processRow(rs);
-      verifyNoMoreInteractions(subscription);
+      Assertions.assertThatThrownBy(() -> uut.processRow(rs))
+          .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
@@ -357,8 +300,7 @@ class PgSynchronizedQueryTest {
                 setter,
                 () -> true,
                 serialToContinueFrom,
-                fetcher,
-                statementHolder);
+                fetcher);
 
         // lets assume a random exception during flush
         doNothing().when(pipeline).process(any(Signal.FactSignal.class));

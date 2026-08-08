@@ -59,7 +59,7 @@ public class PgCursorCatchup extends AbstractPgCatchup {
   public void run() {
     try {
 
-      final var b = new PgQueryBuilder(req.specs(), statementHolder);
+      final var b = new PgQueryBuilder(req.specs());
       final var extractor = new PgFactExtractor(serial);
       final var fromSerial = serial.get() < fastForward ? new AtomicLong(fastForward) : serial;
       final var catchupSQL = b.createSQL();
@@ -72,7 +72,6 @@ public class PgCursorCatchup extends AbstractPgCatchup {
         conn.setAutoCommit(false);
         prep.setFetchSize(props.getPageSize());
         prep.setQueryTimeout(0);
-
         b.createStatementSetter(fromSerial).setValues(prep);
 
         final var timer = metrics.timer(StoreMetrics.OP.RESULT_STREAM_START, isFromScratch);
@@ -86,8 +85,6 @@ public class PgCursorCatchup extends AbstractPgCatchup {
                 () -> logIfAboveThreshold(Duration.ofNanos(timerSample.stop(timer))));
       }
     } finally {
-      statementHolder.clear();
-
       log.trace("Done fetching, flushing.");
       pipeline.process(Signal.flush());
     }
@@ -115,6 +112,7 @@ public class PgCursorCatchup extends AbstractPgCatchup {
           // then we just swallow the exception
           log.trace("Swallowing because statement was cancelled", psql);
         } else {
+          statementHolder.cancel();
           throw psql;
         }
       }
