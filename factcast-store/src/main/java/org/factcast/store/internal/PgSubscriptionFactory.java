@@ -99,7 +99,6 @@ public class PgSubscriptionFactory implements AutoCloseable {
             hwmFetcher,
             pipe,
             telemetry,
-            props,
             req,
             logSuppression);
 

@@ -15,7 +15,8 @@
  */
 package org.factcast.store.internal.catchup.cursor;
 
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import io.micrometer.core.instrument.Counter;
@@ -51,7 +52,7 @@ class PgCursorCatchupTest {
   @Mock(strictness = Mock.Strictness.LENIENT)
   SubscriptionRequestTO req;
 
-  @Mock CurrentStatementHolder statementHolder;
+  @Spy CurrentStatementHolder statementHolder = new CurrentStatementHolder();
   @Mock ServerPipeline pipeline;
 
   @Mock(strictness = Mock.Strictness.LENIENT)
@@ -77,6 +78,7 @@ class PgCursorCatchupTest {
   void setup() {
     lenient().when(ds.getConnection()).thenReturn(c);
     lenient().when(c.prepareStatement(anyString())).thenReturn(p);
+    lenient().when(c.prepareStatement(anyString())).thenReturn(p);
     lenient().when(p.executeQuery()).thenReturn(rs);
     lenient().when(metrics.timer(any(), anyBoolean())).thenReturn(timer);
     lenient().when(metrics.startSample()).thenReturn(sample);
@@ -101,7 +103,7 @@ class PgCursorCatchupTest {
                   ds,
                   PgCatchupFactory.Phase.PHASE_1));
       uut.run();
-      verify(statementHolder).clear();
+      assertThat(statementHolder.hasStatement()).isFalse();
     }
   }
 
@@ -145,7 +147,7 @@ class PgCursorCatchupTest {
       PSQLException mockException = mock(PSQLException.class);
       when(rs.getString(anyString())).thenThrow(mockException);
 
-      Assertions.assertDoesNotThrow(() -> cbh.processRow(rs));
+      assertDoesNotThrow(() -> cbh.processRow(rs));
     }
 
     @Test
@@ -155,7 +157,7 @@ class PgCursorCatchupTest {
       ResultSet rs = mock(ResultSet.class);
       when(statementHolder.wasCanceled()).thenReturn(true);
 
-      Assertions.assertDoesNotThrow(() -> cbh.processRow(rs));
+      assertDoesNotThrow(() -> cbh.processRow(rs));
     }
 
     @Test
