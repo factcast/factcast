@@ -21,7 +21,6 @@ import static org.mockito.Mockito.*;
 
 import com.google.common.collect.Lists;
 import java.sql.*;
-import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.*;
 import lombok.*;
@@ -61,24 +60,35 @@ class PgTransformationCacheTest {
   }
 
   @Nested
-  class WhenSelectingViaFunction {
+  class WhenSelectingByKeys {
     @Mock private Connection con;
     @Mock private PreparedStatement ps;
-    @Mock private Array array;
+    @Mock private Array sqlArray;
 
     @Test
     void createsStatement() throws SQLException {
-      String[] keys = new String[] {"a", "b"};
+      UUID id1 = UUID.randomUUID();
+      UUID id2 = UUID.randomUUID();
+      List<TransformationCache.Key> keys =
+          List.of(
+              TransformationCache.Key.of(id1, 1, List.of(1)),
+              TransformationCache.Key.of(id2, 2, List.of(2)));
       when(con.prepareStatement(anyString())).thenReturn(ps);
-      when(con.createArrayOf(anyString(), any())).thenReturn(array);
+      when(con.createArrayOf(eq("int4"), any())).thenReturn(sqlArray);
 
-      PreparedStatementCreator pc = PgTransformationCache.selectViaFunction(keys);
+      PreparedStatementCreator pc = PgTransformationCache.selectByKeys(keys);
       PreparedStatement result = pc.createPreparedStatement(con);
 
       assertThat(result).isSameAs(ps);
-      verify(con).prepareStatement("select header, payload from selectTransformations( ? )");
-      verify(con).createArrayOf("varchar", keys);
-      verify(ps).setArray(1, array);
+      verify(con)
+          .prepareStatement(
+              "SELECT header, payload FROM transformation_cache WHERE (fact_id, version, path) IN ((?, ?, ?::int[]), (?, ?, ?::int[]))");
+      verify(ps).setObject(1, id1);
+      verify(ps).setInt(2, 1);
+      verify(ps).setArray(3, sqlArray);
+      verify(ps).setObject(4, id2);
+      verify(ps).setInt(5, 2);
+      verify(ps).setArray(6, sqlArray);
     }
   }
 
@@ -288,7 +298,7 @@ class PgTransformationCacheTest {
       underTest.inTransactionWithLock(r);
 
       InOrder inOrder = inOrder(jdbcTemplate, r);
-      inOrder.verify(jdbcTemplate).execute("LOCK TABLE transformationcache IN EXCLUSIVE MODE");
+      inOrder.verify(jdbcTemplate).execute("LOCK TABLE transformation_cache IN EXCLUSIVE MODE");
       inOrder.verify(r).run();
     }
   }
@@ -334,50 +344,6 @@ class PgTransformationCacheTest {
   }
 
   @Nested
-  class WhenCompacting {
-    private final ZonedDateTime THRESHOLD_DATE = ZonedDateTime.now().minusYears(99);
-    private PgTransformationCache underTest;
-
-    @BeforeEach
-    void setup() {
-      underTest =
-          spy(
-              new PgTransformationCache(
-                  platformTransactionManager,
-                  jdbcTemplate,
-                  registryMetrics,
-                  storeConfigurationProperties,
-                  2));
-    }
-
-    @Test
-    void deletesFromDatabase() {
-
-      underTest.compact(THRESHOLD_DATE);
-
-      Mockito.verify(jdbcTemplate).execute("LOCK TABLE transformationcache IN EXCLUSIVE MODE");
-
-      Mockito.verify(jdbcTemplate)
-          .update(
-              "DELETE FROM transformationcache WHERE cache_key in (SELECT cache_key FROM transformationcache_access WHERE last_access < ?)",
-              Timestamp.from(THRESHOLD_DATE.toInstant()));
-    }
-
-    @Mock private PgFact f;
-
-    @Test
-    void doesNotCompactIfInReadOnlyMode() {
-      when(storeConfigurationProperties.isReadOnlyModeEnabled()).thenReturn(true);
-
-      Mockito.reset(jdbcTemplate);
-      underTest.compact(THRESHOLD_DATE);
-
-      // we should not have tried to compact due to readonly setting
-      verify(jdbcTemplate, never()).update(matches("DELETE .*"), any(Timestamp.class));
-    }
-  }
-
-  @Nested
   class WhenFlushing {
     @Mock private TransformationCache.@NonNull Key key;
     @Mock private TransformationCache.@NonNull Key key2;
@@ -414,7 +380,7 @@ class PgTransformationCacheTest {
     @Test
     void logsException() {
       underTest.registerWrite(key, f);
-      when(jdbcTemplate.batchUpdate(anyString(), any(List.class)))
+      when(jdbcTemplate.batchUpdate(anyString(), any(BatchPreparedStatementSetter.class)))
           .thenThrow(IllegalArgumentException.class);
       LogCaptor logCaptor = LogCaptor.forClass(PgTransformationCache.class);
 
@@ -455,12 +421,10 @@ class PgTransformationCacheTest {
         PgFact fact =
             PgFact.from(
                 Fact.builder().ns("ns").type("type").id(UUID.randomUUID()).version(1).build("{}"));
-        String chainId = String.valueOf(i);
-
         // not flush happened yet
         assertThat(wasFlushed.getCount()).isEqualTo(1);
 
-        underTest.put(TransformationCache.Key.of(fact.id(), fact.version(), chainId), fact);
+        underTest.put(TransformationCache.Key.of(fact.id(), fact.version(), List.of(i)), fact);
       }
 
       // flush should have been triggered
@@ -477,6 +441,9 @@ class PgTransformationCacheTest {
 
     @Mock private TransformationCache.@NonNull Key key;
     @Mock private @NonNull Fact f;
+    @Mock private Connection con;
+    @Mock private PreparedStatement ps;
+    @Mock private Array sqlArray;
     private PgTransformationCache underTest;
 
     @BeforeEach
@@ -501,54 +468,44 @@ class PgTransformationCacheTest {
 
       underTest.flush();
 
-      @SuppressWarnings("unchecked")
-      ArgumentCaptor<List<Object[]>> m = ArgumentCaptor.forClass(List.class);
-      Mockito.verify(jdbcTemplate).execute("LOCK TABLE transformationcache IN EXCLUSIVE MODE");
+      ArgumentCaptor<BatchPreparedStatementSetter> m =
+          ArgumentCaptor.forClass(BatchPreparedStatementSetter.class);
+      Mockito.verify(jdbcTemplate).execute("LOCK TABLE transformation_cache IN EXCLUSIVE MODE");
 
       Mockito.verify(jdbcTemplate)
-          .batchUpdate(matches("INSERT INTO transformationcache .*"), m.capture());
+          .batchUpdate(matches("INSERT INTO transformation_cache .*"), m.capture());
 
-      assertThat(m.getValue()).hasSize(3);
-    }
-  }
-
-  @Nested
-  class WhenInsertingBufferedAccesses {
-    CacheBuffer buffer;
-
-    @Mock private TransformationCache.@NonNull Key key;
-    @Mock private @NonNull Fact f;
-    private PgTransformationCache underTest;
-
-    @BeforeEach
-    void setup() {
-      underTest =
-          spy(
-              new PgTransformationCache(
-                  platformTransactionManager,
-                  jdbcTemplate,
-                  registryMetrics,
-                  storeConfigurationProperties,
-                  10));
-      buffer = underTest.buffer();
+      assertThat(m.getValue().getBatchSize()).isEqualTo(3);
     }
 
     @Test
-    void insertsAll() {
-
-      buffer.put(Mockito.mock(TransformationCache.Key.class), Mockito.mock(PgFact.class));
-      buffer.put(Mockito.mock(TransformationCache.Key.class), Mockito.mock(PgFact.class));
-      buffer.put(Mockito.mock(TransformationCache.Key.class), Mockito.mock(PgFact.class));
+    void setsValuesOnPreparedStatement() throws SQLException {
+      UUID factId = UUID.randomUUID();
+      PgFact fact =
+          PgFact.from(
+              Fact.builder().ns("ns").type("type").id(factId).version(2).build("{\"a\":1}"));
+      // only one entry, as the flushed buffer is a HashMap and hence the batch order of several
+      // entries would be undefined
+      buffer.put(TransformationCache.Key.of(factId, 2, List.of(1, 2)), fact);
 
       underTest.flush();
 
-      ArgumentCaptor<List<Object[]>> m = ArgumentCaptor.forClass(List.class);
+      ArgumentCaptor<BatchPreparedStatementSetter> m =
+          ArgumentCaptor.forClass(BatchPreparedStatementSetter.class);
+      Mockito.verify(jdbcTemplate)
+          .batchUpdate(matches("INSERT INTO transformation_cache .*"), m.capture());
 
-      Mockito.verify(jdbcTemplate, times(1))
-          .execute("LOCK TABLE transformationcache IN EXCLUSIVE MODE");
-      Mockito.verify(jdbcTemplate, times(1))
-          .batchUpdate(matches("INSERT INTO transformationcache .*"), m.capture());
-      assertThat((Collection) m.getValue()).isNotNull().hasSize(3);
+      when(ps.getConnection()).thenReturn(con);
+      when(con.createArrayOf(eq("int4"), any())).thenReturn(sqlArray);
+
+      m.getValue().setValues(ps, 0);
+
+      Mockito.verify(ps).setObject(1, factId);
+      Mockito.verify(ps).setInt(2, 2);
+      Mockito.verify(con).createArrayOf("int4", new Integer[] {1, 2});
+      Mockito.verify(ps).setArray(3, sqlArray);
+      Mockito.verify(ps).setString(4, fact.jsonHeader());
+      Mockito.verify(ps).setString(5, fact.jsonPayload());
     }
   }
 
@@ -575,10 +532,10 @@ class PgTransformationCacheTest {
       ArgumentCaptor<String> ns = ArgumentCaptor.forClass(String.class);
       ArgumentCaptor<String> type = ArgumentCaptor.forClass(String.class);
 
-      Mockito.verify(jdbcTemplate).execute("LOCK TABLE transformationcache IN EXCLUSIVE MODE");
+      Mockito.verify(jdbcTemplate).execute("LOCK TABLE transformation_cache IN EXCLUSIVE MODE");
       Mockito.verify(jdbcTemplate)
           .update(
-              matches("DELETE FROM transformationcache WHERE .*"), ns.capture(), type.capture());
+              matches("DELETE FROM transformation_cache WHERE .*"), ns.capture(), type.capture());
 
       assertThat(ns.getAllValues().get(0)).isEqualTo("theNamespace");
       assertThat(type.getAllValues().get(0)).isEqualTo("theType");
@@ -616,13 +573,13 @@ class PgTransformationCacheTest {
 
       underTest.invalidateTransformationFor(factId);
 
-      ArgumentCaptor<String> id = ArgumentCaptor.forClass(String.class);
+      ArgumentCaptor<UUID> id = ArgumentCaptor.forClass(UUID.class);
 
-      Mockito.verify(jdbcTemplate).execute("LOCK TABLE transformationcache IN EXCLUSIVE MODE");
+      Mockito.verify(jdbcTemplate).execute("LOCK TABLE transformation_cache IN EXCLUSIVE MODE");
       Mockito.verify(jdbcTemplate)
-          .update(matches("DELETE FROM transformationcache WHERE cache_key LIKE ?"), id.capture());
+          .update(matches("DELETE FROM transformation_cache WHERE fact_id = \\?"), id.capture());
 
-      assertThat(id.getAllValues().get(0)).isEqualTo(factId + "%");
+      assertThat(id.getAllValues().get(0)).isEqualTo(factId);
     }
 
     @Test
