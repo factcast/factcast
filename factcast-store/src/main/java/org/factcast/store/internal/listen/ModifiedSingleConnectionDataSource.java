@@ -16,11 +16,13 @@
 package org.factcast.store.internal.listen;
 
 import com.google.common.annotations.VisibleForTesting;
-import java.sql.Connection;
+import java.sql.*;
 import java.util.*;
 import lombok.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
+@Slf4j
 public class ModifiedSingleConnectionDataSource extends SingleConnectionDataSource {
   private final Connection connection;
   @VisibleForTesting @Getter private final List<ConnectionModifier> modifiers;
@@ -36,6 +38,16 @@ public class ModifiedSingleConnectionDataSource extends SingleConnectionDataSour
 
   @Override
   public void destroy() {
+    // we first need to check, if there is a still running transaction to roll back
+    try {
+      if (!connection.getAutoCommit()) {
+        log.debug("destroying the datasource, there still a running tx, rolling back");
+        connection.rollback();
+      }
+    } catch (SQLException e) {
+      log.warn("rollback of dangling transaction failed on datasource destruction ", e);
+    }
+
     var reversed = new ArrayList<>(modifiers);
     Collections.reverse(reversed);
     reversed.forEach(modifier -> modifier.beforeReturn(connection));

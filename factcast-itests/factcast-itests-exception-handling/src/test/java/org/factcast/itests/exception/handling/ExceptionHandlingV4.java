@@ -36,10 +36,11 @@ import org.factcast.factus.Factus;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.factcast.test.FactcastTestConfig;
 import org.junit.jupiter.api.Test;
+import org.slf4j.event.Level;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Slf4j
-@FactcastTestConfig(factcastVersion = "latest")
+@FactcastTestConfig(factcastVersion = "latest", serverLogLevel = Level.TRACE)
 public class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
 
   public static final int LATCH_TIMEOUT = 3000;
@@ -180,7 +181,6 @@ public class ExceptionHandlingV4 extends AbstractFactCastIntegrationTest {
           public void onError(@NonNull Throwable exception) {
             e.set(exception);
             errorLatch.countDown();
-            FactObserver.super.onError(exception);
           }
         });
 
