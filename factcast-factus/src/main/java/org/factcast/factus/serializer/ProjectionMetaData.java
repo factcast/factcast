@@ -27,15 +27,34 @@ import lombok.experimental.UtilityClass;
 @Target(ElementType.TYPE)
 @SuppressWarnings("java:S1133")
 public @interface ProjectionMetaData {
+
+  String DEFAULT_REVISION_ID = "0";
+
   String name() default "";
 
-  /** will be made required as soon as serial() is removed */
+  /** will be made removed in favor of revisionName in the future */
+  @Deprecated
   long revision() default 0;
+
+  String revisionId() default DEFAULT_REVISION_ID;
 
   @UtilityClass
   class Resolver {
     public static Optional<ProjectionMetaData> resolveFor(@NonNull Class<?> clazz) {
-      return Optional.ofNullable(clazz.getAnnotation(ProjectionMetaData.class));
+      final Optional<ProjectionMetaData> metaData =
+          Optional.ofNullable(clazz.getAnnotation(ProjectionMetaData.class));
+      metaData.ifPresent(md -> validate(clazz, md));
+      return metaData;
+    }
+
+    private static void validate(Class<?> clazz, ProjectionMetaData md) {
+      boolean hasRevisionSet = md.revision() > 0;
+      boolean hasIdSet = !md.revisionId().equals(DEFAULT_REVISION_ID);
+      ;
+      if (hasRevisionSet && hasIdSet)
+        throw new IllegalArgumentException(
+            clazz.getName()
+                + ": exactly one of revision or revisionId must be set on @ProjectionMetaData");
     }
   }
 }
