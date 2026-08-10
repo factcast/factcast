@@ -32,7 +32,7 @@ public @interface ProjectionMetaData {
 
   String name() default "";
 
-  /** will be made removed in favor of revisionName in the future */
+  /** will be removed in favor of revisionId in the future */
   @Deprecated
   long revision() default 0;
 
