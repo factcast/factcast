@@ -18,6 +18,7 @@ package org.factcast.server.grpc;
 import io.grpc.Metadata;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
+import java.sql.SQLFeatureNotSupportedException;
 import lombok.experimental.UtilityClass;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.core.AuthenticationException;
@@ -31,8 +32,9 @@ public class ServerExceptionHelper {
       return sre;
     } else if (e instanceof RuntimeException && e.getClass().getName().startsWith("org.factcast")) {
       return new StatusRuntimeException(Status.UNKNOWN, addMetaData(meta, e));
-    } else if (e instanceof UnsupportedOperationException) {
-      // UNIMPLEMENTED is technically not fully correct but best we can do here
+    } else if (e instanceof UnsupportedOperationException
+        || e instanceof SQLFeatureNotSupportedException) {
+      // UNIMPLEMENTED is technically not really correct, but seems to be the closest option
       return new StatusRuntimeException(Status.UNIMPLEMENTED, meta);
     } else if (e instanceof AuthenticationException) {
       if (e instanceof AuthenticationCredentialsNotFoundException) {

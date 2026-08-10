@@ -103,7 +103,8 @@ public class PgCursorCatchup extends AbstractPgCatchup {
   RowCallbackHandler createRowCallbackHandler(PgFactExtractor extractor) {
     return rs -> {
       try {
-        if (statementHolder.wasCanceled() || rs.isClosed()) {
+        // PreFetchingQuery supplies a CachedRowSet, which does not support the isClosed() check
+        if (statementHolder.wasCanceled()) {
           return;
         }
 
