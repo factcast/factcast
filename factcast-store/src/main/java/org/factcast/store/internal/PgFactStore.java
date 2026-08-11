@@ -283,7 +283,10 @@ public class PgFactStore extends AbstractFactStore {
           StoreMetrics.OP.PUBLISH_IF_UNCHANGED,
           () -> {
             lock.acquireExclusiveTXLock();
-            return PgFactStore.super.publishIfUnchanged(defensiveCopy, optionalToken);
+            boolean successful = PgFactStore.super.publishIfUnchanged(defensiveCopy, optionalToken);
+            if (!successful)
+              metrics.counter(StoreMetrics.EVENT.UNSUCCESSFUL_CONDITIONAL_PUBLISH).increment();
+            return successful;
           });
   }
 

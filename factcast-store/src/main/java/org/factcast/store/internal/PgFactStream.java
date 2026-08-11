@@ -32,10 +32,10 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.*;
 import org.factcast.store.*;
 import org.factcast.store.internal.catchup.*;
-import org.factcast.store.internal.filter.FromScratchCatchupLogSuppressingTurboFilter;
 import org.factcast.store.internal.listen.ConnectionModifier;
 import org.factcast.store.internal.listen.ModifiedSingleConnectionDataSource;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
+import org.factcast.store.internal.logsuppression.LogSuppression;
 import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.pipeline.Signal;
 import org.factcast.store.internal.query.CurrentStatementHolder;
@@ -68,6 +68,8 @@ public class PgFactStream {
   @Getter(AccessLevel.PROTECTED)
   final SubscriptionRequestTO request;
 
+  final LogSuppression logSuppression;
+
   QueryExecutor queryExecutor;
 
   @VisibleForTesting
@@ -88,7 +90,8 @@ public class PgFactStream {
       ServerPipeline pipeline,
       PgStoreTelemetry telemetry,
       StoreConfigurationProperties props,
-      SubscriptionRequestTO request) {
+      SubscriptionRequestTO request,
+      LogSuppression logSuppression) {
     this(
         connectionSupplier,
         null,
@@ -99,7 +102,8 @@ public class PgFactStream {
         pipeline,
         telemetry,
         props,
-        request);
+        request,
+        logSuppression);
   }
 
   @SuppressWarnings("java:S107")
@@ -113,7 +117,8 @@ public class PgFactStream {
       ServerPipeline pipeline,
       PgStoreTelemetry telemetry,
       StoreConfigurationProperties props,
-      SubscriptionRequestTO request) {
+      SubscriptionRequestTO request,
+      LogSuppression logSuppression) {
     this.connectionSupplier = connectionSupplier;
     this.eventBus = eventBus;
     this.idToSerMapper = idToSerMapper;
@@ -124,6 +129,7 @@ public class PgFactStream {
     this.props = props;
     this.offloadDataSource = offloadDataSource;
     this.request = request;
+    this.logSuppression = logSuppression;
   }
 
   void connect() {
@@ -239,12 +245,8 @@ public class PgFactStream {
   @SneakyThrows
   @VisibleForTesting
   void doCatchup() {
-    try {
+    try (var suppression = logSuppression.forCatchup(request)) {
       if (!isConnected()) return;
-
-      if (serial.get() <= 0 && props.getFromScratchCatchupMinLogLevel() != null) {
-        FromScratchCatchupLogSuppressingTurboFilter.beforeCatchup(request.debugInfo());
-      }
 
       HighWaterMark highWaterMark = hwmFetcher.highWaterMark(connectionSupplier.dataSource());
       // send FactStreamInfo if requested
@@ -281,8 +283,6 @@ public class PgFactStream {
         // now that phase 1&2 are done, we can ffwd to the initial HWM on the primary
         fastForward(highWaterMark);
       }
-    } finally {
-      FromScratchCatchupLogSuppressingTurboFilter.afterCatchup();
     }
   }
 

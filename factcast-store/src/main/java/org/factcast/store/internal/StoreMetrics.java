@@ -82,6 +82,7 @@ public class StoreMetrics {
 
   public enum EVENT implements MetricName {
     MISSED_ROUNDTRIP("missedRoundtrip"),
+    UNSUCCESSFUL_CONDITIONAL_PUBLISH("unsuccessfulConditionalPublish"),
     FACTS_SENT("factsSent");
 
     @NonNull final String name;

@@ -18,6 +18,7 @@ package org.factcast.store.internal;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import io.micrometer.core.instrument.Counter;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -398,10 +399,13 @@ class PgFactStoreTest {
     @Mock Fact fact;
     @Mock @NonNull StateToken optionalToken;
     @Mock State state;
+    @Mock Counter counter;
 
     @BeforeEach
     void setup() {
       configureMetricTimeSupplier();
+      when(metrics.counter(StoreMetrics.EVENT.UNSUCCESSFUL_CONDITIONAL_PUBLISH))
+          .thenReturn(counter);
     }
 
     @Test
@@ -413,6 +417,7 @@ class PgFactStoreTest {
       verify(lock, never()).acquireExclusiveTXLock();
       assertThat(b).isTrue();
       verify(underTest).publishBatchable(any());
+      verify(counter, never()).increment();
     }
 
     @Test
@@ -433,6 +438,25 @@ class PgFactStoreTest {
       verify(lock).acquireExclusiveTXLock();
       assertThat(b).isFalse();
       verify(underTest, never()).publish(any(List.class));
+      verify(counter).increment();
+    }
+
+    @Test
+    void unsuccessfulPublishIncreasesMetricCounter() {
+      underTest = spy(underTest);
+
+      List<FactSpec> specs = Lists.newArrayList(FactSpec.ns("hubba"));
+      when(state.specs()).thenReturn(specs);
+      when(state.serialOfLastMatchingFact()).thenReturn(10L);
+      when(tokenStore.get(optionalToken)).thenReturn(Optional.of(state));
+      when(jdbcTemplate.query(
+              anyString(), any(PreparedStatementSetter.class), any(ResultSetExtractor.class)))
+          .thenReturn(32L);
+
+      boolean b =
+          underTest.publishIfUnchanged(Lists.newArrayList(fact), Optional.of(optionalToken));
+      assertThat(b).isFalse();
+      verify(counter).increment();
     }
 
     @Test
@@ -454,6 +478,7 @@ class PgFactStoreTest {
       verify(lock).acquireExclusiveTXLock();
       assertThat(b).isTrue();
       verify(underTest).publish(any());
+      verify(counter, never()).increment();
     }
 
     @Test
