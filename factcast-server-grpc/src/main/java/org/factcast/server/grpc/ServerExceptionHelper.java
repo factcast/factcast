@@ -34,7 +34,7 @@ public class ServerExceptionHelper {
       return new StatusRuntimeException(Status.UNKNOWN, addMetaData(meta, e));
     } else if (e instanceof UnsupportedOperationException
         || e instanceof SQLFeatureNotSupportedException) {
-      // UNIMPLEMENTED is technically not really correct, but seems to be the closest option
+      // UNIMPLEMENTED is technically not fully correct but best we can do here
       return new StatusRuntimeException(Status.UNIMPLEMENTED, meta);
     } else if (e instanceof AuthenticationException) {
       if (e instanceof AuthenticationCredentialsNotFoundException) {
