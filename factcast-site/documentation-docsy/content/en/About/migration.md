@@ -38,6 +38,14 @@ the next run.
 FactCast ships a recipe that rewrites the attribute for you. Unlike the `postprocess` recipe below, **run it after
 bumping your FactCast dependency**. A guide to add the plugin can be found below in the guide for `0.11.0`.
 
+```xml
+<configuration>
+    <activeRecipes>
+      <recipe>org.factcast.factus.migration.RevisionToRevisionIdRecipe</recipe>
+    </activeRecipes>
+</configuration>
+```
+
 ##### Migrate what the recipe left alone
 
 The recipe only rewrites integer literals, because only for those it can guarantee an unchanged
