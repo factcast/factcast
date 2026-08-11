@@ -25,7 +25,10 @@ import java.util.*;
 import lombok.Data;
 import lombok.NonNull;
 import lombok.SneakyThrows;
+import nl.altindag.log.LogCaptor;
+import nl.altindag.log.model.LogEvent;
 import org.assertj.core.api.Assertions;
+import org.factcast.core.FactHeader;
 import org.factcast.core.FactStreamPosition;
 import org.factcast.factus.*;
 import org.factcast.factus.event.EventObject;
@@ -179,12 +182,21 @@ class ReflectionUtilsTest {
 
   @SneakyThrows
   @Test
-  void discoverAggIdPropertyFilterRejectsHandlerForCombination() {
-    Assertions.assertThatThrownBy(
-            () ->
-                ReflectionUtils.discoverAggIdPropertyFilter(
-                    HandlerForAggregate.class.getDeclaredMethod("apply", FilterEvent.class)))
-        .isInstanceOf(InvalidHandlerDefinition.class);
+  void discoverAggIdPropertyFilterDoesNotFilterHandlerForCombination() {
+    LogCaptor logCaptor = LogCaptor.forClass(ReflectionUtils.class);
+    Method annotatedHandlerFor =
+        HandlerForAggregate.class.getDeclaredMethod("apply", FilterEvent.class);
+
+    // no filter can be built, but the projection stays usable
+    assertNull(ReflectionUtils.discoverAggIdPropertyFilter(annotatedHandlerFor));
+
+    // ... which must not go unnoticed, as facts silently remain unfiltered
+    Assertions.assertThat(logCaptor.getLogEvents()).hasSize(1);
+    LogEvent logged = logCaptor.getLogEvents().get(0);
+    Assertions.assertThat(logged.getLevel()).isEqualTo("ERROR");
+    Assertions.assertThat(logged.getFormattedMessage())
+        .contains(annotatedHandlerFor.toString())
+        .contains("NO FILTERING TAKES PLACE");
   }
 
   @SneakyThrows
@@ -237,6 +249,40 @@ class ReflectionUtilsTest {
     assertEquals(2, filter.fieldChain().size());
     assertEquals("ref", filter.fieldChain().get(0).getName());
     assertEquals("nestedId", filter.fieldChain().get(1).getName());
+  }
+
+  @SneakyThrows
+  @Test
+  void discoverAggIdPropertyFilterFindsEventParameterIndex() {
+    AggregateIdPropertyFilter filter =
+        ReflectionUtils.discoverAggIdPropertyFilter(
+            FilterByAggIdPropertyHeaderFirstAggregate.class.getDeclaredMethod(
+                "apply", FactHeader.class, FilterByAggIdPropertyEvent.class));
+    assertNotNull(filter);
+    assertEquals(1, filter.eventParameterIndex());
+  }
+
+  @SneakyThrows
+  @Test
+  void filterMatchesOnNestedPath() {
+    AggregateIdPropertyFilter filter =
+        ReflectionUtils.discoverAggIdPropertyFilter(
+            NestedPathAggregate.class.getDeclaredMethod("apply", FilterEvent.class));
+    assertNotNull(filter);
+
+    UUID nestedId = UUID.randomUUID();
+    NestedPathAggregate aggregate = new NestedPathAggregate();
+    AggregateUtil.aggregateId(aggregate, nestedId);
+
+    FilterEvent matching = new FilterEvent();
+    matching.ref(new Ref());
+    matching.ref().nestedId(nestedId);
+    assertTrue(filter.matches(aggregate, new Object[] {matching}));
+
+    FilterEvent other = new FilterEvent();
+    other.ref(new Ref());
+    other.ref().nestedId(UUID.randomUUID());
+    assertFalse(filter.matches(aggregate, new Object[] {other}));
   }
 
   @SneakyThrows

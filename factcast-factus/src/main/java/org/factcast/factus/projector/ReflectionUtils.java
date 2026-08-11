@@ -231,10 +231,16 @@ public class ReflectionUtils {
     }
 
     if (m.getAnnotation(HandlerFor.class) != null) {
-      throw new InvalidHandlerDefinition(
-          "FilterByAggIdProperty requires a typed EventObject parameter and cannot be combined with"
-              + " @HandlerFor, but was found on "
-              + m);
+      // a HandlerFor method addresses facts by ns/type/version, so there is no event class to
+      // resolve the property path against. Rather than failing the (already deployed) projection,
+      // we log this prominently and apply no filtering, as was the case before this was
+      // implemented.
+      log.error(
+          "FilterByAggIdProperty cannot be applied to the HandlerFor method {}, as it has no"
+              + " EventObject to resolve the property from. NO FILTERING TAKES PLACE, so this"
+              + " handler receives every fact referencing the aggregate id.",
+          m);
+      return null;
     }
 
     Class<? extends EventObject> eventType = findEventObjectParameterType(m);
@@ -425,7 +431,7 @@ public class ReflectionUtils {
                 + eventObjectType
                 + ")");
       }
-      field.setAccessible(true);
+      org.springframework.util.ReflectionUtils.makeAccessible(field);
       fieldChain.add(field);
       type = field.getType();
     }
@@ -434,7 +440,7 @@ public class ReflectionUtils {
       throw new IllegalAggregateIdPropertyPathException(
           "Encountered non-UUID type at " + value + " on type " + type);
     }
-    return fieldChain;
+    return List.copyOf(fieldChain);
   }
 
   private static FactSpec filterByMetaDoesNotExist(@NonNull Method m, @NonNull FactSpec spec) {

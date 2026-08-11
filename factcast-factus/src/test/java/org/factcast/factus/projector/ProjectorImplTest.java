@@ -288,6 +288,29 @@ class ProjectorImplTest {
       // ASSERT
       assertThat(aggregate.appliedCount()).isEqualTo(2);
     }
+
+    @Test
+    void filtersWhenEventIsNotTheFirstParameter() {
+      // INIT
+      UUID recommendedUserId = UUID.randomUUID();
+      UUID recommendedByUserId = UUID.randomUUID();
+      Fact fact =
+          eventConverter.toFact(
+              new FilterByAggIdPropertyEvent(recommendedUserId, recommendedByUserId));
+
+      FilterByAggIdPropertyHeaderFirstAggregate recommended =
+          new FilterByAggIdPropertyHeaderFirstAggregate(recommendedUserId);
+      FilterByAggIdPropertyHeaderFirstAggregate recommender =
+          new FilterByAggIdPropertyHeaderFirstAggregate(recommendedByUserId);
+
+      // RUN
+      new ProjectorImpl<>(recommended, eventSerializer).apply(Collections.singletonList(fact));
+      new ProjectorImpl<>(recommender, eventSerializer).apply(Collections.singletonList(fact));
+
+      // ASSERT
+      assertThat(recommended.appliedCount()).isEqualTo(1);
+      assertThat(recommender.appliedCount()).isZero();
+    }
   }
 
   @Nested

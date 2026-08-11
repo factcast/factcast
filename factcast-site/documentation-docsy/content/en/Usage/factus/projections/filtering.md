@@ -92,21 +92,25 @@ Note that you could also define a dot-separated path like 'references.recommende
 EventObject.
 The use of Array expressions is not allowed here.
 
-Unlike the other filter annotations, the aggregate id to match against is only known per fetched
-instance and therefore cannot be expressed in the `FactSpec`. This filter is hence evaluated
-**client-side**, right before the handler is invoked: matching Facts are still transferred, but the
-handler is skipped on mismatch. For this reason the annotated handler must declare exactly one typed
-`EventObject` parameter: the property path is resolved against that concrete event class (inherited
-fields included). Combining `@FilterByAggIdProperty` with `@HandlerFor` is therefore not supported,
-as such a handler has no event class to resolve the path against.
+Unlike the other filter annotations, this one is not expressed as a `FactSpec` entry evaluated by the
+server, but is evaluated **client-side**, right before the handler is invoked: a `FactSpec` could
+only express it as a `filterScript`, which is JavaScript and thus specific to the store
+implementation. Non-matching Facts are therefore still transferred and deserialized, and only the
+handler invocation is skipped. Note that this is not as expensive as it may sound: the Aggregate's
+`FactSpec`s already carry its aggregate id, so only Facts that reference this Aggregate at all are
+transferred in the first place.
+
+The annotated handler must declare exactly one typed `EventObject` parameter: the property path is
+resolved against that concrete event class (inherited fields included).
 
 Note for upgraders: up to and including 0.10.x the annotation was validated but had **no runtime
-effect** (no filtering happened), and combining it with `@HandlerFor` only logged a warning. Now
-that the filter is functional, invalid combinations and unresolvable property paths fail instead.
-Note that this happens when the Aggregate is first fetched (that is when handlers are discovered),
-not during application startup. Also note that the property path is resolved against the event's
-**fields** (not getters), so a path that is only reachable via a computed getter without a backing
-field of the same name is rejected.
+effect** (no filtering happened). Now that the filter is functional, an unresolvable property path
+fails when the Aggregate is first fetched (that is when handlers are discovered), not during
+application startup. Also note that the property path is resolved against the event's **fields**
+(not getters), so a path that is only reachable via a computed getter without a backing field of the
+same name is rejected. Combining `@FilterByAggIdProperty` with `@HandlerFor` is still not supported,
+as such a handler addresses facts by ns/type/version and thus has no event class to resolve the path
+against; no filtering takes place in that case, and an error is logged.
 
 This filter is particularly useful, if you want to process events that reference your Aggregate, but only if your
 Aggregate has a particular role.
