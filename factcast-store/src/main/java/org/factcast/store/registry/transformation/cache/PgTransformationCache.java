@@ -155,7 +155,8 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
           new StringBuilder(
               "SELECT header, payload FROM transformation_cache WHERE (fact_id, version, path) IN (");
       for (int i = 0; i < keys.size(); i++) {
-        sql.append(i == 0 ? "(?, ?, ?::int[])" : ", (?, ?, ?::int[])");
+        if (i>0) sql.append(", ");
+        sql.append("(?, ?, ?::int[])");
       }
       sql.append(")");
 
