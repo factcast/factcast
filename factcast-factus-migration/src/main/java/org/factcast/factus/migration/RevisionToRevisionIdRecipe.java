@@ -76,20 +76,12 @@ public class RevisionToRevisionIdRecipe extends Recipe {
           || !PROJECTION_META_DATA_MATCHER.matches(a)
           // both attributes at once is rejected by ProjectionMetaData.Resolver#validate, and
           // adding a second revisionId would not even compile
-          || hasAttribute(a, NEW_ATTRIBUTE)) {
+          || hasNewAttribute(a)) {
         return a;
       }
 
       return a.withArguments(
           ListUtils.map(a.getArguments(), RevisionToRevisionIdVisitor::migrateRevision));
-    }
-
-    private boolean requiresRefactoring(J.Annotation annotation) {
-      return annotation.getArguments() != null
-          || PROJECTION_META_DATA_MATCHER.matches(annotation)
-          // both attributes at once is rejected by ProjectionMetaData.Resolver#validate, and
-          // adding a second revisionId would not even compile
-          || !hasAttribute(annotation, NEW_ATTRIBUTE);
     }
 
     private static Expression migrateRevision(Expression arg) {
@@ -143,19 +135,16 @@ public class RevisionToRevisionIdRecipe extends Recipe {
         return null;
       }
       long revision = ((Number) literalValue).longValue();
-      // ScopedName#revisionIdentifier only uses revision() if it is > 0, and falls back to
-      // revisionId() (defaulting to DEFAULT_REVISION_ID "0") otherwise. That makes 0 safe to
-      // migrate to "0", but a negative revision would change the persisted projection key.
-      return revision < 0 ? null : String.valueOf(revision);
+      return String.valueOf(revision);
     }
 
-    private static boolean hasAttribute(J.Annotation a, String attributeName) {
+    private static boolean hasNewAttribute(J.Annotation a) {
       List<Expression> arguments = a.getArguments();
       if (arguments == null) {
         return false;
       }
       for (Expression argument : arguments) {
-        if (asAttribute(argument, attributeName) != null) {
+        if (asAttribute(argument, NEW_ATTRIBUTE) != null) {
           return true;
         }
       }

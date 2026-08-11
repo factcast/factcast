@@ -225,14 +225,19 @@ class RevisionToRevisionIdRecipeTest implements RewriteTest {
   }
 
   @Test
-  void doesNotChangeNegativeRevision() {
-    // a negative revision never reached the scoped name, so "-1" would change the persisted key
+  void doesChangeNegativeRevision() {
     rewriteRun(
         java(
             """
             import org.factcast.factus.serializer.ProjectionMetaData;
 
             @ProjectionMetaData(revision = -1)
+            class MyProjection {}
+            """,
+            """
+            import org.factcast.factus.serializer.ProjectionMetaData;
+
+            @ProjectionMetaData(revisionId = "-1")
             class MyProjection {}
             """));
   }
