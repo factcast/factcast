@@ -54,8 +54,6 @@ class AggregateIdPropertyFilter {
    */
   boolean matches(@NonNull Projection projection, @NonNull Object[] parameters) {
     if (!(projection instanceof Aggregate aggregate)) {
-      // discovery-time validation guarantees an Aggregate declaring class, but the root projection
-      // instance could differ (e.g. nested projections); fail loudly rather than filter wrongly
       throw new IllegalStateException(
           "@FilterByAggIdProperty is only supported on Aggregate projections, but was evaluated"
               + " against "

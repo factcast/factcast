@@ -221,7 +221,7 @@ class ProjectorImplTest {
       new ProjectorImpl<>(aggregate, eventSerializer).apply(Collections.singletonList(fact));
 
       // ASSERT
-      assertThat(aggregate.applied()).isTrue();
+      assertThat(aggregate.appliedCount()).isEqualTo(1);
     }
 
     @Test
@@ -242,7 +242,7 @@ class ProjectorImplTest {
       new ProjectorImpl<>(aggregate, eventSerializer).apply(Collections.singletonList(fact));
 
       // ASSERT
-      assertThat(aggregate.applied()).isFalse();
+      assertThat(aggregate.appliedCount()).isZero();
     }
 
     @Test
@@ -260,7 +260,33 @@ class ProjectorImplTest {
       new ProjectorImpl<>(aggregate, eventSerializer).apply(Collections.singletonList(fact));
 
       // ASSERT: a null property never matches, so the fact is skipped
-      assertThat(aggregate.applied()).isFalse();
+      assertThat(aggregate.appliedCount()).isZero();
+    }
+
+    @Test
+    void appliesOnlyMatchingFactsOfABatch() {
+      // INIT
+      UUID recommendedUserId = UUID.randomUUID();
+      Fact firstRecommendation =
+          eventConverter.toFact(
+              new FilterByAggIdPropertyEvent(recommendedUserId, UUID.randomUUID()));
+      // recommended by, rather than recommending: must not be applied
+      Fact recommendationMade =
+          eventConverter.toFact(
+              new FilterByAggIdPropertyEvent(UUID.randomUUID(), recommendedUserId));
+      Fact secondRecommendation =
+          eventConverter.toFact(
+              new FilterByAggIdPropertyEvent(recommendedUserId, UUID.randomUUID()));
+
+      FilterByAggIdPropertyAggregate aggregate =
+          new FilterByAggIdPropertyAggregate(recommendedUserId);
+
+      // RUN
+      new ProjectorImpl<>(aggregate, eventSerializer)
+          .apply(Lists.newArrayList(firstRecommendation, recommendationMade, secondRecommendation));
+
+      // ASSERT
+      assertThat(aggregate.appliedCount()).isEqualTo(2);
     }
   }
 

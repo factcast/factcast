@@ -27,11 +27,11 @@ class FilterByAggIdPropertyAggregate extends Aggregate {
     super(aggregateId);
   }
 
-  @Getter private boolean applied = false;
+  @Getter private int appliedCount = 0;
 
   @Handler
   @FilterByAggIdProperty("recommendedUserId")
   void apply(FilterByAggIdPropertyEvent e) {
-    applied = true;
+    appliedCount++;
   }
 }
