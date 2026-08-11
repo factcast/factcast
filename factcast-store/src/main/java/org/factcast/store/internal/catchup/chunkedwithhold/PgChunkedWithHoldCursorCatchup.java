@@ -269,8 +269,6 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
               .executeAndProcess(
                   fetch,
                   rs -> {
-                    if (rs.isClosed()) return;
-
                     PgFact fact = extractor.mapRow(rs, rows.get());
                     // this intentionally throws PipelineAlreadyClosedException
                     pipeline.process(Signal.of(fact));
