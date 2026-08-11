@@ -26,6 +26,7 @@ import org.factcast.factus.event.EventConverter;
 import org.factcast.itests.TestFactusApplication;
 import org.factcast.itests.factus.event.*;
 import org.factcast.itests.factus.proj.*;
+import org.factcast.spring.boot.autoconfigure.snap.InMemorySnapshotCacheAutoConfiguration;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +34,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
 
 @SpringBootTest
-@ContextConfiguration(classes = TestFactusApplication.class)
+@ContextConfiguration(
+    classes = {TestFactusApplication.class, InMemorySnapshotCacheAutoConfiguration.class})
 @Slf4j
 public class FilteringTest extends AbstractFactCastIntegrationTest {
   private static final long WAIT_TIME_FOR_ASYNC_FACT_DELIVERY = 1000;
