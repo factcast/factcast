@@ -149,7 +149,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
 
   static final UUID johnsId = randomUUID();
 
-  @ProjectionMetaData(revision = 3)
+  @ProjectionMetaData(revisionId = "3")
   @NoArgsConstructor
   static class JohnOnlyUserNames extends SnapshotUserNames {
     @Override
@@ -657,7 +657,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
         });
   }
 
-  @ProjectionMetaData(revision = 1)
+  @ProjectionMetaData(revisionId = "1")
   static class SimpleAggregate extends Aggregate {
     static final String ns = "ns";
     static final String type = "foo";

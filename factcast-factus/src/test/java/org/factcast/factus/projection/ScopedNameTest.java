@@ -76,13 +76,13 @@ class ScopedNameTest {
             "exactly one of revision or revisionId must be set on @ProjectionMetaData");
   }
 
-  @ProjectionMetaData(revision = 2)
+  @ProjectionMetaData(revisionId = "2")
   static class WithoutName {}
 
   @ProjectionMetaData(revisionId = "2")
   static class WithoutNameWithId {}
 
-  @ProjectionMetaData(name = "hugo", revision = 3)
+  @ProjectionMetaData(name = "hugo", revisionId = "3")
   static class Complete {}
 
   @ProjectionMetaData(name = "hugo", revisionId = "Some Explanation")
@@ -91,7 +91,7 @@ class ScopedNameTest {
   @ProjectionMetaData(revision = 2, revisionId = "3")
   static class Invalid {}
 
-  @ProjectionMetaData(revision = -2)
+  @ProjectionMetaData(revisionId = "-2")
   static class Negative {}
 
   static class MissingAnnotation {}

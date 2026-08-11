@@ -21,7 +21,7 @@ import org.factcast.factus.projection.Aggregate;
 import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.itests.factus.event.versioned.v1.UserCreated;
 
-@ProjectionMetaData(revision = 1)
+@ProjectionMetaData(revisionId = "1")
 public class UserV1 extends Aggregate {
 
   @Getter private String userName;

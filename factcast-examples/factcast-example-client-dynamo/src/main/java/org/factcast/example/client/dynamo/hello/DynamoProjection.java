@@ -28,7 +28,7 @@ import software.amazon.awssdk.enhanced.dynamodb.model.PutItemEnhancedRequest;
 import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
-@ProjectionMetaData(revision = 1)
+@ProjectionMetaData(revisionId = "1")
 @Slf4j
 public class DynamoProjection extends AbstractDynamoManagedProjection {
 
