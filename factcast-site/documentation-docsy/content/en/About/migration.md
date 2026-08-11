@@ -4,6 +4,99 @@ type = "docs"
 weight = 100015
 +++
 
+## Upgrading to 0.11.3
+
+### `@ProjectionMetaData(revision = …)` is deprecated in favor of `revisionId`
+
+`@ProjectionMetaData` used to identify a projection's revision with a `long`. It now offers a `String` attribute
+`revisionId` instead, so that revisions no longer have to be numeric (a commit hash, a date or a semantic version
+work just as well).
+
+```java
+// before
+@ProjectionMetaData(revision = 1)
+public class MyProjection extends AbstractManagedProjection { ... }
+
+// after
+@ProjectionMetaData(revisionId = "1")
+public class MyProjection extends AbstractManagedProjection { ... }
+```
+
+`revision` still works, so this is not a breaking change and you can migrate at your own pace. However, the two
+attributes are **mutually exclusive**: setting both makes `ProjectionMetaData.Resolver` throw an
+`IllegalArgumentException` when the projection is first resolved.
+
+{{% alert title="Keep the value identical" color="warning" %}}
+The revision is part of the projection's scoped name, and the scoped name is the key under which projection state
+and snapshots are persisted. `revisionId = "1"` produces exactly the same scoped name as `revision = 1` did, so
+nothing is lost. If you take the opportunity to invent a nicer revision string (for instance `"1.0"` instead of
+`"1"`), the key changes and the projection will be rebuilt from scratch on the next run.
+{{% /alert %}}
+
+#### Migrating with OpenRewrite
+
+FactCast ships a recipe that rewrites the attribute for you. Unlike the `postprocess` recipe below, **run it after
+bumping your FactCast dependency** — the rewritten code needs a version that actually offers `revisionId` to
+compile. Since `revision` keeps working, the bump on its own is safe.
+
+##### Step 1: Add the plugin
+
+```xml
+<build>
+  <plugins>
+    <plugin>
+      <groupId>org.openrewrite.maven</groupId>
+      <artifactId>rewrite-maven-plugin</artifactId>
+      <version>6.34.0</version>
+      <configuration>
+        <activeRecipes>
+          <recipe>org.factcast.factus.migration.RevisionToRevisionId</recipe>
+        </activeRecipes>
+      </configuration>
+      <dependencies>
+        <dependency>
+          <groupId>org.factcast</groupId>
+          <artifactId>factcast-factus-migration</artifactId>
+          <version>0.11.3</version>
+        </dependency>
+      </dependencies>
+    </plugin>
+  </plugins>
+</build>
+```
+
+##### Step 2: Preview
+
+```bash
+mvn rewrite:dryRun
+```
+
+Writes a patch to `target/rewrite/rewrite.patch` without touching your source. Check that every rewritten value is
+the plain decimal form of the old one.
+
+##### Step 3: Apply
+
+```bash
+mvn rewrite:run
+```
+
+##### Step 4: Migrate what the recipe left alone
+
+The recipe only rewrites non-negative integer literals, because only for those it can guarantee an unchanged
+scoped name. It deliberately leaves these cases to you:
+
+- a constant reference or a computed expression (`revision = MY_REVISION`, `revision = 1 + 1`) — an annotation
+  attribute has to be a constant expression, so there is no mechanical way to turn it into a string
+- a negative revision
+- an annotation that already sets both `revision` and `revisionId`
+
+Migrate those by hand and make the string equal to what `String.valueOf(oldValue)` would have produced.
+
+##### Step 5: Clean up
+
+Remove the OpenRewrite plugin config (or just the `activeRecipes` entry) from your `pom.xml` and run
+`mvn clean verify`.
+
 ## Upgrading to 0.11.0
 
 ### `Projection.postprocess` now takes a `Collection` instead of a `List`
