@@ -91,5 +91,8 @@ class ScopedNameTest {
   @ProjectionMetaData(revision = 2, revisionId = "3")
   static class Invalid {}
 
+  @ProjectionMetaData(revision = -2)
+  static class Negative {}
+
   static class MissingAnnotation {}
 }

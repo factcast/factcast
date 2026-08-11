@@ -48,7 +48,8 @@ public class ScopedName {
   }
 
   private static @NonNull String revisionIdentifier(@NonNull ProjectionMetaData metaData) {
-    if (metaData.revision() > 0) {
+    // 0 is the default value therefore we assume revision is not set.
+    if (metaData.revision() != 0) {
       return String.valueOf(metaData.revision());
     } else {
       return metaData.revisionId().replace(" ", "_");
