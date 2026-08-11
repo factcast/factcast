@@ -24,26 +24,26 @@ import io.micrometer.core.instrument.Timer;
 import java.sql.*;
 import java.util.concurrent.atomic.*;
 import lombok.SneakyThrows;
+import org.apache.tomcat.jdbc.pool.PooledConnection;
 import org.factcast.core.subscription.*;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.*;
 import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.listen.*;
-import org.factcast.store.internal.pipeline.ServerPipeline;
-import org.factcast.store.internal.pipeline.Signal;
-import org.factcast.store.internal.query.CurrentStatementHolder;
+import org.factcast.store.internal.pipeline.*;
 import org.factcast.store.internal.rowmapper.PgFactExtractor;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.quality.Strictness;
-import org.postgresql.util.PSQLException;
+import org.postgresql.jdbc.PgConnection;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 import org.springframework.transaction.PlatformTransactionManager;
 
 @ExtendWith(MockitoExtension.class)
+@SuppressWarnings("all")
 class PgCursorCatchupTest {
 
   @Mock(strictness = Mock.Strictness.LENIENT)
@@ -52,7 +52,6 @@ class PgCursorCatchupTest {
   @Mock(strictness = Mock.Strictness.LENIENT)
   SubscriptionRequestTO req;
 
-  @Spy CurrentStatementHolder statementHolder = new CurrentStatementHolder();
   @Mock ServerPipeline pipeline;
 
   @Mock(strictness = Mock.Strictness.LENIENT)
@@ -61,15 +60,18 @@ class PgCursorCatchupTest {
   @Mock Counter counter;
 
   @Mock Connection c;
+  @Mock org.apache.tomcat.jdbc.pool.PooledConnection pooled;
+  @Mock PgConnection pg;
+
   @Mock PreparedStatement p;
   @Mock ResultSet rs;
   @Mock AtomicLong serial;
   @Mock PgConnectionSupplier connectionSupplier;
   @Mock SingleConnectionDataSource ds;
   @Mock PlatformTransactionManager txMgr;
-  @Mock PgCatchupFactory.Phase phase;
+  @Mock PgFactExtractor extractor;
 
-  @Spy @InjectMocks PgCursorCatchup underTest;
+  PgCursorCatchup underTest;
   @Mock Timer timer;
   @Mock Timer.Sample sample;
 
@@ -82,110 +84,90 @@ class PgCursorCatchupTest {
     lenient().when(p.executeQuery()).thenReturn(rs);
     lenient().when(metrics.timer(any(), anyBoolean())).thenReturn(timer);
     lenient().when(metrics.startSample()).thenReturn(sample);
+    lenient().when(c.unwrap(PooledConnection.class)).thenReturn(pooled);
+    lenient().when(c.unwrap(PgConnection.class)).thenReturn(pg);
+    lenient().when(pooled.isDiscarded()).thenReturn(false);
+
+    underTest =
+        new PgCursorCatchup(
+            props, metrics, req, pipeline, serial, ds, PgCatchupFactory.Phase.PHASE_1);
   }
 
-  @Nested
-  class WhenRunning {
+  @SneakyThrows
+  @Test
+  void passesFact() {
+    final var cbh = underTest.createRowCallbackHandler(extractor);
+    ResultSet rs = mock(ResultSet.class);
+    PgFact testFact = Mockito.mock(PgFact.class);
+    when(extractor.mapRow(rs, 0)).thenReturn(testFact);
+    cbh.processRow(rs);
 
-    @SneakyThrows
-    @Test
-    void removesCurrentStatement() {
-      when(req.debugInfo()).thenReturn("appName");
-      var uut =
-          spy(
-              new PgCursorCatchup(
-                  props,
-                  metrics,
-                  req,
-                  pipeline,
-                  serial,
-                  statementHolder,
-                  ds,
-                  PgCatchupFactory.Phase.PHASE_1));
-      uut.run();
-      assertThat(statementHolder.hasStatement()).isFalse();
-    }
+    verify(pipeline).process(Signal.of(testFact));
   }
 
-  @SuppressWarnings("resource")
-  @Nested
-  class WhenCreatingRowCallbackHandler {
-    @Mock PgFactExtractor extractor;
+  @SneakyThrows
+  @Test
+  void passesFactEscalatesException() {
+    final var cbh = underTest.createRowCallbackHandler(extractor);
+    ResultSet rs = mock(ResultSet.class);
+    PgFact testFact = Mockito.mock(PgFact.class);
+    when(extractor.mapRow(same(rs), anyInt())).thenReturn(testFact);
+    doThrow(TransformationException.class).when(pipeline).process(Signal.of(testFact));
 
-    @SneakyThrows
-    @Test
-    void passesFact() {
-      final var cbh = underTest.createRowCallbackHandler(extractor);
-      ResultSet rs = mock(ResultSet.class);
-      PgFact testFact = Mockito.mock(PgFact.class);
-      when(extractor.mapRow(rs, 0)).thenReturn(testFact);
-      cbh.processRow(rs);
+    assertThatThrownBy(() -> cbh.processRow(rs)).isInstanceOf(TransformationException.class);
+  }
 
-      verify(pipeline).process(Signal.of(testFact));
-    }
+  @Test
+  @SneakyThrows
+  void swallowsExceptionAfterCancel() {
 
-    @SneakyThrows
-    @Test
-    void passesFactEscalatesException() {
-      final var cbh = underTest.createRowCallbackHandler(extractor);
-      ResultSet rs = mock(ResultSet.class);
-      PgFact testFact = Mockito.mock(PgFact.class);
-      when(extractor.mapRow(same(rs), anyInt())).thenReturn(testFact);
-      doThrow(TransformationException.class).when(pipeline).process(Signal.of(testFact));
+    doReturn(true).when(pooled).isDiscarded();
 
-      assertThatThrownBy(() -> cbh.processRow(rs)).isInstanceOf(TransformationException.class);
-    }
+    final var cbh = underTest.createRowCallbackHandler(extractor);
+    ResultSet rs = mock(ResultSet.class);
 
-    @Test
-    @SneakyThrows
-    void swallowsExceptionAfterCancel() {
-      final var cbh = underTest.createRowCallbackHandler(new PgFactExtractor(new AtomicLong()));
-      ResultSet rs = mock(ResultSet.class);
-      when(statementHolder.wasCanceled()).thenReturn(false, true);
+    // until
+    SQLException mockException = mock(SQLException.class);
+    lenient().when(rs.getString(anyString())).thenThrow(mockException);
 
-      // until
-      PSQLException mockException = mock(PSQLException.class);
-      when(rs.getString(anyString())).thenThrow(mockException);
+    assertDoesNotThrow(() -> cbh.processRow(rs));
+  }
 
-      assertDoesNotThrow(() -> cbh.processRow(rs));
-    }
+  @Test
+  @SneakyThrows
+  void returnsIfCancelled() {
+    final var cbh = underTest.createRowCallbackHandler(new PgFactExtractor(new AtomicLong()));
+    ResultSet rs = mock(ResultSet.class);
+    when(pooled.isDiscarded()).thenReturn(true);
 
-    @Test
-    @SneakyThrows
-    void returnsIfCancelled() {
-      final var cbh = underTest.createRowCallbackHandler(new PgFactExtractor(new AtomicLong()));
-      ResultSet rs = mock(ResultSet.class);
-      when(statementHolder.wasCanceled()).thenReturn(true);
+    assertDoesNotThrow(() -> cbh.processRow(rs));
+  }
 
-      assertDoesNotThrow(() -> cbh.processRow(rs));
-    }
+  @Test
+  @SneakyThrows
+  void throwsWhenNotCanceled() {
+    final var cbh = underTest.createRowCallbackHandler(new PgFactExtractor(new AtomicLong()));
+    ResultSet rs = mock(ResultSet.class);
+    // it should appear open,
+    when(rs.isClosed()).thenReturn(false);
+    // until
+    SQLException mockException =
+        mock(SQLException.class, withSettings().strictness(Strictness.LENIENT));
+    when(rs.getString(anyString())).thenThrow(mockException);
 
-    @Test
-    @SneakyThrows
-    void throwsWhenNotCanceled() {
-      final var cbh = underTest.createRowCallbackHandler(new PgFactExtractor(new AtomicLong()));
-      ResultSet rs = mock(ResultSet.class);
-      // it should appear open,
-      when(rs.isClosed()).thenReturn(false);
-      // until
-      PSQLException mockException =
-          mock(PSQLException.class, withSettings().strictness(Strictness.LENIENT));
-      when(rs.getString(anyString())).thenThrow(mockException);
+    assertThatThrownBy(() -> cbh.processRow(rs)).isInstanceOf(SQLException.class);
+  }
 
-      assertThatThrownBy(() -> cbh.processRow(rs)).isInstanceOf(SQLException.class);
-    }
+  @Test
+  @SneakyThrows
+  void throwsWhenCanceledButUnexpectedException() {
+    final var cbh = underTest.createRowCallbackHandler(extractor);
+    ResultSet rs = mock(ResultSet.class);
+    // it should appear open,
+    when(rs.isClosed()).thenReturn(false);
+    // until
+    when(extractor.mapRow(any(), anyInt())).thenThrow(RuntimeException.class);
 
-    @Test
-    @SneakyThrows
-    void throwsWhenCanceledButUnexpectedException() {
-      final var cbh = underTest.createRowCallbackHandler(extractor);
-      ResultSet rs = mock(ResultSet.class);
-      // it should appear open,
-      when(rs.isClosed()).thenReturn(false);
-      // until
-      when(extractor.mapRow(any(), anyInt())).thenThrow(RuntimeException.class);
-
-      assertThatThrownBy(() -> cbh.processRow(rs)).isInstanceOf(RuntimeException.class);
-    }
+    assertThatThrownBy(() -> cbh.processRow(rs)).isInstanceOf(RuntimeException.class);
   }
 }

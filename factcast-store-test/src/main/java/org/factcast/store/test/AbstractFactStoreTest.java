@@ -678,22 +678,37 @@ public abstract class AbstractFactStoreTest {
         });
   }
 
-  // TODO: implement alternative
-  /*
-   *
-   *
-   * @Test protected void testSerialHeader() {
-   * Assertions.assertTimeout(Duration.ofMillis(10000), () -> { UUID id =
-   * UUID.randomUUID(); uut.publish(Fact.of( "{\"id\":\"" + id +
-   * "\",\"type\":\"someType\",\"ns\":\"default\",\"aggIds\":[\"" + id +
-   * "\"]}", "{}")); UUID id2 = UUID.randomUUID();
-   * uut.publish(Fact.of("{\"id\":\"" + id2 +
-   * "\",\"type\":\"someType\",\"meta\":{\"foo\":\"bar\"},\"ns\":\"default\",\"aggIds\":[\""
-   * + id2 + "\"]}", "{}")); OptionalLong serialOf = uut.serialOf(id);
-   * assertTrue(serialOf.isPresent()); Fact f = uut.fetchById(id).get(); Fact
-   * fact2 = uut.fetchById(id2).get(); assertEquals(serialOf.getAsLong(),
-   * f.serial()); assertTrue(f.before(fact2)); }); }
-   */
+  @Test
+  protected void testSerialHeader() {
+    Assertions.assertTimeout(
+        Duration.ofMillis(10000),
+        () -> {
+          UUID id = UUID.randomUUID();
+          uut.publish(
+              Fact.of(
+                  "{\"id\":\""
+                      + id
+                      + "\",\"type\":\"someType\",\"ns\":\"default\",\"aggIds\":[\""
+                      + id
+                      + "\"]}",
+                  "{}"));
+          UUID id2 = UUID.randomUUID();
+          uut.publish(
+              Fact.of(
+                  "{\"id\":\""
+                      + id2
+                      + "\",\"type\":\"someType\",\"meta\":{\"foo\":\"bar\"},\"ns\":\"default\",\"aggIds\":[\""
+                      + id2
+                      + "\"]}",
+                  "{}"));
+          OptionalLong serialOf = uut.serialOf(id);
+          assertTrue(serialOf.isPresent());
+          Fact f = uut.fetchById(id).get();
+          Fact fact2 = uut.fetchById(id2).get();
+          assertEquals(serialOf.getAsLong(), f.serial());
+          assertTrue(f.before(fact2));
+        });
+  }
 
   @Test
   protected void testChecksMandatoryNamespaceOnPublish() {

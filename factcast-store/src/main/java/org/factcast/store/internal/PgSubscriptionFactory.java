@@ -32,7 +32,6 @@ import org.factcast.store.internal.pipeline.*;
 import org.factcast.store.internal.query.*;
 import org.factcast.store.internal.telemetry.PgStoreTelemetry;
 
-// TODO integrate with PGQuery
 @SuppressWarnings("UnstableApiUsage")
 @Slf4j
 public class PgSubscriptionFactory implements AutoCloseable {

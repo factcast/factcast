@@ -19,7 +19,6 @@ import java.util.concurrent.atomic.*;
 import lombok.NonNull;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.internal.pipeline.ServerPipeline;
-import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
 public interface PgCatchupFactory {
@@ -28,7 +27,6 @@ public interface PgCatchupFactory {
       @NonNull SubscriptionRequestTO request,
       @NonNull ServerPipeline pipeline,
       @NonNull AtomicLong serial,
-      @NonNull CurrentStatementHolder holder,
       @NonNull SingleConnectionDataSource ds,
       @NonNull Phase phase);
 

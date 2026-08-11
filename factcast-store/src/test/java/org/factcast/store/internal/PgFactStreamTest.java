@@ -36,7 +36,6 @@ import org.factcast.store.internal.listen.*;
 import org.factcast.store.internal.logsuppression.*;
 import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.pipeline.Signal;
-import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.telemetry.PgStoreTelemetry;
 import org.junit.jupiter.api.*;
@@ -111,7 +110,7 @@ class PgFactStreamTest {
     @Test
     void sendsStreamInfoSignal() {
 
-      when(pgCatchupFactory.create(any(), any(), any(), any(), any(), any()))
+      when(pgCatchupFactory.create(any(), any(), any(), any(), any()))
           .thenReturn(
               new PgCatchup() {
                 @Override
@@ -313,7 +312,6 @@ class PgFactStreamTest {
 
     @Mock SubscriptionRequestTO request;
     @Mock ServerPipeline factPipeline;
-    @Mock CurrentStatementHolder statementHolder;
 
     @InjectMocks private PgSynchronizedQuery.FactRowCallbackHandler uut;
 
@@ -459,7 +457,7 @@ class PgFactStreamTest {
       PgCatchup catchup1 = mock(PgCatchup.class);
       PgCatchup catchup2 = mock(PgCatchup.class);
       when(uut.isConnected()).thenReturn(true);
-      when(pgCatchupFactory.create(any(), any(), any(), any(), any(), any()))
+      when(pgCatchupFactory.create(any(), any(), any(), any(), any()))
           .thenReturn(catchup1, catchup2);
       uut.doCatchup();
 
@@ -469,7 +467,6 @@ class PgFactStreamTest {
               same(reqTo),
               same(pipeline),
               same(serial),
-              any(CurrentStatementHolder.class),
               same(mds),
               eq(PgCatchupFactory.Phase.PHASE_1));
       verify(pgCatchupFactory)
@@ -477,7 +474,6 @@ class PgFactStreamTest {
               same(reqTo),
               same(pipeline),
               same(serial),
-              any(CurrentStatementHolder.class),
               same(mds),
               eq(PgCatchupFactory.Phase.PHASE_2));
 
@@ -493,8 +489,7 @@ class PgFactStreamTest {
       long phase1Hwm = 123L;
 
       PgCatchup catchup2 = mock(PgCatchup.class);
-      when(pgCatchupFactory.create(
-              any(), any(), any(), any(), any(), eq(PgCatchupFactory.Phase.PHASE_2)))
+      when(pgCatchupFactory.create(any(), any(), any(), any(), eq(PgCatchupFactory.Phase.PHASE_2)))
           .thenReturn(catchup2);
 
       doReturn(phase1Hwm).when(uut).catchupPhaseOne(any());
@@ -522,8 +517,7 @@ class PgFactStreamTest {
       when(connectionSupplier.dataSource()).thenReturn(ds);
       doReturn(Collections.emptyList()).when(uut).catchupConnectionModifiers(any());
       when(hwmFetcher.highWaterMark(any())).thenReturn(initialHwm);
-      when(pgCatchupFactory.create(
-              any(), any(), any(), any(), any(), eq(PgCatchupFactory.Phase.PHASE_2)))
+      when(pgCatchupFactory.create(any(), any(), any(), any(), eq(PgCatchupFactory.Phase.PHASE_2)))
           .thenReturn(pgCatchup2);
       doReturn(phase1Hwm).when(uut).catchupPhaseOne(any());
 
@@ -618,7 +612,7 @@ class PgFactStreamTest {
       // serial is 0 by default → from scratch
 
       PgCatchup catchup = mock(PgCatchup.class);
-      when(pgCatchupFactory.create(any(), any(), any(), any(), any(), any())).thenReturn(catchup);
+      when(pgCatchupFactory.create(any(), any(), any(), any(), any())).thenReturn(catchup);
       when(uut.isConnected()).thenReturn(true);
       doNothing().when(uut).catchupPhaseTwo(any(), anyLong());
 
@@ -644,8 +638,7 @@ class PgFactStreamTest {
       uut.serial().set(42L);
       PgCatchup catchup = mock(PgCatchup.class);
       when(uut.isConnected()).thenReturn(true);
-      when(pgCatchupFactory.create(any(), any(), any(), any(), any(), any()))
-          .thenReturn(catchup, catchup);
+      when(pgCatchupFactory.create(any(), any(), any(), any(), any())).thenReturn(catchup, catchup);
 
       doAnswer(
               invocation -> {
@@ -680,8 +673,7 @@ class PgFactStreamTest {
 
       PgCatchup catchup = mock(PgCatchup.class);
       when(uut.isConnected()).thenReturn(true);
-      when(pgCatchupFactory.create(any(), any(), any(), any(), any(), any()))
-          .thenReturn(catchup, catchup);
+      when(pgCatchupFactory.create(any(), any(), any(), any(), any())).thenReturn(catchup, catchup);
 
       doAnswer(
               invocation -> {
@@ -698,7 +690,7 @@ class PgFactStreamTest {
     void clearsMdcEvenOnException() {
       PgCatchup catchup = mock(PgCatchup.class);
       when(uut.isConnected()).thenReturn(true);
-      when(pgCatchupFactory.create(any(), any(), any(), any(), any(), any())).thenReturn(catchup);
+      when(pgCatchupFactory.create(any(), any(), any(), any(), any())).thenReturn(catchup);
 
       doAnswer(
               i -> {

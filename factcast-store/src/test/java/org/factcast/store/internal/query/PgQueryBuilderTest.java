@@ -39,7 +39,6 @@ class PgQueryBuilderTest {
   @Nested
   class WhenCreatingStatementSetter {
     @Mock private @NonNull AtomicLong serial;
-    @Mock CurrentStatementHolder holder;
 
     @BeforeEach
     void setup() {}

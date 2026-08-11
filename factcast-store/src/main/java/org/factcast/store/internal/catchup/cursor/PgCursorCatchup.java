@@ -32,10 +32,8 @@ import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.catchup.tools.fetching.FetchingQuery;
 import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.pipeline.Signal;
-import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.query.PgQueryBuilder;
 import org.factcast.store.internal.rowmapper.PgFactExtractor;
-import org.postgresql.util.PSQLException;
 import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
@@ -48,10 +46,9 @@ public class PgCursorCatchup extends AbstractPgCatchup {
       @NonNull SubscriptionRequestTO req,
       @NonNull ServerPipeline pipeline,
       @NonNull AtomicLong serial,
-      @NonNull CurrentStatementHolder statementHolder,
       @NonNull SingleConnectionDataSource ds,
       PgCatchupFactory.@NonNull Phase phase) {
-    super(props, metrics, req, pipeline, serial, statementHolder, ds, phase);
+    super(props, metrics, req, pipeline, serial, ds, phase);
   }
 
   @SneakyThrows
@@ -65,6 +62,10 @@ public class PgCursorCatchup extends AbstractPgCatchup {
       final var catchupSQL = b.createSQL();
       final var isFromScratch = (fromSerial.get() <= 0);
       log.trace("{} catchup {} - facts starting with SER={}", req, phase, fromSerial.get());
+
+      if (wasCancelled()) {
+        return;
+      }
 
       try (Connection conn = ds.getConnection();
           PreparedStatement prep = conn.prepareStatement(catchupSQL); ) {
@@ -86,6 +87,7 @@ public class PgCursorCatchup extends AbstractPgCatchup {
       }
     } finally {
       log.trace("Done fetching, flushing.");
+      markConnectionDone();
       pipeline.process(Signal.flush());
     }
   }
@@ -99,23 +101,18 @@ public class PgCursorCatchup extends AbstractPgCatchup {
   @VisibleForTesting
   RowCallbackHandler createRowCallbackHandler(PgFactExtractor extractor) {
     return rs -> {
-      try {
-        if (statementHolder.wasCanceled() || rs.isClosed()) {
-          return;
-        }
-
-        PgFact f = extractor.mapRow(rs, 0);
-        pipeline.process(Signal.of(f));
-      } catch (PSQLException psql) {
-        // see #2088
-        if (statementHolder.wasCanceled()) {
-          // then we just swallow the exception
-          log.trace("Swallowing because statement was cancelled", psql);
-        } else {
-          statementHolder.cancel();
-          throw psql;
-        }
+      if (rs.isClosed() || wasCancelled()) {
+        return;
       }
+
+      PgFact f = extractor.mapRow(rs, 0);
+      pipeline.process(Signal.of(f));
     };
+  }
+
+  @Override
+  @VisibleForTesting
+  protected boolean wasCancelled() {
+    return super.wasCancelled();
   }
 }

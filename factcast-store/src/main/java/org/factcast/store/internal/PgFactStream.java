@@ -38,7 +38,6 @@ import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.logsuppression.LogSuppression;
 import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.pipeline.Signal;
-import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgQueryBuilder;
 import org.factcast.store.internal.telemetry.PgStoreTelemetry;
@@ -76,8 +75,6 @@ public class PgFactStream {
   final AtomicLong serial = new AtomicLong(0);
 
   final AtomicBoolean disconnected = new AtomicBoolean(false);
-
-  final CurrentStatementHolder statementHolder = new CurrentStatementHolder();
 
   @SuppressWarnings("java:S107")
   public PgFactStream(
@@ -285,12 +282,7 @@ public class PgFactStream {
     // proceed to phase 2 on the primary
     PgCatchup pgCatchup =
         pgCatchupFactory.create(
-            request,
-            pipeline,
-            serial,
-            statementHolder,
-            primary.get(),
-            PgCatchupFactory.Phase.PHASE_2);
+            request, pipeline, serial, primary.get(), PgCatchupFactory.Phase.PHASE_2);
     // before starting to run phase2, we'll ffwd to what phase1 found as HWM.
     // while this might seem to be a minor optimization, it matters when phase1 found no
     // matching fact at all. Without ffwd, we would need to recheck all facts from ser
@@ -303,7 +295,7 @@ public class PgFactStream {
   @VisibleForTesting
   ModifiedSingleConnectionDataSource createCatchupDataSource(@NonNull DataSource ds) {
     return new ModifiedSingleConnectionDataSource(
-        statementHolder.track(ds.getConnection()), catchupConnectionModifiers(request));
+        ds.getConnection(), catchupConnectionModifiers(request));
   }
 
   @VisibleForTesting
@@ -318,13 +310,7 @@ public class PgFactStream {
     } else {
 
       pgCatchupFactory
-          .create(
-              request,
-              pipeline,
-              serial,
-              statementHolder,
-              dataSourceToUseForP1,
-              PgCatchupFactory.Phase.PHASE_1)
+          .create(request, pipeline, serial, dataSourceToUseForP1, PgCatchupFactory.Phase.PHASE_1)
           .run();
 
       // serial might be higher than hwm, because of concurrent inserts, but it also may be much
@@ -347,7 +333,6 @@ public class PgFactStream {
       queryExecutor.cancel();
       queryExecutor = null;
     }
-    statementHolder.destroy();
     log.debug("{} disconnected ", request);
 
     // free pipeline resources

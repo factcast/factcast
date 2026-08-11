@@ -71,7 +71,7 @@ class PgFactStreamTelemetryTest {
   @Test
   void postsTelemetryOnCatchup() {
     when(req.debugInfo()).thenReturn("test");
-    when(pgCatchupFactory.create(eq(req), eq(serverPipeline), any(), any(), any(), any()))
+    when(pgCatchupFactory.create(eq(req), eq(serverPipeline), any(), any(), any()))
         .thenReturn(mock(PgCatchup.class));
 
     when(ffwdTarget.highWaterMark(any())).thenReturn(HighWaterMark.empty());
@@ -88,7 +88,7 @@ class PgFactStreamTelemetryTest {
   void postsTelemetryOnFollow() {
     when(req.continuous()).thenReturn(true);
     when(req.debugInfo()).thenReturn("test");
-    when(pgCatchupFactory.create(eq(req), eq(serverPipeline), any(), any(), any(), any()))
+    when(pgCatchupFactory.create(eq(req), eq(serverPipeline), any(), any(), any()))
         .thenReturn(mock(PgCatchup.class));
     when(ffwdTarget.highWaterMark(any())).thenReturn(HighWaterMark.empty());
 
@@ -105,7 +105,7 @@ class PgFactStreamTelemetryTest {
   void postsTelemetryOnClose() {
     when(req.continuous()).thenReturn(true);
     when(req.debugInfo()).thenReturn("test");
-    when(pgCatchupFactory.create(eq(req), eq(serverPipeline), any(), any(), any(), any()))
+    when(pgCatchupFactory.create(eq(req), eq(serverPipeline), any(), any(), any()))
         .thenReturn(mock(PgCatchup.class));
     when(ffwdTarget.highWaterMark(any())).thenReturn(HighWaterMark.empty());
 

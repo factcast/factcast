@@ -26,3 +26,4 @@ package-lock.json
 
 **/AGENTS.md
 .junie/**
+**/.agent-logs
