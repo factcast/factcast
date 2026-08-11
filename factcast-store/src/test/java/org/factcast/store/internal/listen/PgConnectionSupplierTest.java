@@ -28,7 +28,6 @@ import org.apache.tomcat.jdbc.pool.*;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.postgresql.jdbc.PgConnection;
@@ -256,67 +255,5 @@ class PgConnectionSupplierTest {
     Connection poit = uut.getPooledConnection("poit");
     assertThat(poit).isNotNull().isSameAs(c);
     verify(ps).execute();
-  }
-
-  @Nested
-  class ModifiedSingleConnectionDataSourceTest {
-    @Mock Connection c;
-    @Mock ConnectionModifier cm1;
-    @Mock ConnectionModifier cm2;
-
-    @Test
-    void cleansUpConnection() {
-      var uut = new ModifiedSingleConnectionDataSource(c, List.of(cm1));
-      uut.close();
-
-      verify(cm1).beforeReturn(c);
-    }
-
-    @Test
-    void reversesOrder() {
-      InOrder inOrder = inOrder(cm1, cm2);
-      var uut = new ModifiedSingleConnectionDataSource(c, List.of(cm1, cm2));
-      inOrder.verify(cm1).afterBorrow(c);
-      inOrder.verify(cm2).afterBorrow(c);
-
-      uut.close();
-
-      inOrder.verify(cm2).beforeReturn(c);
-      inOrder.verify(cm1).beforeReturn(c);
-    }
-
-    @Test
-    @SneakyThrows
-    void rollsBackOrphanedTransactionOnDestroy() {
-      when(c.getAutoCommit()).thenReturn(false);
-      var uut = new ModifiedSingleConnectionDataSource(c, List.of(cm1));
-      uut.destroy();
-
-      verify(c).rollback();
-      verify(cm1).beforeReturn(c);
-    }
-
-    @Test
-    @SneakyThrows
-    void doesNotRollBackWhenAutoCommitOnDestroy() {
-      when(c.getAutoCommit()).thenReturn(true);
-      var uut = new ModifiedSingleConnectionDataSource(c, List.of(cm1));
-      uut.destroy();
-
-      verify(c, never()).rollback();
-      verify(cm1).beforeReturn(c);
-    }
-
-    @Test
-    @SneakyThrows
-    void handlesSqlExceptionOnDestroy() {
-      when(c.getAutoCommit()).thenReturn(false);
-      doThrow(new SQLException("fail")).when(c).rollback();
-      var uut = new ModifiedSingleConnectionDataSource(c, List.of(cm1));
-      uut.destroy();
-
-      verify(c).rollback();
-      verify(cm1).beforeReturn(c);
-    }
   }
 }

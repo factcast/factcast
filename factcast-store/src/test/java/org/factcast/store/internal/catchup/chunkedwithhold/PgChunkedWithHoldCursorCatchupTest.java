@@ -68,7 +68,6 @@ class PgChunkedWithHoldCursorCatchupTest {
     @Test
     @SneakyThrows
     void testRun() {
-      doReturn(false).when(underTest).wasCancelled();
       when(props.getChunkSize()).thenReturn(1000);
       doReturn(cursor).when(underTest).createCursor(anyInt());
       doReturn(true).when(underTest).fetchAll(any());
@@ -250,6 +249,7 @@ class PgChunkedWithHoldCursorCatchupTest {
     void testFetchChunk_MultipleRows_async_one_fetch() {
       when(connection.prepareStatement(anyString())).thenReturn(ps);
       when(connection.getAutoCommit()).thenReturn(false);
+      when(underTest.wasCancelled()).thenReturn(false);
 
       when(ps.executeQuery()).thenReturn(rs);
       when(ps.getConnection()).thenReturn(connection);
