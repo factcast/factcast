@@ -88,7 +88,7 @@ public class PgSubscriptionFactory implements AutoCloseable {
 
     ServerPipeline pipe = pipelineFactory.create(req, subscription, maxPipelineBufferSize);
 
-    PgFactStream pgsub =
+    PgFactStream factStream =
         new PgFactStream(
             connectionSupplier,
             offloadDataSource,
@@ -102,8 +102,8 @@ public class PgSubscriptionFactory implements AutoCloseable {
             logSuppression);
 
     // when closing the subscription, also close the PgFactStream
-    subscription.onClose(pgsub::close);
-    CompletableFuture.runAsync(connect(subscription, pgsub), es);
+    subscription.onClose(factStream::close);
+    CompletableFuture.runAsync(connect(subscription, factStream), es);
 
     return subscription;
   }

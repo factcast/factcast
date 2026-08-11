@@ -36,8 +36,7 @@ import org.factcast.store.internal.listen.ConnectionModifier;
 import org.factcast.store.internal.listen.ModifiedSingleConnectionDataSource;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.logsuppression.LogSuppression;
-import org.factcast.store.internal.pipeline.ServerPipeline;
-import org.factcast.store.internal.pipeline.Signal;
+import org.factcast.store.internal.pipeline.*;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgQueryBuilder;
 import org.factcast.store.internal.telemetry.PgStoreTelemetry;
@@ -129,23 +128,27 @@ public class PgFactStream {
     // signal connect
     telemetry.onConnect(request);
     initializeSerialToStartAfter();
+    try {
+      if (request.ephemeral()) {
+        // just fast forward to the latest event published by now
+        serial.set(hwmFetcher.highWaterMark(connectionSupplier.dataSource()).targetSer());
+      } else {
+        doCatchup();
+      }
 
-    if (request.ephemeral()) {
-      // just fast forward to the latest event published by now
-      serial.set(hwmFetcher.highWaterMark(connectionSupplier.dataSource()).targetSer());
-    } else {
-      doCatchup();
+      // propagate catchup signal
+      if (isConnected()) {
+        log.debug("{} signaling catchup", request);
+        // signal catchup
+        telemetry.onCatchup(request);
+        pipeline.process(Signal.catchup());
+      }
+
+      if (isConnected()) follow(request, createPgSynchronizedQuery());
+
+    } catch (PipelineAlreadyClosedException e) {
+      log.info("{} pipeline was closed, exiting.", request);
     }
-
-    // propagate catchup signal
-    if (isConnected()) {
-      log.debug("{} signaling catchup", request);
-      // signal catchup
-      telemetry.onCatchup(request);
-      pipeline.process(Signal.catchup());
-    }
-
-    follow(request, createPgSynchronizedQuery());
   }
 
   @VisibleForTesting
@@ -336,6 +339,9 @@ public class PgFactStream {
     log.debug("{} disconnected ", request);
 
     // free pipeline resources
+    //
+    // note that this also signals to upstream threads that the pipeline can no longer accept new
+    // elements and the respective process can be terminated.
     pipeline.close();
 
     // signal close

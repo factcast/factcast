@@ -30,8 +30,7 @@ import org.factcast.store.internal.StoreMetrics;
 import org.factcast.store.internal.catchup.AbstractPgCatchup;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.catchup.tools.fetching.FetchingQuery;
-import org.factcast.store.internal.pipeline.ServerPipeline;
-import org.factcast.store.internal.pipeline.Signal;
+import org.factcast.store.internal.pipeline.*;
 import org.factcast.store.internal.query.PgQueryBuilder;
 import org.factcast.store.internal.rowmapper.PgFactExtractor;
 import org.springframework.jdbc.core.RowCallbackHandler;
@@ -106,7 +105,13 @@ public class PgCursorCatchup extends AbstractPgCatchup {
       }
 
       PgFact f = extractor.mapRow(rs, 0);
-      pipeline.process(Signal.of(f));
+      try {
+        pipeline.process(Signal.of(f));
+      } catch (PipelineAlreadyClosedException e) {
+        log.trace("{} catchup {} - pipeline was closed, exiting.", req, phase);
+        // make the loop skip the rest of the RS
+        rs.close();
+      }
     };
   }
 

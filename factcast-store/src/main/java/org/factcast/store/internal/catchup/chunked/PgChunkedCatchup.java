@@ -28,8 +28,7 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.*;
 import org.factcast.store.internal.catchup.*;
-import org.factcast.store.internal.pipeline.ServerPipeline;
-import org.factcast.store.internal.pipeline.Signal;
+import org.factcast.store.internal.pipeline.*;
 import org.factcast.store.internal.query.PgQueryBuilder;
 import org.factcast.store.internal.rowmapper.PgFactExtractor;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -87,6 +86,8 @@ public class PgChunkedCatchup extends AbstractPgCatchup {
 
       int chunkCount = 0;
       int rowsToProcess = -1;
+
+      loop:
       while (rowsToProcess != 0) {
 
         if (wasCancelled()) return;
@@ -102,7 +103,14 @@ public class PgChunkedCatchup extends AbstractPgCatchup {
             rowsToProcess);
 
         // process them
-        facts.forEach(f -> pipeline.process(Signal.of(f)));
+        for (PgFact f : facts) {
+          try {
+            pipeline.process(Signal.of(f));
+          } catch (PipelineAlreadyClosedException e) {
+            log.trace("{} catchup {} - pipeline was closed, exiting.", req, phase);
+            break loop;
+          }
+        }
       }
       log.trace("{} catchup {} - all chunks processed", req, phase);
     } else {

@@ -57,14 +57,14 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
   @SneakyThrows
   @Override
   public synchronized void run() {
-    if (ds.getConnection() == null)
-      throw new IllegalStateException("PgChunkedWithHoldCursorCatchup is a one-shot object");
-
     try (Cursor cursor = createCursor(props.getChunkSize())) {
-      if (wasCancelled()) return;
       if (fetchAll(cursor)) {
         log.trace("Done fetching, flushing.");
-        pipeline.process(Signal.flush());
+        try {
+          pipeline.process(Signal.flush());
+        } catch (PipelineAlreadyClosedException e) {
+          log.trace("{} catchup {}, pipeline was closed, exiting.", req, phase);
+        }
       }
     }
     markConnectionDone();
@@ -269,14 +269,19 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
               .executeAndProcess(
                   fetch,
                   rs -> {
+                    if (rs.isClosed()) return;
+
                     PgFact fact = extractor.mapRow(rs, rows.get());
+                    // this intentionally throws PipelineAlreadyClosedException
                     pipeline.process(Signal.of(fact));
                     rows.incrementAndGet();
                   },
                   callbackAfterExecution::run);
         } catch (SQLException e) {
           log.trace("{} catchup {}, fetch chunk encountered", req, phase, e);
-          return rows.get();
+        } catch (PipelineAlreadyClosedException e) {
+          log.trace("{} catchup {}, pipeline was closed, exiting.", req, phase);
+          return 0; // end this
         }
         return rows.get();
       }
@@ -312,10 +317,8 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
   }
 
   private <R> R doInTransaction(@NonNull ThrowingCallable<R> callable) throws SQLException {
-    Connection connection = ds.getConnection();
-    connection.setAutoCommit(false);
-
-    try {
+    try (Connection connection = ds.getConnection(); ) {
+      connection.setAutoCommit(false);
       R call = callable.call();
       connection.commit();
       connection.setAutoCommit(true);

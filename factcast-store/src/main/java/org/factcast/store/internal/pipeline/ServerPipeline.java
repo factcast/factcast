@@ -24,7 +24,7 @@ import lombok.NonNull;
  */
 public interface ServerPipeline {
 
-  void process(@NonNull Signal s);
+  void process(@NonNull Signal s) throws PipelineAlreadyClosedException;
 
   void close(); // does not throw exception, just for freeing resources
 }

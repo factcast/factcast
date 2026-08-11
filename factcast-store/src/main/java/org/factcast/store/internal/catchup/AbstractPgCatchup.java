@@ -50,6 +50,8 @@ public abstract class AbstractPgCatchup implements PgCatchup {
     this.fastForward = serialToStartFrom;
   }
 
+  // TODO Dear reviewer: as all querying is single threaded, i no longer see a reason for checking
+  // this over and over
   protected boolean wasCancelled() {
     try {
       Connection connection = ds.getConnection();
