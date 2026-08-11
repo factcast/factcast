@@ -372,6 +372,18 @@ class PgChunkedWithHoldCursorCatchupTest {
 
     @Test
     @SneakyThrows
+    void testDeclareAndFetchFirst_CanceledAfterDeclare() {
+      when(connection.getAutoCommit()).thenReturn(false);
+      when(statementHolder.wasCanceled()).thenReturn(true);
+
+      Boolean result =
+          underTest.declareAndFetchFirst(
+              cursor, mock(PgQueryBuilder.class), new AtomicLong(0), mock(PgFactExtractor.class));
+      assertThat(result).isNull();
+    }
+
+    @Test
+    @SneakyThrows
     void testDeclareAndFetchFirst_QuickCatchup() {
       when(props.getChunkSize()).thenReturn(1000);
       when(cursor.fetchChunk(any(), any())).thenReturn(500);

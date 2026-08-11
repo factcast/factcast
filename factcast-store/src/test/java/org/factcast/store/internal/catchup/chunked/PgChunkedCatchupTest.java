@@ -253,6 +253,39 @@ class PgChunkedCatchupTest {
 
     @Test
     @SneakyThrows
+    void fetchHonorsIntermediateCancellation() {
+      SingleConnectionDataSource scds = mock(SingleConnectionDataSource.class);
+      Connection conn = mock(Connection.class);
+      Statement stmt = mock(Statement.class);
+      ResultSet rs1 = mock(ResultSet.class);
+      when(scds.getConnection()).thenReturn(conn);
+      when(conn.createStatement()).thenReturn(stmt);
+      when(stmt.execute(anyString())).thenReturn(true);
+      when(stmt.executeQuery(startsWith("with"))).thenReturn(rs1);
+
+      when(rs1.next()).thenReturn(true, false);
+      when(rs1.getString(PgConstants.ALIAS_ID)).thenReturn(java.util.UUID.randomUUID().toString());
+      when(rs1.getString(PgConstants.ALIAS_AGGID)).thenReturn("[]");
+      when(rs1.getString(PgConstants.ALIAS_TYPE)).thenReturn("t");
+      when(rs1.getString(PgConstants.ALIAS_NS)).thenReturn("ns");
+      when(rs1.getString(PgConstants.COLUMN_HEADER)).thenReturn("{}");
+      when(rs1.getString(PgConstants.COLUMN_PAYLOAD)).thenReturn("{}");
+      when(rs1.getInt(PgConstants.COLUMN_VERSION)).thenReturn(1);
+      when(rs1.getLong(PgConstants.COLUMN_SER)).thenReturn(1L);
+
+      doReturn(1).when(underTest).prepareTemporaryTable(any(), anyString());
+      // First check in while loop: false (enters loop), second check (next iteration): true (exits
+      // early)
+      when(statementHolder.wasCanceled()).thenReturn(false, true);
+
+      underTest.fetch(scds);
+
+      verify(stmt, times(1)).executeQuery(startsWith("with"));
+      verify(pipeline, times(1)).process(any());
+    }
+
+    @Test
+    @SneakyThrows
     void fetch() {
       // Arrange a SingleConnectionDataSource backed by mocked JDBC artifacts
       SingleConnectionDataSource scds = mock(SingleConnectionDataSource.class);
