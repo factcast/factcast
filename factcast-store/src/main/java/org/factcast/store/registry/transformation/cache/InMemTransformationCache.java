@@ -18,6 +18,7 @@ package org.factcast.store.registry.transformation.cache;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.map.LRUMap;
@@ -38,7 +39,7 @@ public class InMemTransformationCache implements TransformationCache {
   }
 
   public InMemTransformationCache(int capacity, RegistryMetrics registryMetrics) {
-    cache = Collections.synchronizedMap(new LRUMap<>(Math.max(capacity, DEFAULT_CAPACITY)));
+    cache = Collections.synchronizedMap(new LRUMap<>(Math.min(capacity, DEFAULT_CAPACITY)));
     this.registryMetrics = registryMetrics;
   }
 
@@ -48,6 +49,7 @@ public class InMemTransformationCache implements TransformationCache {
   }
 
   @Override
+  @Nonnull
   public Optional<Fact> find(@NonNull TransformationCache.Key key) {
     Optional<Fact> cached = Optional.ofNullable(cache.get(key));
     registryMetrics.count(
@@ -58,6 +60,7 @@ public class InMemTransformationCache implements TransformationCache {
   }
 
   @Override
+  @Nonnull
   public Set<Fact> findAll(Collection<Key> keys) {
     Set<Fact> found = new HashSet<>(keys.size());
     keys.forEach(
@@ -82,7 +85,7 @@ public class InMemTransformationCache implements TransformationCache {
   }
 
   @Override
-  public void invalidateTransformationFor(String ns, String type) {
+  public void invalidateTransformationFor(@Nonnull String ns, @Nonnull String type) {
     synchronized (cache) {
       Set<Key> toBeInvalidated =
           cache.entrySet().stream()
@@ -97,7 +100,7 @@ public class InMemTransformationCache implements TransformationCache {
   }
 
   @Override
-  public void invalidateTransformationFor(UUID factId) {
+  public void invalidateTransformationFor(@Nonnull UUID factId) {
     synchronized (cache) {
       Set<Key> toBeInvalidated =
           cache.keySet().stream()
@@ -111,6 +114,6 @@ public class InMemTransformationCache implements TransformationCache {
 
   @Override
   public void flush() {
-    // NOP
+    // NOOP
   }
 }
