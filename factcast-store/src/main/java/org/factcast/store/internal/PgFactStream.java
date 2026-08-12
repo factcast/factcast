@@ -32,8 +32,7 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.*;
 import org.factcast.store.*;
 import org.factcast.store.internal.catchup.*;
-import org.factcast.store.internal.listen.ConnectionModifier;
-import org.factcast.store.internal.listen.ModifiedSingleConnectionDataSource;
+import org.factcast.store.internal.catchup.CatchupDataSource;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.logsuppression.LogSuppression;
 import org.factcast.store.internal.pipeline.*;
@@ -59,7 +58,7 @@ public class PgFactStream {
   final PgFactIdToSerialMapper idToSerMapper;
   final PgCatchupFactory pgCatchupFactory;
   final HighWaterMarkFetcher hwmFetcher;
-  final ServerPipeline pipeline;
+  final PushbackServerPipeline pipeline;
   final PgStoreTelemetry telemetry;
 
   @Getter(AccessLevel.PROTECTED)
@@ -82,7 +81,7 @@ public class PgFactStream {
       PgFactIdToSerialMapper idToSerMapper,
       PgCatchupFactory pgCatchupFactory,
       HighWaterMarkFetcher hwmFetcher,
-      ServerPipeline pipeline,
+      PushbackServerPipeline pipeline,
       PgStoreTelemetry telemetry,
       SubscriptionRequestTO request,
       LogSuppression logSuppression) {
@@ -107,7 +106,7 @@ public class PgFactStream {
       PgFactIdToSerialMapper idToSerMapper,
       PgCatchupFactory pgCatchupFactory,
       HighWaterMarkFetcher hwmFetcher,
-      ServerPipeline pipeline,
+      PushbackServerPipeline pipeline,
       PgStoreTelemetry telemetry,
       SubscriptionRequestTO request,
       LogSuppression logSuppression) {
@@ -116,6 +115,7 @@ public class PgFactStream {
     this.idToSerMapper = idToSerMapper;
     this.pgCatchupFactory = pgCatchupFactory;
     this.hwmFetcher = hwmFetcher;
+    // we need that subtype
     this.pipeline = pipeline;
     this.telemetry = telemetry;
     this.offloadDataSource = offloadDataSource;
@@ -256,14 +256,15 @@ public class PgFactStream {
       // to block a connection during P1 if it was offloaded
       try (PrimaryDataSourceSupplier primary =
           new PrimaryDataSourceSupplier(
-              () -> createCatchupDataSource(connectionSupplier.dataSource()))) {
+              () -> createCatchupDataSource(connectionSupplier.dataSource(), pipeline))) {
 
         // Phase 1
         long phase1HighwaterMark = -1;
 
         if (offloadDataSource != null) {
           // we're creating a SCDS for offload, that we destroy right after
-          try (SingleConnectionDataSource secondary = createCatchupDataSource(offloadDataSource)) {
+          try (SingleConnectionDataSource secondary =
+              createCatchupDataSource(offloadDataSource, pipeline)) {
             phase1HighwaterMark = catchupPhaseOne(secondary);
           }
         } else {
@@ -296,9 +297,9 @@ public class PgFactStream {
 
   @SneakyThrows
   @VisibleForTesting
-  ModifiedSingleConnectionDataSource createCatchupDataSource(@NonNull DataSource ds) {
-    return new ModifiedSingleConnectionDataSource(
-        ds.getConnection(), catchupConnectionModifiers(request));
+  CatchupDataSource createCatchupDataSource(
+      @NonNull DataSource ds, PushbackServerPipeline pipeline) {
+    return new CatchupDataSource(ds.getConnection(), catchupConnectionModifiers(request), pipeline);
   }
 
   @VisibleForTesting

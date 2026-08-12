@@ -28,7 +28,6 @@ import org.factcast.core.subscription.observer.HighWaterMarkFetcher;
 import org.factcast.store.internal.listen.*;
 import org.factcast.store.internal.pipeline.ServerPipeline;
 import org.factcast.store.internal.pipeline.Signal;
-import org.factcast.store.internal.query.*;
 import org.springframework.jdbc.core.*;
 import org.springframework.jdbc.datasource.*;
 

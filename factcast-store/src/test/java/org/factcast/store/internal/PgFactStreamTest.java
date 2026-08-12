@@ -30,8 +30,7 @@ import org.factcast.core.*;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.*;
 import org.factcast.store.*;
-import org.factcast.store.internal.catchup.PgCatchup;
-import org.factcast.store.internal.catchup.PgCatchupFactory;
+import org.factcast.store.internal.catchup.*;
 import org.factcast.store.internal.listen.*;
 import org.factcast.store.internal.logsuppression.*;
 import org.factcast.store.internal.pipeline.ServerPipeline;
@@ -60,7 +59,7 @@ class PgFactStreamTest {
   @Mock StoreConfigurationProperties props;
   @Mock SubscriptionRequestTO reqTo;
   @Spy LogSuppression logSuppression = new DefaultLogSuppression(Level.INFO, 0, 0);
-  @Mock ModifiedSingleConnectionDataSource mds;
+  @Mock CatchupDataSource mds;
 
   @InjectMocks @Spy PgFactStream uut;
 
@@ -143,7 +142,7 @@ class PgFactStreamTest {
       when(uut.catchupConnectionModifiers(reqTo))
           .thenReturn(Collections.singletonList(ConnectionModifier.withCustomPlanForced()));
 
-      ModifiedSingleConnectionDataSource catchupDataSource = uut.createCatchupDataSource(ds);
+      CatchupDataSource catchupDataSource = uut.createCatchupDataSource(ds);
       assertThat(catchupDataSource.modifiers())
           .isNotNull()
           .containsExactly(ConnectionModifier.withCustomPlanForced());
@@ -542,7 +541,7 @@ class PgFactStreamTest {
       @Mock StoreConfigurationProperties props;
       @Mock SubscriptionRequestTO reqTo;
       @Mock SingleConnectionDataSource ds;
-      @Mock ModifiedSingleConnectionDataSource mds;
+      @Mock CatchupDataSource mds;
 
       @BeforeEach
       void setup() {

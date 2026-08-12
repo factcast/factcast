@@ -22,6 +22,7 @@ import javax.sql.DataSource;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tomcat.jdbc.pool.PoolConfiguration;
+import org.factcast.store.internal.*;
 import org.postgresql.jdbc.PgConnection;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 

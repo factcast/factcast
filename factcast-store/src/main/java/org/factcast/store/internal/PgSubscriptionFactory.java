@@ -96,7 +96,7 @@ public class PgSubscriptionFactory implements AutoCloseable {
             idToSerialMapper,
             catchupFactory,
             hwmFetcher,
-            pipe,
+            new PushbackServerPipeline(pipe),
             telemetry,
             req,
             logSuppression);

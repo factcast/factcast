@@ -78,8 +78,6 @@ public class PgChunkedCatchup extends AbstractPgCatchup {
     jdbc.setQueryTimeout(0); // disable query timeout
     if (prepareTemporaryTable(jdbc, tempTableName) > 0) {
 
-      if (wasCancelled()) return;
-
       final var extractor = new PgFactExtractor(serial);
 
       String chunkQuery = prepareChunkQuery(tempTableName);
@@ -89,8 +87,6 @@ public class PgChunkedCatchup extends AbstractPgCatchup {
 
       loop:
       while (rowsToProcess != 0) {
-
-        if (wasCancelled()) return;
 
         log.trace("{} catchup {} - fetching chunk {}", req, phase, ++chunkCount);
         List<PgFact> facts = jdbc.query(chunkQuery, extractor);
@@ -119,9 +115,7 @@ public class PgChunkedCatchup extends AbstractPgCatchup {
 
     // tmp table is not needed anymore. As we reuse the connection, it'd be good to drop it.
     try {
-      if (wasCancelled()) return;
       jdbc.execute("drop table " + tempTableName);
-      markConnectionDone();
     } catch (Exception e) {
       log.warn("{} catchup {} - while dropping tmp table:", req, phase, e);
     }
@@ -197,11 +191,5 @@ public class PgChunkedCatchup extends AbstractPgCatchup {
           req,
           elapsed.toSeconds());
     }
-  }
-
-  @Override
-  @VisibleForTesting
-  protected boolean wasCancelled() {
-    return super.wasCancelled();
   }
 }

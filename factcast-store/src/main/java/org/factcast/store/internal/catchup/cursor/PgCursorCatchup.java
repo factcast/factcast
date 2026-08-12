@@ -62,10 +62,6 @@ public class PgCursorCatchup extends AbstractPgCatchup {
       final var isFromScratch = (fromSerial.get() <= 0);
       log.trace("{} catchup {} - facts starting with SER={}", req, phase, fromSerial.get());
 
-      if (wasCancelled()) {
-        return;
-      }
-
       try (Connection conn = ds.getConnection();
           PreparedStatement prep = conn.prepareStatement(catchupSQL); ) {
         // this needs to be transactional for fetch-size to have any effect whatsoever.
@@ -86,7 +82,6 @@ public class PgCursorCatchup extends AbstractPgCatchup {
       }
     } finally {
       log.trace("Done fetching, flushing.");
-      markConnectionDone();
       pipeline.process(Signal.flush());
     }
   }
@@ -100,7 +95,7 @@ public class PgCursorCatchup extends AbstractPgCatchup {
   @VisibleForTesting
   RowCallbackHandler createRowCallbackHandler(PgFactExtractor extractor) {
     return rs -> {
-      if (rs.isClosed() || wasCancelled()) {
+      if (rs.isClosed()) {
         return;
       }
 
@@ -113,11 +108,5 @@ public class PgCursorCatchup extends AbstractPgCatchup {
         rs.close();
       }
     };
-  }
-
-  @Override
-  @VisibleForTesting
-  protected boolean wasCancelled() {
-    return super.wasCancelled();
   }
 }

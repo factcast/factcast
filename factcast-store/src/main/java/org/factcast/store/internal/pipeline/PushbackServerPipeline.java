@@ -15,13 +15,17 @@
  */
 package org.factcast.store.internal.pipeline;
 
-import java.util.concurrent.atomic.AtomicBoolean;
+import jakarta.validation.constraints.Null;
+import java.util.*;
+import java.util.concurrent.atomic.*;
 import javax.annotation.Nonnull;
 import lombok.NonNull;
+import org.factcast.store.internal.catchup.CatchupDataSource;
 
 public class PushbackServerPipeline implements ServerPipeline {
   private final ServerPipeline delegate;
-  private final AtomicBoolean isCLosed = new AtomicBoolean(false);
+  private final AtomicBoolean isClosed = new AtomicBoolean(false);
+  private Set<CatchupDataSource> onCloseListeners = Collections.synchronizedSet(new HashSet<>());
 
   public PushbackServerPipeline(@Nonnull ServerPipeline chain) {
     this.delegate = chain;
@@ -29,13 +33,27 @@ public class PushbackServerPipeline implements ServerPipeline {
 
   @Override
   public void process(@NonNull Signal s) throws PipelineAlreadyClosedException {
-    if (isCLosed.get()) throw new PipelineAlreadyClosedException();
+    if (isClosed.get()) throw new PipelineAlreadyClosedException();
     delegate.process(s);
   }
 
   @Override
   public void close() {
-    isCLosed.set(true);
+    isClosed.set(true);
     delegate.close();
+    // we don't close the datasource, because it will be done in the catchup process.
+    onCloseListeners.forEach(CatchupDataSource::cancel);
+  }
+
+  // these two methods are use to communicate a close to a datasource in use. Note that due to
+  // offloading, there might be two separate DS valid at a time.
+  public void register(@Null CatchupDataSource ds) {
+    if (!onCloseListeners.add(ds))
+      throw new IllegalStateException("DS was already registered. This is a weird bug.");
+  }
+
+  public void unregister(@NonNull CatchupDataSource ds) {
+    if (!onCloseListeners.remove(ds))
+      throw new IllegalStateException("DS was not registered. This is a bug.");
   }
 }

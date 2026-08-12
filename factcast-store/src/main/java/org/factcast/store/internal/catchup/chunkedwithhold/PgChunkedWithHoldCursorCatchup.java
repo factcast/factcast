@@ -67,7 +67,6 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
         }
       }
     }
-    markConnectionDone();
   }
 
   // needed for comfortable mocking
@@ -98,8 +97,6 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
     Boolean moreToFetch =
         inTransaction(() -> declareAndFetchFirst(cursor, queryBuilder, fromSerial, extractor));
 
-    if (wasCancelled()) return false;
-
     if (moreToFetch == null) {
       // no rows fetched whatsoever
       return false;
@@ -123,7 +120,6 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
       @NonNull Cursor cursor, @NonNull PgFactExtractor extractor) throws SQLException {
 
     while (true) {
-      if (wasCancelled()) return;
       if (inTransaction(() -> cursor.fetchChunk(extractor)) != cursor.chunkSize()) break;
     }
   }
@@ -152,8 +148,6 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
     final var timerSample = metrics.startSample();
 
     cursor.declare(queryBuilder, fromSerial);
-
-    if (wasCancelled()) return false;
 
     log.debug("{} catchup {}, fetching first chunk", req, phase);
 
@@ -251,8 +245,6 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
     int fetchChunk(@NonNull PgFactExtractor extractor, @Nonnull Runnable callbackAfterExecution)
         throws SQLException {
 
-      if (wasCancelled()) return 0;
-
       final AtomicInteger rows = new AtomicInteger(0);
       try (PreparedStatement fetch = ds.getConnection().prepareStatement(fetchSql)) {
         fetch.setFetchSize(props.getPageSize());
@@ -316,21 +308,19 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
 
   private <R> R doInTransaction(@NonNull ThrowingCallable<R> callable) throws SQLException {
     try (Connection connection = ds.getConnection(); ) {
+      boolean autocommitBefore = connection.getAutoCommit();
       connection.setAutoCommit(false);
-      R call = callable.call();
-      connection.commit();
-      connection.setAutoCommit(true);
-      return call;
-    } catch (Exception e) {
-      markConnectionDone();
-      if (e instanceof SQLException sql) throw sql;
-      throw new SQLException(e);
+      try {
+        R call = callable.call();
+        connection.commit();
+        return call;
+      } catch (Exception e) {
+        connection.rollback();
+        if (e instanceof SQLException sql) throw sql;
+        throw new SQLException(e);
+      } finally {
+        connection.setAutoCommit(autocommitBefore);
+      }
     }
-  }
-
-  @Override
-  @VisibleForTesting
-  protected boolean wasCancelled() {
-    return super.wasCancelled();
   }
 }

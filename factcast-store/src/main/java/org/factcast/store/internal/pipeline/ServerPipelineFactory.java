@@ -50,7 +50,6 @@ public class ServerPipelineFactory {
 
     chain = new BlacklistFilterServerPipeline(chain, blacklist);
     chain = new AutoFlushingServerPipeline(chain, properties.getAutoFlushDelay());
-    chain = new PushbackServerPipeline(chain);
     return chain;
   }
 }

@@ -23,6 +23,8 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 import lombok.SneakyThrows;
+import org.factcast.store.internal.ConnectionModifier;
+import org.factcast.store.internal.catchup.CatchupDataSource;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
@@ -38,19 +40,17 @@ class ModifiedSingleConnectionDataSourceTest {
 
   @Test
   void throwsIllegalArgumentExceptionWhenConnectionIsNull() {
-    assertThrows(
-        IllegalArgumentException.class,
-        () -> new ModifiedSingleConnectionDataSource(null, List.of(cm1)));
+    assertThrows(IllegalArgumentException.class, () -> new CatchupDataSource(null, List.of(cm1)));
   }
 
   @Test
   void throwsNullPointerExceptionWhenModifiersIsNull() {
-    assertThrows(NullPointerException.class, () -> new ModifiedSingleConnectionDataSource(c, null));
+    assertThrows(NullPointerException.class, () -> new CatchupDataSource(c, null));
   }
 
   @Test
   void initializesWithEmptyModifiers() {
-    var uut = new ModifiedSingleConnectionDataSource(c, List.of());
+    var uut = new CatchupDataSource(c, List.of());
     assertThat(uut.modifiers()).isEmpty();
     uut.close();
   }
@@ -58,7 +58,7 @@ class ModifiedSingleConnectionDataSourceTest {
   @Test
   void callsAfterBorrowInOrder() {
     InOrder inOrder = inOrder(cm1, cm2);
-    var uut = new ModifiedSingleConnectionDataSource(c, List.of(cm1, cm2));
+    var uut = new CatchupDataSource(c, List.of(cm1, cm2));
 
     inOrder.verify(cm1).afterBorrow(c);
     inOrder.verify(cm2).afterBorrow(c);
@@ -69,7 +69,7 @@ class ModifiedSingleConnectionDataSourceTest {
 
   @Test
   void cleansUpConnection() {
-    var uut = new ModifiedSingleConnectionDataSource(c, List.of(cm1));
+    var uut = new CatchupDataSource(c, List.of(cm1));
     uut.close();
 
     verify(cm1).beforeReturn(c);
@@ -78,7 +78,7 @@ class ModifiedSingleConnectionDataSourceTest {
   @Test
   void reversesOrderOnClose() {
     InOrder inOrder = inOrder(cm1, cm2);
-    var uut = new ModifiedSingleConnectionDataSource(c, List.of(cm1, cm2));
+    var uut = new CatchupDataSource(c, List.of(cm1, cm2));
 
     uut.close();
 
@@ -90,7 +90,7 @@ class ModifiedSingleConnectionDataSourceTest {
   @SneakyThrows
   void rollsBackOrphanedTransactionOnDestroy() {
     when(c.getAutoCommit()).thenReturn(false);
-    var uut = new ModifiedSingleConnectionDataSource(c, List.of(cm1));
+    var uut = new CatchupDataSource(c, List.of(cm1));
     uut.destroy();
 
     verify(c).rollback();
@@ -101,7 +101,7 @@ class ModifiedSingleConnectionDataSourceTest {
   @SneakyThrows
   void doesNotRollBackWhenAutoCommitOnDestroy() {
     when(c.getAutoCommit()).thenReturn(true);
-    var uut = new ModifiedSingleConnectionDataSource(c, List.of(cm1));
+    var uut = new CatchupDataSource(c, List.of(cm1));
     uut.destroy();
 
     verify(c, never()).rollback();
@@ -112,7 +112,7 @@ class ModifiedSingleConnectionDataSourceTest {
   @SneakyThrows
   void handlesSqlExceptionOnGetAutoCommit() {
     when(c.getAutoCommit()).thenThrow(new SQLException("fail"));
-    var uut = new ModifiedSingleConnectionDataSource(c, List.of(cm1));
+    var uut = new CatchupDataSource(c, List.of(cm1));
     uut.destroy();
 
     verify(c, never()).rollback();
@@ -124,7 +124,7 @@ class ModifiedSingleConnectionDataSourceTest {
   void handlesSqlExceptionOnDestroy() {
     when(c.getAutoCommit()).thenReturn(false);
     doThrow(new SQLException("fail")).when(c).rollback();
-    var uut = new ModifiedSingleConnectionDataSource(c, List.of(cm1));
+    var uut = new CatchupDataSource(c, List.of(cm1));
     uut.destroy();
 
     verify(c).rollback();

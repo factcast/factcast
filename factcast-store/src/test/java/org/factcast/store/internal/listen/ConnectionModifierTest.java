@@ -15,12 +15,12 @@
  */
 package org.factcast.store.internal.listen;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 
 import java.sql.*;
 import lombok.SneakyThrows;
 import org.assertj.core.api.Assertions;
+import org.factcast.store.internal.ConnectionModifier;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;

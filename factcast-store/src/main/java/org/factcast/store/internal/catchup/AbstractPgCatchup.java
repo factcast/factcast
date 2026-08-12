@@ -21,9 +21,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import javax.sql.DataSource;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.tomcat.jdbc.pool.PooledConnection;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.core.util.ExceptionHelper;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.pipeline.ServerPipeline;
@@ -48,34 +46,5 @@ public abstract class AbstractPgCatchup implements PgCatchup {
   @Override
   public final void fastForward(long serialToStartFrom) {
     this.fastForward = serialToStartFrom;
-  }
-
-  // TODO Dear reviewer: as all querying is single threaded, i no longer see a reason for checking
-  // this over and over
-  protected boolean wasCancelled() {
-    try {
-      Connection connection = ds.getConnection();
-      PooledConnection pooled = connection.unwrap(PooledConnection.class);
-      boolean discarded = pooled.isDiscarded();
-      if (discarded) log.debug("{} catchup was cancelled", req);
-      return discarded;
-    } catch (SQLException e) {
-      throw ExceptionHelper.toRuntime(e);
-    }
-  }
-
-  public final void assertWasNotCancelled() {
-    if (wasCancelled())
-      throw new IllegalStateException(
-          "Connection was discarded. This happens after cancelling and might be rare, but normal");
-  }
-
-  @SuppressWarnings("java:S2095")
-  protected final void markConnectionDone() throws SQLException {
-    Connection connection = ds.getConnection();
-    if (!connection.getAutoCommit()) {
-      connection.rollback(); // marks the process as regularly complete
-      connection.setAutoCommit(true);
-    }
   }
 }
