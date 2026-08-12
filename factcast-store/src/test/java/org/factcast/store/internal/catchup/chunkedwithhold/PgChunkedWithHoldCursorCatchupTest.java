@@ -60,7 +60,6 @@ class PgChunkedWithHoldCursorCatchupTest {
     underTest =
         Mockito.spy(
             new PgChunkedWithHoldCursorCatchup(props, metrics, req, pipeline, serial, ds, phase));
-    lenient().doReturn(false).when(underTest).wasCancelled();
   }
 
   @Nested
@@ -97,9 +96,10 @@ class PgChunkedWithHoldCursorCatchupTest {
     @Test
     @SneakyThrows
     void testFetchAllCanceled() {
-      lenient().doReturn(true).when(underTest).wasCancelled();
-      boolean result = underTest.fetchAll(cursor);
-      assertThat(result).isFalse();
+      doThrow(new PipelineAlreadyClosedException())
+          .when(underTest)
+          .inTransaction(any(PgChunkedWithHoldCursorCatchup.ThrowingCallable.class));
+      assertThrows(PipelineAlreadyClosedException.class, () -> underTest.fetchAll(cursor));
     }
 
     @Test
@@ -157,8 +157,7 @@ class PgChunkedWithHoldCursorCatchupTest {
     @SneakyThrows
     void testContinueFetchingUntilExhausted_Canceled() {
       when(cursor.chunkSize()).thenReturn(1000);
-      when(cursor.fetchChunk(any())).thenReturn(1000);
-      doReturn(false, true).when(underTest).wasCancelled();
+      when(cursor.fetchChunk(any())).thenReturn(0);
       PgFactExtractor extractor = mock(PgFactExtractor.class);
       underTest.inTransaction(() -> underTest.continueFetchingUntilExhausted(cursor, extractor));
 
@@ -178,9 +177,7 @@ class PgChunkedWithHoldCursorCatchupTest {
 
     @BeforeEach
     @SneakyThrows
-    void setupCursor() {
-      lenient().doReturn(false).when(underTest).wasCancelled();
-    }
+    void setupCursor() {}
 
     @Test
     @SneakyThrows
@@ -249,7 +246,6 @@ class PgChunkedWithHoldCursorCatchupTest {
     void testFetchChunk_MultipleRows_async_one_fetch() {
       when(connection.prepareStatement(anyString())).thenReturn(ps);
       when(connection.getAutoCommit()).thenReturn(false);
-      when(underTest.wasCancelled()).thenReturn(false);
 
       when(ps.executeQuery()).thenReturn(rs);
       when(ps.getConnection()).thenReturn(connection);
@@ -333,6 +329,7 @@ class PgChunkedWithHoldCursorCatchupTest {
     @Test
     @SneakyThrows
     void testDoInTransactionSuccess() {
+      when(connection.getAutoCommit()).thenReturn(true);
       underTest.inTransaction(() -> "success");
       verify(connection).setAutoCommit(false);
       verify(connection).commit();
@@ -342,6 +339,7 @@ class PgChunkedWithHoldCursorCatchupTest {
     @Test
     @SneakyThrows
     void testDoInTransactionFailure() {
+      when(connection.getAutoCommit()).thenReturn(true);
       assertThrows(
           SQLException.class,
           () ->

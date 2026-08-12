@@ -25,6 +25,7 @@ import java.util.List;
 import lombok.SneakyThrows;
 import org.factcast.store.internal.ConnectionModifier;
 import org.factcast.store.internal.catchup.CatchupDataSource;
+import org.factcast.store.internal.pipeline.PushbackServerPipeline;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
@@ -37,39 +38,39 @@ class ModifiedSingleConnectionDataSourceTest {
   @Mock private Connection c;
   @Mock private ConnectionModifier cm1;
   @Mock private ConnectionModifier cm2;
+  @Mock private PushbackServerPipeline pipeline;
 
   @Test
   void throwsIllegalArgumentExceptionWhenConnectionIsNull() {
-    assertThrows(IllegalArgumentException.class, () -> new CatchupDataSource(null, List.of(cm1)));
+    assertThrows(
+        IllegalArgumentException.class, () -> new CatchupDataSource(null, List.of(cm1), pipeline));
   }
 
   @Test
   void throwsNullPointerExceptionWhenModifiersIsNull() {
-    assertThrows(NullPointerException.class, () -> new CatchupDataSource(c, null));
+    assertThrows(NullPointerException.class, () -> new CatchupDataSource(c, null, pipeline));
   }
 
   @Test
   void initializesWithEmptyModifiers() {
-    var uut = new CatchupDataSource(c, List.of());
-    assertThat(uut.modifiers()).isEmpty();
+    var uut = new CatchupDataSource(c, List.of(), pipeline);
     uut.close();
   }
 
   @Test
   void callsAfterBorrowInOrder() {
     InOrder inOrder = inOrder(cm1, cm2);
-    var uut = new CatchupDataSource(c, List.of(cm1, cm2));
+    var uut = new CatchupDataSource(c, List.of(cm1, cm2), pipeline);
 
     inOrder.verify(cm1).afterBorrow(c);
     inOrder.verify(cm2).afterBorrow(c);
-    assertThat(uut.modifiers()).containsExactly(cm1, cm2);
 
     uut.close();
   }
 
   @Test
   void cleansUpConnection() {
-    var uut = new CatchupDataSource(c, List.of(cm1));
+    var uut = new CatchupDataSource(c, List.of(cm1), pipeline);
     uut.close();
 
     verify(cm1).beforeReturn(c);
@@ -78,7 +79,7 @@ class ModifiedSingleConnectionDataSourceTest {
   @Test
   void reversesOrderOnClose() {
     InOrder inOrder = inOrder(cm1, cm2);
-    var uut = new CatchupDataSource(c, List.of(cm1, cm2));
+    var uut = new CatchupDataSource(c, List.of(cm1, cm2), pipeline);
 
     uut.close();
 
@@ -90,7 +91,7 @@ class ModifiedSingleConnectionDataSourceTest {
   @SneakyThrows
   void rollsBackOrphanedTransactionOnDestroy() {
     when(c.getAutoCommit()).thenReturn(false);
-    var uut = new CatchupDataSource(c, List.of(cm1));
+    var uut = new CatchupDataSource(c, List.of(cm1), pipeline);
     uut.destroy();
 
     verify(c).rollback();
@@ -101,7 +102,7 @@ class ModifiedSingleConnectionDataSourceTest {
   @SneakyThrows
   void doesNotRollBackWhenAutoCommitOnDestroy() {
     when(c.getAutoCommit()).thenReturn(true);
-    var uut = new CatchupDataSource(c, List.of(cm1));
+    var uut = new CatchupDataSource(c, List.of(cm1), pipeline);
     uut.destroy();
 
     verify(c, never()).rollback();
@@ -112,7 +113,7 @@ class ModifiedSingleConnectionDataSourceTest {
   @SneakyThrows
   void handlesSqlExceptionOnGetAutoCommit() {
     when(c.getAutoCommit()).thenThrow(new SQLException("fail"));
-    var uut = new CatchupDataSource(c, List.of(cm1));
+    var uut = new CatchupDataSource(c, List.of(cm1), pipeline);
     uut.destroy();
 
     verify(c, never()).rollback();
@@ -124,7 +125,7 @@ class ModifiedSingleConnectionDataSourceTest {
   void handlesSqlExceptionOnDestroy() {
     when(c.getAutoCommit()).thenReturn(false);
     doThrow(new SQLException("fail")).when(c).rollback();
-    var uut = new CatchupDataSource(c, List.of(cm1));
+    var uut = new CatchupDataSource(c, List.of(cm1), pipeline);
     uut.destroy();
 
     verify(c).rollback();

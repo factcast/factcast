@@ -197,8 +197,6 @@ class PgChunkedCatchupTest {
     @SneakyThrows
     void fetch() {
 
-      doReturn(false).when(underTest).wasCancelled();
-
       // Arrange a SingleConnectionDataSource backed by mocked JDBC artifacts
       SingleConnectionDataSource scds = mock(SingleConnectionDataSource.class);
       Connection conn = mock(Connection.class);
