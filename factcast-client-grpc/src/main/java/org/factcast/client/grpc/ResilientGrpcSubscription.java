@@ -203,7 +203,10 @@ public class ResilientGrpcSubscription extends AbstractSubscription {
     close();
     currentSubscription.unblock();
     originalObserver.onError(exception);
-    throw ExceptionHelper.toRuntime(exception);
+
+    // we do not rethrow the exception here, because the resources have been cleaned up, the
+    // observer had his onError call and this would only log the exception twice.
+    // so that "throw ExceptionHelper.toRuntime(exception)" was removed
   }
 
   @FunctionalInterface

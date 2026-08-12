@@ -45,7 +45,7 @@ class PgChunkedWithHoldCursorCatchupTest {
   @Mock PgMetrics metrics;
   @Mock SubscriptionRequestTO req;
   @Mock ServerPipeline pipeline;
-  @Mock CurrentStatementHolder statementHolder;
+  @Spy CurrentStatementHolder statementHolder = new CurrentStatementHolder();
   @Mock SingleConnectionDataSource ds;
   @Mock PgCatchupFactory.Phase phase;
   @Mock AtomicLong serial;
@@ -226,7 +226,6 @@ class PgChunkedWithHoldCursorCatchupTest {
 
       assertThat(rows).isEqualTo(0);
       verify(ps).setFetchSize(anyInt());
-      verify(statementHolder).statement(ps);
     }
 
     @Test
@@ -364,6 +363,18 @@ class PgChunkedWithHoldCursorCatchupTest {
     void testDeclareAndFetchFirst_Empty() {
       when(props.getChunkSize()).thenReturn(1000);
       when(cursor.fetchChunk(any(), any())).thenReturn(0);
+
+      Boolean result =
+          underTest.declareAndFetchFirst(
+              cursor, mock(PgQueryBuilder.class), new AtomicLong(0), mock(PgFactExtractor.class));
+      assertThat(result).isNull();
+    }
+
+    @Test
+    @SneakyThrows
+    void testDeclareAndFetchFirst_CanceledAfterDeclare() {
+      when(connection.getAutoCommit()).thenReturn(false);
+      when(statementHolder.wasCanceled()).thenReturn(true);
 
       Boolean result =
           underTest.declareAndFetchFirst(

@@ -24,6 +24,7 @@ import javax.sql.DataSource;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import nl.altindag.log.LogCaptor;
+import org.assertj.core.api.Assertions;
 import org.factcast.core.subscription.*;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.*;
@@ -51,7 +52,7 @@ class PgChunkedCatchupTest {
   @Mock(strictness = Mock.Strictness.LENIENT)
   SubscriptionRequestTO req;
 
-  @Mock @NonNull CurrentStatementHolder statementHolder;
+  @Spy @NonNull CurrentStatementHolder statementHolder = new CurrentStatementHolder();
   @Mock @NonNull ServerPipeline pipeline;
 
   @Mock(strictness = Mock.Strictness.LENIENT)
@@ -132,7 +133,7 @@ class PgChunkedCatchupTest {
       doNothing().when(uut).fetch(any());
       uut.run();
 
-      verify(statementHolder).clear();
+      Assertions.assertThat(statementHolder.hasStatement()).isFalse();
     }
   }
 
@@ -252,11 +253,44 @@ class PgChunkedCatchupTest {
 
     @Test
     @SneakyThrows
+    void fetchHonorsIntermediateCancellation() {
+      SingleConnectionDataSource scds = mock(SingleConnectionDataSource.class);
+      Connection conn = mock(Connection.class);
+      Statement stmt = mock(Statement.class);
+      ResultSet rs1 = mock(ResultSet.class);
+      when(scds.getConnection()).thenReturn(conn);
+      when(conn.createStatement()).thenReturn(stmt);
+      when(stmt.execute(anyString())).thenReturn(true);
+      when(stmt.executeQuery(startsWith("with"))).thenReturn(rs1);
+
+      when(rs1.next()).thenReturn(true, false);
+      when(rs1.getString(PgConstants.ALIAS_ID)).thenReturn(java.util.UUID.randomUUID().toString());
+      when(rs1.getString(PgConstants.ALIAS_AGGID)).thenReturn("[]");
+      when(rs1.getString(PgConstants.ALIAS_TYPE)).thenReturn("t");
+      when(rs1.getString(PgConstants.ALIAS_NS)).thenReturn("ns");
+      when(rs1.getString(PgConstants.COLUMN_HEADER)).thenReturn("{}");
+      when(rs1.getString(PgConstants.COLUMN_PAYLOAD)).thenReturn("{}");
+      when(rs1.getInt(PgConstants.COLUMN_VERSION)).thenReturn(1);
+      when(rs1.getLong(PgConstants.COLUMN_SER)).thenReturn(1L);
+
+      doReturn(1).when(underTest).prepareTemporaryTable(any(), anyString());
+      // First check in while loop: false (enters loop), second check (next iteration): true (exits
+      // early)
+      when(statementHolder.wasCanceled()).thenReturn(false, true);
+
+      underTest.fetch(scds);
+
+      verify(stmt, times(1)).executeQuery(startsWith("with"));
+      verify(pipeline, times(1)).process(any());
+    }
+
+    @Test
+    @SneakyThrows
     void fetch() {
       // Arrange a SingleConnectionDataSource backed by mocked JDBC artifacts
       SingleConnectionDataSource scds = mock(SingleConnectionDataSource.class);
       Connection conn = mock(Connection.class);
-      Statement stmt = mock(Statement.class);
+      PreparedStatement stmt = mock(PreparedStatement.class);
       ResultSet rs1 = mock(ResultSet.class);
       ResultSet rs2 = mock(ResultSet.class);
       ResultSet rs3 = mock(ResultSet.class);
@@ -264,10 +298,11 @@ class PgChunkedCatchupTest {
 
       when(scds.getConnection()).thenReturn(conn);
       when(conn.createStatement()).thenReturn(stmt);
+
       // drop table succeeds
       when(stmt.execute(anyString())).thenReturn(true);
       // query returns 1 row, then 1 row, then 1 row, then 0 rows
-      when(stmt.executeQuery(anyString())).thenReturn(rs1, rs2, rs3, rs4);
+      when(stmt.executeQuery(startsWith("with"))).thenReturn(rs1, rs2, rs3, rs4);
 
       // Configure the rows for PgFactExtractor/PgFact.from
       // rs1: one row
@@ -308,14 +343,12 @@ class PgChunkedCatchupTest {
 
       // ensure there are matching serials, so the while-loop is reached
       doReturn(1).when(underTest).prepareTemporaryTable(any(), anyString());
-      // do not cancel during the loop
-      when(statementHolder.wasCanceled()).thenReturn(false);
 
       // Act
       underTest.fetch(scds);
 
       // Assert: query loop ran 4 iterations (3 with rows, 1 with 0 rows to finish)
-      verify(stmt, atLeast(4)).executeQuery(anyString());
+      verify(stmt, atLeast(4)).executeQuery(startsWith("with"));
       // And the pipeline processed at least three facts (one per iteration)
       verify(pipeline, atLeast(3)).process(any());
     }
