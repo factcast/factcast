@@ -196,6 +196,7 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
     }
 
     @VisibleForTesting
+    @SuppressWarnings("java:S2077")
     void declare(@NonNull PgQueryBuilder queryBuilder, @NonNull AtomicLong fromSerial)
         throws SQLException {
 
@@ -206,7 +207,7 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
       //
       // This will declare a cursor as needed from and specified by SQL function
       // fetchFactsFromCursorWithHold
-      @SuppressWarnings("java:S2077")
+
       String sql =
           String.format(
               """
