@@ -75,15 +75,17 @@ public class CatchupDataSource extends ModifiedSingleConnectionDataSource {
       //
       // nothing to do here.
     } else {
-      // we might have gotten here because of an Exception being thrown by the catchup thread
-      // itself.
-      // this should not really have a statement in a running state, but we try to cancel it anyway.
-      //
-      // If there is no statement running, this is a no-op.
-      tryCancel(connection);
 
       // we prepare this connection to get reused.
       try {
+        // we might have gotten here because of an Exception being thrown by the catchup thread
+        // itself.
+        // this should not really have a statement in a running state, but we try to cancel it
+        // anyway.
+        //
+        // If there is no statement running, this is a no-op.
+        tryCancel(connection);
+
         if (!connection.getAutoCommit())
           // we can rollback, as catchup is read only, anyway.
           tryRollback(connection);
@@ -92,8 +94,8 @@ public class CatchupDataSource extends ModifiedSingleConnectionDataSource {
         log.warn("Error preparing a connection for reuse", meh);
         // if anything exceptional happened here, we decide the connection is not safe to return, so
         // we will kill it nevertheless. Better safe than sorry.
-        tryDiscard(connection);
         tryAbort(connection);
+        tryDiscard(connection);
       }
     }
 
@@ -113,7 +115,7 @@ public class CatchupDataSource extends ModifiedSingleConnectionDataSource {
         log.warn("Unwrapping of PgConnection failed. This is ok, if we're in a unit test");
       else pgNative.abort(Runnable::run);
     } catch (SQLException e) {
-      log.warn("Discarding of connection failed on datasource destruction ", e);
+      log.warn("Aborting of connection failed on datasource destruction ", e);
     }
   }
 
@@ -154,12 +156,13 @@ public class CatchupDataSource extends ModifiedSingleConnectionDataSource {
   /** This may be called from another thread. */
   public void cancel() {
     this.wasCanceled.set(true);
+    log.debug("Cancellation requested");
 
     // this should throw a SQLException on the thread waiting for the statement to return.
     // if however, it currently isn't waiting for a query, we kill the connection to
     // produce runtime exceptions on that Thread asap.
     tryCancel(connection);
-    tryDiscard(connection);
     tryAbort(connection);
+    tryDiscard(connection);
   }
 }

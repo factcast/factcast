@@ -176,7 +176,7 @@ public class BufferedTransformingServerPipeline extends AbstractServerPipeline {
 
           buffer.stream().map(Supplier::get).forEach(parent::process);
         } catch (TransformationException e) {
-          // swallows the signals at the beginning of the buffer.
+          log.warn("Transformation failed", e);
           parent.process(Signal.of(e));
         }
       } finally {
