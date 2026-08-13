@@ -79,7 +79,6 @@ class CatchupDataSourceTest {
       verify(pipeline).unregister(underTest);
       verify(connection).getAutoCommit();
       verify(connection, never()).rollback();
-      verify(pgConnection).cancelQuery();
     }
 
     @Test

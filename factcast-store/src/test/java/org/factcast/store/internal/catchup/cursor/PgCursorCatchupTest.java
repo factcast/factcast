@@ -133,28 +133,23 @@ class PgCursorCatchupTest {
 
   @Test
   @SneakyThrows
-  void swallowsExceptionAfterCancel() {
+  void swallowsExceptionAndTerminatesAfterCancel() {
     PgFact testFact = mock(PgFact.class);
     when(extractor.mapRow(any(), anyInt())).thenReturn(testFact);
     doThrow(PipelineAlreadyClosedException.class).when(pipeline).process(any());
 
     final var cbh = underTest.createRowCallbackHandler(extractor);
     ResultSet rs = mock(ResultSet.class);
-    when(rs.isClosed()).thenReturn(false);
 
     assertDoesNotThrow(() -> cbh.processRow(rs));
-    verify(rs).close();
-  }
-
-  @Test
-  @SneakyThrows
-  void returnsIfCancelled() {
-    final var cbh = underTest.createRowCallbackHandler(extractor);
-    ResultSet rs = mock(ResultSet.class);
-    when(rs.isClosed()).thenReturn(true);
-
     assertDoesNotThrow(() -> cbh.processRow(rs));
-    verify(extractor, never()).mapRow(any(), anyInt());
+    assertDoesNotThrow(() -> cbh.processRow(rs));
+
+    verify(rs, never()).close();
+    verify(rs, never()).isClosed();
+
+    // but still it should not process after the first
+    verify(extractor, times(1)).mapRow(any(), anyInt());
   }
 
   @Test

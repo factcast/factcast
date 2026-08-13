@@ -78,14 +78,6 @@ public class CatchupDataSource extends ModifiedSingleConnectionDataSource {
 
       // we prepare this connection to get reused.
       try {
-        // we might have gotten here because of an Exception being thrown by the catchup thread
-        // itself.
-        // this should not really have a statement in a running state, but we try to cancel it
-        // anyway.
-        //
-        // If there is no statement running, this is a no-op.
-        tryCancel(connection);
-
         if (!connection.getAutoCommit())
           // we can rollback, as catchup is read only, anyway.
           tryRollback(connection);

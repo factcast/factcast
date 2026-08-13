@@ -18,10 +18,12 @@ package org.factcast.store.internal.catchup.cursor;
 import com.google.common.annotations.VisibleForTesting;
 import java.sql.*;
 import java.time.Duration;
+import java.util.List;
 import java.util.concurrent.atomic.*;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgFact;
@@ -55,7 +57,7 @@ public class PgCursorCatchup extends AbstractPgCatchup {
   public void run() {
     try {
 
-      final var b = new PgQueryBuilder(req.specs());
+      final var b = createPgQueryBuilder(req.specs());
       final var extractor = new PgFactExtractor(serial);
       final var fromSerial = serial.get() < fastForward ? new AtomicLong(fastForward) : serial;
       final var catchupSQL = b.createSQL();
@@ -86,6 +88,12 @@ public class PgCursorCatchup extends AbstractPgCatchup {
     }
   }
 
+  /** hook for tests to influence the generated sql */
+  @VisibleForTesting
+  protected PgQueryBuilder createPgQueryBuilder(List<FactSpec> specs) {
+    return new PgQueryBuilder(req.specs());
+  }
+
   private void logIfAboveThreshold(Duration elapsed) {
     if (elapsed.compareTo(FIRST_ROW_FETCHING_THRESHOLD) > 0) {
       log.info("{} catchup - took {}s to stream the first result set", req, elapsed.toSeconds());
@@ -93,15 +101,21 @@ public class PgCursorCatchup extends AbstractPgCatchup {
   }
 
   @VisibleForTesting
-  RowCallbackHandler createRowCallbackHandler(PgFactExtractor extractor) {
+  protected RowCallbackHandler createRowCallbackHandler(PgFactExtractor extractor) {
+    // as we cannot call rs.isCLosed or close, we need to have a separate flag
+    AtomicBoolean closed = new AtomicBoolean(false);
+
     return rs -> {
-      PgFact f = extractor.mapRow(rs, 0);
       try {
+        if (closed.get()) return;
+
+        // this might still throw a SQLException "already closed" due to bad timing.
+        PgFact f = extractor.mapRow(rs, 0);
+
         pipeline.process(Signal.of(f));
       } catch (PipelineAlreadyClosedException e) {
         log.trace("{} catchup {} - pipeline was closed, exiting.", req, phase);
-        // make the loop skip the rest of the RS
-        rs.close();
+        closed.set(true);
       }
     };
   }
