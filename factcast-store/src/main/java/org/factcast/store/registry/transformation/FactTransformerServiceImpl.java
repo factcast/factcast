@@ -110,9 +110,8 @@ public class FactTransformerServiceImpl implements FactTransformerService, AutoC
 
     TransformationKey key = TransformationKey.of(e.ns(), e.type());
     TransformationChain chain = chains.get(key, sourceVersion, req.targetVersions());
-    String chainId = chain.id();
     TransformationCache.Key cacheKey =
-        TransformationCache.Key.of(e.id(), chain.toVersion(), chainId);
+        TransformationCache.Key.of(e.id(), chain.toVersion(), chain.versionPath());
     return cache.find(cacheKey).orElseGet(() -> doTransform(e, chain));
   }
 
@@ -144,13 +143,14 @@ public class FactTransformerServiceImpl implements FactTransformerService, AutoC
                                   TransformationCache.Key.of(
                                       p.left().toTransform().id(),
                                       p.right().toVersion(),
-                                      p.right().id()))
+                                      p.right().versionPath()))
                           .collect(Collectors.toSet());
 
                   // ConcurrentHashMap needed because remove is used from a potentially
                   // parallel stream below
                   Map<UUID, PgFact> found =
                       cache.findAll(keys).stream()
+                          .map(x -> (PgFact) x)
                           .collect(Collectors.toConcurrentMap(PgFact::id, f -> f));
                   log.trace(
                       "batch lookup found {} out of {} pre transformed facts",
@@ -241,7 +241,7 @@ public class FactTransformerServiceImpl implements FactTransformerService, AutoC
     // memory
     PgFact transformed = PgFact.of(header.toString(), transformedPayload.json());
     cache.put(
-        TransformationCache.Key.of(transformed.id(), transformed.version(), chain.id()),
+        TransformationCache.Key.of(transformed.id(), transformed.version(), chain.versionPath()),
         transformed);
 
     return transformed;
