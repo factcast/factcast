@@ -151,9 +151,9 @@ public class CatchupDataSource extends ModifiedSingleConnectionDataSource {
     log.debug("Cancellation requested");
 
     // this should throw a SQLException on the thread waiting for the statement to return.
+    tryCancel(connection);
     // if however, it currently isn't waiting for a query, we kill the connection to
     // produce runtime exceptions on that Thread asap.
-    tryCancel(connection);
     tryAbort(connection);
     tryDiscard(connection);
   }

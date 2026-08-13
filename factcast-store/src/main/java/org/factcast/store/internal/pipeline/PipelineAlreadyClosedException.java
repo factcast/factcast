@@ -19,4 +19,4 @@ package org.factcast.store.internal.pipeline;
  * This is supposed to be thrown, when the pipeline was closed, but process() is still called. This
  * should signal upstream processes to terminate.
  */
-public class PipelineAlreadyClosedException extends RuntimeException {}
+public class PipelineAlreadyClosedException extends IllegalStateException {}
