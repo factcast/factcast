@@ -95,10 +95,6 @@ public class PgCursorCatchup extends AbstractPgCatchup {
   @VisibleForTesting
   RowCallbackHandler createRowCallbackHandler(PgFactExtractor extractor) {
     return rs -> {
-      if (rs.isClosed()) {
-        return;
-      }
-
       PgFact f = extractor.mapRow(rs, 0);
       try {
         pipeline.process(Signal.of(f));

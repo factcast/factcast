@@ -23,6 +23,7 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Timer;
 import java.sql.*;
 import java.util.concurrent.atomic.*;
+import javax.sql.rowset.*;
 import lombok.SneakyThrows;
 import org.apache.tomcat.jdbc.pool.PooledConnection;
 import org.factcast.core.subscription.*;
@@ -107,6 +108,19 @@ class PgCursorCatchupTest {
 
   @SneakyThrows
   @Test
+  void passesFactFromCachedRowSet() {
+    final var cbh = underTest.createRowCallbackHandler(extractor);
+    CachedRowSet rs = RowSetProvider.newFactory().createCachedRowSet();
+    PgFact testFact = mock(PgFact.class);
+    when(extractor.mapRow(rs, 0)).thenReturn(testFact);
+
+    cbh.processRow(rs);
+
+    verify(pipeline).process(Signal.of(testFact));
+  }
+
+  @SneakyThrows
+  @Test
   void passesFactEscalatesException() {
     final var cbh = underTest.createRowCallbackHandler(extractor);
     ResultSet rs = mock(ResultSet.class);
@@ -148,8 +162,6 @@ class PgCursorCatchupTest {
   void throwsWhenNotCanceled() {
     final var cbh = underTest.createRowCallbackHandler(extractor);
     ResultSet rs = mock(ResultSet.class);
-    // it should appear open,
-    when(rs.isClosed()).thenReturn(false);
     // until
     SQLException mockException =
         mock(SQLException.class, withSettings().strictness(Strictness.LENIENT));
@@ -163,8 +175,6 @@ class PgCursorCatchupTest {
   void throwsWhenCanceledButUnexpectedException() {
     final var cbh = underTest.createRowCallbackHandler(extractor);
     ResultSet rs = mock(ResultSet.class);
-    // it should appear open,
-    when(rs.isClosed()).thenReturn(false);
     // until
     when(extractor.mapRow(any(), anyInt())).thenThrow(RuntimeException.class);
 
