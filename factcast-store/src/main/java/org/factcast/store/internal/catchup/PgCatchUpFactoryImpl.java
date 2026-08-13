@@ -40,6 +40,7 @@ public class PgCatchUpFactoryImpl implements PgCatchupFactory {
   }
 
   @Override
+  @SuppressWarnings("java:S5738")
   public PgCatchup create(
       @NonNull SubscriptionRequestTO request,
       @NonNull ServerPipeline pipeline,

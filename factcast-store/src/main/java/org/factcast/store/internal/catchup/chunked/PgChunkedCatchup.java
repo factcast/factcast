@@ -84,9 +84,9 @@ public class PgChunkedCatchup extends AbstractPgCatchup {
 
       int chunkCount = 0;
       int rowsToProcess = -1;
+      boolean pipelineClosed = false;
 
-      loop:
-      while (rowsToProcess != 0) {
+      while (rowsToProcess != 0 && !pipelineClosed) {
 
         log.trace("{} catchup {} - fetching chunk {}", req, phase, ++chunkCount);
         List<PgFact> facts = jdbc.query(chunkQuery, extractor);
@@ -104,7 +104,8 @@ public class PgChunkedCatchup extends AbstractPgCatchup {
             pipeline.process(Signal.of(f));
           } catch (PipelineAlreadyClosedException e) {
             log.trace("{} catchup {} - pipeline was closed, exiting.", req, phase);
-            break loop;
+            pipelineClosed = true;
+            break;
           }
         }
       }

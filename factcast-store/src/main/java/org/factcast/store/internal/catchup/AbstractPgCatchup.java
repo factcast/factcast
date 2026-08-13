@@ -15,7 +15,6 @@
  */
 package org.factcast.store.internal.catchup;
 
-import java.sql.*;
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.sql.DataSource;

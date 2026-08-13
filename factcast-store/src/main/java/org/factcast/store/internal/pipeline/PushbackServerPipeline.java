@@ -15,7 +15,6 @@
  */
 package org.factcast.store.internal.pipeline;
 
-import jakarta.validation.constraints.Null;
 import java.util.*;
 import java.util.concurrent.atomic.*;
 import javax.annotation.Nonnull;
@@ -47,7 +46,7 @@ public class PushbackServerPipeline implements ServerPipeline {
 
   // these two methods are use to communicate a close to a datasource in use. Note that due to
   // offloading, there might be two separate DS valid at a time.
-  public void register(@Null CatchupDataSource ds) {
+  public void register(@NonNull CatchupDataSource ds) {
     if (!onCloseListeners.add(ds))
       throw new IllegalStateException("DS was already registered. This is a weird bug.");
   }
