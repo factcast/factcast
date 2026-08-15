@@ -131,7 +131,7 @@
     <graaljs.version>25.2.4</graaljs.version>
     <redisson.version>4.7.0</redisson.version>
     <aws-sdk.version>2.53.1</aws-sdk.version>
-    <mongodb-driver.version>5.9.2</mongodb-driver.version>
+    <mongodb-driver.version>5.10.0</mongodb-driver.version>
     <shedlock.version>7.8.0</shedlock.version>
     <byte-buddy.version>1.18.11-jdk5</byte-buddy.version>
     <rewrite-java.version>8.89.2</rewrite-java.version>
