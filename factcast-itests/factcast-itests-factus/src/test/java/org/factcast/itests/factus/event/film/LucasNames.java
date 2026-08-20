@@ -23,7 +23,7 @@ import org.factcast.factus.projection.LocalManagedProjection;
 import org.factcast.factus.serializer.ProjectionMetaData;
 
 @Slf4j
-@ProjectionMetaData(revision = 1)
+@ProjectionMetaData(revisionId = "1")
 public class LucasNames extends LocalManagedProjection {
 
   @HandlerFor(ns = "*", type = "*")

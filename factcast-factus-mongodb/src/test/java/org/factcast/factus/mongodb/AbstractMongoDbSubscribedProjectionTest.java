@@ -68,7 +68,7 @@ class AbstractMongoDbSubscribedProjectionTest {
     }
   }
 
-  @ProjectionMetaData(revision = 1)
+  @ProjectionMetaData(revisionId = "1")
   static class TestProjection extends AbstractMongoDbSubscribedProjection {
 
     public TestProjection(@NonNull MongoDatabase mongoDatabase) {

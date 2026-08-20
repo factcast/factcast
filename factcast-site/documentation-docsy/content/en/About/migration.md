@@ -4,6 +4,62 @@ type = "docs"
 weight = 100015
 +++
 
+## Upgrading to 0.11.3
+
+### `@ProjectionMetaData(revision = …)` is deprecated in favor of `revisionId`
+
+`@ProjectionMetaData` used to identify a projection's revision with a `long`. It now offers a `String` attribute
+`revisionId` instead, so that revisions no longer have to be numeric (a commit hash, a date or a semantic version
+work just as well). The goal is to reduce the chance of conflicting revisions when working on projections on multiple
+branches.
+
+```java
+// before
+@ProjectionMetaData(revision = 1)
+public class MyProjection extends AbstractManagedProjection { ... }
+
+// after
+@ProjectionMetaData(revisionId = "issue1234")
+public class MyProjection extends AbstractManagedProjection { ... }
+```
+
+`revision` and `revisionId` are **mutually exclusive** and setting both will resolve in an `IllegalArgumentException`
+when the projection is first resolved.
+
+{{% alert title="Keep the value identical" theme="warning" %}}
+The revision is part of the key under which projection state and snapshots are persisted. `revisionId = "1"` produces
+exactly the same scoped name as `revision = 1` did, so migratin is stable. If you decide to change the name during
+migration (for instance `"1.0"` instead of `"1"`), the key changes and the projection will be rebuilt from scratch on
+the next run.
+{{% /alert %}}
+
+#### Migrating with OpenRewrite
+
+FactCast ships a recipe that rewrites the attribute for you. Unlike the `postprocess` recipe below, **run it after
+bumping your FactCast dependency**. A guide to add the plugin can be found below in the guide for `0.11.0`.
+
+```xml
+<configuration>
+    <activeRecipes>
+      <recipe>org.factcast.factus.migration.RevisionToRevisionIdRecipe</recipe>
+    </activeRecipes>
+</configuration>
+```
+
+##### Migrate what the recipe left alone
+
+The recipe only rewrites integer literals, because only for those it can guarantee an unchanged
+scoped name. It deliberately leaves these cases to you:
+
+- a constant reference or a computed expression (`revision = MY_REVISION`, `revision = 1 + 1`) — an annotation
+  attribute has to be a constant expression, so there is no mechanical way to turn it into a string
+- an annotation that sets both `revision` and `revisionId` (which violates the contract)
+
+Migrate those by hand and make the string equal to what `String.valueOf(oldValue)` would have produced.
+
+Finally remember to remove the OpenRewrite plugin config (or just the `activeRecipes` entry) from your `pom.xml`
+and run `mvn clean verify`.
+
 ## Upgrading to 0.11.0
 
 ### `Projection.postprocess` now takes a `Collection` instead of a `List`

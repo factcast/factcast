@@ -348,9 +348,9 @@ class MongoDbSnapshotCacheTest {
     }
   }
 
-  @ProjectionMetaData(revision = 1)
+  @ProjectionMetaData(revisionId = "1")
   public class TestSnapshotProjection implements SnapshotProjection {}
 
-  @ProjectionMetaData(revision = 1)
+  @ProjectionMetaData(revisionId = "1")
   public class TestAggregate extends Aggregate {}
 }

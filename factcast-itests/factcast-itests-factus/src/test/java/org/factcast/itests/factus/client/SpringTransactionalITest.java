@@ -136,7 +136,7 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       assertThat(p.txSeen()).hasSize(3); // one rolled back, two committed
     }
 
-    @ProjectionMetaData(revision = 1)
+    @ProjectionMetaData(revisionId = "1")
     @SpringTransactional(bulkSize = 3)
     class BulkSize3Projection extends AbstractTrackingUserProjection {
       public BulkSize3Projection(
@@ -146,7 +146,7 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       }
     }
 
-    @ProjectionMetaData(revision = 1)
+    @ProjectionMetaData(revisionId = "1")
     @SpringTransactional(bulkSize = 5)
     class BulkSize5Projection extends AbstractTrackingUserProjection {
       public BulkSize5Projection(
@@ -156,7 +156,7 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       }
     }
 
-    @ProjectionMetaData(revision = 1)
+    @ProjectionMetaData(revisionId = "1")
     @SpringTransactional(bulkSize = 20)
     class BulkSize20Projection extends AbstractTrackingUserProjection {
       public BulkSize20Projection(
@@ -166,7 +166,7 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       }
     }
 
-    @ProjectionMetaData(revision = 1)
+    @ProjectionMetaData(revisionId = "1")
     @SpringTransactional(bulkSize = 10)
     class BulkSize10Projection extends AbstractTrackingUserProjection {
       public BulkSize10Projection(
@@ -176,7 +176,7 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       }
     }
 
-    @ProjectionMetaData(revision = 1)
+    @ProjectionMetaData(revisionId = "1")
     @SpringTransactional(bulkSize = 5)
     class SpringTxProjectionSizeBlowAt7th extends AbstractTrackingUserProjection {
       private int count;
@@ -288,7 +288,7 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       assertThat(p.txSeen()).hasSize(3); // one rolled back, two committed
     }
 
-    @ProjectionMetaData(revision = 1)
+    @ProjectionMetaData(revisionId = "1")
     @SpringTransactional(bulkSize = 3)
     static class BulkSize3Projection extends AbstractTrackingUserSubscribedProjection {
       public BulkSize3Projection(
@@ -298,7 +298,7 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       }
     }
 
-    @ProjectionMetaData(revision = 1)
+    @ProjectionMetaData(revisionId = "1")
     @SpringTransactional(bulkSize = 5)
     static class BulkSize5Projection extends AbstractTrackingUserSubscribedProjection {
       public BulkSize5Projection(
@@ -308,7 +308,7 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       }
     }
 
-    @ProjectionMetaData(revision = 1)
+    @ProjectionMetaData(revisionId = "1")
     @SpringTransactional(bulkSize = 20)
     static class BulkSize20Projection extends AbstractTrackingUserSubscribedProjection {
       public BulkSize20Projection(
@@ -318,7 +318,7 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       }
     }
 
-    @ProjectionMetaData(revision = 1)
+    @ProjectionMetaData(revisionId = "1")
     @SpringTransactional(bulkSize = 10)
     static class BulkSize10Projection extends AbstractTrackingUserSubscribedProjection {
       public BulkSize10Projection(
@@ -328,7 +328,7 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       }
     }
 
-    @ProjectionMetaData(revision = 1)
+    @ProjectionMetaData(revisionId = "1")
     @SpringTransactional(bulkSize = 5)
     static class SpringTxProjectionSizeBlowAt7th extends AbstractTrackingUserSubscribedProjection {
       private int count;

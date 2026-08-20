@@ -24,7 +24,7 @@ import org.factcast.itests.factus.event.UserCreated;
 import org.redisson.api.*;
 
 @Slf4j
-@ProjectionMetaData(revision = 1)
+@ProjectionMetaData(revisionId = "1")
 public class BlockingRedisTxManagedUserNames extends AbstractRedisTxManagedProjection {
 
   public BlockingRedisTxManagedUserNames(RedissonClient redisson) {

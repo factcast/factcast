@@ -29,7 +29,7 @@ public class ProjectionMetaDataTest {
     assertThat(ProjectionMetaData.Resolver.resolveFor(Without.class)).isEmpty();
   }
 
-  @ProjectionMetaData(name = "foo", revision = 32)
+  @ProjectionMetaData(name = "foo", revisionId = "32")
   static class WithRevision {}
 
   static class Without {}

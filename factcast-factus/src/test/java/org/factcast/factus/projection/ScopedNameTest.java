@@ -28,7 +28,11 @@ class ScopedNameTest {
         .isInstanceOf(IllegalStateException.class);
     assertThat(ScopedName.fromProjectionMetaData(WithoutName.class).asString())
         .isEqualTo("org.factcast.factus.projection.ScopedNameTest$WithoutName_2");
+    assertThat(ScopedName.fromProjectionMetaData(WithoutNameWithId.class).asString())
+        .isEqualTo("org.factcast.factus.projection.ScopedNameTest$WithoutNameWithId_2");
     assertThat(ScopedName.fromProjectionMetaData(Complete.class).asString()).isEqualTo("hugo_3");
+    assertThat(ScopedName.fromProjectionMetaData(CompleteWithId.class).asString())
+        .isEqualTo("hugo_Some_Explanation");
   }
 
   @Test
@@ -64,11 +68,31 @@ class ScopedNameTest {
         .isInstanceOf(IllegalArgumentException.class);
   }
 
-  @ProjectionMetaData(revision = 2)
+  @Test
+  void testInvalidMetadataThrows() {
+    assertThatThrownBy(() -> ScopedName.fromProjectionMetaData(Invalid.class))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining(
+            "exactly one of revision or revisionId must be set on @ProjectionMetaData");
+  }
+
+  @ProjectionMetaData(revisionId = "2")
   static class WithoutName {}
 
-  @ProjectionMetaData(name = "hugo", revision = 3)
+  @ProjectionMetaData(revisionId = "2")
+  static class WithoutNameWithId {}
+
+  @ProjectionMetaData(name = "hugo", revisionId = "3")
   static class Complete {}
+
+  @ProjectionMetaData(name = "hugo", revisionId = "Some Explanation")
+  static class CompleteWithId {}
+
+  @ProjectionMetaData(revision = 2, revisionId = "3")
+  static class Invalid {}
+
+  @ProjectionMetaData(revisionId = "-2")
+  static class Negative {}
 
   static class MissingAnnotation {}
 }
