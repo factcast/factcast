@@ -204,7 +204,7 @@ public class ResilientGrpcSubscription extends AbstractSubscription {
     currentSubscription.unblock();
     originalObserver.onError(exception);
 
-    // TODO see issue4904
+    // see issue4904
     throw ExceptionHelper.toRuntime(exception);
   }
 

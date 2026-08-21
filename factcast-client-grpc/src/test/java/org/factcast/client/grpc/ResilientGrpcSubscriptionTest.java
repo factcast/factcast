@@ -250,7 +250,13 @@ class ResilientGrpcSubscriptionTest {
   @Test
   void testFail() {
     IOException ex = new IOException();
-    uut.fail(ex);
+
+    // see issue4904
+    assertThatThrownBy(
+            () -> {
+              uut.fail(ex);
+            })
+        .isInstanceOf(RuntimeException.class);
     verify(obs).onError(ex);
   }
 

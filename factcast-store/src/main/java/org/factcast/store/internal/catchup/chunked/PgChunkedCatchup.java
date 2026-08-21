@@ -66,7 +66,7 @@ public class PgChunkedCatchup extends AbstractPgCatchup {
   @VisibleForTesting
   @SneakyThrows
   @SuppressWarnings("java:S2077")
-  void fetch(DataSource ds) {
+  void fetch(DataSource ds) throws PipelineAlreadyClosedException {
     JdbcTemplate jdbc = new JdbcTemplate(ds);
 
     String tempTableName = "catchup_" + UUID.randomUUID().toString().replace("-", "");
@@ -100,13 +100,7 @@ public class PgChunkedCatchup extends AbstractPgCatchup {
 
         // process them
         for (PgFact f : facts) {
-          try {
-            pipeline.process(Signal.of(f));
-          } catch (PipelineAlreadyClosedException e) {
-            log.trace("{} catchup {} - pipeline was closed, exiting.", req, phase);
-            pipelineClosed = true;
-            break;
-          }
+          pipeline.process(Signal.of(f));
         }
       }
       log.trace("{} catchup {} - all chunks processed", req, phase);
