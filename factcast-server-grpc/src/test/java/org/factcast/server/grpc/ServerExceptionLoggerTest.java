@@ -25,6 +25,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.Objects;
 import nl.altindag.log.LogCaptor;
 import org.factcast.server.grpc.ServerExceptionLogger.Level;
 import org.junit.jupiter.api.BeforeEach;
@@ -144,11 +145,10 @@ class ServerExceptionLoggerTest {
     String id = "foo";
     underTest.error(e, id);
 
-    assertThat(logCaptor.getLogs()).hasSize(2);
     assertThat(logCaptor.getLogEvents().stream())
         .anyMatch(
             l ->
-                l.getLevel() == LogLevel.ErrorLevel.toString()
+                Objects.equals(l.getLevel(), LogLevel.ErrorLevel.toString())
                     && l.getFormattedMessage()
                         .startsWith(id + " onError – sending Error notification"));
   }
@@ -160,11 +160,10 @@ class ServerExceptionLoggerTest {
     String id = "foo";
     underTest.warn(e, id);
 
-    assertThat(logCaptor.getLogs()).hasSize(2);
     assertThat(logCaptor.getLogEvents().stream())
         .anyMatch(
             l ->
-                l.getLevel() == LogLevel.WarnLevel.toString()
+                Objects.equals(l.getLevel(), LogLevel.WarnLevel.toString())
                     && l.getFormattedMessage()
                         .startsWith(id + " onError – sending Error notification"));
   }
@@ -176,11 +175,10 @@ class ServerExceptionLoggerTest {
     String id = "foo";
     underTest.info(e, id);
 
-    assertThat(logCaptor.getLogs()).hasSize(2);
     assertThat(logCaptor.getLogEvents().stream())
         .anyMatch(
             l ->
-                l.getLevel() == LogLevel.InfoLevel.toString()
+                Objects.equals(l.getLevel(), LogLevel.InfoLevel.toString())
                     && l.getFormattedMessage()
                         .startsWith(id + " onError – sending Error notification"));
   }

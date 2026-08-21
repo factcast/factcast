@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2020 factcast.org
+ * Copyright © 2017-2026 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,8 @@
  */
 package org.factcast.store.internal.catchup;
 
-import java.sql.SQLException;
-import org.factcast.store.internal.pipeline.PipelineAlreadyClosedException;
-
-public interface PgCatchup {
-  void fastForward(long serialToStartFrom);
-
-  void run() throws SQLException, PipelineAlreadyClosedException;
+public class CatchupException extends Exception {
+  public CatchupException(Exception e) {
+    super(e);
+  }
 }

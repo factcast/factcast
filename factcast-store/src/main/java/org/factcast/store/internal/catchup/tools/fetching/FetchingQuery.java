@@ -18,6 +18,7 @@ package org.factcast.store.internal.catchup.tools.fetching;
 import java.sql.*;
 import lombok.*;
 import org.factcast.store.StoreConfigurationProperties;
+import org.factcast.store.internal.pipeline.PipelineAlreadyClosedException;
 
 public interface FetchingQuery {
 
@@ -32,10 +33,10 @@ public interface FetchingQuery {
       @NonNull PreparedStatement ps,
       @NonNull RowProcessor rowProcessor,
       @NonNull CallbackAfterQueryFinished callbackBeforeProcessing)
-      throws SQLException;
+      throws SQLException, PipelineAlreadyClosedException;
 
   default int executeAndProcess(@NonNull PreparedStatement ps, @NonNull RowProcessor rowProcessor)
-      throws SQLException {
+      throws SQLException, PipelineAlreadyClosedException {
     return executeAndProcess(ps, rowProcessor, NOP);
   }
 
