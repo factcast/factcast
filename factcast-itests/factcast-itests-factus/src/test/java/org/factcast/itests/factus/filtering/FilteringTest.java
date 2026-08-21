@@ -26,6 +26,7 @@ import org.factcast.factus.event.EventConverter;
 import org.factcast.itests.TestFactusApplication;
 import org.factcast.itests.factus.event.*;
 import org.factcast.itests.factus.proj.*;
+import org.factcast.spring.boot.autoconfigure.snap.InMemorySnapshotCacheAutoConfiguration;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +34,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
 
 @SpringBootTest
-@ContextConfiguration(classes = TestFactusApplication.class)
+@ContextConfiguration(
+    classes = {TestFactusApplication.class, InMemorySnapshotCacheAutoConfiguration.class})
 @Slf4j
 public class FilteringTest extends AbstractFactCastIntegrationTest {
   private static final long WAIT_TIME_FOR_ASYNC_FACT_DELIVERY = 1000;
@@ -152,6 +154,24 @@ public class FilteringTest extends AbstractFactCastIntegrationTest {
 
     assertThat(localUserNamesFilterByAggregateId.count()).isEqualTo(1);
     assertThat(localUserNamesFilterByAggregateId.contains("John")).isTrue();
+  }
+
+  @Test
+  public void filtersByAggregateIdProperty() {
+
+    UUID sackedId = randomUUID();
+    UUID sackerId = randomUUID();
+
+    // sackedId and sackerId both end up as aggregate ids on the fact
+    factus.publish(new UserFired(sackedId, sackerId));
+
+    // the sacked user's aggregate consumes the event...
+    FiredUserAggregate sacked = factus.fetch(FiredUserAggregate.class, sackedId);
+    assertThat(sacked.fired()).isTrue();
+
+    // ...but the actor's (sacker's) aggregate must not, even though the fact carries its id
+    FiredUserAggregate sacker = factus.fetch(FiredUserAggregate.class, sackerId);
+    assertThat(sacker.fired()).isFalse();
   }
 
   @Test
