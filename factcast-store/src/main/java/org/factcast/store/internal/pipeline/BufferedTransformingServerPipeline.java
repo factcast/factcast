@@ -174,7 +174,10 @@ public class BufferedTransformingServerPipeline extends AbstractServerPipeline {
           Iterator<PgFact> transformedIterator = transformedFacts.iterator();
           pendingTransformations.forEach(t -> t.resolved(transformedIterator.next()));
 
-          buffer.stream().map(Supplier::get).forEach(parent::process);
+          for (Supplier<Signal> signalSupplier : buffer) {
+            Signal signal = signalSupplier.get();
+            parent.process(signal);
+          }
         } catch (TransformationException e) {
           log.warn("Transformation failed", e);
           parent.process(Signal.of(e));

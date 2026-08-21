@@ -47,7 +47,7 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
       @NonNull StoreConfigurationProperties props,
       @NonNull PgMetrics metrics,
       @NonNull SubscriptionRequestTO req,
-      @NonNull ServerPipeline pipeline,
+      @NonNull PushbackServerPipeline pipeline,
       @NonNull AtomicLong serial,
       @NonNull SingleConnectionDataSource ds,
       @NonNull PgCatchupFactory.Phase phase) {
@@ -60,11 +60,7 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
     try (Cursor cursor = createCursor(props.getChunkSize())) {
       if (fetchAll(cursor)) {
         log.trace("Done fetching, flushing.");
-        try {
-          pipeline.process(Signal.flush());
-        } catch (PipelineAlreadyClosedException e) {
-          log.trace("{} catchup {}, pipeline was closed, exiting.", req, phase);
-        }
+        pipeline.process(Signal.flush());
       }
     }
   }

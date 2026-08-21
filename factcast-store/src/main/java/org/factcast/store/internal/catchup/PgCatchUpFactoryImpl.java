@@ -24,7 +24,7 @@ import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.catchup.chunked.PgChunkedCatchup;
 import org.factcast.store.internal.catchup.chunkedwithhold.PgChunkedWithHoldCursorCatchup;
 import org.factcast.store.internal.catchup.cursor.PgCursorCatchup;
-import org.factcast.store.internal.pipeline.ServerPipeline;
+import org.factcast.store.internal.pipeline.*;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
 @Slf4j
@@ -43,7 +43,7 @@ public class PgCatchUpFactoryImpl implements PgCatchupFactory {
   @SuppressWarnings("java:S5738")
   public PgCatchup create(
       @NonNull SubscriptionRequestTO request,
-      @NonNull ServerPipeline pipeline,
+      @NonNull PushbackServerPipeline pipeline,
       @NonNull AtomicLong serial,
       @NonNull SingleConnectionDataSource ds,
       @NonNull Phase phase) {

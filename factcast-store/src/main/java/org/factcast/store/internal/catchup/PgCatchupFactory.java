@@ -18,14 +18,14 @@ package org.factcast.store.internal.catchup;
 import java.util.concurrent.atomic.*;
 import lombok.NonNull;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.store.internal.pipeline.ServerPipeline;
+import org.factcast.store.internal.pipeline.*;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
 public interface PgCatchupFactory {
 
   PgCatchup create(
       @NonNull SubscriptionRequestTO request,
-      @NonNull ServerPipeline pipeline,
+      @NonNull PushbackServerPipeline pipeline,
       @NonNull AtomicLong serial,
       @NonNull SingleConnectionDataSource ds,
       @NonNull Phase phase);

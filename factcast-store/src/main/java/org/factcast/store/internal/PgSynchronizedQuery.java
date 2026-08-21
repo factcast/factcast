@@ -26,8 +26,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.subscription.observer.HighWaterMarkFetcher;
 import org.factcast.store.internal.listen.*;
-import org.factcast.store.internal.pipeline.ServerPipeline;
-import org.factcast.store.internal.pipeline.Signal;
+import org.factcast.store.internal.pipeline.*;
 import org.springframework.jdbc.core.*;
 import org.springframework.jdbc.datasource.*;
 
@@ -55,7 +54,7 @@ class PgSynchronizedQuery {
   @NonNull final RowCallbackHandler rowHandler;
 
   @NonNull final String debugInfo;
-  @NonNull final ServerPipeline pipe;
+  @NonNull final PushbackServerPipeline pipe;
   @NonNull final AtomicLong serialToContinueFrom;
 
   @NonNull final HighWaterMarkFetcher hwmFetcher;
@@ -64,7 +63,7 @@ class PgSynchronizedQuery {
 
   PgSynchronizedQuery(
       @NonNull String debugInfo,
-      @NonNull ServerPipeline pipe,
+      @NonNull PushbackServerPipeline pipe,
       @NonNull PgConnectionSupplier connectionSupplier,
       @NonNull String sql,
       @NonNull PreparedStatementSetter setter,
@@ -85,7 +84,7 @@ class PgSynchronizedQuery {
 
   // the synchronized here is crucial!
   @SuppressWarnings({"SameReturnValue", "java:S1181"})
-  public synchronized void run(boolean useIndex) {
+  public synchronized void run(boolean useIndex) throws PipelineAlreadyClosedException {
     List<ConnectionModifier> filters =
         Lists.newArrayList(ConnectionModifier.withApplicationName(debugInfo));
     if (!useIndex) {
@@ -122,7 +121,7 @@ class PgSynchronizedQuery {
 
   @RequiredArgsConstructor
   static class FactRowCallbackHandler implements RowCallbackHandler {
-    final ServerPipeline pipe;
+    final PushbackServerPipeline pipe;
 
     final Supplier<Boolean> isConnectedSupplier;
 
@@ -153,7 +152,12 @@ class PgSynchronizedQuery {
       } catch (Exception ignore) {
         // this one will be ignored
       }
-      pipe.process(Signal.of(e));
+
+      try {
+        pipe.process(Signal.of(e));
+      } catch (PipelineAlreadyClosedException meh) {
+        // can be ignored
+      }
     }
   }
 }

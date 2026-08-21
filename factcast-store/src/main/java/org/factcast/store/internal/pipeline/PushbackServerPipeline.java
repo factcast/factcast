@@ -21,7 +21,7 @@ import javax.annotation.Nonnull;
 import lombok.NonNull;
 import org.factcast.store.internal.catchup.CatchupDataSource;
 
-public class PushbackServerPipeline implements ServerPipeline {
+public class PushbackServerPipeline {
   private final ServerPipeline delegate;
   private final AtomicBoolean isClosed = new AtomicBoolean(false);
   private Set<CatchupDataSource> onCloseListeners = Collections.synchronizedSet(new HashSet<>());
@@ -30,13 +30,11 @@ public class PushbackServerPipeline implements ServerPipeline {
     this.delegate = chain;
   }
 
-  @Override
   public void process(@NonNull Signal s) throws PipelineAlreadyClosedException {
     if (isClosed.get()) throw new PipelineAlreadyClosedException();
     delegate.process(s);
   }
 
-  @Override
   public void close() {
     isClosed.set(true);
     delegate.close();
@@ -46,7 +44,10 @@ public class PushbackServerPipeline implements ServerPipeline {
 
   // these two methods are use to communicate a close to a datasource in use. Note that due to
   // offloading, there might be two separate DS valid at a time.
-  public void register(@NonNull CatchupDataSource ds) {
+  public void register(@NonNull CatchupDataSource ds) throws PipelineAlreadyClosedException {
+
+    if (isClosed.get()) throw new PipelineAlreadyClosedException();
+
     if (!onCloseListeners.add(ds))
       throw new IllegalStateException("DS was already registered. This is a weird bug.");
   }
@@ -54,5 +55,9 @@ public class PushbackServerPipeline implements ServerPipeline {
   public void unregister(@NonNull CatchupDataSource ds) {
     if (!onCloseListeners.remove(ds))
       throw new IllegalStateException("DS was not registered. This is a bug.");
+  }
+
+  public boolean isClosed() {
+    return isClosed.get();
   }
 }

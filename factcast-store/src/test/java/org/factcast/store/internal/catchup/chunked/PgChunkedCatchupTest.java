@@ -52,7 +52,7 @@ class PgChunkedCatchupTest {
   @Mock(strictness = Mock.Strictness.LENIENT)
   SubscriptionRequestTO req;
 
-  @Mock @NonNull ServerPipeline pipeline;
+  @Mock @NonNull PushbackServerPipeline pipeline;
 
   @Mock(strictness = Mock.Strictness.LENIENT)
   @NonNull

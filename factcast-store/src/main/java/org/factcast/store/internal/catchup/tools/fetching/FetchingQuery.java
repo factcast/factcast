@@ -50,7 +50,7 @@ public interface FetchingQuery {
 
   /** the user must not call rs.next() */
   interface RowProcessor {
-    void process(ResultSet row) throws SQLException, PipelineAlreadyClosedException;
+    void process(ResultSet row) throws SQLException;
   }
 
   interface CallbackAfterQueryFinished {

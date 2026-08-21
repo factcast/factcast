@@ -134,7 +134,7 @@ class QueryCancellationIntegrationTest {
         @Override
         public PgCatchup create(
             @NonNull SubscriptionRequestTO request,
-            @NonNull ServerPipeline pipeline,
+            @NonNull PushbackServerPipeline pipeline,
             @NonNull AtomicLong serial,
             @NonNull SingleConnectionDataSource ds,
             @NonNull Phase phase) {
@@ -143,7 +143,7 @@ class QueryCancellationIntegrationTest {
             @Override
             protected PgQueryBuilder createPgQueryBuilder(List<FactSpec> specs) {
               return new PgQueryBuilder(specs) {
-                public String createSql() {
+                public String createSQL() {
                   var sql = super.createSQL();
 
                   // slow down the query

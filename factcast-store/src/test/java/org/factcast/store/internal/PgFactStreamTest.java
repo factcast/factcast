@@ -93,6 +93,7 @@ class PgFactStreamTest {
       logSuppression.stop();
     }
 
+    @SneakyThrows
     @Test
     void catchesUpAndFollows() {
       doNothing().when(uut).doCatchup();
@@ -155,12 +156,14 @@ class PgFactStreamTest {
     final HighWaterMark hwm = HighWaterMark.of(UUID.randomUUID(), 66L);
 
     @BeforeEach
+    @SneakyThrows
     void setup() {
       lenient().doNothing().when(uut).doCatchup();
       lenient().when(reqTo.debugInfo()).thenReturn("foo");
       lenient().when(hwmFetcher.highWaterMark(any())).thenReturn(hwm);
     }
 
+    @SneakyThrows
     @Test
     void nonEphemeralRequestCatchesUp() {
       when(reqTo.ephemeral()).thenReturn(false);
@@ -171,6 +174,7 @@ class PgFactStreamTest {
       verify(uut).doCatchup();
     }
 
+    @SneakyThrows
     @Test
     void onlyFastForwardsOnEphemeralRequest() {
       when(reqTo.ephemeral()).thenReturn(true);
@@ -181,6 +185,7 @@ class PgFactStreamTest {
       verify(uut, never()).doCatchup();
     }
 
+    @SneakyThrows
     @Test
     void signalsCatchup() {
       doReturn(true).when(uut).isConnected();
@@ -429,6 +434,7 @@ class PgFactStreamTest {
       lenient().when(uut.isConnected()).thenReturn(true);
     }
 
+    @SneakyThrows
     @Test
     void ifDisconnected_doNothing() {
       when(uut.isConnected()).thenReturn(false);
@@ -438,6 +444,7 @@ class PgFactStreamTest {
       verifyNoInteractions(pgCatchupFactory);
     }
 
+    @SneakyThrows
     @Test
     void ifConnected_catchupTwice() {
       when(uut.isConnected()).thenReturn(true);
@@ -451,6 +458,7 @@ class PgFactStreamTest {
       verify(uut).catchupPhaseTwo(any(), same(12L));
     }
 
+    @SneakyThrows
     @Test
     void usesPrimaryDataSourceForBothPhasesByDefault() {
       PgCatchup catchup1 = mock(PgCatchup.class);
@@ -483,6 +491,7 @@ class PgFactStreamTest {
       verify(catchup2).fastForward(24L);
     }
 
+    @SneakyThrows
     @Test
     void phase2UsesPrimaryDataSourceAndStartsFromPhase1Highwatermark() {
       long phase1Hwm = 123L;
@@ -500,6 +509,7 @@ class PgFactStreamTest {
               ArgumentMatchers.argThat(supplier -> supplier.get() == mds), eq(phase1Hwm));
     }
 
+    @SneakyThrows
     @Test
     void phaseTwoForwardsToPhase1HwmThenRunsThenFfwdToInitialHwm() {
       long phase1Hwm = 100L;
@@ -548,6 +558,7 @@ class PgFactStreamTest {
         lenient().when(connectionSupplier.dataSource()).thenReturn(ds);
       }
 
+      @SneakyThrows
       @Test
       void phase1UsesPrimaryIfOffloadIsNull() {
         PgFactStream uut =
@@ -574,6 +585,7 @@ class PgFactStreamTest {
         verify(uut).catchupPhaseOne(mds);
       }
 
+      @SneakyThrows
       @Test
       void phase1UsesOffloadIfProvided() {
         PgFactStream uut =
@@ -603,6 +615,7 @@ class PgFactStreamTest {
       }
     }
 
+    @SneakyThrows
     @Test
     void setsMdcDuringFromScratchCatchup() {
       doReturn(ds).when(connectionSupplier).dataSource();
@@ -628,6 +641,7 @@ class PgFactStreamTest {
       assertThat(MDC.get(DefaultLogSuppression.MDC_KEY)).isNull();
     }
 
+    @SneakyThrows
     @Test
     void doesNotSetMdcWhenNotFromScratch() {
       doReturn(ds).when(connectionSupplier).dataSource();
@@ -650,6 +664,7 @@ class PgFactStreamTest {
       uut.doCatchup();
     }
 
+    @SneakyThrows
     @Test
     void doesNotSetMdcWhenNopSuppressionUsed() {
       doReturn(ds).when(connectionSupplier).dataSource();
@@ -685,6 +700,7 @@ class PgFactStreamTest {
       uut.doCatchup();
     }
 
+    @SneakyThrows
     @Test
     void clearsMdcEvenOnException() {
       PgCatchup catchup = mock(PgCatchup.class);

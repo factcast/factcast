@@ -44,7 +44,7 @@ class PgChunkedWithHoldCursorCatchupTest {
   @Mock StoreConfigurationProperties props;
   @Mock PgMetrics metrics;
   @Mock SubscriptionRequestTO req;
-  @Mock ServerPipeline pipeline;
+  @Mock PushbackServerPipeline pipeline;
   @Mock SingleConnectionDataSource ds;
   @Mock PgCatchupFactory.Phase phase;
   @Mock AtomicLong serial;

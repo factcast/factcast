@@ -55,7 +55,7 @@ class PgSynchronizedQueryTest {
 
   @Mock AtomicLong serialToContinueFrom;
 
-  @Mock BufferedTransformingServerPipeline pipeline;
+  @Mock PushbackServerPipeline pipeline;
   @Mock PgConnectionSupplier connectionSupplier;
 
   final HighWaterMarkFetcher fetcher = HighWaterMarkFetcher.forTest();
@@ -159,7 +159,7 @@ class PgSynchronizedQueryTest {
     @Mock AtomicLong serial;
 
     @Mock SubscriptionRequestTO request;
-    @Mock ServerPipeline pipe;
+    @Mock PushbackServerPipeline pipe;
 
     @InjectMocks private PgSynchronizedQuery.FactRowCallbackHandler uut;
 

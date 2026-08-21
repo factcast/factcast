@@ -23,7 +23,7 @@ import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tomcat.jdbc.pool.PooledConnection;
 import org.factcast.store.internal.*;
-import org.factcast.store.internal.pipeline.PushbackServerPipeline;
+import org.factcast.store.internal.pipeline.*;
 import org.postgresql.jdbc.PgConnection;
 
 /**
@@ -69,6 +69,7 @@ public class CatchupDataSource extends ModifiedSingleConnectionDataSource {
     // lets deregister from the pipeline, first
     pipeline.unregister(this);
 
+    //noinspection StatementWithEmptyBody
     if (wasCanceled.get()) {
       // ok, we received a cancel call before from another thread, so we're not in the happy
       // try-with-resource path. For safety reasons, we killed the connection already completely.

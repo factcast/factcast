@@ -21,7 +21,6 @@ import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.atomic.*;
 import lombok.NonNull;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.SubscriptionRequestTO;
@@ -45,16 +44,15 @@ public class PgCursorCatchup extends AbstractPgCatchup {
       @NonNull StoreConfigurationProperties props,
       @NonNull PgMetrics metrics,
       @NonNull SubscriptionRequestTO req,
-      @NonNull ServerPipeline pipeline,
+      @NonNull PushbackServerPipeline pipeline,
       @NonNull AtomicLong serial,
       @NonNull SingleConnectionDataSource ds,
       PgCatchupFactory.@NonNull Phase phase) {
     super(props, metrics, req, pipeline, serial, ds, phase);
   }
 
-  @SneakyThrows
   @Override
-  public void run() {
+  public void run() throws SQLException {
     try {
 
       final var b = createPgQueryBuilder(req.specs());

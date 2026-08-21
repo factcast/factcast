@@ -15,6 +15,11 @@
  */
 package org.factcast.store.internal.catchup;
 
-public interface PgCatchup extends Runnable {
+import java.sql.SQLException;
+import org.factcast.store.internal.pipeline.PipelineAlreadyClosedException;
+
+public interface PgCatchup {
   void fastForward(long serialToStartFrom);
+
+  void run() throws SQLException, PipelineAlreadyClosedException;
 }

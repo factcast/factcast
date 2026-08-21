@@ -42,7 +42,7 @@ import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.store.OffloadDataSource;
 import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
-import org.factcast.store.internal.pipeline.ServerPipeline;
+import org.factcast.store.internal.pipeline.PushbackServerPipeline;
 import org.factcast.test.IntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.BeanFactory;
@@ -176,7 +176,7 @@ class PgFactStoreOffloadIntegrationTest {
     @Override
     public PgCatchup create(
         @NonNull SubscriptionRequestTO request,
-        @NonNull ServerPipeline pipeline,
+        @NonNull PushbackServerPipeline pipeline,
         @NonNull AtomicLong serial,
         @NonNull SingleConnectionDataSource ds,
         @NonNull Phase phase) {

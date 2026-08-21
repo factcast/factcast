@@ -23,7 +23,7 @@ import javax.sql.DataSource;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgMetrics;
-import org.factcast.store.internal.pipeline.ServerPipeline;
+import org.factcast.store.internal.pipeline.PushbackServerPipeline;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -35,7 +35,7 @@ class AbstractPgCatchupTest {
   @Mock StoreConfigurationProperties props;
   @Mock PgMetrics metrics;
   @Mock SubscriptionRequestTO req;
-  @Mock ServerPipeline pipeline;
+  @Mock PushbackServerPipeline pipeline;
   @Mock AtomicLong serial;
   @Mock DataSource ds;
   @Mock PgCatchupFactory.Phase phase;
@@ -45,7 +45,7 @@ class AbstractPgCatchupTest {
         StoreConfigurationProperties props,
         PgMetrics metrics,
         SubscriptionRequestTO req,
-        ServerPipeline pipeline,
+        PushbackServerPipeline pipeline,
         AtomicLong serial,
         DataSource ds,
         PgCatchupFactory.Phase phase) {

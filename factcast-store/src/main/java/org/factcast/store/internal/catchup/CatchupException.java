@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2024 factcast.org
+ * Copyright © 2017-2026 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.internal.pipeline;
+package org.factcast.store.internal.catchup;
 
-import lombok.NonNull;
-
-/**
- * used on the server side instead of FactObserver/Subscription
- *
- * <p>Note, that pipelines *MUST* maintain the order of signals.
- */
-public interface ServerPipeline {
-
-  void process(@NonNull Signal s);
-
-  void close(); // does not throw exception, just for freeing resources
+public class CatchupException extends Exception {
+  public CatchupException(Exception e) {
+    super(e);
+  }
 }

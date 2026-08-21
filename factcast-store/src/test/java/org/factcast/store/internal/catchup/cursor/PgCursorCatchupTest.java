@@ -53,7 +53,7 @@ class PgCursorCatchupTest {
   @Mock(strictness = Mock.Strictness.LENIENT)
   SubscriptionRequestTO req;
 
-  @Mock ServerPipeline pipeline;
+  @Mock PushbackServerPipeline pipeline;
 
   @Mock(strictness = Mock.Strictness.LENIENT)
   PgMetrics metrics;
