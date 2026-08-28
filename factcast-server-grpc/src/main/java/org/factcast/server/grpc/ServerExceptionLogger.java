@@ -90,16 +90,16 @@ public class ServerExceptionLogger {
 
   @VisibleForTesting
   void info(Throwable e, String id) {
-    log.info(EXCEPTION_MESSAGE, id, e.getMessage());
+    log.info(EXCEPTION_MESSAGE, id, e.getMessage(), e);
   }
 
   @VisibleForTesting
   void warn(Throwable e, String id) {
-    log.warn(EXCEPTION_MESSAGE, id, e.getMessage());
+    log.warn(EXCEPTION_MESSAGE, id, e.getMessage(), e);
   }
 
   @VisibleForTesting
   void error(Throwable e, String id) {
-    log.error(EXCEPTION_MESSAGE, id, e.getMessage());
+    log.error(EXCEPTION_MESSAGE, id, e.getMessage(), e);
   }
 }
