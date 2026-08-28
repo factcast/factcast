@@ -16,7 +16,6 @@
 package org.factcast.store.internal.pipeline;
 
 import java.util.*;
-import java.util.concurrent.atomic.*;
 import javax.annotation.Nonnull;
 import lombok.NonNull;
 import org.factcast.store.internal.catchup.CatchupDataSource;
