@@ -266,7 +266,8 @@ public class PgFactStream {
         // now that phase 1&2 are done, we can ffwd to the initial HWM on the primary
         fastForward(highWaterMark);
       }
-    } catch (PipelineAlreadyClosedException | CatchupException e) { // TODO
+    } catch (PipelineAlreadyClosedException e) {
+      throw new CatchupException(e);
     }
   }
 

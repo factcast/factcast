@@ -16,6 +16,7 @@
 package org.factcast.store.internal;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import ch.qos.logback.classic.Level;
@@ -26,6 +27,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 import javax.sql.DataSource;
 import lombok.SneakyThrows;
+import org.assertj.core.api.Assertions;
 import org.factcast.core.*;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.*;
@@ -715,11 +717,11 @@ class PgFactStreamTest {
           .when(catchup)
           .run();
 
-      try {
-        uut.doCatchup();
-      } catch (RuntimeException e) {
-        // expected
-      }
+      Assertions.assertThatThrownBy(
+              () -> {
+                uut.doCatchup();
+              })
+          .isInstanceOf(CatchupException.class);
 
       assertThat(MDC.get(DefaultLogSuppression.MDC_KEY)).isNull();
     }
