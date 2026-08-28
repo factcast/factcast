@@ -253,23 +253,16 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
             chunkSize(),
             fetchSql);
 
-        try {
-          FetchingQuery.create(props)
-              .executeAndProcess(
-                  fetch,
-                  rs -> {
-                    PgFact fact = extractor.mapRow(rs, rows.get());
-                    // this intentionally throws PipelineAlreadyClosedException
-                    pipeline.process(Signal.of(fact));
-                    rows.incrementAndGet();
-                  },
-                  callbackAfterExecution::run);
-        } catch (SQLException e) {
-          log.trace("{} catchup {}, fetch chunk encountered", req, phase, e);
-        } catch (PipelineAlreadyClosedException e) {
-          log.trace("{} catchup {}, pipeline was closed, exiting.", req, phase);
-          return 0; // end this
-        }
+        FetchingQuery.create(props)
+            .executeAndProcess(
+                fetch,
+                rs -> {
+                  PgFact fact = extractor.mapRow(rs, rows.get());
+                  // this intentionally throws PipelineAlreadyClosedException
+                  pipeline.process(Signal.of(fact));
+                  rows.incrementAndGet();
+                },
+                callbackAfterExecution::run);
         return rows.get();
       }
     }

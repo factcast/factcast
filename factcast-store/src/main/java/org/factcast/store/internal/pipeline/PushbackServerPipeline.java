@@ -23,20 +23,20 @@ import org.factcast.store.internal.catchup.CatchupDataSource;
 
 public class PushbackServerPipeline {
   private final ServerPipeline delegate;
-  private final AtomicBoolean isClosed = new AtomicBoolean(false);
+  private boolean isClosed = false;
   private Set<CatchupDataSource> onCloseListeners = Collections.synchronizedSet(new HashSet<>());
 
   public PushbackServerPipeline(@Nonnull ServerPipeline chain) {
     this.delegate = chain;
   }
 
-  public void process(@NonNull Signal s) throws PipelineAlreadyClosedException {
-    if (isClosed.get()) throw new PipelineAlreadyClosedException();
+  public synchronized void process(@NonNull Signal s) throws PipelineAlreadyClosedException {
+    if (isClosed) throw new PipelineAlreadyClosedException();
     delegate.process(s);
   }
 
-  public void close() {
-    isClosed.set(true);
+  public synchronized void close() {
+    isClosed = true;
     delegate.close();
     // we don't close the datasource, because it will be done in the catchup process.
     onCloseListeners.forEach(CatchupDataSource::cancel);
@@ -44,20 +44,20 @@ public class PushbackServerPipeline {
 
   // these two methods are use to communicate a close to a datasource in use. Note that due to
   // offloading, there might be two separate DS valid at a time.
-  public void register(@NonNull CatchupDataSource ds) throws PipelineAlreadyClosedException {
+  public synchronized void register(@NonNull CatchupDataSource ds)
+      throws PipelineAlreadyClosedException {
 
-    if (isClosed.get()) throw new PipelineAlreadyClosedException();
-
-    if (!onCloseListeners.add(ds))
+    if (isClosed) throw new PipelineAlreadyClosedException();
+    else if (!onCloseListeners.add(ds))
       throw new IllegalStateException("DS was already registered. This is a weird bug.");
   }
 
-  public void unregister(@NonNull CatchupDataSource ds) {
+  public synchronized void unregister(@NonNull CatchupDataSource ds) {
     if (!onCloseListeners.remove(ds))
       throw new IllegalStateException("DS was not registered. This is a bug.");
   }
 
-  public boolean isClosed() {
-    return isClosed.get();
+  public synchronized boolean isClosed() {
+    return isClosed;
   }
 }
