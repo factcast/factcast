@@ -1,0 +1,219 @@
+= Hitchhiker
+:toc: left
+:icons: font
+
+
+
+[source,java]
+----
+@Slf4j
+public class UserEmailsProjection {
+
+    private final Map<UUID, String> userEmails = new HashMap<>();
+
+    @NonNull
+    public Set<String> getUserEmails() {
+        return new HashSet<>(userEmails.values());
+    }
+
+    public void apply(Fact fact) {
+        switch (fact.type()) {
+            case "UserAdded":
+                handleUserAdded(fact);
+                break;
+            case "UserRemoved":
+                handleUserRemoved(fact);
+                break;
+            default:
+                log.error("Fact type {} not supported", fact.type());
+                break;
+        }
+    }
+
+    @VisibleForTesting
+    void handleUserAdded(Fact fact) {
+        JsonNode payload = parsePayload(fact);
+        userEmails.put(extractIdFrom(payload), extractEmailFrom(payload));
+    }
+
+    @VisibleForTesting
+    void handleUserRemoved(Fact fact) {
+        JsonNode payload = parsePayload(fact);
+        userEmails.remove(extractIdFrom(payload));
+    }
+
+    // helper methods:
+
+    @SneakyThrows
+    private JsonNode parsePayload(Fact fact) {
+        return FactCastJson.readTree(fact.jsonPayload());
+    }
+
+    private UUID extractIdFrom(JsonNode payload) {
+        return UUID.fromString(payload.get("id").asText());
+    }
+
+    private String extractEmailFrom(JsonNode payload) {
+        return payload.get("email").asText();
+    }
+}
+----
+[source,java]
+----
+@Test
+void whenHandlingUserAddedFactEmailIsAdded() {
+    // arrange
+    String jsonPayload = String.format(
+        "{\"id\":\"%s\", \"email\": \"%s\"}",
+        UUID.randomUUID(),
+        "user@bar.com");
+    Fact userAdded = Fact.builder()
+        .id(UUID.randomUUID())
+        .ns("user")
+        .type("UserAdded")
+        .version(1)
+        .build(jsonPayload);
+
+    // act
+    uut.handleUserAdded(userAdded);
+
+    // assert
+    Set<String> emails = uut.getUserEmails();
+    assertThat(emails).hasSize(1).containsExactly("user@bar.com");
+}
+----
+[source,xml]
+----
+
+<dependency>
+    <groupId>org.factcast</groupId>
+    <artifactId>factcast-test</artifactId>
+    <version>${factcast.version}</version>
+    <scope>test</scope>
+</dependency>
+----
+[source,java]
+----
+@SpringBootTest
+@ExtendWith(FactCastExtension.class)
+class UserEmailsProjectionITest {
+
+    @Autowired FactCast factCast;
+
+    private final UserEmailsProjection uut = new UserEmailsProjection();
+
+    private class FactObserverImpl implements FactObserver {
+
+        @Override
+        public void onNext(@NonNull Fact fact) {
+            uut.apply(fact);
+        }
+    }
+
+    @Test
+    void projectionHandlesUserAddedFact() {
+        UUID userId = UUID.randomUUID();
+        Fact userAdded = Fact.builder()
+            .id(UUID.randomUUID())
+            .ns("user")
+            .type("UserAdded")
+            .version(1)
+            .build(String.format(
+                "{\"id\":\"%s\", \"email\": \"%s\"}",
+                userId,
+                "user@bar.com"));
+
+        factCast.publish(userAdded);
+
+        SubscriptionRequest subscriptionRequest = SubscriptionRequest
+            .catchup(FactSpec.ns("user").type("UserAdded"))
+            .or(FactSpec.ns("user").type("UserRemoved"))
+            .fromScratch();
+
+        factCast.subscribe(subscriptionRequest, new FactObserverImpl()).awaitComplete();
+
+        Set<String> userEmails = uut.getUserEmails();
+        assertThat(userEmails).hasSize(1).containsExactly("user@bar.com");
+  }
+  //...
+----
+[source,java]
+----
+@Getter
+@Specification(ns = "user", type = "UserAdded", version = 1)
+public class UserAdded implements EventObject {
+
+    private UUID userId;
+    private String email;
+
+    // used by Jackson deserializer
+    protected UserAdded(){}
+
+    public static UserAdded of(UUID userId, String email) {
+        UserAdded fact = new UserAdded();
+        fact.userId = userId;
+        fact.email = email;
+        return fact;
+    }
+
+    @Override
+    public Set<UUID> aggregateIds() {
+        return Collections.emptySet();
+      }
+}
+----
+[source,java]
+----
+public class UserEmailsProjection extends LocalManagedProjection {
+
+    private final Map<UUID, String> userEmails = new HashMap<>();
+
+    public Set<String> getEmails() {
+        return new HashSet<>(userEmails.values());
+    }
+
+    @Handler
+    void apply(UserAdded event) {
+        userEmails.put(event.getUserId(), event.getEmail());
+    }
+
+    @Handler
+    void apply(UserRemoved event) {
+        userEmails.remove(event.getUserId());
+    }
+}
+----
+[source,java]
+----
+@Test
+void whenHandlingUserAddedEventEmailIsAdded() {
+    UUID someUserId = UUID.randomUUID();
+
+    UserEmailsProjection uut = new UserEmailsProjection();
+    uut.apply(UserAdded.of(someUserId, "foo@bar.com"));
+
+    Set<String> emails = uut.getEmails();
+    assertThat(emails).hasSize(1).containsExactly("foo@bar.com");
+}
+----
+[source,java]
+----
+@SpringBootTest
+@ExtendWith(FactCastExtension.class)
+public class UserEmailsProjectionITest {
+
+    @Autowired Factus factus;
+
+    @Test
+    void projectionHandlesUserAddedEvent() {
+        UserAdded userAdded = UserAdded.of(UUID.randomUUID(), "user@bar.com");
+        factus.publish(userAdded);
+
+        UserEmailsProjection uut = new UserEmailsProjection();
+        factus.update(uut);
+
+        Set<String> emails = uut.getEmails();
+        assertThat(emails).hasSize(1).containsExactly("user@bar.com");
+    }
+    //...
+----

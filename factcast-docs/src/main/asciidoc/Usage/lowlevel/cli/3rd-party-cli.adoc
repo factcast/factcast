@@ -1,0 +1,9 @@
+= 3rd Party CLI
+:toc: left
+:icons: font
+
+
+
+As an alternative to the xref:factcast-cli.adoc[Factcast CLI]
+there is the Python based https://gitlab.com/edthamm/pyfactcast[PyFactCast].
+It is still in early development, but you might want to check it out.

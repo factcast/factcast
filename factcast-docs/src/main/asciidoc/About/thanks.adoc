@@ -1,0 +1,28 @@
+= Contribution
+:toc: left
+:icons: font
+
+
+
+Any Contribution, be it code, issues, docs etc. are more than welcome if they comply with ASL2. Please head over to
+https://github.com/factcast/factcast[GitHub] and help!
+
+Have a look at the https://github.com/factcast/factcast/blob/main/CONTRIBUTING.md[guide on contributing] for the first steps.
+
+==== Thank you
+
+https://github.com/factcast/factcast/graphs/contributors[Contributors]
+
+{{<ghcontributors
+"https://api.github.com/repos/factcast/factcast/contributors?per_page=101" >}}
+
+and also
+
+- https://twitter.com/gregyoung[@gregyoung] for teaching CQRS & ES
+- https://twitter.com/martinfowler[@martinfowler] for documenting the patterns
+- https://twitter.com/joeclueless[@joeclueless] for work on initial prototype & invaluable discussions
+- https://twitter.com/gb6881[@gb6881] for work on initial prototype & invaluable discussions
+- https://github.com/leflamm[github.com/leflamm] for discussions, review and guidance
+- https://github.com/BernhardBln[github.com/BernhardBln] for discussions, review and guidance
+- https://twitter.com/emwexx[@emwexx] for discussions
+- https://twitter.com/joerg_adler[@joerg_adler] for providing the REST adapter

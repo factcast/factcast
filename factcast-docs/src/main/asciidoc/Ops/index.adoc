@@ -1,0 +1,8 @@
+= Ops
+:toc: left
+:icons: font
+
+
+
+This section is concerned with the operation of a factcast server and related infrastructure plus some helpful
+experiences from the ops sector to maybe learn from.

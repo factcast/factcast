@@ -1,0 +1,9 @@
+= Projection Types
+:toc: left
+:icons: font
+
+
+
+image::ph_p.png[, align="center"]
+
+Use the Menu on the left hand side to learn about the different flavors of projections.

@@ -1,0 +1,37 @@
+= Atomicity
+:toc: left
+:icons: font
+
+
+
+[source,mermaid]
+----
+sequenceDiagram
+  participant Projection
+  participant External Data Store
+  Projection->>External Data Store: 1) update projection
+  Note right of External Data Store: Inside Transaction
+  Projection->>External Data Store: 2) store fact-stream-position
+----
+[source,mermaid]
+----
+sequenceDiagram
+  participant Projection
+  participant External Data Store
+  Projection->>External Data Store: event 1: update projection data
+  Projection->>External Data Store: event 1: store fact-stream-position
+  Projection->>External Data Store: event 2: update projection data
+  Projection->>External Data Store: event 2: store fact-stream-position
+  Projection->>External Data Store: event 3: update projection data
+  Projection->>External Data Store: event 3: store fact-stream-position
+----
+[source,mermaid]
+----
+sequenceDiagram
+  participant Projection
+  participant External Data Store
+  Projection->>External Data Store: event 1: update projection data
+  Projection->>External Data Store: event 2: update projection data
+  Projection->>External Data Store: event 3: update projection data
+  Projection->>External Data Store: event 3: store fact-stream-position
+----

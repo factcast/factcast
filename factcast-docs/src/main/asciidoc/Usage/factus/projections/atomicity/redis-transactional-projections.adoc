@@ -1,0 +1,58 @@
+= Redis Transactional
+:toc: left
+:icons: font
+
+
+
+A _Redis transactional projection_ is a xref:atomicity[transactional projection]
+based on https://www.javadoc.io/doc/org.redisson/redisson/latest/org/redisson/api/RTransaction.html[Redisson RTransaction].
+
+Compared to a xref:spring-transactional-projections.adoc[Spring transactional projection], a _Redis transactional projection_ is more lightweight since
+
+- transactionality is directly provided by `RTransaction`. There is no need to deal with Spring's `PlatformTransactionManager`
+- the fact stream position is automatically managed (see example below)
+
+== Motivation
+
+You would want to use Redis Transactional for two reasons:
+
+- atomicity of factStreamPosition updates and your projection state updates
+- increased fact processing throughput
+
+The performance bit is achieved by skipping unnecessary factStreamPosition updates and (more importantly) by
+reducing the number of operations on your Redis backend by using `bulkSize` updates with one `redisson transsaction` instead of single writes.
+The `bulkSize` is configurable per projection via the `@RedisTransactional` annotation.
+
+Working with a _Redis transactional projection_ you can read your own uncommitted write. For this reason, a _Redis transactional projection_ is best used for projections which
+need to access the projection's data during the handling of an event.
+
+== Configuration
+
+In order to make use of redisson RTransaction support, the necessary dependency has to be included in your project:
+
+[source,xml]
+----
+    <dependency>
+        <groupId>org.factcast</groupId>
+        <artifactId>factcast-factus-redis</artifactId>
+    </dependency>
+
+----
+
+== Structure
+
+A _Redis transactional projection_ can be a xref:managed-projection.adoc[managed-] or
+a xref:subscribed-projection.adoc[subscribed] projection and is defined as follows:
+
+- it is annotated with `@RedisTransactional` (optional when using the default values and extending one of Factus' abstract classes mentioned below)
+- it implements `RedisProjection` revealing the `RedisClient` used
+- it provides the revision number of the projection via the `@ProjectionMetaData` annotation
+- the handler methods receive an additional `RTransaction` parameter
+
+[source,java]
+----
+@Handler
+void apply(SomethingHappened fact, RTransaction tx) {
+    myMap = tx.getMap( ... ).put( fact.getKey() , fact.getValue() );
+}
+----

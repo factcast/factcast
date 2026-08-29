@@ -1,0 +1,113 @@
+= UserNames (Spring/JDBC)
+:toc: left
+:icons: font
+
+
+
+Here is an example for a managed projection externalizing its state to a relational database (PostgreSQL here) using Spring transactional management.
+
+The example projects a list of used UserNames in the System.
+
+== Preparation
+
+We need to store two things in our JDBC Datastore:
+
+- the actual list of UserNames, and
+- the fact-stream-position of your projection.
+
+Therefore we create the necessary tables (probably using liquibase/flyway or similar tooling of your choice):
+
+[source,sql]
+----
+CREATE TABLE users (
+    name TEXT,
+    id UUID,
+    PRIMARY KEY (id));
+----
+
+[source,sql]
+----
+CREATE TABLE fact_stream_positions (
+    projection_name TEXT,
+    fact_stream_position UUID,
+    PRIMARY KEY (projection_name));
+----
+
+Given a unique projection name, we can use _fact_stream_positions_ as a common table for all our JDBC managed projections.
+
+[source,java]
+----
+@ProjectionMetaData(serial = 1)
+@SpringTransactional
+public class UserNames extends AbstractSpringTxManagedProjection {
+
+    private final JdbcTemplate jdbcTemplate;
+
+    public UserNames(
+            @NonNull PlatformTransactionManager platformTransactionManager, JdbcTemplate jdbcTemplate) {
+        super(platformTransactionManager);
+        this.jdbcTemplate = jdbcTemplate;
+    }
+    ...
+----
+[source,java]
+----
+@Override
+public void factStreamPosition(@NonNull UUID factStreamPosition) {
+    jdbcTemplate.update(
+            "INSERT INTO fact_stream_positions (projection_name, fact_stream_position) " +
+            "VALUES (?, ?) " +
+            "ON CONFLICT (projection_name) DO UPDATE SET fact_stream_position = ?",
+            getScopedName().asString(),
+            factStreamPosition,
+            factStreamPosition);
+}
+----
+[source,java]
+----
+@Override
+public UUID factStreamPosition() {
+    try {
+        return jdbcTemplate.queryForObject(
+                "SELECT fact_stream_position FROM fact_stream_positions WHERE projection_name = ?",
+                UUID.class,
+                getScopedName().asString());
+    } catch (IncorrectResultSizeDataAccessException e) {
+        // no position yet, just return null
+        return null;
+    }
+}
+----
+[source,java]
+----
+@Handler
+void apply(UserCreated e) {
+    jdbcTemplate.update(
+            "INSERT INTO users (name, id) VALUES (?,?);",
+            e.getUserName(),
+            e.getAggregateId());
+}
+----
+[source,java]
+----
+@Handler
+void apply(UserDeleted e) {
+    jdbcTemplate.update("DELETE FROM users where id = ?", e.getAggregateId());
+}
+----
+[source,java]
+----
+public List<String> getUserNames() {
+    return jdbcTemplate.query("SELECT name FROM users", (rs, rowNum) -> rs.getString(1));
+}
+----
+[source,java]
+----
+// create a local instance or get a Spring Bean from the ApplicationContext, depending on your code organization
+UserNames userNameProjection = new UserNames(platformTransactionManager, jdbcTemplate);
+
+// depending on many factors you *may* want to update the projection before querying it
+factus.update(userNameProjection);
+
+List<String> userNames = userNameProjection.getUserNames();
+----

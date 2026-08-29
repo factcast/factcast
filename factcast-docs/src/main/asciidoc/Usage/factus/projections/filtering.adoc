@@ -1,0 +1,62 @@
+= Filtering
+:toc: left
+:icons: font
+
+
+
+When implementing a Projection, you would add handler methods
+(xref:handler-parameters.adoc[methods annotated with either `@Handler` or `@HandlerFor`])
+in order to express, what the projection is interested in.
+
+Factus will look at these methods in order to discover xref:factspec.adoc#specification[fact specifications].
+These fact specifications form a query which is sent to the FactCast server to create a fact-stream suited for this
+projection.
+In detail, for each handler method, a Projector inspects the method's annotations and parameter types
+including their annotations to build a
+https://github.com/factcast/factcast/blob/main/factcast-core/src/main/java/org/factcast/core/spec/FactSpec.java[
+`FactSpec`]
+object.
+This object contains at least the `ns`, `type` properties. Optionally the `version` property is set.
+
+If you look at a `FactSpec` however, sometimes it makes sense to use additional filtering possibilities like
+
+- aggregateId
+- meta key/value pair (one or more) or even
+- JavaScript acting as a predicate.
+
+If for a projection these filters are known in advance, you can use additional annotations to declare them:
+
+- `@FilterByAggId`
+- `@FilterByAggIdProperty` (can only be used on aggregates)
+- `@FilterByScript`
+- `@FilterByMeta` (can be used repeatedly)
+- `@FilterByMetaExists` (can be used repeatedly)
+- `@FilterByMetaDoesNotExist` (can be used repeatedly)
+
+[source,java]
+----
+
+@Handler
+@FilterByMeta(key = "priority", value = "urgent")
+protected void apply(UserCreated created) {
+    // ...
+}
+----
+[source,java]
+----
+
+@Handler
+@FilterByMetaExists("priority")
+protected void apply(UserCreated created) {
+    // ...
+}
+----
+[source,java]
+----
+
+@Handler
+@FilterByAggIdProperty("recommendedByUserId")
+protected void apply(UserRecommended event) {
+    // ...
+}
+----
