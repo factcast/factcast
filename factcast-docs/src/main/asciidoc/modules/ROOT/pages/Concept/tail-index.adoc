@@ -37,7 +37,7 @@ In general, xref:fact.adoc#read-subscribe[subscriptions] may consist of two poss
 A _tail index_ supports the regular "are there new events (since X)?" queries by creating additional smaller partial indexes
 at _the end_ of the fact log:
 
-image::../images/tail-index.png[]
+image::tail-index.png[]
 
 More precisely, FactCast maintains a certain number of rolling partial (tail) indexes.
 When asked to query facts from the end of the fact log,
@@ -66,7 +66,7 @@ The Fast-Forward feature further improves the effectiveness of tail indexes by p
 
 Based on the fact log diagram above, here is an example of how a regular check for new events without Fast-Forward would work:
 
-[source,mermaid]
+[mermaid]
 ----
 sequenceDiagram
     FactCast Client->>FactCast Server: Are there new facts after position 10?
@@ -86,7 +86,7 @@ the same expensive query via the global index might be repeated, given that ther
 
 With Fast-Forward however, the situation is different:
 
-[source,mermaid]
+[mermaid]
 ----
 sequenceDiagram
     FactCast Client->>FactCast Server: Are there new facts after position 10?

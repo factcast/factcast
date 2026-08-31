@@ -14,47 +14,26 @@
   <properties>
     <sonar.skip>true</sonar.skip>
     <maven.deploy.skip>true</maven.deploy.skip>
-    <asciidoctor-maven-plugin.version>3.2.0</asciidoctor-maven-plugin.version>
+    <antora-maven-plugin.version>1.0.0-alpha.5</antora-maven-plugin.version>
   </properties>
   <build>
     <plugins>
       <plugin>
-        <groupId>org.asciidoctor</groupId>
-        <artifactId>asciidoctor-maven-plugin</artifactId>
-        <version>${asciidoctor-maven-plugin.version}</version>
+        <groupId>org.antora</groupId>
+        <artifactId>antora-maven-plugin</artifactId>
+        <version>${antora-maven-plugin.version}</version>
+        <extensions>true</extensions>
+        <configuration>
+          <packages>
+            <package>@sntke/antora-mermaid-extension</package>
+          </packages>
+        </configuration>
         <executions>
           <execution>
-            <id>output-html</id>
-            <phase>generate-resources</phase>
             <goals>
-              <goal>process-asciidoc</goal>
+              <goal>antora</goal>
             </goals>
-            <configuration>
-              <backend>html5</backend>
-              <preserveDirectories>true</preserveDirectories>
-              <relativeBaseDir>true</relativeBaseDir>
-              <docinfodir>${project.basedir}/src/main/asciidoc</docinfodir>
-              <resources>
-                <resource>
-                  <directory>src/main/asciidoc</directory>
-                  <includes>
-                    <include>**/*.png</include>
-                    <include>**/*.svg</include>
-                    <include>**/*.jpg</include>
-                    <include>**/*.jpeg</include>
-                    <include>**/*.puml</include>
-                    <include>logos/**/*</include>
-                  </includes>
-                </resource>
-              </resources>
-              <attributes>
-                <toc>left</toc>
-                <icons>font</icons>
-                <source-highlighter>highlight.js</source-highlighter>
-                <docinfo>shared</docinfo>
-                <docinfodir>${project.basedir}/src/main/asciidoc</docinfodir>
-              </attributes>
-            </configuration>
+            <phase>generate-resources</phase>
           </execution>
         </executions>
       </plugin>

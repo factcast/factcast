@@ -4,7 +4,7 @@
 
 
 
-[source,mermaid]
+[mermaid]
 ----
 sequenceDiagram
   participant Projection
@@ -13,7 +13,7 @@ sequenceDiagram
   Note right of External Data Store: Inside Transaction
   Projection->>External Data Store: 2) store fact-stream-position
 ----
-[source,mermaid]
+[mermaid]
 ----
 sequenceDiagram
   participant Projection
@@ -25,7 +25,7 @@ sequenceDiagram
   Projection->>External Data Store: event 3: update projection data
   Projection->>External Data Store: event 3: store fact-stream-position
 ----
-[source,mermaid]
+[mermaid]
 ----
 sequenceDiagram
   participant Projection

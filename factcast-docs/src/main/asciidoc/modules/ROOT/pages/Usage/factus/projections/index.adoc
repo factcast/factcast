@@ -4,7 +4,7 @@
 
 
 
-image::../../../images/ph_p.png[, align="center"]
+image::ph_p.png[, align="center"]
 
 Before we can look at processing Events, we first have to talk about another abstraction that does not exist in
 FactCast: `Projection`
@@ -36,13 +36,13 @@ external projections
 - RDBMS like
 ++++
 <div style="text-align: center;">
-<img src="../../../logos/postgres-logo.svg" width="100px" height="100px"/>
-<img src="../../../logos/maria-logo.png" width="100px" height="100px"/>
-<img src="../../../logos/mysql-logo.svg" width="100px" height="100px"/>
-<img src="../../../logos/rds-logo.png" width="100px" height="100px"/>
+<img src="../../../_images/logos/postgres-logo.svg" width="100px" height="100px"/>
+<img src="../../../_images/logos/maria-logo.png" width="100px" height="100px"/>
+<img src="../../../_images/logos/mysql-logo.svg" width="100px" height="100px"/>
+<img src="../../../_images/logos/rds-logo.png" width="100px" height="100px"/>
 
 or any other via
-<img src="../../../logos/jdbc-logo.png" width="100px" height="100px"/>
+<img src="../../../_images/logos/jdbc-logo.png" width="100px" height="100px"/>
 
 </div>
 ++++
@@ -50,23 +50,23 @@ or any other via
 - Redis / Valkey
 ++++
 <div style="text-align: center;">
-<img src="../../../logos/redis-logo.png" width="100px" height="100px"/>
-<img src="../../../logos/valkey-logo.png" width="100px" height="100px"/> 
+<img src="../../../_images/logos/redis-logo.png" width="100px" height="100px"/>
+<img src="../../../_images/logos/valkey-logo.png" width="100px" height="100px"/> 
 </div>
 ++++
 
 - AWS DynamoDB
 ++++
 <div style="text-align: center;">
-<img src="../../../logos/dynamo-logo.svg" width="100px" height="100px"/> 
+<img src="../../../_images/logos/dynamo-logo.svg" width="100px" height="100px"/> 
 </div>
 ++++
 
 - MongoDB / AWS DocumentDB
 ++++
 <div style="text-align: center;">
-<img src="../../../logos/mongodb-logo.svg" width="100px" height="100px" style="padding-right: 15px;"/>
-<img src="../../../logos/documentdb-logo.svg" width="100px" height="100px"/> 
+<img src="../../../_images/logos/mongodb-logo.svg" width="100px" height="100px" style="padding-right: 15px;"/>
+<img src="../../../_images/logos/documentdb-logo.svg" width="100px" height="100px"/> 
 </div>
 ++++
 with more to come.

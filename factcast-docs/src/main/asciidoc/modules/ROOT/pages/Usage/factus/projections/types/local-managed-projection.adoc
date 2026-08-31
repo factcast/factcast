@@ -4,7 +4,7 @@
 
 
 
-image::../../../../images/ph_lm.png[, align="center"]
+image::ph_lm.png[, align="center"]
 
 As a specialization of ManagedProjection, a LocalManagedProjection lives within the application
 process and **does not use shared external Databases** to maintain its state.
