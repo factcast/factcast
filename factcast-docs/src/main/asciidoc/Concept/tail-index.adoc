@@ -37,7 +37,7 @@ In general, xref:fact.adoc#read-subscribe[subscriptions] may consist of two poss
 A _tail index_ supports the regular "are there new events (since X)?" queries by creating additional smaller partial indexes
 at _the end_ of the fact log:
 
-image::../tail-index.png[]
+image::../images/tail-index.png[]
 
 More precisely, FactCast maintains a certain number of rolling partial (tail) indexes.
 When asked to query facts from the end of the fact log,

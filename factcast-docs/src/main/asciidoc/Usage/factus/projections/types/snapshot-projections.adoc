@@ -4,7 +4,7 @@
 
 
 
-image::../ph_sp.png[, align="center"]
+image::../../../../images/ph_sp.png[, align="center"]
 
 Now that we know how snapshotting works and what a projection is, it is quite easy to put things together:
 

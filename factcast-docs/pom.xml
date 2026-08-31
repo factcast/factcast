@@ -33,6 +33,7 @@
               <backend>html5</backend>
               <preserveDirectories>true</preserveDirectories>
               <relativeBaseDir>true</relativeBaseDir>
+              <docinfodir>${project.basedir}/src/main/asciidoc</docinfodir>
               <resources>
                 <resource>
                   <directory>src/main/asciidoc</directory>
@@ -50,6 +51,8 @@
                 <toc>left</toc>
                 <icons>font</icons>
                 <source-highlighter>highlight.js</source-highlighter>
+                <docinfo>shared</docinfo>
+                <docinfodir>${project.basedir}/src/main/asciidoc</docinfodir>
               </attributes>
             </configuration>
           </execution>
