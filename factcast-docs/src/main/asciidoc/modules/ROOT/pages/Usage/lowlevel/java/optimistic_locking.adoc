@@ -103,7 +103,10 @@ The number of retries is set to _100_ here (default is 10, which for many system
 If _interval_ is not set, it defaults to 0 with the effect, that the code passed into _attempt_ is continuously retried without any pause until it either _aborts_, succeeds, or the max number of retries was hit (see above).
 Setting it to _5_ means, that before retrying, a 5 msec wait happens.
 
-{{< warning >}}<b>WARNING</b>: Setting interval to non-zero makes your code block a thread. The above combination of 100 retries with a 5 msec interval means, that - at worst - your code could block <i>longer than half a second</i>.{{< /warning >}}
+[WARNING]
+====
+Setting interval to non-zero makes your code block a thread. The above combination of 100 retries with a 5 msec interval means, that - at worst - your code could block _longer than half a second_.
+====
 
 Everything starts with passing a lambda to the _attempt_ method. The lambda is of type
 

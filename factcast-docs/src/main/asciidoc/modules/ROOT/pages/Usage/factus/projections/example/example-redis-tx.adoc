@@ -5,8 +5,7 @@
 
 
 Here is a projection that handles _UserCreated_ and
-_UserDeleted_ events. It solves the same problem as the example we've seen in xref:{{<
-ref "example-spring-tx.md">}}[Spring transactional projections]. However, this time we use Redis as our data store and https://github.com/redisson/redisson[Redisson] as the access API.
+_UserDeleted_ events. It solves the same problem as the example we've seen in xref:example-spring-tx.adoc[Spring transactional projections]. However, this time we use Redis as our data store and https://github.com/redisson/redisson[Redisson] as the access API.
 
 == Configuration
 

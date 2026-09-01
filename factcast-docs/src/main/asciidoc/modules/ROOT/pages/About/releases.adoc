@@ -12,12 +12,12 @@ For full overview, you can look at the xref:changelog.adoc[changelog]
 
 === RELEASE 0.4.3
 
-{{< rawhtml >}}
+++++
 <a
 href="https://github.com/factcast/factcast/issues?q=is%3Aissue+milestone%3A0.4.3+">
 0.4.3
 </a>
-{{< /rawhtml >}}
+++++
 
 ==== Fixes
 
@@ -31,12 +31,12 @@ Factus: Important fix regarding threading when using Atomicity
 
 === RELEASE 0.4.2
 
-{{< rawhtml >}}
+++++
 <a
 href="https://github.com/factcast/factcast/issues?q=is%3Aissue+milestone%3A0.4.2+">
 0.4.2
 </a>
-{{< /rawhtml >}}
+++++
 
 ==== Fixes
 
@@ -56,12 +56,12 @@ Hitchhikers Guide to Integration Testing #1160
 
 === RELEASE 0.4.1
 
-{{< rawhtml >}}
+++++
 <a
 href="https://github.com/factcast/factcast/issues?q=is%3Aissue+milestone%3A0.4.1+">
 0.4.1
 </a>
-{{< /rawhtml >}}
+++++
 
 ===== Performance
 
@@ -77,12 +77,12 @@ href="https://github.com/factcast/factcast/issues?q=is%3Aissue+milestone%3A0.4.1
 
 === RELEASE 0.4.0
 
-{{< rawhtml >}}
+++++
 <a
 href="https://github.com/factcast/factcast/issues?q=is%3Aissue+milestone%3A0.4.0+">
 0.4.0
 </a>
-{{< /rawhtml >}}
+++++
 
 ==== Feature
 
@@ -109,12 +109,12 @@ Performance
 
 === RELEASE 0.3.0
 
-{{< rawhtml >}}
+++++
 <a
 href="https://github.com/factcast/factcast/issues?q=is%3Aissue+milestone%3A0.3.0+">
 0.3.0
 </a>
-{{< /rawhtml >}}
+++++
 
 ==== Feature
 
@@ -138,12 +138,12 @@ href="https://github.com/factcast/factcast/issues?q=is%3Aissue+milestone%3A0.3.0
 
 === RELEASE 0.2.5
 
-{{< rawhtml >}}
+++++
 <a
 href="https://github.com/factcast/factcast/issues?q=is%3Aissue+milestone%3A0.2.5+">
 0.2.5
 </a>
-{{< /rawhtml >}}
+++++
 
 - important fix for detecting disappearing clients
 - self-defense against spinning clients by refusing excessive reoccurring
@@ -154,33 +154,33 @@ href="https://github.com/factcast/factcast/issues?q=is%3Aissue+milestone%3A0.2.5
 
 === RELEASE 0.2.4
 
-{{< rawhtml >}}
+++++
 <a
 href="https://github.com/factcast/factcast/issues?q=is%3Aissue+milestone%3A0.2.4+">
 0.2.4
 </a>
-{{< /rawhtml >}}
+++++
 
 ---
 
 === RELEASE 0.2.1
 
-{{< rawhtml >}}
+++++
 <a
 href="https://github.com/factcast/factcast/issues?q=is%3Aissue+milestone%3A0.2.1+">
 0.2.1
 </a>
-{{< /rawhtml >}}
+++++
 
 ---
 
 === RELEASE 0.2.0
 
-{{< rawhtml >}}
+++++
 <a href="https://github.com/factcast/factcast/issues?q=is%3Aissue+milestone%3A0.2.0+">
 0.2.0 (milestone)
 </a>
-{{< /rawhtml >}}
+++++
 
 ==== major features
 

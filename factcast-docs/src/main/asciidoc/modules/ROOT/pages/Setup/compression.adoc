@@ -35,12 +35,9 @@ in the server, and just the preferred one on the client side.
 For obvious reasons, extra dependencies to `factcast-grpc-myCompressionAlgorithm` may bring new transitive dependencies
 (like `commons-compress` or `net.jpountz` for example). As always: please check for potential conflicts.
 
-{{< cardpane >}}
-{{< card header="Snappy" >}}
-
+.Snappy
 [source,xml]
 ----
-
 <dependency>
     <groupId>org.factcast</groupId>
     <artifactId>factcast-grpc-lz4</artifactId>
@@ -48,12 +45,9 @@ For obvious reasons, extra dependencies to `factcast-grpc-myCompressionAlgorithm
 </dependency>
 ----
 
-{{< /card >}}
-{{< card header="LZ4" >}}
-
+.LZ4
 [source,xml]
 ----
-
 <dependency>
     <groupId>org.factcast</groupId>
     <artifactId>factcast-grpc-snappy</artifactId>
@@ -61,40 +55,27 @@ For obvious reasons, extra dependencies to `factcast-grpc-myCompressionAlgorithm
 </dependency>
 ----
 
-{{< /card >}}
-{{< /cardpane >}}
-
 For versions before 0.7.9 the respective dependencies were
 
-{{< cardpane >}}
-{{< card header="Snappy" >}}
-
+.Snappy
 [source,xml]
 ----
-
 <dependency>
     <groupId>org.xerial.snappy</groupId>
     <artifactId>snappy-java</artifactId>
     <version>1.1.8.4</version>
 </dependency>
-
 ----
 
-{{< /card >}}
-{{< card header="LZ4" >}}
-
+.LZ4
 [source,xml]
 ----
-
 <dependency>
     <groupId>net.jpountz.lz4</groupId>
     <artifactId>lz4</artifactId>
     <version>1.3.0</version>
 </dependency>
 ----
-
-{{< /card >}}
-{{< /cardpane >}}
 
 `org.xerial.snappy` and `net.jpountz.lz4` are deprecated now and will be removed in 0.8.
 

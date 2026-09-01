@@ -35,8 +35,10 @@ looking for the basic configuration properties, that is where you can find the l
 
 At the time of writing, the most relevant are:
 
-| Name                                                  | Example Value           | required |
-| :---------------------------------------------------- | :---------------------- | :------- |
-| spring.grpc.client.channel.factstore.target           | static://localhost:9090 | yes      |
-| spring.grpc.client.channel.factstore.ssl.enabled      | true                    | no       |
-| spring.grpc.client.channel.factstore.keepalive.enable | true                    | no       |
+[cols="2,2,1", options="header"]
+|===
+|Name |Example Value |required
+|spring.grpc.client.channel.factstore.target |static://localhost:9090 |yes
+|spring.grpc.client.channel.factstore.ssl.enabled |true |no
+|spring.grpc.client.channel.factstore.keepalive.enable |true |no
+|===

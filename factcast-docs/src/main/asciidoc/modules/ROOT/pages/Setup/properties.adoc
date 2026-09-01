@@ -1,10 +1,9 @@
 = Properties
-:toc: left
 :icons: font
 
 
 
-=== Schemaregistry
+== Schemaregistry
 
 [cols="1,1,1", options="header"]
 |===
@@ -19,7 +18,7 @@
 
 ---
 
-=== Transformation-Registry
+== Transformation-Registry
 
 [cols="1,1,1", options="header"]
 |===
@@ -30,7 +29,7 @@
 
 ---
 
-=== Performance / Reliability
+== Performance / Reliability
 
 [cols="1,1,1", options="header"]
 |===
@@ -76,9 +75,9 @@
 
 ---
 
-=== Snapshots
+== Snapshots
 
-==== InMem-Snapshots
+=== InMem-Snapshots
 
 [cols="1,1,1", options="header"]
 |===
@@ -86,7 +85,7 @@
 |factcast.snapshot.local.mem.delete-snapshot-stale-for-days |min number of days a snapshot is kept even though it is not read anymore. Must be a positive number. |90
 |===
 
-==== InMemAndDisk-Snapshots
+=== InMemAndDisk-Snapshots
 
 [cols="1,1,1", options="header"]
 |===
@@ -95,7 +94,7 @@
 |factcast.snapshot.local.disk.max-disk-space |max disk space to be used by the SnapshotDiskRepository. The oldest Snapshots will start to be removed after reaching 90% of the allocated space, never reaching 100%. Use 0 for unlimited disk space |0
 |===
 
-==== RedisSnapshots
+=== RedisSnapshots
 
 [cols="1,1,1", options="header"]
 |===
@@ -103,7 +102,7 @@
 |factcast.snapshot.redis.delete-snapshot-stale-for-days |min number of days a snapshot is kept even though it is not read anymore. Must be a positive number. |90
 |===
 
-==== JDBC-Snapshots
+=== JDBC-Snapshots
 
 [cols="1,1,1", options="header"]
 |===
@@ -113,7 +112,7 @@
 |factcast.snapshot.jdbc.snapshot-access-table-name |optional name of the table for the snapshots access timestamp. When not provided the default will be used |factcast_snapshot_last_accessed
 |===
 
-==== MongoDB-Snapshots
+=== MongoDB-Snapshots
 
 [cols="1,1,1", options="header"]
 |===
@@ -121,7 +120,7 @@
 |factcast.snapshot.mongodb.delete-snapshot-stale-for-days |min number of days a snapshot is kept even though it is not read anymore. Must be a positive number. |90
 |===
 
-=== Snapshot Serializers
+== Snapshot Serializers
 
 [cols="1,1,1", options="header"]
 |===
@@ -131,7 +130,7 @@
 
 ---
 
-=== gRPC
+== gRPC
 
 Properties you can use to configure gRPC:
 
@@ -147,7 +146,7 @@ Properties you can use to configure gRPC:
 |spring.grpc.client.channel.factstore.keepalive.without-calls |Configures whether keepAlive will be performed when there are no outstanding RPCs on a connection. |false |true
 |===
 
-==== gRPC Client recommended settings
+=== gRPC Client recommended settings
 
 ----
 spring.grpc.client.channel.factstore.keepalive.time=300
@@ -156,7 +155,7 @@ spring.grpc.client.channel.factstore.keepalive.without-calls=true
 
 Further details can be found here : `org.springframework.boot.grpc.client.autoconfigure.GrpcClientProperties`.
 
-==== FactCast client specific
+=== FactCast client specific
 
 [cols="1,1,1,1", options="header"]
 |===
@@ -174,7 +173,7 @@ Further details can be found here : `org.springframework.boot.grpc.client.autoco
 |factcast.grpc.client.health-check-enabled |Enables a client side actuator health check that reports out of service as soon as the underlying connection reports a transient failure. You can achieve the same by excluding the `GrpcClientHealthAutoConfiguration.class` from your autoconfiguration. |true |false
 |===
 
-==== grpc Server
+=== grpc Server
 
 [cols="1,1,1,1", options="header"]
 |===
@@ -188,7 +187,7 @@ Further details can be found here : `org.springframework.boot.grpc.client.autoco
 |factcast.grpc.bandwidth.disabled |completely disables checking if set to true |false |true
 |===
 
-==== gRPC Server recommended settings
+=== gRPC Server recommended settings
 
 ----
 spring.grpc.server.keep-alive.permit-without-calls=true
@@ -197,7 +196,7 @@ spring.grpc.server.keep-alive.permit-time=100
 
 ---
 
-=== Blacklist
+== Blacklist
 
 [cols="1,1,1,1", options="header"]
 |===
@@ -208,7 +207,7 @@ spring.grpc.server.keep-alive.permit-time=100
 
 ---
 
-=== Testing
+== Testing
 
 [cols="1,1,1", options="header"]
 |===
@@ -218,7 +217,7 @@ spring.grpc.server.keep-alive.permit-time=100
 
 ---
 
-=== UI
+== UI
 
 [cols="1,1,1", options="header"]
 |===
