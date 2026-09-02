@@ -1,5 +1,4 @@
 = Introduction
-:toc: left
 :icons: font
 
 

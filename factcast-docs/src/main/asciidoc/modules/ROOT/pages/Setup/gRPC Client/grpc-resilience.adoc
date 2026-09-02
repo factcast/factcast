@@ -1,5 +1,4 @@
 = gRPC Resilience
-:toc: left
 :icons: font
 
 

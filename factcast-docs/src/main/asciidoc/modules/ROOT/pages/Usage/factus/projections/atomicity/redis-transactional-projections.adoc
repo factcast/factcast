@@ -1,5 +1,4 @@
 = Redis Transactional
-:toc: left
 :icons: font
 
 

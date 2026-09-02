@@ -1,5 +1,4 @@
 = Docker
-:toc: left
 :icons: font
 
 

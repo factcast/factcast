@@ -1,5 +1,4 @@
 = fat-jar (TLS)
-:toc: left
 :icons: font
 
 

@@ -1,5 +1,4 @@
 = Fact Specification
-:toc: left
 :icons: font
 
 

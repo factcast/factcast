@@ -1,5 +1,4 @@
 = Metrics
-:toc: left
 :icons: font
 
 

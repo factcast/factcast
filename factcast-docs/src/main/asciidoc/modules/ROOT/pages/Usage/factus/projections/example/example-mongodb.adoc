@@ -1,5 +1,4 @@
 = UserNames (MongoDB)
-:toc: left
 :icons: font
 
 

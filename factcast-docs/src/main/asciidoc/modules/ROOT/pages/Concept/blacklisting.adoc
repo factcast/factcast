@@ -1,5 +1,4 @@
 = Blacklisting
-:toc: left
 :icons: font
 
 

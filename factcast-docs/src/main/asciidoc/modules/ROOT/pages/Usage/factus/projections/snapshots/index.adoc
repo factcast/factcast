@@ -1,5 +1,4 @@
 = Snapshotting
-:toc: left
 :icons: font
 
 

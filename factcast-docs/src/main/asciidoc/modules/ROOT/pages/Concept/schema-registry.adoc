@@ -1,5 +1,4 @@
 = Schema validation and Registry
-:toc: left
 :icons: font
 
 

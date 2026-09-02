@@ -1,5 +1,4 @@
 = 3rd Party CLI
-:toc: left
 :icons: font
 
 

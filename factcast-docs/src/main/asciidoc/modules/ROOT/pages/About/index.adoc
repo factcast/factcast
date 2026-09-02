@@ -1,5 +1,4 @@
 = About
-:toc: left
 :icons: font
 
 pass:[<div style="text-align: center; font-size: xx-large;"><i>FactCast is a 'good enough' Event-store based on PostgreSQL.</i></div>]

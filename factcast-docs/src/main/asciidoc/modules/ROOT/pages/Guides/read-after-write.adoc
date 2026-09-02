@@ -1,5 +1,4 @@
 = Hitchhiker's Guide To Read-after-Write consistency
-:toc: left
 :icons: font
 
 [NOTE]
@@ -7,12 +6,12 @@
 This guide is targeting an audience that is already informed about the projection types offered by Factus, and about
 their concepts.
 
-We suggest to check out the "Projections" section of the [Factus API docs](xref:../Usage/factus/projections/index.adoc)
+We suggest to check out the "Projections" section of the xref:../Usage/factus/projections/index.adoc[Factus API docs]
 before delving into this guide.
 ====
 
 
-## Problem statement
+== Problem statement
 
 Factus and its projections follow the CQRS Pattern, which - next to plenty of other advantages - provides
 the application with a good way to make use of _Eventual Consistency_.
@@ -22,7 +21,7 @@ Depending on the Projection you use, it can be updated
 - manually at you convenience, or
 - asynchronously, pushed by the factcast server
 
-## Eventual consistency, and when to use it
+== Eventual consistency, and when to use it
 
 Eventual consistency is a great way of drastically improving scalability of your application in scenarios,
 where the exact moment of an update of the model is not important.
@@ -37,7 +36,7 @@ somebody logs in, nobody will care.
 This latency, from the moment when a potentially interesting fact is published up to when a callback on the handler
 method of a projection is invoked, we call the **window of inconsistency**.
 
-#### Snapshot / Aggregate
+==== Snapshot / Aggregate
 
 The above argumentation probably gives away, that you would not want to use a SnapshotProjection in this case,
 as it would probably be
@@ -53,7 +52,7 @@ What the more applicable alternative is (Managed or Subscribed Projection), depe
 on your tolerance for the window of inconsistency and the level of control you'd like to have over
 updating your model.
 
-##### Managed Projection
+===== Managed Projection
 
 A managed projection is called managed because the application can decide how often & when to update it.
 For instance, you could decide that a window of inconsistency can be as large as 60 seconds, so that ideally
@@ -65,13 +64,13 @@ This would also be slightly more efficient than using a subscribed projection if
 relevant facts to be published within this interval, but less efficient if there was nothing
 published in between.
 
-##### Subscribed Projection
+===== Subscribed Projection
 
 A subscribed projection will have its handler method invoked, when a relevant fact arrived.
 This method is more convenient (as there is less on the application layer to do) and also
 reduces the window of inconsistency to few milliseconds, depending on your networking & hardware setup.
 
-## Eventual consistency, and when to **not** use it
+== Eventual consistency, and when to **not** use it
 
 The use of eventual consistent models of course needs to be limited to the read-path of you application.
 When using eventual consistent models to validate constraints, you risk wrong business decisions due to race conditions.
@@ -87,10 +86,12 @@ There is however a use case, where inconsistency might not be appreciated:
 Your customer service agent is on the phone and is asked to change the name of the customer due to marriage.
 Lets assume the list-view of customers looks like:
 
-| customerId | Name           |
-| ---------- | -------------- |
-| 1          | John Lennon    |
-| 2          | Paul McCartney |
+[cols="1,2", options="header"]
+|===
+| customerId | Name
+| 1 | John Lennon
+| 2 | Paul McCartney
+|===
 
 Clicking on "John Lennon" leads to the detail dialog where he/she changed the name, saves and gets back to this list.
 If you think about it, we have a race condition here between the user again reading the model and the fact
@@ -104,12 +105,12 @@ If we take a step back, we have some kind of hybrid situation here, where most o
 users, we actually want eventual consistency, but we need to have exceptions. This is what we call Read-after-Write
 consistency.
 
-## Read-after-Write consistency
+== Read-after-Write consistency
 
 There are many ways of implementing this read-after-write consistency. We're discussing one example approach
 for managed and subscribed projections each:
 
-#### Managed Projections and selective update
+==== Managed Projections and selective update
 
 When using managed projections you can call `factus.update(myManagedUserCount);` whenever you want.
 If you have chosen to update it regularly, the first idea would be to add an additional update call,
@@ -120,7 +121,7 @@ This would also only work for externalized models and might be wasteful. Basical
 subscribed projection in a way (apply change as soon as it happened), but gives you the control necessary
 to make the user in question (the writer) wait for the model to be updated.
 
-#### Subscribed Projections and additional waiting
+==== Subscribed Projections and additional waiting
 
 When using subscribed projections you have no control over when the fact arrives at the model. So
 in order to make the data appear consistent to the user who just changed something, you'd need to

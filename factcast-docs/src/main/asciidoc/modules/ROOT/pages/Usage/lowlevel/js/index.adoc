@@ -1,5 +1,4 @@
 = JavaScript
-:toc: left
 :icons: font
 
 

@@ -1,5 +1,4 @@
 = Callbacks
-:toc: left
 :icons: font
 
 

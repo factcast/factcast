@@ -1,5 +1,4 @@
 = Security
-:toc: left
 :icons: font
 
 

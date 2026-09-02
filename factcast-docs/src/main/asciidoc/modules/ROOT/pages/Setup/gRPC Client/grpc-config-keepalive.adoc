@@ -1,5 +1,4 @@
 = gRPC KeepAlive
-:toc: left
 :icons: font
 
 

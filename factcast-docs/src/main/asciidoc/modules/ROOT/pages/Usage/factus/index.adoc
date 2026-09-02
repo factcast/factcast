@@ -1,5 +1,4 @@
 = Factus (high-level)
-:toc: left
 :icons: font
 
 

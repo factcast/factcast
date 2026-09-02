@@ -1,5 +1,4 @@
 = UI
-:toc: left
 :icons: font
 
 

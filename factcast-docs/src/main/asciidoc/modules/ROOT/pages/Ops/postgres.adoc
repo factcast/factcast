@@ -1,5 +1,4 @@
 = PostgreSQL
-:toc: left
 :icons: font
 
 

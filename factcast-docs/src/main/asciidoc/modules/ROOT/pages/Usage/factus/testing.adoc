@@ -1,5 +1,4 @@
 = Testing
-:toc: left
 :icons: font
 
 

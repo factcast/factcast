@@ -1,5 +1,4 @@
 = Report Storage
-:toc: left
 :icons: font
 
 

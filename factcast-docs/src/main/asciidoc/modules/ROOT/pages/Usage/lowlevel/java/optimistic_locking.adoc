@@ -1,5 +1,4 @@
 = Java Optimistic Locking
-:toc: left
 :icons: font
 
 

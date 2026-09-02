@@ -1,5 +1,4 @@
 = Schema Registry CLI
-:toc: left
 :icons: font
 
 

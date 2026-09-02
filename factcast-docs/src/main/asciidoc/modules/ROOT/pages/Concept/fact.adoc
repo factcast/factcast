@@ -1,5 +1,4 @@
 = The Anatomy of a Fact
-:toc: left
 :icons: font
 
 

@@ -1,5 +1,4 @@
 = Plugins
-:toc: left
 :icons: font
 
 

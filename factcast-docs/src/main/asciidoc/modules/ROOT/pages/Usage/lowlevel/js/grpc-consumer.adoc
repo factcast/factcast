@@ -1,5 +1,4 @@
 = nodeJS GRPC Consumer
-:toc: left
 :icons: font
 
 

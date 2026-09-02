@@ -1,5 +1,4 @@
 = fat-jar
-:toc: left
 :icons: font
 
 

@@ -1,5 +1,4 @@
 = API
-:toc: left
 :icons: font
 
 

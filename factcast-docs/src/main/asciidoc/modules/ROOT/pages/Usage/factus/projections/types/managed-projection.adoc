@@ -1,5 +1,4 @@
 = Managed
-:toc: left
 :icons: font
 
 

@@ -1,5 +1,4 @@
 = Java
-:toc: left
 :icons: font
 
 

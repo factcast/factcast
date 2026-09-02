@@ -1,5 +1,4 @@
 = Usage (low-level)
-:toc: left
 :icons: font
 
 

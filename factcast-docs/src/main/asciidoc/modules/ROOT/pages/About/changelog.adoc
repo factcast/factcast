@@ -1,5 +1,4 @@
 = Changelog
-:toc: left
 :icons: font
 
 

@@ -1,5 +1,4 @@
 = Transformation
-:toc: left
 :icons: font
 
 

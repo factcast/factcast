@@ -1,5 +1,4 @@
 = Java GRPC Producer
-:toc: left
 :icons: font
 
 

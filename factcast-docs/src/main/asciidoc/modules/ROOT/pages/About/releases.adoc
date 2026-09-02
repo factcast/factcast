@@ -1,5 +1,4 @@
 = Releases
-:toc: left
 :icons: font
 
 

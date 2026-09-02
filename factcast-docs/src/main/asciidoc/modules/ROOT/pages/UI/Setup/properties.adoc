@@ -1,5 +1,4 @@
 = Properties
-:toc: left
 :icons: font
 
 

@@ -1,5 +1,4 @@
 = Tail Indexing
-:toc: left
 :icons: font
 
 

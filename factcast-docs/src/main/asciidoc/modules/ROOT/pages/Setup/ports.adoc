@@ -1,5 +1,4 @@
 = Ports
-:toc: left
 :icons: font
 
 

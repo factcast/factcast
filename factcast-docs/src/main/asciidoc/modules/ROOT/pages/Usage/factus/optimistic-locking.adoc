@@ -1,5 +1,4 @@
 = Optimistic locking
-:toc: left
 :icons: font
 
 

@@ -1,5 +1,4 @@
 = Hitchhiker's Guide To Projection Selection
-:toc: left
 :icons: font
 
 [NOTE]
@@ -7,12 +6,12 @@
 This guide is targeting an audience that is already informed about the projection types offered by Factus, and about
 their concepts.
 
-We suggest to check out the "Projections" section of the [Factus API docs](xref:../Usage/factus/projections/index.adoc)
+We suggest to check out the "Projections" section of the xref:../Usage/factus/projections/index.adoc[Factus API docs]
 before delving into this guide.
 ====
 
 
-## Introduction
+== Introduction
 
 Projections, the derived views of our event-sourced data, serve as vital components in shaping our applications,
 enabling efficient querying, analysis, and decision-making. However, with Factus offering a range of projection options,
@@ -25,7 +24,7 @@ practical advice to aid your decision-making process.
 
 ---
 
-## Identifying Relevant Requirements
+== Identifying Relevant Requirements
 
 Before diving into the exploration of different projection types, it is essential to establish a clear understanding of
 the requirements that are relevant to your specific project. By identifying these requirements upfront, you can
@@ -36,41 +35,41 @@ In this section, we will delve into a comprehensive list of possible requirement
 evaluating projection types. By examining and prioritizing these requirements, you will gain valuable insights into the
 trade-offs and considerations associated with each projection type.
 
-### Scalability
+=== Scalability
 
 This requirement focuses on the ability of the chosen projection type to handle growing amounts of data and increasing
 workloads without compromising performance or functionality. Considerations include the horizontal scalability of the
 projection, the efficiency of data distribution, and the ability to handle concurrent updates and queries.
 
-### Performance (split between latencies and costs?)
+=== Performance (split between latencies and costs?)
 
 Performance refers to the speed and responsiveness of the projection type in processing events and serving queries.
 It involves evaluating factors such as event ingestion rates, query response times, and the impact of increasing data
 volumes on overall system performance. Choosing a projection type that can meet the desired performance benchmarks is
 crucial for maintaining a high-performing and responsive system.
 
-### Query flexibility
+=== Query flexibility
 
 Query flexibility assesses the ability to express complex queries and retrieve relevant information efficiently. It
 involves evaluating the projection type's support for various query patterns, such as filtering, aggregations, joins,
 and ad-hoc queries. Consider whether the chosen projection type enables the desired flexibility in querying the
 event-sourced data while maintaining good performance.
 
-### Complexity
+=== Complexity
 
 Complexity refers to the level of intricacy and sophistication involved in implementing and managing the chosen
 projection type. It encompasses aspects such as the learning curve for developers, the architectural complexity of the
 projection, and the degree of operational complexity. It is important to assess whether the complexity aligns with the
 team's expertise and resources.
 
-### Data consistency
+=== Data consistency
 
 Data consistency focuses on ensuring that the derived views produced by the projection type accurately reflect the state
 of the event stream. It involves assessing how well the projection type handles events, updates, and concurrent
 modifications to maintain a consistent and coherent view of the data across different projections. Ensuring data
 consistency is crucial for making reliable and accurate decisions based on the derived views.
 
-### Maintainability
+=== Maintainability
 
 Maintainability assesses the ease of managing, updating, and evolving the projection type over time. Considerations
 include the ability to accommodate changing business requirements, the ease of making modifications or adding new
@@ -79,14 +78,14 @@ ensures long-term sustainability and adaptability of the system.
 
 ---
 
-## Comparing Projection Types
+== Comparing Projection Types
 
 Let's go over a comparative analysis of the different projection types, discussing the strengths and weaknesses of each
 type concerning the identified requirements.
 
-### Snapshot Projection
+=== Snapshot Projection
 
-[Snapshot Projection documentation](xref:../Usage/factus/projections/types/snapshot-projections.adoc)
+xref:../Usage/factus/projections/types/snapshot-projections.adoc[Snapshot Projection documentation]
 
 - **Scalability**: different modules can be used to configure the snapshot cache. Whenever scalability is a requirement,
   consider using snapshot cache modules that allow storing the snapshots in a shared database, like
@@ -104,19 +103,19 @@ type concerning the identified requirements.
 
 - **Data consistency**: when fetched, the Snapshot Projection ensures to return the most recent representation of the
   event stream. It supports optimistic locking to handle concurrent modifications. Check out the
-  [Optimistic Locking](xref:../Usage/factus/optimistic-locking.adoc) section for further details.
+  xref:../Usage/factus/optimistic-locking.adoc[Optimistic Locking] section for further details.
 
 - **Maintainability**: the projection allows to change the business logic of the event handlers, to create new data
   structures for the derived views, update existing ones, or to add new decisions. To do so, it is necessary to update
   the serial of the projection every time the projection class is changed - check out the
-  [documentation](xref:../Usage/factus/projections/snapshots/index.adoc#serials).
+  xref:../Usage/factus/projections/snapshots/index.adoc#serials[documentation].
   The full event-stream will then be re-consumed on the subsequent fetch, as the previously created snapshots will get
   invalidated. The snapshots retention might need to be fine-tuned on the long run, based on the amount of resources
   available, and the frequency of the queries.
 
-### Aggregate
+=== Aggregate
 
-[Aggregate documentation](xref:../Usage/factus/projections/types/aggregates.adoc)
+xref:../Usage/factus/projections/types/aggregates.adoc[Aggregate documentation]
 
 - **Scalability**: same considerations made for the Snapshot Projection apply.
 
@@ -135,9 +134,9 @@ type concerning the identified requirements.
 
 - **Maintainability**: same considerations made for the Snapshot Projection apply.
 
-### Managed Projection
+=== Managed Projection
 
-[Managed Projection documentation](xref:../Usage/factus/projections/types/managed-projection.adoc)
+xref:../Usage/factus/projections/types/managed-projection.adoc[Managed Projection documentation]
 
 Preface: considering a Managed Projection that has its state externalized in a shared database.
 
@@ -162,18 +161,18 @@ Preface: considering a Managed Projection that has its state externalized in a s
   all instances of the projection. Of course, the derived views might be stale, whenever new events are published, but
   the projection can be updated while processing queries, to ensure that the most recent state is returned. It supports
   optimistic locking to handle concurrent modifications. Check out the
-  [Optimistic Locking](xref:../Usage/factus/optimistic-locking.adoc) section for further details.
+  xref:../Usage/factus/optimistic-locking.adoc[Optimistic Locking] section for further details.
 
 - **Maintainability**: a managed projection enables the construction of derived views that can potentially be queried
   even when the Event Store is unavailable. The projection allows to change the business logic of the event handlers,
   and change the underlying structure the derived views. To do so, it is necessary to update the serial of the
   projection every time the projection class is changed - check out the
-  [documentation](xref:../Usage/factus/projections/snapshots/index.adoc#serials). The full event-stream will then be
+  xref:../Usage/factus/projections/snapshots/index.adoc#serials[documentation]. The full event-stream will then be
   re-consumed on the subsequent updates, to rebuild the derived views.
 
-### Local Managed Projection
+=== Local Managed Projection
 
-[Local Managed Projection documentation](xref:../Usage/factus/projections/types/local-managed-projection.adoc)
+xref:../Usage/factus/projections/types/local-managed-projection.adoc[Local Managed Projection documentation]
 
 - **Scalability**: a Local Managed Projection stores its state in-memory. Depending on the use-case, this can create
   performance, and availability issues on the long-run, whenever the derived views size increases over time or is
@@ -199,9 +198,9 @@ Preface: considering a Managed Projection that has its state externalized in a s
   on subsequent restarts: this allows to easily test the projection, and change its business logic, but also has an
   impact on the performances, as the derived views need to be rebuilt from scratch.
 
-### Subscribed Projection
+=== Subscribed Projection
 
-[Subscribed Projection documentation](xref:../Usage/factus/projections/types/subscribed-projection.adoc)
+xref:../Usage/factus/projections/types/subscribed-projection.adoc[Subscribed Projection documentation]
 
 Preface: considering a Subscribed Projection that has its state externalized in a shared database.
 
@@ -233,12 +232,12 @@ Preface: considering a Subscribed Projection that has its state externalized in 
 - **Maintainability**: in terms of maintainability, a Subscribed Projection is similar to a Managed Projection, as it
   allows to change the business logic of the event handlers, and change the underlying structure the derived views. To
   do so, it is necessary to update the serial of the projection every time the projection class is changed - check out
-  the [documentation](xref:../Usage/factus/projections/snapshots/index.adoc#serials). The full event-stream will then be
+  the xref:../Usage/factus/projections/snapshots/index.adoc#serials[documentation]. The full event-stream will then be
   re-consumed on the next catch-up phase (when the new projection starts), to rebuild the derived views.
 
-### Local Subscribed Projection
+=== Local Subscribed Projection
 
-[Local Subscribed Projection documentation](xref:../Usage/factus/projections/types/local-subscribed-projection.adoc)
+xref:../Usage/factus/projections/types/local-subscribed-projection.adoc[Local Subscribed Projection documentation]
 
 - **Scalability**: same considerations made for the Local Managed Projection apply.
 
@@ -256,7 +255,7 @@ Preface: considering a Subscribed Projection that has its state externalized in 
 
 ---
 
-## Selecting the Right Projection Type
+== Selecting the Right Projection Type
 
 When embarking on the journey of selecting the right projection type for your event sourcing project, it is crucial to
 carefully evaluate and prioritize the identified requirements based on your project's unique context.
@@ -308,7 +307,7 @@ ask each time the server for new events (regardless of those being available or 
 
 ---
 
-## Best Practices and Tips
+== Best Practices and Tips
 
 Check the following [guide](https://docs.factcast.org/usage/factus/tips/) regularly, as it is updated with tips to
 improve performance, or fix common issues.

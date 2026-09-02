@@ -1,5 +1,4 @@
 = Motivation
-:toc: left
 :icons: font
 
 

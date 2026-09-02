@@ -1,5 +1,4 @@
 = Snapshot Caching
-:toc: left
 :icons: font
 
 

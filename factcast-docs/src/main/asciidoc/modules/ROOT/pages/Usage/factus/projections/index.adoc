@@ -1,5 +1,4 @@
 = Projection
-:toc: left
 :icons: font
 
 

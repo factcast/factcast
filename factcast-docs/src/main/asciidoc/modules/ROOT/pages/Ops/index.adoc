@@ -1,5 +1,4 @@
 = Ops
-:toc: left
 :icons: font
 
 

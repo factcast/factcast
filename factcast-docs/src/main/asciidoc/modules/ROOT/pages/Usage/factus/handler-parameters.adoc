@@ -1,5 +1,4 @@
 = Handler Parameters
-:toc: left
 :icons: font
 
 

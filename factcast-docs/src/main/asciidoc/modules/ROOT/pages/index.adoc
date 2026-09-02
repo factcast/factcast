@@ -1,5 +1,4 @@
 = FactCast
-:toc: left
 :icons: font
 
 

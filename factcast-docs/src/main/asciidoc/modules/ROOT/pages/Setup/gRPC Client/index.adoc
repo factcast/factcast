@@ -1,5 +1,4 @@
 = gRPC Client
-:toc: left
 :icons: font
 
 

@@ -1,5 +1,4 @@
 = gRPC BasicAuth
-:toc: left
 :icons: font
 
 

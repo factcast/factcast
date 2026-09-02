@@ -1,5 +1,4 @@
 = Hitchhiker's Guide To Extending Projection Database Support
-:toc: left
 :icons: font
 
 [NOTE]
@@ -7,12 +6,12 @@
 This guide is targeting an audience that is already informed about the projection types offered by Factus, and about
 their concepts.
 
-We suggest to check out the "Projections" section of the [Factus API docs](xref:../Usage/factus/projections/index.adoc)
+We suggest to check out the "Projections" section of the xref:../Usage/factus/projections/index.adoc[Factus API docs]
 before delving into this guide.
 ====
 
 
-## Introduction
+== Introduction
 
 When projections consume a lot of events or are complex to calculate it usually makes sense to persist their state into
 an external data store instead of using local projections. This way the state is not lost when the service is restarted,
@@ -23,13 +22,13 @@ If you want to use a different data store you can implement your own support for
 
 ---
 
-## Extending Factus's Database Support
+== Extending Factus's Database Support
 
 In case you want to use a data store that is not already supported by the existing abstract projections to persist your
 projection state, you can write your own projection implementation. This section guides you through the considerations
 and options you need to keep in mind in this situation.
 
-### Prerequisites
+=== Prerequisites
 
 When designing a projection implementation you'll need to consider the following aspects:
 
@@ -41,7 +40,7 @@ When designing a projection implementation you'll need to consider the following
    your projection in order to increase performance and to provide atomicity to your changes. Otherwise, go with a
    basic projection, but keep in mind that this approach has its limitations in terms of atomicity and throughput.
 
-### General Structure
+=== General Structure
 
 Projection implementations are usually provided via an abstract class that is extended by the actual projections within
 your
@@ -50,7 +49,7 @@ services. Apart from your desired class hierarchy, projections need to implement
 
 Let's imagine you implement support for the XYZ data store.
 
-### Projections without Transactional Safety
+=== Projections without Transactional Safety
 
 - Create an `AbstractXYZProjection` that implements `ExternalizedProjection`
 - Override the Getter and Setter for the FactStreamPosition, which represents the information up to which fact your
@@ -60,12 +59,12 @@ Let's imagine you implement support for the XYZ data store.
   of your service is able to write at a time. This way only the instance that holds the lock can process the fact
   stream and update your projection's state.
 
-### Projections with Transactional Safety
+=== Projections with Transactional Safety
 
 There are two types of transaction aware projections. No matter which one you choose the implementation will mostly be
 the same.
 
-#### Transaction Aware Projection
+==== Transaction Aware Projection
 
 In order to implement the `TransactionAware` interface, the data store needs to support atomicity for multiple writes
 within a transaction that can be collectively rolled back in case of failure.
@@ -77,7 +76,7 @@ within a transaction that can be collectively rolled back in case of failure.
   - `@Delegate TransactionalBehavior<YourTransactionType> txBehavior = new TransactionalBehavior<>( myXYZTransactionAdapter )`
     to put your XYZTranactionAdapter to good use.
 
-#### Open Transaction Aware Projection
+==== Open Transaction Aware Projection
 
 TransactionAware projections that are "Open" share all the characteristic of the Transaction Aware Projection, but they
 also provide the

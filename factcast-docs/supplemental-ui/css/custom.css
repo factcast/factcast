@@ -1,0 +1,36 @@
+/* Maximize main content column width and align TOC to the right */
+@media screen and (min-width: 1024px) {
+  .article {
+    max-width: none !important;
+    width: 100% !important;
+  }
+  
+  .content {
+    max-width: none !important;
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: flex-start !important;
+    padding-left: 2rem !important;
+    padding-right: 2rem !important;
+  }
+
+  .doc {
+    order: 1 !important;
+    flex: 1 1 auto !important;
+    max-width: none !important;
+    width: auto !important;
+    margin-right: 2rem !important;
+  }
+
+  .toc.sidebar {
+    order: 2 !important;
+    flex: 0 0 16rem !important;
+    width: 16rem !important;
+    margin-left: 0 !important;
+    position: sticky !important;
+    top: 5rem !important;
+    height: calc(100vh - 6rem) !important;
+    overflow-y: auto !important;
+  }
+}

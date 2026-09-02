@@ -1,5 +1,4 @@
 = Telemetry
-:toc: left
 :icons: font
 
 

@@ -1,5 +1,4 @@
 = Subscribed
-:toc: left
 :icons: font
 
 

@@ -1,5 +1,4 @@
 = Examples
-:toc: left
 :icons: font
 
 

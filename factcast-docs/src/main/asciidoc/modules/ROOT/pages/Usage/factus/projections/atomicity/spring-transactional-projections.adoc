@@ -1,5 +1,4 @@
 = Spring Transactional
-:toc: left
 :icons: font
 
 

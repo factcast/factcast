@@ -1,5 +1,4 @@
 = Prerequisites
-:toc: left
 :icons: font
 
 
