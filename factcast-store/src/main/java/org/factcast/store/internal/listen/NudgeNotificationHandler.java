@@ -110,7 +110,11 @@ public class NudgeNotificationHandler implements DisposableBean {
     public void run() {
       if (version == timerVersion.get()) {
         // only if we're in the current 100msec window
-        fetchPairsAndDispatch();
+        try {
+          fetchPairsAndDispatch();
+        } catch (RuntimeException e) {
+          log.warn("Scheduled notification poll failed", e);
+        }
       }
     }
   }
@@ -118,7 +122,11 @@ public class NudgeNotificationHandler implements DisposableBean {
   class ScheduledCleanup extends TimerTask {
     @Override
     public void run() {
-      jdbc.execute("CALL notificationCleanup()");
+      try {
+        jdbc.execute("CALL notificationCleanup()");
+      } catch (RuntimeException e) {
+        log.warn("Scheduled notification cleanup failed", e);
+      }
     }
   }
 
