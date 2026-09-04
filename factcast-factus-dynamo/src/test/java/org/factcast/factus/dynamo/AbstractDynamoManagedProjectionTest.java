@@ -194,7 +194,7 @@ class AbstractDynamoManagedProjectionTest {
   }
 
   @SuppressWarnings("deprecation")
-  @ProjectionMetaData(revision = 1)
+  @ProjectionMetaData(revisionId = "1")
   static class TestProjection extends AbstractDynamoManagedProjection {
 
     public TestProjection(@NonNull DynamoDbClient dynamoDb) {

@@ -34,7 +34,7 @@ class InMemoryAndDiskSnapshotCacheTest {
   private InMemoryAndDiskSnapshotCache underTest;
   private final SnapshotDiskRepository diskRepository = mock(SnapshotDiskRepository.class);
 
-  @ProjectionMetaData(name = "foo", revision = 1)
+  @ProjectionMetaData(name = "foo", revisionId = "1")
   class foo implements SnapshotProjection {}
 
   SnapshotIdentifier id = new SnapshotIdentifier(foo.class, UUID.randomUUID());

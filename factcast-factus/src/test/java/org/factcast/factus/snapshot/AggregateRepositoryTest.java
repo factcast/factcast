@@ -169,6 +169,6 @@ class AggregateRepositoryTest {
     }
   }
 
-  @ProjectionMetaData(revision = 43)
+  @ProjectionMetaData(revisionId = "43")
   public static class WithAnnotation extends Aggregate {}
 }
