@@ -44,8 +44,7 @@ class PgChunkedWithHoldCursorCatchupTest {
   @Mock StoreConfigurationProperties props;
   @Mock PgMetrics metrics;
   @Mock SubscriptionRequestTO req;
-  @Mock ServerPipeline pipeline;
-  @Mock CurrentStatementHolder statementHolder;
+  @Mock PushbackServerPipeline pipeline;
   @Mock SingleConnectionDataSource ds;
   @Mock PgCatchupFactory.Phase phase;
   @Mock AtomicLong serial;
@@ -57,11 +56,10 @@ class PgChunkedWithHoldCursorCatchupTest {
   @BeforeEach
   @SneakyThrows
   void setup() {
-    when(ds.getConnection()).thenReturn(connection);
+    lenient().when(ds.getConnection()).thenReturn(connection);
     underTest =
         Mockito.spy(
-            new PgChunkedWithHoldCursorCatchup(
-                props, metrics, req, pipeline, serial, statementHolder, ds, phase));
+            new PgChunkedWithHoldCursorCatchup(props, metrics, req, pipeline, serial, ds, phase));
   }
 
   @Nested
@@ -98,9 +96,10 @@ class PgChunkedWithHoldCursorCatchupTest {
     @Test
     @SneakyThrows
     void testFetchAllCanceled() {
-      when(statementHolder.wasCanceled()).thenReturn(true);
-      boolean result = underTest.fetchAll(cursor);
-      assertThat(result).isFalse();
+      doThrow(new PipelineAlreadyClosedException())
+          .when(underTest)
+          .inTransaction(any(PgChunkedWithHoldCursorCatchup.ThrowingCallable.class));
+      assertThrows(PipelineAlreadyClosedException.class, () -> underTest.fetchAll(cursor));
     }
 
     @Test
@@ -132,7 +131,6 @@ class PgChunkedWithHoldCursorCatchupTest {
     @Test
     @SneakyThrows
     void testContinueFetchingUntilExhausted_LoopExit() {
-      when(statementHolder.wasCanceled()).thenReturn(false);
       when(cursor.chunkSize()).thenReturn(1000);
       when(cursor.fetchChunk(any())).thenReturn(0); // < 1000, should return
 
@@ -145,7 +143,6 @@ class PgChunkedWithHoldCursorCatchupTest {
     @Test
     @SneakyThrows
     void testContinueFetchingUntilExhausted_Loop() {
-      when(statementHolder.wasCanceled()).thenReturn(false);
       when(cursor.chunkSize()).thenReturn(1000);
       when(cursor.fetchChunk(any())).thenReturn(1000, 1000, 750); // < 1000, should return
 
@@ -159,10 +156,8 @@ class PgChunkedWithHoldCursorCatchupTest {
     @Test
     @SneakyThrows
     void testContinueFetchingUntilExhausted_Canceled() {
-      when(statementHolder.wasCanceled()).thenReturn(false, true);
       when(cursor.chunkSize()).thenReturn(1000);
-      when(cursor.fetchChunk(any())).thenReturn(1000);
-
+      when(cursor.fetchChunk(any())).thenReturn(0);
       PgFactExtractor extractor = mock(PgFactExtractor.class);
       underTest.inTransaction(() -> underTest.continueFetchingUntilExhausted(cursor, extractor));
 
@@ -226,7 +221,6 @@ class PgChunkedWithHoldCursorCatchupTest {
 
       assertThat(rows).isEqualTo(0);
       verify(ps).setFetchSize(anyInt());
-      verify(statementHolder).statement(ps);
     }
 
     @Test
@@ -335,6 +329,7 @@ class PgChunkedWithHoldCursorCatchupTest {
     @Test
     @SneakyThrows
     void testDoInTransactionSuccess() {
+      when(connection.getAutoCommit()).thenReturn(true);
       underTest.inTransaction(() -> "success");
       verify(connection).setAutoCommit(false);
       verify(connection).commit();
@@ -344,6 +339,7 @@ class PgChunkedWithHoldCursorCatchupTest {
     @Test
     @SneakyThrows
     void testDoInTransactionFailure() {
+      when(connection.getAutoCommit()).thenReturn(true);
       assertThrows(
           SQLException.class,
           () ->

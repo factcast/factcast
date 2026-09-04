@@ -20,10 +20,12 @@ description: Properties you can use to configure FactCast
 
 ### Transformation-Registry
 
-| Property                                            | Description                                                                                                                     | Default |
-| --------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------ | :------ |
-| factcast.store.persistent-transformation-cache      | if Transformed Fact payloads are persistently cached into Postgres.                                                             | false   |
-| factcast.store.in-mem-transformation-cache-capacity | when using the inmem impl of the transformation cache, this is the max number of entries cached. The minimum value here is 100. | 100     |
+| Property                                             | Description                                                                                                                                                                                                                                                                                                        | Default                     |
+| ---------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------- |
+| factcast.store.persistent-transformation-cache       | if Transformed Fact payloads are persistently cached into Postgres.                                                                                                                                                                                                                                                | false                       |
+| factcast.store.in-mem-transformation-cache-capacity  | when using the inmem impl of the transformation cache, this is the max number of entries cached. The minimum value here is 100.                                                                                                                                                                                    | 100                         |
+| factcast.store.delete-transformations-stale-for-days | when using the persistent impl of the transformation cache, this is the min number of days a transformation result is not read in order to be considered stale. This should free some space in a regular cleanup job. Setting this to `-1` allows to disable the cleanup of transformation results from the cache. | -1 (disabled)               |
+| factcast.store.transformation-cache-compact-cron     | defines the cron schedule for compacting the transformation result cache.                                                                                                                                                                                                                                          | `0 0 0 * * *` (at midnight) |
 
 ---
 

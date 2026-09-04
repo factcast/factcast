@@ -28,9 +28,7 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.*;
 import org.factcast.store.internal.catchup.*;
-import org.factcast.store.internal.pipeline.ServerPipeline;
-import org.factcast.store.internal.pipeline.Signal;
-import org.factcast.store.internal.query.CurrentStatementHolder;
+import org.factcast.store.internal.pipeline.*;
 import org.factcast.store.internal.query.PgQueryBuilder;
 import org.factcast.store.internal.rowmapper.PgFactExtractor;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -47,12 +45,11 @@ public class PgChunkedCatchup extends AbstractPgCatchup {
       @NonNull StoreConfigurationProperties props,
       @NonNull PgMetrics metrics,
       @NonNull SubscriptionRequestTO req,
-      @NonNull ServerPipeline pipeline,
+      @NonNull PushbackServerPipeline pipeline,
       @NonNull AtomicLong serial,
-      @NonNull CurrentStatementHolder statementHolder,
       @NonNull SingleConnectionDataSource ds,
       PgCatchupFactory.@NonNull Phase phase) {
-    super(props, metrics, req, pipeline, serial, statementHolder, ds, phase);
+    super(props, metrics, req, pipeline, serial, ds, phase);
   }
 
   @SneakyThrows
@@ -61,8 +58,6 @@ public class PgChunkedCatchup extends AbstractPgCatchup {
     try {
       fetch(ds);
     } finally {
-      statementHolder.clear();
-
       log.trace("Done fetching, flushing.");
       pipeline.process(Signal.flush());
     }
@@ -71,55 +66,53 @@ public class PgChunkedCatchup extends AbstractPgCatchup {
   @VisibleForTesting
   @SneakyThrows
   @SuppressWarnings("java:S2077")
-  void fetch(DataSource ds) {
+  void fetch(DataSource ds) throws PipelineAlreadyClosedException {
     JdbcTemplate jdbc = new JdbcTemplate(ds);
 
     String tempTableName = "catchup_" + UUID.randomUUID().toString().replace("-", "");
 
-    try {
-      // this needs to be transactional for fetch-size to have any effect whatsoever.
-      ds.getConnection().setAutoCommit(false);
-      jdbc.setFetchSize(props.getPageSize());
-      jdbc.setQueryTimeout(0); // disable query timeout
-      if (prepareTemporaryTable(jdbc, tempTableName) > 0) {
+    // this needs to be transactional for fetch-size to have any effect whatsoever.
+    Connection connection = ds.getConnection();
+    connection.setAutoCommit(false);
+    jdbc.setFetchSize(props.getPageSize());
+    jdbc.setQueryTimeout(0); // disable query timeout
+    if (prepareTemporaryTable(jdbc, tempTableName) > 0) {
 
-        final var extractor = new PgFactExtractor(serial);
+      final var extractor = new PgFactExtractor(serial);
 
-        String chunkQuery = prepareChunkQuery(tempTableName);
+      String chunkQuery = prepareChunkQuery(tempTableName);
 
-        int chunkCount = 0;
-        int rowsToProcess = -1;
-        while (rowsToProcess != 0) {
+      int chunkCount = 0;
+      int rowsToProcess = -1;
+      boolean pipelineClosed = false;
 
-          if (statementHolder.wasCanceled()) {
-            log.trace("{} catchup {} - was cancelled", req, phase);
-            return;
-          }
+      while (rowsToProcess != 0 && !pipelineClosed) {
 
-          log.trace("{} catchup {} - fetching chunk {}", req, phase, ++chunkCount);
-          List<PgFact> facts = jdbc.query(chunkQuery, extractor);
-          rowsToProcess = facts.size();
-          log.trace(
-              "{} catchup {} - processing chunk {} - found {} rows",
-              req,
-              phase,
-              chunkCount,
-              rowsToProcess);
+        log.trace("{} catchup {} - fetching chunk {}", req, phase, ++chunkCount);
+        List<PgFact> facts = jdbc.query(chunkQuery, extractor);
+        rowsToProcess = facts.size();
+        log.trace(
+            "{} catchup {} - processing chunk {} - found {} rows",
+            req,
+            phase,
+            chunkCount,
+            rowsToProcess);
 
-          // process them
-          facts.forEach(f -> pipeline.process(Signal.of(f)));
+        // process them
+        for (PgFact f : facts) {
+          pipeline.process(Signal.of(f));
         }
-        log.trace("{} catchup {} - all chunks processed", req, phase);
-      } else {
-        log.trace("{} catchup {} - no matching serials found", req, phase);
       }
-    } finally {
-      // tmp table is not needed anymore. As we reuse the connection, it'd be good to drop it.
-      try {
-        jdbc.execute("drop table " + tempTableName);
-      } catch (Exception e) {
-        log.warn("{} catchup {} - while dropping tmp table:", req, phase, e);
-      }
+      log.trace("{} catchup {} - all chunks processed", req, phase);
+    } else {
+      log.trace("{} catchup {} - no matching serials found", req, phase);
+    }
+
+    // tmp table is not needed anymore. As we reuse the connection, it'd be good to drop it.
+    try {
+      jdbc.execute("drop table " + tempTableName);
+    } catch (Exception e) {
+      log.warn("{} catchup {} - while dropping tmp table:", req, phase, e);
     }
   }
 
@@ -146,7 +139,7 @@ public class PgChunkedCatchup extends AbstractPgCatchup {
   int prepareTemporaryTable(JdbcTemplate jdbc, String tempTableName) {
     createTempTable(jdbc, tempTableName);
 
-    final var b = new PgQueryBuilder(req.specs(), statementHolder);
+    final var b = new PgQueryBuilder(req.specs());
     b.useTempTable(tempTableName);
 
     final var fromSerial = new AtomicLong(Math.max(serial.get(), fastForward));
