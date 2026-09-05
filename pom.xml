@@ -128,7 +128,7 @@
     <kotlin.version>2.4.10</kotlin.version>
     <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
     <mockk.version>1.14.11</mockk.version>
-    <graaljs.version>25.2.4</graaljs.version>
+    <graaljs.version>25.3.4.1</graaljs.version>
     <redisson.version>4.7.0</redisson.version>
     <aws-sdk.version>2.54.13</aws-sdk.version>
     <mongodb-driver.version>5.10.0</mongodb-driver.version>
