@@ -61,17 +61,16 @@ public class CatchupDataSource extends ModifiedSingleConnectionDataSource {
     this.pipeline = pipeline;
 
     // we want to know when the pipeline is closed, so that we can cancel and abort.
-      try {
-    pipeline.register(this);
-  } catch (RuntimeException registrationFailure) {
     try {
-      super.destroy();
-    } catch (RuntimeException cleanupFailure) {
-      registrationFailure.addSuppressed(cleanupFailure);
+      pipeline.register(this);
+    } catch (RuntimeException registrationFailure) {
+      try {
+        super.destroy();
+      } catch (RuntimeException cleanupFailure) {
+        registrationFailure.addSuppressed(cleanupFailure);
+      }
+      throw registrationFailure;
     }
-    throw registrationFailure;
-  }
-
   }
 
   @Override
