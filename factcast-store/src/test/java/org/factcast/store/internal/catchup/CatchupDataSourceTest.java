@@ -178,4 +178,43 @@ class CatchupDataSourceTest {
       }
     }
   }
+
+  @Nested
+  class WhenRegistrationFails {
+
+    @Test
+    @SneakyThrows
+    void rethrowsRegistrationFailureAndDestroysConnection() {
+      PushbackServerPipeline failingPipeline = mock(PushbackServerPipeline.class);
+      RuntimeException registrationEx = new IllegalStateException("Pipeline closed");
+      doThrow(registrationEx).when(failingPipeline).register(any());
+
+      RuntimeException thrown =
+          assertThrows(
+              RuntimeException.class,
+              () -> new CatchupDataSource(connection, modifiers, failingPipeline));
+
+      assertThat(thrown).isSameAs(registrationEx);
+      verify(connection).close();
+    }
+
+    @Test
+    void addsCleanupExceptionAsSuppressedWhenBothFail() {
+      PushbackServerPipeline failingPipeline = mock(PushbackServerPipeline.class);
+      RuntimeException registrationEx = new IllegalStateException("Pipeline closed");
+      doThrow(registrationEx).when(failingPipeline).register(any());
+
+      ConnectionModifier modifier = mock(ConnectionModifier.class);
+      RuntimeException cleanupEx = new RuntimeException("cleanup fail");
+      doThrow(cleanupEx).when(modifier).beforeReturn(connection);
+
+      RuntimeException thrown =
+          assertThrows(
+              RuntimeException.class,
+              () -> new CatchupDataSource(connection, List.of(modifier), failingPipeline));
+
+      assertThat(thrown).isSameAs(registrationEx);
+      assertThat(thrown.getSuppressed()).containsExactly(cleanupEx);
+    }
+  }
 }
