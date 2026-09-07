@@ -57,7 +57,8 @@ public final class PgBlacklistDataProvider
       log.warn(
           "A change to the blacklist table was detected, but filtering uses the "
               + "internal exclusion column (factcast.store.useInternalExclusion=true). "
-              + "While an automated sync is in place for now, exclusion only is possible via the fact table in the future.");
+              + "Changes to the legacy table are synced for now, but in the future "
+              + "exclusion will be only possible via the fact table.");
       return;
     }
     log.debug("A potential change on blacklist table was triggered.");

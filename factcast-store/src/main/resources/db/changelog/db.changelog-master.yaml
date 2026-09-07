@@ -771,7 +771,7 @@ databaseChangeLog:
       changes:
         - sqlFile:
             encoding: utf8
-            path: factcast/issue3609/migrate_blacklist_to_exclusion_reason_procedure.sql
+            path: factcast/issue3609/create_migrate_blacklist_to_exclusion_reason_procedure.sql
             relativeToChangelogFile: true
             splitStatements: false
             stripComments: true

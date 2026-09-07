@@ -15,12 +15,14 @@
  */
 package org.factcast.store.internal.filter.blacklist;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 import com.google.common.collect.Sets;
 import com.google.common.eventbus.EventBus;
 import java.util.*;
 import lombok.SneakyThrows;
+import nl.altindag.log.LogCaptor;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.notification.BlacklistChangeNotification;
 import org.junit.jupiter.api.*;
@@ -124,10 +126,14 @@ class PgBlacklistDataProviderTest {
 
     @Test
     void warnsAndDoesNotUpdateOnChange() {
+      LogCaptor captor = LogCaptor.forClass(PgBlacklistDataProvider.class);
       underTest.on(new BlacklistChangeNotification(1));
 
       verifyNoInteractions(jdbc);
       verify(blacklist, never()).accept(any());
+      List<String> warnLogs = captor.getWarnLogs();
+      assertThat(warnLogs).isNotEmpty();
+      assertThat(warnLogs.get(0)).contains("A change to the blacklist table was detected");
     }
   }
 }
