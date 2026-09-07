@@ -28,7 +28,7 @@ when the projection is first resolved.
 
 {{% alert title="Keep the value identical" theme="warning" %}}
 The revision is part of the key under which projection state and snapshots are persisted. `revisionId = "1"` produces
-exactly the same scoped name as `revision = 1` did, so migratin is stable. If you decide to change the name during
+exactly the same scoped name as `revision = 1` did, so migration is stable. If you decide to change the name during
 migration (for instance `"1.0"` instead of `"1"`), the key changes and the projection will be rebuilt from scratch on
 the next run.
 {{% /alert %}}
