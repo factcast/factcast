@@ -91,7 +91,8 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
   /** returns true if fetch was not completely empty */
   @VisibleForTesting
   boolean fetchAll(@NonNull Cursor cursor) throws SQLException {
-    final var queryBuilder = new PgQueryBuilder(req.specs(), statementHolder);
+    final var queryBuilder =
+        new PgQueryBuilder(req.specs(), statementHolder, props.isUseInternalExclusion());
     queryBuilder.serialsOnly();
 
     final var extractor = new PgFactExtractor(serial);
