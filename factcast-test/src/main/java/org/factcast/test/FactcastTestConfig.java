@@ -21,6 +21,7 @@ import lombok.NonNull;
 import lombok.Value;
 import lombok.With;
 import org.factcast.core.util.MavenHelper;
+import org.slf4j.event.Level;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
@@ -34,6 +35,8 @@ public @interface FactcastTestConfig {
 
   boolean securityEnabled() default false;
 
+  Level serverLogLevel() default Level.INFO;
+
   @Value
   @With
   class Config {
@@ -41,11 +44,13 @@ public @interface FactcastTestConfig {
     String postgresVersion;
     String configDir;
     boolean securityEnabled;
+    Level serverLogLevel;
 
     static final String CONFIG_DIR = "./config";
 
     static Config defaults() {
-      return new Config(FactcastVersion.get(), PostgresVersion.get(), CONFIG_DIR, false);
+      return new Config(
+          FactcastVersion.get(), PostgresVersion.get(), CONFIG_DIR, false, Level.INFO);
     }
 
     public String factcastVersion() {
@@ -54,7 +59,10 @@ public @interface FactcastTestConfig {
 
     static Config from(@NonNull FactcastTestConfig e) {
       Config config =
-          defaults().withConfigDir(e.configDir()).withSecurityEnabled(e.securityEnabled());
+          defaults()
+              .withConfigDir(e.configDir())
+              .withSecurityEnabled(e.securityEnabled())
+              .withServerLogLevel(e.serverLogLevel());
 
       if (!e.factcastVersion().isEmpty()) {
         config = config.withFactcastVersion(e.factcastVersion());

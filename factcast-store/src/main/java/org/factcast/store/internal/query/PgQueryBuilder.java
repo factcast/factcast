@@ -45,23 +45,12 @@ public class PgQueryBuilder {
   public static final String CONTAINS_JSONB = " @> ?::jsonb ";
 
   private final @NonNull Collection<FactSpec> factSpecs;
-  private final CurrentStatementHolder statementHolder;
   private final boolean useInternalExclusion;
   private String tempTableName = null;
   private boolean serialsOnly = false;
 
   public PgQueryBuilder(@NonNull Collection<FactSpec> specs, boolean useInternalExclusion) {
     factSpecs = specs;
-    statementHolder = null;
-    this.useInternalExclusion = useInternalExclusion;
-  }
-
-  public PgQueryBuilder(
-      @NonNull Collection<FactSpec> specs,
-      @NonNull CurrentStatementHolder holder,
-      boolean useInternalExclusion) {
-    factSpecs = specs;
-    this.statementHolder = holder;
     this.useInternalExclusion = useInternalExclusion;
   }
 
@@ -79,10 +68,6 @@ public class PgQueryBuilder {
       }
 
       p.setLong(++count, serial.get());
-
-      if (statementHolder != null) {
-        statementHolder.statement(p);
-      }
     };
   }
 

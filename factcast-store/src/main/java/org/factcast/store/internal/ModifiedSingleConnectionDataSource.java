@@ -13,32 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.internal.listen;
+package org.factcast.store.internal;
 
-import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.*;
 import java.sql.Connection;
 import java.util.*;
-import lombok.*;
+import lombok.NonNull;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
 public class ModifiedSingleConnectionDataSource extends SingleConnectionDataSource {
   private final Connection connection;
-  @VisibleForTesting @Getter private final List<ConnectionModifier> modifiers;
+  @NonNull private final List<ConnectionModifier> modifiers;
 
   public ModifiedSingleConnectionDataSource(
       @NonNull Connection connection, @NonNull List<ConnectionModifier> modifiers) {
     super(connection, true);
     this.connection = connection;
     this.modifiers = List.copyOf(modifiers);
-
-    this.modifiers.forEach(modifier -> modifier.afterBorrow(connection));
+    this.modifiers.forEach(m -> m.afterBorrow(connection));
   }
 
   @Override
   public void destroy() {
-    var reversed = new ArrayList<>(modifiers);
-    Collections.reverse(reversed);
-    reversed.forEach(modifier -> modifier.beforeReturn(connection));
-    super.destroy();
+    try {
+      Lists.reverse(modifiers).forEach(m -> m.beforeReturn(connection));
+    } finally {
+      super.destroy();
+    }
   }
 }
