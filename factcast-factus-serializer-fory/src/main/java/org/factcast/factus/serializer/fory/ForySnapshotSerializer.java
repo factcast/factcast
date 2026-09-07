@@ -19,7 +19,7 @@ import java.io.*;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.fory.Fory;
-import org.apache.fory.config.Language;
+import org.apache.fory.config.*;
 import org.apache.fory.io.ForyInputStream;
 import org.factcast.factus.projection.SnapshotProjection;
 import org.factcast.factus.serializer.*;
@@ -31,7 +31,12 @@ public class ForySnapshotSerializer implements SnapshotSerializer {
   public static final Fory fory;
 
   static {
-    fory = Fory.builder().withLanguage(Language.JAVA).requireClassRegistration(false).build();
+    fory =
+        Fory.builder()
+            .withLanguage(Language.JAVA)
+            .requireClassRegistration(false)
+            .withCompatibleMode(CompatibleMode.COMPATIBLE)
+            .build();
   }
 
   // acceptable coverage miss:

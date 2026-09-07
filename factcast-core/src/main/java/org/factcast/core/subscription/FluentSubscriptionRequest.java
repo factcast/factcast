@@ -15,14 +15,14 @@
  */
 package org.factcast.core.subscription;
 
-import static org.factcast.core.util.StackTraceCallerHelper.createDebugInfo;
-
 import java.util.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.spec.FactSpec;
+import org.factcast.core.util.RollingCounter;
 
 /**
  * SubscriptionRequest intended to be used by clients for convenience.
@@ -32,10 +32,12 @@ import org.factcast.core.spec.FactSpec;
 @FieldDefaults(level = AccessLevel.PROTECTED)
 @Getter
 class FluentSubscriptionRequest implements SubscriptionRequest {
+  @SuppressWarnings("java:S2140")
+  private static final String INSTANCE_ID = Long.toHexString((long) (Math.random() * 0xffff));
+
+  private static final RollingCounter REQUEST_ID = new RollingCounter(0);
 
   boolean ephemeral;
-
-  long maxBatchDelayInMs = SubscriptionRequestTO.DEFAULT_MAX_BATCH_DELAY_IN_MS;
 
   long keepaliveIntervalInMs;
 
@@ -56,13 +58,17 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
   String pid;
 
   private FluentSubscriptionRequest() {
-    debugInfo = createDebugInfo();
+    // this is no longer useful
+    // debugInfo = createDebugInfo();
+
+    debugInfo = "req(" + INSTANCE_ID + ":" + Long.toHexString(REQUEST_ID.getAndIncrement()) + ")";
   }
 
   public static SpecBuilder builder() {
     return new Builder();
   }
 
+  @Slf4j
   public static class Builder implements SpecBuilder {
 
     private final FluentSubscriptionRequest toBuild = new FluentSubscriptionRequest();
@@ -118,12 +124,9 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
     }
 
     @Override
+    @Deprecated(forRemoval = true, since = "0.11.2")
     public @NonNull SpecBuilder withMaxBatchDelayInMs(long msec) {
-      if (msec < 10) {
-        throw new IllegalArgumentException("The minimum maxBatchDelayInMs is 10msec");
-      }
-
-      toBuild.maxBatchDelayInMs = msec;
+      log.warn("Max batch delay has been deprecated");
       return this;
     }
 

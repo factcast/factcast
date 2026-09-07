@@ -78,10 +78,4 @@ public class JsonViewPluginConfiguration {
 
     return om;
   }
-
-  @Bean
-  @ConditionalOnMissingBean
-  public JsonFactory jsonFactory(JsonViewPluginObjectMapperCustomizer customizer) {
-    return new JsonFactory(createObjectMapper(customizer));
-  }
 }

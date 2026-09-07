@@ -595,16 +595,154 @@ databaseChangeLog:
             stripComments: true
 
   - changeSet:
-     id: issue4444
-     author: leflamm
-     runInTransaction: false
-     changes:
-       - sqlFile:
-           encoding: utf8
-           path: factcast/issue4444/create_hash_idx_on_transformationcache.sql
-           relativeToChangelogFile: true
-           splitStatements: false
-           stripComments: true
+      id: issue4444
+      author: leflamm
+      runInTransaction: false
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue4444/create_hash_idx_on_transformationcache.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+  - changeSet:
+      id: issue4557
+      author: uweschaefer
+      runInTransaction: false
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue4557/fetchFactsFrom.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+  - changeSet:
+      id: issue4736
+      author: uweschaefer
+      runInTransaction: false
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue4736/set_toast_compression_to_lz4.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+  - changeSet:
+      id: issue4757-notification
+      author: uweschaefer
+      runInTransaction: false
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue4757/notification_table.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+  - changeSet:
+      id: issue4757-insert-trigger
+      author: uweschaefer
+      runInTransaction: false
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue4757/fact_insertion_notification_trigger.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+  - changeSet:
+      id: issue4757-cleanup
+      author: uweschaefer
+      runInTransaction: false
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue4757/cleanup_deprecations.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+  - changeSet:
+      id: issue4782
+      author: uweschaefer
+      runInTransaction: false
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue4782/date2serial_trigger.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+  - changeSet:
+      id: issue4785
+      author: uweschaefer
+      runInTransaction: false
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue4785/notification_ser_index.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+  - changeSet:
+      id: issue4781
+      author: uweschaefer
+      runInTransaction: false
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue4781/create_published_versions_trigger.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+  - changeSet:
+      id: issue4589_create_table
+      author: mamup11
+      comment: Create the new (fact_id, version)-keyed transformation cache table. Always runs - it is empty and cheap, and the code depends on it existing.
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue4589/01_create_table.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+  - changeSet:
+      id: issue4589_copy_data
+      author: mamup11
+      preConditions:
+        - onFail: MARK_RAN
+        - sqlCheck:
+            expectedResult: t
+            sql: SELECT count_estimate('SELECT * FROM transformationcache') < 10000000;
+      comment: If you have less than 10mio transformation results, existing entries are copied over - otherwise we kindly ask you to execute this script manually. If skipped, the new cache simply starts empty and repopulates on demand.
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue4589/02_copy_data.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+  - changeSet:
+      id: issue4589_create_index
+      author: mamup11
+      runInTransaction: false
+      comment: Create the created_at index concurrently (the PK already covers fact_id/version).
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue4589/03_create_index.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
 
   - changeSet:
       id: issue3609_add_exclusion_reason_to_facts

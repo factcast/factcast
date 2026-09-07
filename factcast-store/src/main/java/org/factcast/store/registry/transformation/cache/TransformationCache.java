@@ -15,26 +15,24 @@
  */
 package org.factcast.store.registry.transformation.cache;
 
-import java.time.ZonedDateTime;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import lombok.NonNull;
 import lombok.Value;
-import org.factcast.store.internal.PgFact;
+import org.factcast.core.Fact;
 
 public interface TransformationCache {
 
   // maybe optimize by passing header and payload separately as
   // string/jsonnode?
-  void put(@NonNull TransformationCache.Key key, @NonNull PgFact f);
+  void put(@NonNull TransformationCache.Key key, @NonNull Fact f);
 
-  Optional<PgFact> find(Key key);
+  Optional<Fact> find(Key key);
 
-  Set<PgFact> findAll(Collection<Key> keys);
-
-  void compact(ZonedDateTime thresholdDate);
+  Set<Fact> findAll(Collection<Key> keys);
 
   void invalidateTransformationFor(String ns, String type);
 
@@ -45,11 +43,15 @@ public interface TransformationCache {
   @Value
   class Key {
 
-    String id;
+    UUID factId;
 
-    public static Key of(@NonNull UUID id, int version, @NonNull String transformationChainId) {
-      return new Key(
-          String.join("-", id.toString(), String.valueOf(version), transformationChainId));
+    int version;
+
+    // the transformation chain version path, e.g. [1, 2, 3]
+    @NonNull List<Integer> path;
+
+    public static Key of(@NonNull UUID id, int version, @NonNull List<Integer> path) {
+      return new Key(id, version, path);
     }
   }
 }

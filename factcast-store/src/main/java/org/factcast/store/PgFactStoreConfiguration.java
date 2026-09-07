@@ -15,6 +15,7 @@
  */
 package org.factcast.store;
 
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.store.internal.PgFactStoreInternalConfiguration;
 import org.factcast.store.internal.filter.blacklist.BlacklistConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -33,6 +34,7 @@ import org.springframework.context.annotation.Import;
 @Configuration
 @EnableConfigurationProperties
 @Import(PgFactStoreInternalConfiguration.class)
+@Slf4j
 public class PgFactStoreConfiguration {
   @Bean
   StoreConfigurationProperties storeConfigurationProperties() {

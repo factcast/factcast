@@ -38,91 +38,126 @@ import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 @SpringJUnitConfig(classes = {PgTestConfiguration.class})
 @Sql(scripts = "/wipe.sql", config = @SqlConfig(separator = "#"))
 @IntegrationTest
-@SuppressWarnings("ResultOfMethodCallIgnored")
+@SuppressWarnings("all")
 class PgListenerIntegrationTest {
+
+  @Autowired EventBus eventBus;
+  @Autowired FactStore factStore;
+  @Autowired JdbcTemplate jdbc;
 
   @Nested
   class FactInsertTrigger {
-
-    @Autowired EventBus eventBus;
-    @Autowired FactStore factStore;
+    String ns = "someNamespace";
 
     @Test
     @SneakyThrows
-    void containsTransactionId() {
-      EventCollector events = new EventCollector();
-      try {
-        eventBus.register(events);
+    void atLeastOneInsertNotificationPerType() {
+      String t1 = "atLeastOneInsertNotificationPerType-1";
+      String t2 = "atLeastOneInsertNotificationPerType-2";
+      String t3 = "atLeastOneInsertNotificationPerType-3";
+      String t4 = "atLeastOneInsertNotificationPerType-4";
+      String t5 = "atLeastOneInsertNotificationPerType-5";
+      String t6 = "atLeastOneInsertNotificationPerType-6";
 
-        UUID id1 = UUID.randomUUID();
-        UUID id2 = UUID.randomUUID();
-        UUID id3 = UUID.randomUUID();
+      List<String> expectedTypes = List.of(t1, t2, t3, t4, t5, t6);
+      TypeFactInsertCollector collector = new TypeFactInsertCollector(expectedTypes.size());
+      try {
+        eventBus.register(collector);
+
+        // this will trigger the first general FIN
+        factStore.publish(
+            Collections.singletonList(
+                Fact.builder()
+                    .ns("initial")
+                    .type("initial")
+                    .id(UUID.randomUUID())
+                    .buildWithoutPayload()));
+        // can come back as internal with type null, or type initial - depending on the state of the
+        // PGListener
+
+        // we want to be sure, that the pglistener recieved to notification and set its current
+        // serial, before we go on.
+        // Otherwise we would still notify all subscribers, but might not see swallow explicit
+        // notifications for inserts to come.
+
+        collector.awaitInitalRetrieval();
 
         // RUN
-        // publish together, should have same tx id
         factStore.publish(
             List.of(
-                Fact.builder().ns("test").type("listenerTest1").id(id1).buildWithoutPayload(),
-                Fact.builder().ns("test").type("listenerTest1").id(id2).buildWithoutPayload()));
-        // separate, should have another tx id
+                Fact.builder().ns(ns).type(t1).buildWithoutPayload(),
+                Fact.builder().ns(ns).type(t2).buildWithoutPayload()));
+
         factStore.publish(
-            List.of(Fact.builder().ns("test").type("listenerTest2").id(id3).buildWithoutPayload()));
+            List.of(
+                Fact.builder().ns(ns).type(t3).buildWithoutPayload(),
+                Fact.builder().ns(ns).type(t2).buildWithoutPayload()));
+        // the next should be pulled
+        factStore.publish(List.of(Fact.builder().ns(ns).type(t4).buildWithoutPayload()));
 
+        factStore.publish(
+            List.of(
+                Fact.builder().ns(ns).type(t5).buildWithoutPayload(),
+                Fact.builder().ns(ns).type(t5).buildWithoutPayload(),
+                Fact.builder().ns(ns).type(t5).buildWithoutPayload(),
+                Fact.builder().ns(ns).type(t5).buildWithoutPayload(),
+                Fact.builder().ns(ns).type(t5).buildWithoutPayload(),
+                Fact.builder().ns(ns).type(t5).buildWithoutPayload(),
+                Fact.builder().ns(ns).type(t5).buildWithoutPayload(),
+                Fact.builder().ns(ns).type(t6).buildWithoutPayload(),
+                Fact.builder().ns(ns).type(t5).buildWithoutPayload(),
+                Fact.builder().ns(ns).type(t5).buildWithoutPayload(),
+                Fact.builder().ns(ns).type(t5).buildWithoutPayload(),
+                Fact.builder().ns(ns).type(t5).buildWithoutPayload()));
+        //
         // so finally, there should be two notifications arriving as we have two txids
-        events.latch().await(10, TimeUnit.SECONDS);
+        assertThat(collector.await()).isTrue();
 
-        assertThat(events.signals())
-            .hasSize(2)
-            .anySatisfy(
-                n -> {
-                  assertThat(n.ns()).isEqualTo("test");
-                  assertThat(n.type()).isEqualTo("listenerTest1");
-                })
-            .anySatisfy(
-                n -> {
-                  assertThat(n.ns()).isEqualTo("test");
-                  assertThat(n.type()).isEqualTo("listenerTest2");
-                });
+        assertThat(collector.types).containsAll(expectedTypes);
       } finally {
-        eventBus.unregister(events);
+        eventBus.unregister(collector);
       }
     }
 
-    @Getter
-    public static class EventCollector {
-      final List<FactInsertionNotification> signals =
-          Collections.synchronizedList(new ArrayList<>());
+    private class TypeFactInsertCollector extends FactInsertCollector {
+      Set<String> types = new HashSet<>();
+      CountDownLatch initial = new CountDownLatch(1);
 
-      @SuppressWarnings("unused")
-      @Subscribe
-      public void onEvent(FactInsertionNotification ev) {
-        signals.add(ev);
-        latch.countDown();
+      public TypeFactInsertCollector(int i) {
+        super(i);
       }
 
-      private final CountDownLatch latch = new CountDownLatch(2);
+      @Override
+      public void recordEvent(StoreNotification e) {
+        if (e instanceof FactInsertionNotification fin) {
+          initial.countDown();
+          if (ns.equals(fin.ns()) && types.add(fin.type())) super.recordEvent(e);
+        }
+      }
+
+      public void awaitInitalRetrieval() {
+        try {
+          initial.await(3, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+          throw new RuntimeException(e);
+        }
+      }
     }
   }
 
   @Nested
   class FactTruncateTrigger {
 
-    @Autowired EventBus eventBus;
-    @Autowired FactStore factStore;
-    @Autowired JdbcTemplate jdbc;
-
     @Test
     @SneakyThrows
-    @SuppressWarnings("unused")
-    void listensToDatabase() {
-      TruncateNotificationCollector ec = new TruncateNotificationCollector();
+    void notifiesTruncate() {
+      FactTruncateCollector collector = new FactTruncateCollector(1);
       try {
-        eventBus.register(ec);
-
-        // make sure we catch the initial truncate, even though it might have passed already
-        log.info("Waiting up to three seconds to receive truncate event from test start");
-        boolean mightHaveBeenTooLate = ec.latch().await(3, TimeUnit.SECONDS);
-        ec.reset();
+        eventBus.register(collector);
+        log.info(
+            "Waiting in case there is a dangeling truncate notification caused by wiping the table before test start");
+        collector.await(2, TimeUnit.SECONDS);
+        collector.reset();
 
         log.debug("inserting a few facts");
         UUID id1 = UUID.randomUUID();
@@ -138,31 +173,16 @@ class PgListenerIntegrationTest {
         factStore.publish(
             List.of(Fact.builder().ns("test").type("listenerTest2").id(id3).buildWithoutPayload()));
 
-        assertThat(ec.latch().await(2, TimeUnit.SECONDS)).isFalse();
+        assertThat(collector.signals()).isEmpty();
 
         // act
         log.info("truncating now");
         jdbc.execute("truncate fact");
 
         // assert
-        assertThat(ec.latch().await(5, TimeUnit.SECONDS)).isTrue();
+        assertThat(collector.await(5, TimeUnit.SECONDS)).isTrue();
       } finally {
-        eventBus.unregister(ec);
-      }
-    }
-
-    @Getter
-    public static class TruncateNotificationCollector {
-      private CountDownLatch latch = new CountDownLatch(1);
-
-      @SuppressWarnings("unused")
-      @Subscribe
-      public void onEvent(FactTruncationNotification ev) {
-        latch.countDown();
-      }
-
-      public void reset() {
-        latch = new CountDownLatch(1);
+        eventBus.unregister(collector);
       }
     }
   }
@@ -170,15 +190,9 @@ class PgListenerIntegrationTest {
   @Nested
   class FactUpdateTrigger {
 
-    @Autowired EventBus eventBus;
-    @Autowired FactStore factStore;
-    @Autowired JdbcTemplate jdbc;
-
     @Test
     @SneakyThrows
-    void containsTransactionId() {
-      var events = new UpdateNotificationEventCollector();
-      eventBus.register(events);
+    void oneNotificationPerRowUpdated() {
 
       UUID id1 = UUID.randomUUID();
       UUID id2 = UUID.randomUUID();
@@ -205,36 +219,87 @@ class PgListenerIntegrationTest {
                   .version(2)
                   .build("{\"value\":\"1\"}")));
 
-      // RUN
-      jdbc.update(
-          "UPDATE fact SET payload = '{\"value\":\"2\"}' WHERE header @> '{\"type\": \"listenerTest1\"}'"); // changing two rows
+      var collector = new FactUpdateCollector(2);
+      eventBus.register(collector);
+      try {
+        // RUN
+        jdbc.update(
+            "UPDATE fact SET payload = '{\"value\":\"2\"}' WHERE header @> '{\"type\": \"listenerTest1\"}'"); // changing two rows
 
-      // assert
-      assertThat(events.latch().await(5, TimeUnit.SECONDS)).isTrue();
-      assertThat(events.signals())
-          .hasSize(2)
-          .anySatisfy(
-              n -> {
-                assertThat(n.updatedFactId()).isEqualTo(id1);
-              })
-          .anySatisfy(
-              n -> {
-                assertThat(n.updatedFactId()).isEqualTo(id2);
-              });
-    }
-
-    @Getter
-    public static class UpdateNotificationEventCollector {
-      final List<FactUpdateNotification> signals = new ArrayList<>();
-
-      @SuppressWarnings("unused")
-      @Subscribe
-      public void onEvent(FactUpdateNotification ev) {
-        latch.countDown();
-        signals.add(ev);
+        // assert
+        assertThat(collector.await(5, TimeUnit.SECONDS)).isTrue();
+        assertThat(collector.signals())
+            .hasSize(2)
+            .anySatisfy(
+                n -> {
+                  assertThat(n.updatedFactId()).isEqualTo(id1);
+                })
+            .anySatisfy(
+                n -> {
+                  assertThat(n.updatedFactId()).isEqualTo(id2);
+                });
+      } finally {
+        eventBus.unregister(collector);
       }
-
-      private final CountDownLatch latch = new CountDownLatch(2);
     }
+  }
+}
+
+abstract class NotificationCollector<T extends StoreNotification> {
+
+  private final Class<T> type;
+  private final int initialLatchCount;
+  private volatile CountDownLatch latch;
+  @Getter private final List<T> signals = Collections.synchronizedList(new ArrayList<>());
+
+  NotificationCollector(Class<T> type, int latchCount) {
+    this.type = type;
+    this.initialLatchCount = latchCount;
+    this.latch = new CountDownLatch(latchCount);
+  }
+
+  @SuppressWarnings("unused")
+  @Subscribe
+  public void recordEvent(StoreNotification e) {
+    if (type.isAssignableFrom(e.getClass()))
+      synchronized (signals) {
+        signals.add(type.cast(e));
+        latch.countDown();
+      }
+  }
+
+  boolean await() {
+    return await(5, TimeUnit.SECONDS);
+  }
+
+  @SneakyThrows
+  boolean await(int i, TimeUnit unit) {
+    return latch.await(i, unit);
+  }
+
+  public void reset() {
+    synchronized (signals) {
+      signals.clear();
+      latch = new CountDownLatch(initialLatchCount);
+    }
+  }
+}
+
+class FactInsertCollector extends NotificationCollector<FactInsertionNotification> {
+
+  FactInsertCollector(int latchCount) {
+    super(FactInsertionNotification.class, latchCount);
+  }
+}
+
+class FactTruncateCollector extends NotificationCollector<FactTruncationNotification> {
+  FactTruncateCollector(int latchCount) {
+    super(FactTruncationNotification.class, latchCount);
+  }
+}
+
+class FactUpdateCollector extends NotificationCollector<FactUpdateNotification> {
+  FactUpdateCollector(int latchCount) {
+    super(FactUpdateNotification.class, latchCount);
   }
 }

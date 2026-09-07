@@ -16,17 +16,18 @@
 package org.factcast.core.subscription.observer;
 
 import java.util.UUID;
+import javax.annotation.Nullable;
 import javax.sql.DataSource;
 import lombok.NonNull;
 import lombok.Value;
 
 public interface HighWaterMarkFetcher {
   static HighWaterMarkFetcher forTest() {
-    return of(null, 0);
+    return forTest(null, 0);
   }
 
-  static HighWaterMarkFetcher of(UUID id, long ser) {
-    return Impl.of(HighWaterMark.of(id, ser));
+  static HighWaterMarkFetcher forTest(@Nullable UUID targetId, long targetSer) {
+    return StubHighWaterMarkFetcher.of(HighWaterMark.of(targetId, targetSer));
   }
 
   // we cannot have single getters for id and ser (race condition)
@@ -34,7 +35,7 @@ public interface HighWaterMarkFetcher {
   HighWaterMark highWaterMark(@NonNull DataSource ds);
 
   @Value(staticConstructor = "of")
-  class Impl implements HighWaterMarkFetcher {
+  class StubHighWaterMarkFetcher implements HighWaterMarkFetcher {
     HighWaterMark highWaterMark;
 
     @Override

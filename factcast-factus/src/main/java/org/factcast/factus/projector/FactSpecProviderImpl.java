@@ -16,6 +16,7 @@
 package org.factcast.factus.projector;
 
 import java.util.*;
+import javax.annotation.Nonnull;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.factcast.core.spec.FactSpec;
@@ -24,14 +25,22 @@ import org.factcast.factus.projection.*;
 @RequiredArgsConstructor
 public class FactSpecProviderImpl implements FactSpecProvider {
 
-  final ProjectorFactory pf;
+  @Nonnull final ProjectorFactory pf;
 
   // While projector initialization is somewhat costly, FactSpec generation is not on the hot path,
 
   @Override
   public @NonNull Collection<FactSpec> forSnapshot(
       @NonNull Class<? extends SnapshotProjection> clazz) {
-    Projection p = ReflectionUtils.instantiate(clazz);
+    // this is considered lightweight, because snapshot projections are not initialized much, as
+    // they are serialized and deserialized frequently.
+    SnapshotProjection emptyInstance = ReflectionUtils.instantiate(clazz);
+
+    return forProjection(emptyInstance);
+  }
+
+  @Override
+  public @NonNull Collection<FactSpec> forProjection(@NonNull Projection p) {
     return pf.create(p).createFactSpecs();
   }
 }

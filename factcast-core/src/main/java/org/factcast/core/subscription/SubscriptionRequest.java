@@ -28,8 +28,6 @@ import org.factcast.core.spec.FactSpec;
  */
 public interface SubscriptionRequest {
 
-  long maxBatchDelayInMs();
-
   long keepaliveIntervalInMs();
 
   boolean streamInfo();
@@ -66,19 +64,5 @@ public interface SubscriptionRequest {
 
   static SpecBuilder catchup(@NonNull Collection<FactSpec> specification) {
     return FluentSubscriptionRequest.builder().catchup(specification);
-  }
-
-  /**
-   * use builder().follow(spec).withMaxBatchDelay(maxBatchDelayInMs) instead
-   *
-   * @param maxBatchDelayInMs
-   * @param specification
-   * @return
-   */
-  @Deprecated
-  static SpecBuilder follow(long maxBatchDelayInMs, @NonNull FactSpec specification) {
-    return FluentSubscriptionRequest.builder()
-        .withMaxBatchDelayInMs(maxBatchDelayInMs)
-        .follow(specification);
   }
 }
