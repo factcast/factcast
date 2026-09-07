@@ -89,7 +89,7 @@ public class PgCursorCatchup extends AbstractPgCatchup {
   /** hook for tests to influence the generated sql */
   @VisibleForTesting
   protected PgQueryBuilder createPgQueryBuilder(List<FactSpec> specs) {
-    return new PgQueryBuilder(req.specs());
+    return new PgQueryBuilder(req.specs(), props.isUseInternalExclusion());
   }
 
   private void logIfAboveThreshold(Duration elapsed) {
