@@ -16,6 +16,7 @@
 package org.factcast.store.internal.catchup.chunked;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.sql.*;
@@ -31,11 +32,11 @@ import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.listen.*;
 import org.factcast.store.internal.pipeline.*;
-import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.postgresql.util.*;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
@@ -51,8 +52,7 @@ class PgChunkedCatchupTest {
   @Mock(strictness = Mock.Strictness.LENIENT)
   SubscriptionRequestTO req;
 
-  @Mock @NonNull CurrentStatementHolder statementHolder;
-  @Mock @NonNull ServerPipeline pipeline;
+  @Mock @NonNull PushbackServerPipeline pipeline;
 
   @Mock(strictness = Mock.Strictness.LENIENT)
   @NonNull
@@ -78,14 +78,8 @@ class PgChunkedCatchupTest {
       var uut =
           spy(
               new PgChunkedCatchup(
-                  props,
-                  metrics,
-                  req,
-                  pipeline,
-                  serial,
-                  statementHolder,
-                  ds,
-                  PgCatchupFactory.Phase.PHASE_1));
+                  props, metrics, req, pipeline, serial, ds, PgCatchupFactory.Phase.PHASE_1));
+
       doNothing().when(uut).fetch(any());
       uut.run();
     }
@@ -97,14 +91,8 @@ class PgChunkedCatchupTest {
       var uut =
           spy(
               new PgChunkedCatchup(
-                  props,
-                  metrics,
-                  req,
-                  pipeline,
-                  serial,
-                  statementHolder,
-                  ds,
-                  PgCatchupFactory.Phase.PHASE_1));
+                  props, metrics, req, pipeline, serial, ds, PgCatchupFactory.Phase.PHASE_1));
+
       doNothing().when(uut).fetch(any());
 
       uut.run();
@@ -112,27 +100,6 @@ class PgChunkedCatchupTest {
       ArgumentCaptor<Signal> sigCap = ArgumentCaptor.forClass(Signal.class);
       verify(pipeline).process(sigCap.capture());
       assertThat(sigCap.getValue().indicatesFlush()).isTrue();
-    }
-
-    @SneakyThrows
-    @Test
-    void removesCurrentStatement() {
-      when(req.debugInfo()).thenReturn("appName");
-      var uut =
-          spy(
-              new PgChunkedCatchup(
-                  props,
-                  metrics,
-                  req,
-                  pipeline,
-                  serial,
-                  statementHolder,
-                  ds,
-                  PgCatchupFactory.Phase.PHASE_1));
-      doNothing().when(uut).fetch(any());
-      uut.run();
-
-      verify(statementHolder).clear();
     }
   }
 
@@ -228,35 +195,12 @@ class PgChunkedCatchupTest {
 
     @Test
     @SneakyThrows
-    void fetchDropsTempTableAndHonorsCancellation() {
-      // arrange a SingleConnectionDataSource that provides a JDBC Connection/Statement
-      SingleConnectionDataSource scds = mock(SingleConnectionDataSource.class);
-      Connection conn = mock(Connection.class);
-      Statement stmt = mock(Statement.class);
-      when(scds.getConnection()).thenReturn(conn);
-      when(conn.createStatement()).thenReturn(stmt);
-      when(stmt.execute(anyString())).thenReturn(true);
-
-      // ensure there are matching serials, so the while-loop is reached
-      doReturn(1).when(underTest).prepareTemporaryTable(any(), anyString());
-      // cancel immediately so no query is executed and the method returns early
-      when(statementHolder.wasCanceled()).thenReturn(true);
-
-      // act
-      underTest.fetch(scds);
-
-      // assert: temp table is dropped in finally and no facts are processed
-      verify(stmt).execute(argThat(sql -> sql.toLowerCase().startsWith("drop table catchup_")));
-      verifyNoInteractions(pipeline);
-    }
-
-    @Test
-    @SneakyThrows
     void fetch() {
+
       // Arrange a SingleConnectionDataSource backed by mocked JDBC artifacts
       SingleConnectionDataSource scds = mock(SingleConnectionDataSource.class);
       Connection conn = mock(Connection.class);
-      Statement stmt = mock(Statement.class);
+      PreparedStatement stmt = mock(PreparedStatement.class);
       ResultSet rs1 = mock(ResultSet.class);
       ResultSet rs2 = mock(ResultSet.class);
       ResultSet rs3 = mock(ResultSet.class);
@@ -264,10 +208,11 @@ class PgChunkedCatchupTest {
 
       when(scds.getConnection()).thenReturn(conn);
       when(conn.createStatement()).thenReturn(stmt);
+
       // drop table succeeds
       when(stmt.execute(anyString())).thenReturn(true);
       // query returns 1 row, then 1 row, then 1 row, then 0 rows
-      when(stmt.executeQuery(anyString())).thenReturn(rs1, rs2, rs3, rs4);
+      when(stmt.executeQuery(startsWith("with"))).thenReturn(rs1, rs2, rs3, rs4);
 
       // Configure the rows for PgFactExtractor/PgFact.from
       // rs1: one row
@@ -308,14 +253,12 @@ class PgChunkedCatchupTest {
 
       // ensure there are matching serials, so the while-loop is reached
       doReturn(1).when(underTest).prepareTemporaryTable(any(), anyString());
-      // do not cancel during the loop
-      when(statementHolder.wasCanceled()).thenReturn(false);
 
       // Act
       underTest.fetch(scds);
 
       // Assert: query loop ran 4 iterations (3 with rows, 1 with 0 rows to finish)
-      verify(stmt, atLeast(4)).executeQuery(anyString());
+      verify(stmt, atLeast(4)).executeQuery(startsWith("with"));
       // And the pipeline processed at least three facts (one per iteration)
       verify(pipeline, atLeast(3)).process(any());
     }

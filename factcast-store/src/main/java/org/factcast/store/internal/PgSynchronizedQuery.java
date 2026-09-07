@@ -26,11 +26,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.subscription.observer.HighWaterMarkFetcher;
 import org.factcast.store.internal.listen.*;
-import org.factcast.store.internal.pipeline.ServerPipeline;
-import org.factcast.store.internal.pipeline.Signal;
-import org.factcast.store.internal.query.*;
-import org.postgresql.util.PSQLException;
-import org.springframework.dao.DataAccessException;
+import org.factcast.store.internal.pipeline.*;
 import org.springframework.jdbc.core.*;
 import org.springframework.jdbc.datasource.*;
 
@@ -58,24 +54,22 @@ class PgSynchronizedQuery {
   @NonNull final RowCallbackHandler rowHandler;
 
   @NonNull final String debugInfo;
-  @NonNull final ServerPipeline pipe;
+  @NonNull final PushbackServerPipeline pipe;
   @NonNull final AtomicLong serialToContinueFrom;
 
   @NonNull final HighWaterMarkFetcher hwmFetcher;
 
-  @NonNull final CurrentStatementHolder statementHolder;
   private final @NonNull PgConnectionSupplier connectionSupplier;
 
   PgSynchronizedQuery(
       @NonNull String debugInfo,
-      @NonNull ServerPipeline pipe,
+      @NonNull PushbackServerPipeline pipe,
       @NonNull PgConnectionSupplier connectionSupplier,
       @NonNull String sql,
       @NonNull PreparedStatementSetter setter,
       @NonNull Supplier<Boolean> isConnected,
       @NonNull AtomicLong serialToContinueFrom,
-      @NonNull HighWaterMarkFetcher hwmFetcher,
-      @NonNull CurrentStatementHolder statementHolder) {
+      @NonNull HighWaterMarkFetcher hwmFetcher) {
     this.debugInfo = debugInfo;
     this.pipe = pipe;
     this.serialToContinueFrom = serialToContinueFrom;
@@ -83,16 +77,14 @@ class PgSynchronizedQuery {
     this.connectionSupplier = connectionSupplier;
     this.sql = sql;
     this.setter = setter;
-    this.statementHolder = statementHolder;
 
     rowHandler =
-        new PgSynchronizedQuery.FactRowCallbackHandler(
-            pipe, isConnected, serialToContinueFrom, statementHolder);
+        new PgSynchronizedQuery.FactRowCallbackHandler(pipe, isConnected, serialToContinueFrom);
   }
 
   // the synchronized here is crucial!
   @SuppressWarnings({"SameReturnValue", "java:S1181"})
-  public synchronized void run(boolean useIndex) {
+  public synchronized void run(boolean useIndex) throws PipelineAlreadyClosedException {
     List<ConnectionModifier> filters =
         Lists.newArrayList(ConnectionModifier.withApplicationName(debugInfo));
     if (!useIndex) {
@@ -102,30 +94,18 @@ class PgSynchronizedQuery {
       // the latest facts
       filters.add(ConnectionModifier.withCustomPlanForced());
     }
+
+    // it does not make much sense to track the statement here, as we expect this to be executed
+    // quickly, as we're in  afloow scenarion
     try (SingleConnectionDataSource ds = connectionSupplier.getPooledAsSingleDataSource(filters)) {
       long latest = hwmFetcher.highWaterMark(ds).targetSer();
-      new JdbcTemplate(ds)
-          .query(
-              sql,
-              ps -> {
-                statementHolder.statement(ps);
-                setter.setValues(ps);
-              },
-              rowHandler);
+      new JdbcTemplate(ds).query(sql, setter, rowHandler);
 
       // shift to max(retrievedLatestSer, and ser as updated in
       // rowHandler)
       serialToContinueFrom.set(Math.max(latest, serialToContinueFrom.get()));
-    } catch (DataAccessException e) {
-      // #2165 swallow exception after cancel.
-      if (statementHolder.wasCanceled()) {
-        log.trace("Query was cancelled during execution", e);
-      } else {
-        throw e;
-      }
     } finally {
       try {
-        statementHolder.clear();
         // involves transformation & IO, so can throw exception
         pipe.process(Signal.flush());
       } catch (Throwable e) {
@@ -141,39 +121,25 @@ class PgSynchronizedQuery {
 
   @RequiredArgsConstructor
   static class FactRowCallbackHandler implements RowCallbackHandler {
-    final ServerPipeline pipe;
+    final PushbackServerPipeline pipe;
 
     final Supplier<Boolean> isConnectedSupplier;
 
     final AtomicLong serial;
-
-    final CurrentStatementHolder statementHolder;
 
     @SuppressWarnings("NullableProblems")
     @Override
     public void processRow(ResultSet rs) throws SQLException {
       if (Boolean.TRUE.equals(isConnectedSupplier.get())) {
         if (rs.isClosed()) {
-          if (!statementHolder.wasCanceled()) {
-            throw new IllegalStateException(
-                "ResultSet already closed. We should not have gotten here. THIS IS A BUG!");
-          } else {
-            return;
-          }
+          throw new IllegalStateException(
+              "ResultSet already closed. We should not have gotten here. THIS IS A BUG!");
         }
         PgFact f = null;
         try {
           f = PgFact.from(rs);
           pipe.process(Signal.of(f));
           serial.set(rs.getLong(PgConstants.COLUMN_SER));
-        } catch (PSQLException psql) {
-          // see #2088
-          if (statementHolder.wasCanceled()) {
-            // then we just swallow the exception
-            log.trace("Swallowing because statement was cancelled", psql);
-          } else {
-            escalateError(rs, psql);
-          }
         } catch (Exception e) {
           escalateError(rs, e);
         }
@@ -186,7 +152,12 @@ class PgSynchronizedQuery {
       } catch (Exception ignore) {
         // this one will be ignored
       }
-      pipe.process(Signal.of(e));
+
+      try {
+        pipe.process(Signal.of(e));
+      } catch (PipelineAlreadyClosedException meh) {
+        // can be ignored
+      }
     }
   }
 }

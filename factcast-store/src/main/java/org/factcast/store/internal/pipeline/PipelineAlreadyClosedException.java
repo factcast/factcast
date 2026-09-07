@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2020 factcast.org
+ * Copyright © 2017-2026 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.internal.catchup;
+package org.factcast.store.internal.pipeline;
 
-import java.sql.SQLException;
-import org.factcast.store.internal.pipeline.PipelineAlreadyClosedException;
-
-public interface PgCatchup {
-  void fastForward(long serialToStartFrom);
-
-  void run() throws SQLException, PipelineAlreadyClosedException;
-}
+/**
+ * This is supposed to be thrown, when the pipeline was closed, but process() is still called. This
+ * should signal upstream processes to terminate.
+ */
+public class PipelineAlreadyClosedException extends IllegalStateException {}

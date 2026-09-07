@@ -39,7 +39,6 @@ class PgQueryBuilderTest {
   @Nested
   class WhenCreatingStatementSetter {
     @Mock private @NonNull AtomicLong serial;
-    @Mock CurrentStatementHolder holder;
 
     @BeforeEach
     void setup() {}
@@ -93,19 +92,6 @@ class PgQueryBuilderTest {
       // ser>?
       verify(ps).setLong(++index, serial.get());
       verifyNoMoreInteractions(ps);
-    }
-
-    @SneakyThrows
-    @Test
-    void setsCurrentStatement() {
-      when(serial.get()).thenReturn(120L);
-      var underTest = new PgQueryBuilder(Lists.newArrayList(FactSpec.ns("ns3")), holder);
-      var setter = underTest.createStatementSetter(serial);
-      var ps = mock(PreparedStatement.class);
-
-      setter.setValues(ps);
-
-      verify(holder).statement(ps);
     }
   }
 

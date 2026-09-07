@@ -76,7 +76,6 @@ public class PreFetchingQuery implements FetchingQuery {
             rowProcessor.process(page);
             rows++;
           }
-          page.close(); // not strictly necessary
         } while (!exhausted);
 
       } catch (InterruptedException e) {
