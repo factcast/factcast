@@ -108,6 +108,7 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
                       + pgProxy.toxiProxyPort()
                       + "/"
                       + db.getDatabaseName();
+              String fcName = "fc" + config.hashCode();
               GenericContainer<?> fc =
                   new GenericContainer<>("factcast/factcast:" + config.factcastVersion())
                       .withExposedPorts(FC_PORT)
@@ -120,13 +121,16 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
                       .withEnv("spring_datasource_url", jdbcUrl)
                       .withEnv("spring_datasource_username", db.getUsername())
                       .withEnv("spring_datasource_password", db.getPassword())
+                      .withEnv("logging.level.org.factcast", config.serverLogLevel().name())
                       .withNetwork(FactCastIntegrationTestExecutionListener._docker_network)
+                      .withNetworkAliases(fcName)
                       .dependsOn(db)
                       .withLogConsumer(
                           new Slf4jLogConsumer(
                               LoggerFactory.getLogger(AbstractFactCastIntegrationTest.class)))
                       .waitingFor(
                           new HostPortWaitStrategy().withStartupTimeout(Duration.ofSeconds(180)));
+
               fc.start();
               ProxiedEndpoint fcProxy =
                   FactCastIntegrationTestExecutionListener.createProxy("factcast", fc, FC_PORT);
@@ -141,7 +145,7 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
 
     ProxiedEndpoint fcProxy = containers.fcProxy().get();
     String address = "static://" + fcProxy.host() + ":" + fcProxy.port();
-    System.setProperty("spring.grpc.client.channels.factstore.address", address);
+    System.setProperty("spring.grpc.client.channel.factstore.target", address);
 
     System.setProperty("spring.datasource.url", containers.db().getJdbcUrl());
     System.setProperty("spring.datasource.username", containers.db().getUsername());

@@ -15,9 +15,12 @@
  */
 package org.factcast.store.internal;
 
+import com.google.common.base.Preconditions;
 import com.google.common.eventbus.*;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import jakarta.annotation.Nullable;
+import java.lang.annotation.*;
 import java.util.concurrent.*;
 import javax.sql.DataSource;
 import liquibase.integration.spring.SpringLiquibase;
@@ -38,6 +41,7 @@ import org.factcast.store.internal.check.IndexCheck;
 import org.factcast.store.internal.filter.blacklist.*;
 import org.factcast.store.internal.listen.*;
 import org.factcast.store.internal.lock.*;
+import org.factcast.store.internal.logsuppression.*;
 import org.factcast.store.internal.pipeline.ServerPipelineFactory;
 import org.factcast.store.internal.query.*;
 import org.factcast.store.internal.tail.PGTailIndexingConfiguration;
@@ -46,6 +50,7 @@ import org.factcast.store.internal.transformation.FactTransformerService;
 import org.factcast.store.registry.*;
 import org.factcast.store.registry.transformation.cache.*;
 import org.factcast.store.registry.transformation.chains.*;
+import org.springframework.beans.factory.annotation.*;
 import org.springframework.boot.autoconfigure.condition.*;
 import org.springframework.boot.sql.init.dependency.DependsOnDatabaseInitialization;
 import org.springframework.context.annotation.*;
@@ -71,7 +76,11 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 // not that InterceptMode.PROXY_SCHEDULER does not work when wrapped at runtime (by opentelemetry
 // for instance)
 @EnableSchedulerLock(defaultLockAtMostFor = "PT30m", interceptMode = InterceptMode.PROXY_METHOD)
-@Import({SchemaRegistryConfiguration.class, PGTailIndexingConfiguration.class})
+@Import({
+  SchemaRegistryConfiguration.class,
+  PGTailIndexingConfiguration.class,
+  PgFactStoreInternalConfiguration.OffloadConfiguration.class
+})
 public class PgFactStoreInternalConfiguration {
 
   public static final int LISTENER_POOL_MAX_SIZE = 64;
@@ -141,6 +150,7 @@ public class PgFactStoreInternalConfiguration {
   @Bean
   public PgSubscriptionFactory pgSubscriptionFactory(
       PgConnectionSupplier connectionSupplier,
+      @Offload @Nullable OffloadDataSource offloadDataSource,
       EventBus eventBus,
       PgFactIdToSerialMapper pgFactIdToSerialMapper,
       StoreConfigurationProperties props,
@@ -148,9 +158,11 @@ public class PgFactStoreInternalConfiguration {
       HighWaterMarkFetcher hwmFetcher,
       PgStoreTelemetry telemetry,
       ServerPipelineFactory pipelineFactory,
-      PgMetrics metrics) {
+      PgMetrics metrics,
+      LogSuppression logsup) {
     return new PgSubscriptionFactory(
         connectionSupplier,
+        offloadDataSource,
         eventBus,
         pgFactIdToSerialMapper,
         props,
@@ -158,7 +170,8 @@ public class PgFactStoreInternalConfiguration {
         hwmFetcher,
         pipelineFactory,
         metrics,
-        telemetry);
+        telemetry,
+        logsup);
   }
 
   @Bean
@@ -254,7 +267,8 @@ public class PgFactStoreInternalConfiguration {
   }
 
   @Bean
-  @ConditionalOnProperty(value = "factcast.type", matchIfMissing = true)
+  // should better be factcast.store.blacklist.type, but will be removed soon anyway.
+  @ConditionalOnProperty(value = "factcast.blacklist.type", matchIfMissing = true)
   public BlacklistDataProvider blacklistProvider(
       ResourceLoader resourceLoader,
       Blacklist blacklist,
@@ -322,4 +336,57 @@ public class PgFactStoreInternalConfiguration {
   public Transformer transformer() {
     return new JsTransformer();
   }
+
+  @Bean
+  public NudgeNotificationHandler nudgeHandler(
+      EventBus bus,
+      JdbcTemplate jdbcTemplate,
+      StoreConfigurationProperties props,
+      PgMetrics metrics) {
+    return new NudgeNotificationHandler(bus, jdbcTemplate, props, metrics);
+  }
+
+  @Bean
+  public LogSuppression logSuppression(StoreConfigurationProperties props) {
+    LogSuppressionProperties p = props.getLogSuppression();
+    if (p.isEnabled()) {
+      log.info(
+          "Conditional log suppression below {} during suppressed code paths is enabled (threshold={},"
+              + " sampleRate={})",
+          p.getMinLogLevel(),
+          p.getThreshold(),
+          p.getSampleRate());
+      return new DefaultLogSuppression(p);
+    } else return new NopLogSuppression();
+  }
+
+  // Keeping the conditional offload bean isolated so its activation logic can be tested in a
+  // simplified application context without constructing the other unrelated FactStore beans above.
+  @Configuration(proxyBeanMethods = false)
+  static class OffloadConfiguration {
+
+    // we don't want it to be injected without the qualifying annotation as a Datasource, so
+    // defaultCandidate=false
+    @Bean(defaultCandidate = false)
+    @ConditionalOnProperty(
+        prefix = StoreConfigurationProperties.PROPERTIES_PREFIX + ".offload",
+        name = "enabled",
+        havingValue = "true")
+    @Offload
+    OffloadDataSource offloadDataSource(StoreConfigurationProperties props) {
+      StoreConfigurationProperties.OffloadDataSourceProperties offload = props.getOffload();
+      Preconditions.checkArgument(
+          offload.getUrl() != null && !offload.getUrl().isBlank(),
+          StoreConfigurationProperties.PROPERTIES_PREFIX
+              + ".offload.url must be configured when "
+              + StoreConfigurationProperties.PROPERTIES_PREFIX
+              + ".offload.enabled=true");
+      return new OffloadDataSource(offload.initializeDataSourceBuilder().build());
+    }
+  }
+
+  @Target({ElementType.FIELD, ElementType.PARAMETER, ElementType.METHOD, ElementType.TYPE})
+  @Retention(RetentionPolicy.RUNTIME)
+  @Qualifier
+  public @interface Offload {}
 }

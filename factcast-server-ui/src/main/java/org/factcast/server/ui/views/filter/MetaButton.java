@@ -20,27 +20,40 @@ import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import java.util.Collection;
 import org.factcast.core.util.NoCoverageReportToBeGenerated;
-import org.vaadin.crudui.crud.CrudListener;
-import org.vaadin.crudui.crud.impl.GridCrud;
+import org.vaadin.crudui.Crud;
+import org.vaadin.crudui.CrudOperation;
+import org.vaadin.crudui.data.provider.SimpleBackendDataProvider;
+import org.vaadin.crudui.layout.impl.DialogCrudLayout;
 
 @NoCoverageReportToBeGenerated
 class MetaButton extends Button {
   private final FactCriteria backingBean;
-  private final GridCrud<MetaTuple> crud = new GridCrud<>(MetaTuple.class);
+  private final SimpleBackendDataProvider<MetaTuple> dataProvider;
+  private final Crud<MetaTuple> crud;
 
   MetaButton(FactCriteria backingBean) {
     super("Meta");
     this.backingBean = backingBean;
+    dataProvider = new SimpleBackendDataProvider<>(backingBean::getMeta);
+    crud =
+        Crud.of(MetaTuple.class)
+            .layout(DialogCrudLayout.of(MetaTuple.class))
+            .onRead(dataProvider)
+            .onCreate(metaTuple -> backingBean.getMeta().add(metaTuple))
+            .onUpdate(metaTuple -> {})
+            .onDelete(metaTuple -> backingBean.getMeta().remove(metaTuple))
+            .onSaveSuccess(metaTuple -> updateBadge())
+            .onDeleteSuccess(metaTuple -> updateBadge())
+            .button(CrudOperation.CREATE)
+            .label("Add")
+            .build();
 
     final var dialog = new Dialog("Meta");
 
-    crud.setCrudListener(new MetaTupleCrudListener());
-    crud.getCrudFormFactory().setUseBeanValidation(true);
     setId("metabox");
 
-    crud.setWidthFull();
+    crud.getElement().getStyle().set("width", "100%");
 
     Button closeButton = new Button("Close");
     closeButton.addClickListener(e -> dialog.close());
@@ -56,6 +69,11 @@ class MetaButton extends Button {
   }
 
   public void update() {
+    dataProvider.refreshAll();
+    updateBadge();
+  }
+
+  private void updateBadge() {
     if (getSuffixComponent() != null) {
       getSuffixComponent().removeFromParent();
     }
@@ -67,34 +85,5 @@ class MetaButton extends Button {
     Span confirmed = new Span(String.valueOf(backingBean.getMeta().size()));
     confirmed.getElement().getThemeList().add("badge success");
     setSuffixComponent(confirmed);
-
-    crud.refreshGrid();
-  }
-
-  @NoCoverageReportToBeGenerated
-  class MetaTupleCrudListener implements CrudListener<MetaTuple> {
-
-    @Override
-    public Collection<MetaTuple> findAll() {
-      return backingBean.getMeta();
-    }
-
-    @Override
-    public MetaTuple add(MetaTuple user) {
-      backingBean.getMeta().add(user);
-      MetaButton.this.update();
-      return user;
-    }
-
-    @Override
-    public MetaTuple update(MetaTuple user) {
-      return user;
-    }
-
-    @Override
-    public void delete(MetaTuple user) {
-      backingBean.getMeta().remove(user);
-      MetaButton.this.update();
-    }
   }
 }

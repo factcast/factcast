@@ -17,8 +17,7 @@ package org.factcast.store.internal.lock;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.*;
 
 @RequiredArgsConstructor
 @SuppressWarnings("java:S2077")

@@ -33,7 +33,7 @@ jobs:
         restore-keys: '${{ runner.os }}-sonar-'
     - id: 'step-3'
       name: 'JDK 21'
-      uses: 'actions/setup-java@v5'
+      uses: 'actions/setup-java@v6'
       with:
         java-version: '21'
         distribution: 'corretto'
@@ -46,8 +46,8 @@ jobs:
     - id: 'step-6'
       name: 'Sonar upload'
       env:
-        SONAR: '${{ secrets.SONAR_TOKEN }}'
-      run: './mvnw -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=factcast -Dsonar.organization=factcast -Dsonar.host.url=https://sonarcloud.io -Dsonar.token=$SONAR'
+        SONAR_TOKEN: '${{ secrets.SONAR_2026 }}'
+      run: './mvnw -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=factcast -Dsonar.organization=factcast -Dsonar.host.url=https://sonarcloud.io '
     - id: 'step-7'
       name: 'Test - Integration'
       run: './mvnw -B verify -DskipUnitTests'
@@ -77,7 +77,7 @@ jobs:
         restore-keys: '${{ runner.os }}-maven-'
     - id: 'step-2'
       name: 'JDK 21'
-      uses: 'actions/setup-java@v5'
+      uses: 'actions/setup-java@v6'
       with:
         java-version: '21'
         distribution: 'corretto'

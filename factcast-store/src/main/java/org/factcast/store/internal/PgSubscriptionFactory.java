@@ -18,19 +18,20 @@ package org.factcast.store.internal;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.EventBus;
 import java.util.concurrent.*;
+import javax.annotation.Nullable;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.subscription.*;
 import org.factcast.core.subscription.MissingTransformationInformationException;
 import org.factcast.core.subscription.observer.*;
-import org.factcast.store.StoreConfigurationProperties;
+import org.factcast.store.*;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
+import org.factcast.store.internal.logsuppression.LogSuppression;
 import org.factcast.store.internal.pipeline.*;
 import org.factcast.store.internal.query.*;
 import org.factcast.store.internal.telemetry.PgStoreTelemetry;
 
-// TODO integrate with PGQuery
 @SuppressWarnings("UnstableApiUsage")
 @Slf4j
 public class PgSubscriptionFactory implements AutoCloseable {
@@ -48,10 +49,13 @@ public class PgSubscriptionFactory implements AutoCloseable {
   final ExecutorService es;
   final PgStoreTelemetry telemetry;
   final StoreConfigurationProperties props;
+  final OffloadDataSource offloadDataSource;
   private final int maxPipelineBufferSize;
+  private final LogSuppression logSuppression;
 
   public PgSubscriptionFactory(
       PgConnectionSupplier connectionSupplier,
+      @Nullable OffloadDataSource offloadDataSource,
       EventBus eventBus,
       PgFactIdToSerialMapper idToSerialMapper,
       StoreConfigurationProperties props,
@@ -59,7 +63,8 @@ public class PgSubscriptionFactory implements AutoCloseable {
       HighWaterMarkFetcher hwmFetcher,
       ServerPipelineFactory pipelineFactory,
       PgMetrics metrics,
-      PgStoreTelemetry telemetry) {
+      PgStoreTelemetry telemetry,
+      LogSuppression logSuppression) {
     this.connectionSupplier = connectionSupplier;
     this.eventBus = eventBus;
     this.idToSerialMapper = idToSerialMapper;
@@ -68,8 +73,9 @@ public class PgSubscriptionFactory implements AutoCloseable {
     this.pipelineFactory = pipelineFactory;
     this.telemetry = telemetry;
     this.props = props;
-
+    this.offloadDataSource = offloadDataSource;
     this.maxPipelineBufferSize = props.getTransformationCachePageSize();
+    this.logSuppression = logSuppression;
 
     this.es =
         metrics.monitor(
@@ -82,21 +88,22 @@ public class PgSubscriptionFactory implements AutoCloseable {
 
     ServerPipeline pipe = pipelineFactory.create(req, subscription, maxPipelineBufferSize);
 
-    PgFactStream pgsub =
+    PgFactStream factStream =
         new PgFactStream(
             connectionSupplier,
+            offloadDataSource,
             eventBus,
             idToSerialMapper,
             catchupFactory,
             hwmFetcher,
-            pipe,
+            new PushbackServerPipeline(pipe),
             telemetry,
-            props,
-            req);
+            req,
+            logSuppression);
 
     // when closing the subscription, also close the PgFactStream
-    subscription.onClose(pgsub::close);
-    CompletableFuture.runAsync(connect(subscription, pgsub), es);
+    subscription.onClose(factStream::close);
+    CompletableFuture.runAsync(connect(subscription, factStream), es);
 
     return subscription;
   }

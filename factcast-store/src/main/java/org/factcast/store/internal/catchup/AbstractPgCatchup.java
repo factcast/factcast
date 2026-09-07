@@ -19,14 +19,15 @@ import java.time.Duration;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.sql.DataSource;
 import lombok.*;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgMetrics;
-import org.factcast.store.internal.pipeline.ServerPipeline;
-import org.factcast.store.internal.query.CurrentStatementHolder;
+import org.factcast.store.internal.pipeline.*;
 
 @RequiredArgsConstructor
 @SuppressWarnings("java:S107")
+@Slf4j
 public abstract class AbstractPgCatchup implements PgCatchup {
 
   public static final Duration FIRST_ROW_FETCHING_THRESHOLD = Duration.ofSeconds(1);
@@ -36,9 +37,8 @@ public abstract class AbstractPgCatchup implements PgCatchup {
   @NonNull protected final StoreConfigurationProperties props;
   @NonNull protected final PgMetrics metrics;
   @NonNull protected final SubscriptionRequestTO req;
-  @NonNull protected final ServerPipeline pipeline;
+  @NonNull protected final PushbackServerPipeline pipeline;
   @NonNull protected final AtomicLong serial;
-  @NonNull protected final CurrentStatementHolder statementHolder;
   @NonNull protected final DataSource ds;
   @NonNull protected final PgCatchupFactory.Phase phase;
 

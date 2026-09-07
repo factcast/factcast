@@ -162,7 +162,8 @@ Note the use of the convenient builder the `Fact` class is providing.
 
 Since the focus of this unit test is on `handleUserAdded`, we execute the method directly.
 [The full unit test](https://github.com/factcast/factcast/tree/main/factcast-itests/factcast-itests-doc/src/test/java/org/factcast/itests/docexample/factcastlowlevel/UserEmailsProjectionTest.java)
-also contains a test for the dispatching logic of the `apply` method, as well as a similar test for the `handleUserRemoved` method.
+also contains a test for the dispatching logic of the `apply` method, as well as a similar test for the
+`handleUserRemoved` method.
 
 Checking your projection's logic should preferably be done with unit tests in the first place, even though you might
 also want to add an integration test to prove it to work in conjunction with its collaborators.
@@ -188,13 +189,6 @@ Before writing your first integration test
     <version>${factcast.version}</version>
     <scope>test</scope>
 </dependency>
-```
-
-- to allow TLS free authentication between our test code and the local FactCast server, create
-  an `application.properties` file in the project's `resources` directory with the following content:
-
-```
-spring.grpc.client.channels.factstore.negotiation-type=PLAINTEXT
 ```
 
 This will make the client application connect to the server without using TLS.
@@ -265,12 +259,15 @@ use the same scenario as before, an `UserEmailsProjection` which we will ask for
 
 These are the events we need to handle:
 
-- [`UserAdded`](https://github.com/factcast/factcast/tree/main/factcast-itests/factcast-itests-doc/src/main/java/org/factcast/itests/docexample/factus/event/UserAdded.java)
+- [
+  `UserAdded`](https://github.com/factcast/factcast/tree/main/factcast-itests/factcast-itests-doc/src/main/java/org/factcast/itests/docexample/factus/event/UserAdded.java)
   and
-- [`UserRemoved`](https://github.com/factcast/factcast/tree/main/factcast-itests/factcast-itests-doc/src/main/java/org/factcast/itests/docexample/factus/event/UserRemoved.java)
+- [
+  `UserRemoved`](https://github.com/factcast/factcast/tree/main/factcast-itests/factcast-itests-doc/src/main/java/org/factcast/itests/docexample/factus/event/UserRemoved.java)
   .
 
-The `UserAdded` event contains two properties, the user ID and the email whereas `UserRemoved` only contains the user ID.
+The `UserAdded` event contains two properties, the user ID and the email whereas `UserRemoved` only contains the user
+ID.
 
 ### An Example Event
 
@@ -303,8 +300,10 @@ public class UserAdded implements EventObject {
 
 We create a Factus compatible event by implementing the `EventObject` interface and supplying the fact details via
 the `@Specification` annotation. The event itself contains the properties `userId` and `email` which are simply fields
-of the `UserAdded` class. The `protected` no-args constructor is used by Jackson when deserializing from JSON back to a POJO.
-The `of` factory method is used by application- and test code to create an `UserAdded` event. For more details on how to define a Factus event read on
+of the `UserAdded` class. The `protected` no-args constructor is used by Jackson when deserializing from JSON back to a
+POJO.
+The `of` factory method is used by application- and test code to create an `UserAdded` event. For more details on how to
+define a Factus event read on
 [here]({{< ref "/usage/factus/introduction">}}).
 
 ### The User Emails Projection

@@ -65,7 +65,8 @@ public class StoreMetrics {
 
     NOTIFY_ROUNDTRIP("notifyRoundTripLatency"),
 
-    RESULT_STREAM_START("resultStreamStart");
+    RESULT_STREAM_START("resultStreamStart"),
+    SELECT_DISTINCT_NOTIFICATIONS("selectDistinctNotifications");
 
     @NonNull final String name;
 
@@ -81,6 +82,7 @@ public class StoreMetrics {
 
   public enum EVENT implements MetricName {
     MISSED_ROUNDTRIP("missedRoundtrip"),
+    UNSUCCESSFUL_CONDITIONAL_PUBLISH("unsuccessfulConditionalPublish"),
     FACTS_SENT("factsSent");
 
     @NonNull final String name;
