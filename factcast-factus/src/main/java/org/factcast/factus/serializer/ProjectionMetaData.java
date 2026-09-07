@@ -48,8 +48,12 @@ public @interface ProjectionMetaData {
     }
 
     private static void validate(Class<?> clazz, ProjectionMetaData md) {
-      boolean hasRevisionSet = md.revision() > 0;
+      boolean hasRevisionSet = md.revision() != 0;
       boolean hasIdSet = !md.revisionId().equals(DEFAULT_REVISION_ID);
+      if (md.revisionId().isBlank())
+        throw new IllegalArgumentException(
+            clazz.getName() + ": providing a blank revisionId is not allowed");
+
       if (hasRevisionSet && hasIdSet)
         throw new IllegalArgumentException(
             clazz.getName()

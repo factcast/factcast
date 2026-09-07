@@ -47,9 +47,7 @@ public class RevisionToRevisionIdRecipe extends Recipe {
   @Override
   public @NonNull String getDescription() {
     return "Replaces the deprecated numeric revision attribute of @ProjectionMetaData with an "
-        + "equivalent revisionId string attribute. Only non-negative integer literals are "
-        + "rewritten, because only for those the resulting scoped (and therefore persisted) "
-        + "projection name stays byte-identical.";
+        + "equivalent revisionId string attribute.";
   }
 
   @Override

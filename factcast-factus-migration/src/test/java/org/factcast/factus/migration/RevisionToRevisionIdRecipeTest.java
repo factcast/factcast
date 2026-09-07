@@ -225,7 +225,7 @@ class RevisionToRevisionIdRecipeTest implements RewriteTest {
   }
 
   @Test
-  void doesChangeNegativeRevision() {
+  void migratesNegativeRevision() {
     rewriteRun(
         java(
             """
