@@ -793,9 +793,3 @@ databaseChangeLog:
             relativeToChangelogFile: true
             splitStatements: false
             stripComments: true
-        - sqlFile:
-            encoding: utf8
-            path: factcast/issue3609/create_partial_idx_fact_header_active.sql
-            relativeToChangelogFile: true
-            splitStatements: false
-            stripComments: true
