@@ -323,9 +323,15 @@
             <phase>integration-test</phase>
             <configuration>
               <executable>java</executable>
+              <!-- Runs off the reactor classpath instead of within repackaged jar,
+                since that would make the thin launcher resolve this module's parent POM
+                from the local/remote repository at runtime, which fails in any build that
+                did not "install" first (e.g. a bare "mvn verify"). -->
+              <classpathScope>runtime</classpathScope>
               <arguments>
-                <argument>-jar</argument>
-                <argument>target/fc-schema-cli.jar</argument>
+                <argument>-classpath</argument>
+                <classpath></classpath>
+                <argument>${main.class}</argument>
                 <argument>build</argument>
                 <argument>--base-path</argument>
                 <argument>../factcast-examples/factcast-example-schema-registry/src/main/resources</argument>
