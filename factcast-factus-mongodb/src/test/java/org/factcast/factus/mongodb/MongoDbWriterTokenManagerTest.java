@@ -21,10 +21,12 @@ import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.times;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import lombok.SneakyThrows;
 import net.javacrumbs.shedlock.core.LockConfiguration;
 import net.javacrumbs.shedlock.core.LockProvider;
@@ -58,6 +60,7 @@ class MongoDbWriterTokenManagerTest {
   static class TimeTravellingTokenManager extends MongoDbWriterTokenManager {
     final List<Long> sleeps = new ArrayList<>();
     private long nanos;
+    private Instant now = Instant.parse("2026-01-01T00:00:00Z");
 
     TimeTravellingTokenManager(LockProvider lockProvider, String projectionKey) {
       super(lockProvider, projectionKey);
@@ -69,9 +72,15 @@ class MongoDbWriterTokenManagerTest {
     }
 
     @Override
+    Instant now() {
+      return now;
+    }
+
+    @Override
     void sleep(long milliseconds) {
       sleeps.add(milliseconds);
       nanos += TimeUnit.MILLISECONDS.toNanos(milliseconds);
+      now = now.plusMillis(milliseconds);
     }
 
     long totalSleepMilliseconds() {
@@ -125,6 +134,31 @@ class MongoDbWriterTokenManagerTest {
       assertThat(lockConfig.getLockAtMostFor())
           .isEqualTo(MongoDbWriterTokenManager.MAX_LEASE_DURATION_SECONDS);
       assertThat(manager.sleeps).containsExactly(500L, 1000L);
+
+      assertThat(res).isNotNull();
+      res.close();
+    }
+
+    @Test
+    @DisplayName("every attempt gets a lease starting now, not one starting when waiting began")
+    @SneakyThrows
+    void buildsAFreshLockConfigurationPerAttempt() {
+      SimpleLock lock = mock(SimpleLock.class);
+      AtomicInteger attempts = new AtomicInteger();
+      when(lockProvider.lock(any(LockConfiguration.class)))
+          .thenAnswer(i -> attempts.incrementAndGet() < 8 ? Optional.empty() : Optional.of(lock));
+      TimeTravellingTokenManager manager = new TimeTravellingTokenManager(lockProvider, KEY);
+
+      final WriterToken res = manager.acquireWriteToken(Duration.ofMinutes(10));
+
+      verify(lockProvider, times(8)).lock(captor.capture());
+      assertThat(manager.totalSleepMilliseconds())
+          .isGreaterThan(MongoDbWriterTokenManager.MAX_LEASE_DURATION_SECONDS.toMillis());
+      // MongoLockProvider writes this as lockUntil, so a stale one hands out an expired lease
+      assertThat(captor.getValue().getLockAtMostUntil()).isAfter(manager.now());
+      assertThat(captor.getAllValues())
+          .extracting(LockConfiguration::getLockAtMostUntil)
+          .doesNotHaveDuplicates();
 
       assertThat(res).isNotNull();
       res.close();

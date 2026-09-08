@@ -53,33 +53,24 @@ public class MongoDbWriterTokenManager {
   }
 
   @Nullable
-  public WriterToken acquireWriteToken(@NonNull Duration maxWait) {
-    final LockConfiguration lockConfiguration = getLockConfiguration(projectionKey + "_lock");
-    Optional<SimpleLock> acquiredLock = tryToAcquireLock(lockConfiguration, maxWait);
-    return acquiredLock.map(l -> new MongoDbWriterToken(l, lockConfiguration)).orElse(null);
-  }
-
-  private static LockConfiguration getLockConfiguration(String lockKey) {
-    return new LockConfiguration(
-        Instant.now(), lockKey, MAX_LEASE_DURATION_SECONDS, MIN_LEASE_DURATION_SECONDS);
-  }
-
   @SuppressWarnings("java:S2142")
-  private Optional<SimpleLock> tryToAcquireLock(
-      @NonNull LockConfiguration lockConfig, @NonNull Duration maxWait) {
+  public WriterToken acquireWriteToken(@NonNull Duration maxWait) {
     final long deadline = nanoTime() + maxWait.toNanos();
     try {
       long retryBackoffDuration = INITIAL_RETRY_INTERVAL_MILLISECONDS;
       while (true) {
+        // MongoLockProvider is not on database time: it writes lockUntil as createdAt plus the
+        // lease, so a configuration reused across retries would grant an already expired lease
+        LockConfiguration lockConfiguration = getLockConfiguration(projectionKey + "_lock");
         log.debug("Trying to acquire lock for projection: {}", projectionKey);
-        Optional<SimpleLock> acquiredLock = lockProvider.lock(lockConfig);
+        Optional<SimpleLock> acquiredLock = lockProvider.lock(lockConfiguration);
         if (acquiredLock.isPresent()) {
           log.debug("Acquired lock for projection: {}", projectionKey);
-          return acquiredLock;
+          return new MongoDbWriterToken(acquiredLock.get(), lockConfiguration);
         }
         long remainingMilliseconds = TimeUnit.NANOSECONDS.toMillis(deadline - nanoTime());
         if (remainingMilliseconds <= 0) {
-          return Optional.empty();
+          return null;
         }
         sleep(Math.min(retryBackoffDuration, remainingMilliseconds));
         retryBackoffDuration = Math.min(MAX_RETRY_INTERVAL_MILLISECONDS, retryBackoffDuration * 2);
@@ -87,13 +78,23 @@ public class MongoDbWriterTokenManager {
     } catch (InterruptedException e) {
       log.info("Interrupted while trying to acquire lock: {}", e.getMessage());
       Thread.currentThread().interrupt();
+      return null;
     }
-    return Optional.empty();
+  }
+
+  private LockConfiguration getLockConfiguration(String lockKey) {
+    return new LockConfiguration(
+        now(), lockKey, MAX_LEASE_DURATION_SECONDS, MIN_LEASE_DURATION_SECONDS);
   }
 
   @VisibleForTesting
   long nanoTime() {
     return System.nanoTime();
+  }
+
+  @VisibleForTesting
+  Instant now() {
+    return Instant.now();
   }
 
   @VisibleForTesting

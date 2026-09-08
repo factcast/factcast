@@ -21,6 +21,7 @@ import java.util.Optional;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.*;
+import java.util.function.LongSupplier;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.core.*;
@@ -30,6 +31,8 @@ import org.factcast.factus.projection.WriterToken;
 public class MongoDbWriterToken implements WriterToken {
   private final AtomicReference<SimpleLock> lock;
   private final LockConfiguration lockConfiguration;
+  private final long leaseNanos;
+  private final LongSupplier nanoTime;
 
   private final long keepaliveInterval;
   private final Timer scheduler;
@@ -39,7 +42,7 @@ public class MongoDbWriterToken implements WriterToken {
 
   @Getter(AccessLevel.PROTECTED)
   @VisibleForTesting
-  private final AtomicLong liveness = new AtomicLong(System.nanoTime());
+  private final AtomicLong liveness;
 
   /**
    * Creates a WriterToken based on a SimpleLock acquired before, assuming it is a MongoDbLock. The
@@ -59,8 +62,20 @@ public class MongoDbWriterToken implements WriterToken {
       @NonNull SimpleLock lock,
       @NonNull LockConfiguration lockConfiguration,
       @NonNull Duration keepaliveInterval) {
+    this(lock, lockConfiguration, keepaliveInterval, System::nanoTime);
+  }
+
+  @VisibleForTesting
+  MongoDbWriterToken(
+      @NonNull SimpleLock lock,
+      @NonNull LockConfiguration lockConfiguration,
+      @NonNull Duration keepaliveInterval,
+      @NonNull LongSupplier nanoTime) {
     this.lock = new AtomicReference<>(lock);
     this.lockConfiguration = lockConfiguration;
+    this.leaseNanos = lockConfiguration.getLockAtMostFor().toNanos();
+    this.nanoTime = nanoTime;
+    this.liveness = new AtomicLong(nanoTime.getAsLong());
     this.scheduler = new Timer(lockConfiguration.getName() + System.currentTimeMillis(), true);
     this.keepaliveInterval = keepaliveInterval.toMillis();
     startWriterTokenKeepalive();
@@ -72,10 +87,7 @@ public class MongoDbWriterToken implements WriterToken {
    */
   @Override
   public boolean isValid() {
-    if (closed.get() || lockLost.get()) {
-      return false;
-    }
-    return System.nanoTime() - liveness.get() < lockConfiguration.getLockAtMostFor().toNanos();
+    return !closed.get() && !lockLost.get() && leaseIsLive();
   }
 
   @Override
@@ -84,6 +96,12 @@ public class MongoDbWriterToken implements WriterToken {
       return;
     }
     scheduler.cancel();
+    if (lockLost.get() || !leaseIsLive()) {
+      // MongoLockProvider's unlock matches on the lock name alone, so once our lease is gone that
+      // document may already describe somebody else's lock
+      log.debug("Not releasing lock {}, its lease is gone", lockConfiguration.getName());
+      return;
+    }
     try {
       lock.get().unlock();
     } catch (IllegalStateException e) {
@@ -107,28 +125,44 @@ public class MongoDbWriterToken implements WriterToken {
         keepaliveInterval);
   }
 
-  private void extendLock() {
-    if (closed.get()) {
+  private boolean leaseIsLive() {
+    return nanoTime.getAsLong() - liveness.get() < leaseNanos;
+  }
+
+  /**
+   * An escaping exception would kill the Timer thread and with it the keepalive, so this must never
+   * throw.
+   */
+  @VisibleForTesting
+  void extendLock() {
+    if (closed.get() || lockLost.get()) {
       return;
     }
+    if (!leaseIsLive()) {
+      // MongoLockProvider only extends a document whose lockUntil is still in the future, so past
+      // our own lease there is nothing left to retry
+      log.warn("Lease of lock {} ran out, invalidating writer token", lockConfiguration.getName());
+      invalidateLock();
+      return;
+    }
+    long extendedFrom = nanoTime.getAsLong();
     try {
       Optional<SimpleLock> extendedLock =
           lock.get()
               .extend(lockConfiguration.getLockAtMostFor(), lockConfiguration.getLockAtLeastFor());
       if (extendedLock.isPresent()) {
         lock.set(extendedLock.get());
-        liveness.set(System.nanoTime());
+        liveness.set(extendedFrom);
         log.debug("Extended lock for projection: {}", lockConfiguration.getName());
-        return;
+      } else {
+        log.warn("Lost lock for projection: {}", lockConfiguration.getName());
+        invalidateLock();
       }
-      log.warn("Failed to extend lock for projection: {}", lockConfiguration.getName());
-    } catch (IllegalStateException e) {
+    } catch (RuntimeException e) {
+      // a failing round trip does not tell us the lease is gone, so let the next tick retry
       log.warn(
-          "Failed to extend lock for projection: {}, {}",
-          lockConfiguration.getName(),
-          e.getMessage());
+          "Failed to extend lock for projection: {}, will retry", lockConfiguration.getName(), e);
     }
-    invalidateLock();
   }
 
   private void invalidateLock() {
