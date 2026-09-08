@@ -23,14 +23,38 @@ public class ProjectionMetaDataTest {
   @Test
   void testResolver() {
     assertThat(ProjectionMetaData.Resolver.resolveFor(WithRevision.class).get())
-        .extracting(ProjectionMetaData::name, ProjectionMetaData::revision)
-        .containsExactly("foo", 32L);
+        .extracting(
+            ProjectionMetaData::name, ProjectionMetaData::revision, ProjectionMetaData::revisionId)
+        .containsExactly("foo", 32L, "0");
+
+    assertThat(ProjectionMetaData.Resolver.resolveFor(WithRevisionId.class).get())
+        .extracting(
+            ProjectionMetaData::name, ProjectionMetaData::revision, ProjectionMetaData::revisionId)
+        .containsExactly("foo", 0L, "32 A");
 
     assertThat(ProjectionMetaData.Resolver.resolveFor(Without.class)).isEmpty();
   }
 
-  @ProjectionMetaData(name = "foo", revisionId = "32")
+  @Test
+  void validationFails() {
+    assertThatThrownBy(() -> ProjectionMetaData.Resolver.resolveFor(InvalidDeclaresBoth.class))
+        .isInstanceOf(IllegalArgumentException.class);
+
+    assertThatThrownBy(() -> ProjectionMetaData.Resolver.resolveFor(InvalidBlankRevisionId.class))
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @ProjectionMetaData(name = "foo", revision = 32L)
   static class WithRevision {}
 
+  @ProjectionMetaData(name = "foo", revisionId = "32 A")
+  static class WithRevisionId {}
+
   static class Without {}
+
+  @ProjectionMetaData(revision = 1, revisionId = "32 A")
+  static class InvalidDeclaresBoth {}
+
+  @ProjectionMetaData(revisionId = "")
+  static class InvalidBlankRevisionId {}
 }
