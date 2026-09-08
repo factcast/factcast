@@ -33,7 +33,7 @@ public @interface ProjectionMetaData {
   String name() default "";
 
   /** will be removed in favor of revisionId in the future */
-  @Deprecated
+  @Deprecated(since = "0.12.3", forRemoval = true)
   long revision() default 0;
 
   String revisionId() default DEFAULT_REVISION_ID;
