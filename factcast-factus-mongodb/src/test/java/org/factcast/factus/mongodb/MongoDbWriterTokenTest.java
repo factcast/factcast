@@ -20,8 +20,8 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.Mockito.*;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicLong;
 import net.javacrumbs.shedlock.core.LockConfiguration;
 import net.javacrumbs.shedlock.core.SimpleLock;
 import org.awaitility.Awaitility;
@@ -33,85 +33,85 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class MongoDbWriterTokenTest {
 
-  private final long KEEPALIVE_INTERVAL_SECONDS = 2;
+  private static final Duration LOCK_AT_MOST_FOR = Duration.ofSeconds(1);
+  private static final Duration LOCK_AT_LEAST_FOR = Duration.ofMillis(10);
+  private static final Duration SHORT_KEEPALIVE = Duration.ofMillis(100);
+  private static final Duration KEEPALIVE_BEYOND_TEST_RUNTIME = Duration.ofMinutes(5);
+  private static final Duration PATIENTLY = Duration.ofSeconds(5);
+
+  private final LockConfiguration lockConfiguration =
+      new LockConfiguration(Instant.now(), "key_lock", LOCK_AT_MOST_FOR, LOCK_AT_LEAST_FOR);
 
   @Mock SimpleLock lock;
-  @Mock LockConfiguration lockConfiguration;
   MongoDbWriterToken uut;
 
-  @BeforeEach
-  void setUp() {
-    uut =
-        new MongoDbWriterToken(
-            lock, lockConfiguration, Duration.ofSeconds(KEEPALIVE_INTERVAL_SECONDS));
+  @AfterEach
+  void cancelKeepalive() {
+    if (uut != null) {
+      uut.close();
+    }
+  }
+
+  private MongoDbWriterToken tokenWith(Duration keepaliveInterval) {
+    uut = new MongoDbWriterToken(lock, lockConfiguration, keepaliveInterval);
+    return uut;
+  }
+
+  private void expire() {
+    uut.liveness().set(System.nanoTime() - LOCK_AT_MOST_FOR.toNanos());
+  }
+
+  private SimpleLock stubSuccessfulExtension() {
+    SimpleLock extendedLock = mock(SimpleLock.class);
+    lenient()
+        .when(lock.extend(LOCK_AT_MOST_FOR, LOCK_AT_LEAST_FOR))
+        .thenReturn(Optional.of(extendedLock));
+    lenient()
+        .when(extendedLock.extend(LOCK_AT_MOST_FOR, LOCK_AT_LEAST_FOR))
+        .thenReturn(Optional.of(extendedLock));
+    return extendedLock;
   }
 
   @Nested
   class WhenCheckingValidity {
+
     @Test
-    @DisplayName(
-        "isValid should return true without extending the lock when checkIntervall is not exceeded.")
-    void isValidReturnsTrueWhenLivenessNotExpired() {
+    @DisplayName("isValid returns true while the lease of the last extension still holds")
+    void isValidReturnsTrueWhileLeaseHolds() {
+      tokenWith(KEEPALIVE_BEYOND_TEST_RUNTIME);
+
       assertThat(uut.isValid()).isTrue();
 
       verifyNoInteractions(lock);
     }
 
     @Test
-    @DisplayName("isValid should return true when lock can be extended")
-    void isValidExtendsLockWhenLivenessExpired() {
-      when(lock.extend(any(Duration.class), any(Duration.class)))
-          .thenReturn(Optional.of(mock(SimpleLock.class)));
-      final Duration minDuration = Duration.ofSeconds(1L);
-      final Duration maxDuration = Duration.ofSeconds(1L);
-      when(lockConfiguration.getLockAtLeastFor()).thenReturn(minDuration);
-      when(lockConfiguration.getLockAtMostFor()).thenReturn(maxDuration);
-      uut.liveness().set(System.currentTimeMillis() - Duration.ofSeconds(21).toMillis());
-
-      assertThat(uut.isValid()).isTrue();
-
-      verify(lock).extend(maxDuration, minDuration);
-    }
-
-    @Test
-    @DisplayName("isValid should return false when lock cannot be extended")
-    void isValidReturnsFalseIfExtendReturnsEmpty() {
-      when(lock.extend(any(Duration.class), any(Duration.class))).thenReturn(Optional.empty());
-      final Duration minDuration = Duration.ofSeconds(1L);
-      final Duration maxDuration = Duration.ofSeconds(1L);
-      when(lockConfiguration.getLockAtLeastFor()).thenReturn(minDuration);
-      when(lockConfiguration.getLockAtMostFor()).thenReturn(maxDuration);
-      uut.liveness().set(System.currentTimeMillis() - Duration.ofSeconds(21).toMillis());
+    @DisplayName("isValid returns false once the lease of the last extension expired")
+    void isValidReturnsFalseWhenLeaseExpired() {
+      tokenWith(KEEPALIVE_BEYOND_TEST_RUNTIME);
+      expire();
 
       assertThat(uut.isValid()).isFalse();
-
-      verify(lock).extend(maxDuration, minDuration);
     }
 
     @Test
-    @DisplayName("isValid should return false when liveness is null.")
-    void isValidReturnsFalseWhenLivenessIsExpired() {
-      uut.liveness(null);
+    @DisplayName("isValid never extends the lock, not even repeatedly on an expired lease")
+    void isValidNeverExtendsTheLock() {
+      tokenWith(KEEPALIVE_BEYOND_TEST_RUNTIME);
+      expire();
 
-      assertThat(uut.isValid()).isFalse();
+      for (int i = 0; i < 5; i++) {
+        assertThat(uut.isValid()).isFalse();
+      }
 
-      verifyNoInteractions(lock);
+      verify(lock, never()).extend(any(), any());
     }
 
     @Test
-    @DisplayName("isValid should return false attempt to extend lock fails")
-    void IsValidReturnsFalseWhenExtendingLockFails() {
-      // Set liveness to value smaller than the keepalive interval.
-      uut.liveness(
-          new AtomicLong(
-              System.currentTimeMillis()
-                  - Duration.ofSeconds(KEEPALIVE_INTERVAL_SECONDS + 3).toMillis()));
-      when(lock.extend(any(Duration.class), any(Duration.class)))
-          .thenThrow(IllegalStateException.class);
-      final Duration minDuration = Duration.ofSeconds(1L);
-      final Duration maxDuration = Duration.ofSeconds(1L);
-      when(lockConfiguration.getLockAtLeastFor()).thenReturn(minDuration);
-      when(lockConfiguration.getLockAtMostFor()).thenReturn(maxDuration);
+    @DisplayName("isValid returns false after close")
+    void isValidReturnsFalseAfterClose() {
+      tokenWith(KEEPALIVE_BEYOND_TEST_RUNTIME);
+      uut.close();
 
       assertThat(uut.isValid()).isFalse();
     }
@@ -123,59 +123,101 @@ class MongoDbWriterTokenTest {
     @Test
     @DisplayName("close calls unlock")
     void closeSuccessfully() {
+      tokenWith(KEEPALIVE_BEYOND_TEST_RUNTIME);
+
       uut.close();
 
       verify(lock).unlock();
-      assertThat(uut.liveness()).isNull();
     }
 
     @Test
     @DisplayName("close catches the exception when unlock is unsuccessful")
     void closeCatchesExceptionWhenFailing() {
       doThrow(new IllegalStateException()).when(lock).unlock();
+      tokenWith(KEEPALIVE_BEYOND_TEST_RUNTIME);
 
       assertThatCode(() -> uut.close()).doesNotThrowAnyException();
 
       verify(lock).unlock();
-      assertThat(uut.liveness()).isNull();
+      assertThat(uut.isValid()).isFalse();
+    }
+
+    @Test
+    @DisplayName("close is idempotent")
+    void closeIsIdempotent() {
+      tokenWith(KEEPALIVE_BEYOND_TEST_RUNTIME);
+
+      uut.close();
+      uut.close();
+      uut.close();
+
+      verify(lock, times(1)).unlock();
+    }
+
+    @Test
+    @DisplayName("close stops the keepalive")
+    void closeStopsTheKeepalive() {
+      tokenWith(SHORT_KEEPALIVE);
+
+      uut.close();
+
+      verify(lock, after(SHORT_KEEPALIVE.multipliedBy(5).toMillis()).never()).extend(any(), any());
+      verify(lock).unlock();
     }
   }
 
   @Nested
   class WhenRefreshing {
-    private final long keepaliveIntervalPassedMillis = (KEEPALIVE_INTERVAL_SECONDS * 1000) + 500;
 
     @Test
     @DisplayName("schedules a task to extend the lock periodically")
     void schedulesTask() {
-      when(lock.extend(any(Duration.class), any(Duration.class)))
-          .thenReturn(Optional.of(mock(SimpleLock.class)));
-      final Duration minDuration = Duration.ofSeconds(1L);
-      final Duration maxDuration = Duration.ofSeconds(1L);
-      when(lockConfiguration.getLockAtLeastFor()).thenReturn(minDuration);
-      when(lockConfiguration.getLockAtMostFor()).thenReturn(maxDuration);
+      SimpleLock extendedLock = stubSuccessfulExtension();
+      tokenWith(SHORT_KEEPALIVE);
 
-      // wait for it
-      verify(lock, after(KEEPALIVE_INTERVAL_SECONDS - 1).never()).extend(any(), any());
+      verify(lock, after(SHORT_KEEPALIVE.dividedBy(2).toMillis()).never()).extend(any(), any());
+      verify(lock, timeout(PATIENTLY.toMillis())).extend(LOCK_AT_MOST_FOR, LOCK_AT_LEAST_FOR);
+      verify(extendedLock, timeout(PATIENTLY.toMillis()).atLeast(2))
+          .extend(LOCK_AT_MOST_FOR, LOCK_AT_LEAST_FOR);
 
-      // half a second after the keepalive interval passed, we expect the lock to be extended.
-      verify(lock, timeout(keepaliveIntervalPassedMillis).times(1))
-          .extend(maxDuration, minDuration);
+      // a SimpleLock may only be extended once, the successor takes over
+      verify(lock, times(1)).extend(LOCK_AT_MOST_FOR, LOCK_AT_LEAST_FOR);
+      assertThat(uut.isValid()).isTrue();
     }
 
     @Test
-    @DisplayName("scheduled task expires lock if extending the lock causes an exception")
-    void expiresOnFailure() {
-      when(lock.extend(any(Duration.class), any(Duration.class)))
-          .thenThrow(new IllegalStateException());
-      final Duration minDuration = Duration.ofSeconds(1L);
-      final Duration maxDuration = Duration.ofSeconds(1L);
-      when(lockConfiguration.getLockAtLeastFor()).thenReturn(minDuration);
-      when(lockConfiguration.getLockAtMostFor()).thenReturn(maxDuration);
+    @DisplayName("keepalive refreshes the liveness, so isValid recovers without extending itself")
+    void keepaliveRefreshesLiveness() {
+      stubSuccessfulExtension();
+      tokenWith(SHORT_KEEPALIVE);
+      expire();
 
-      Awaitility.await()
-          .atMost(Duration.ofMillis(keepaliveIntervalPassedMillis))
-          .until(() -> uut.liveness() == null);
+      assertThat(uut.isValid()).isFalse();
+
+      Awaitility.await().atMost(PATIENTLY).until(() -> uut.isValid());
+      verify(lock, times(1)).extend(LOCK_AT_MOST_FOR, LOCK_AT_LEAST_FOR);
+    }
+
+    @Test
+    @DisplayName("scheduled task invalidates the token if the lock cannot be extended")
+    void expiresWhenExtendReturnsEmpty() {
+      when(lock.extend(LOCK_AT_MOST_FOR, LOCK_AT_LEAST_FOR)).thenReturn(Optional.empty());
+      tokenWith(SHORT_KEEPALIVE);
+
+      Awaitility.await().atMost(PATIENTLY).until(() -> !uut.isValid());
+    }
+
+    @Test
+    @DisplayName("scheduled task invalidates the token if extending the lock causes an exception")
+    void expiresOnFailure() {
+      when(lock.extend(LOCK_AT_MOST_FOR, LOCK_AT_LEAST_FOR)).thenThrow(new IllegalStateException());
+      tokenWith(SHORT_KEEPALIVE);
+
+      Awaitility.await().atMost(PATIENTLY).until(() -> !uut.isValid());
+
+      // after giving up, the keepalive stops hitting the lock
+      verify(lock, after(SHORT_KEEPALIVE.multipliedBy(5).toMillis()).times(1))
+          .extend(LOCK_AT_MOST_FOR, LOCK_AT_LEAST_FOR);
     }
   }
 }

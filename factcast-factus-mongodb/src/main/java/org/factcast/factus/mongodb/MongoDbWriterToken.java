@@ -20,8 +20,7 @@ import java.time.Duration;
 import java.util.Optional;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.atomic.AtomicLong;
-import javax.annotation.Nullable;
+import java.util.concurrent.atomic.*;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.core.*;
@@ -29,16 +28,18 @@ import org.factcast.factus.projection.WriterToken;
 
 @Slf4j
 public class MongoDbWriterToken implements WriterToken {
-  private @NonNull SimpleLock lock;
+  private final AtomicReference<SimpleLock> lock;
   private final LockConfiguration lockConfiguration;
 
   private final long keepaliveInterval;
   private final Timer scheduler;
 
+  private final AtomicBoolean closed = new AtomicBoolean(false);
+  private final AtomicBoolean lockLost = new AtomicBoolean(false);
+
   @Getter(AccessLevel.PROTECTED)
-  @Setter(AccessLevel.PROTECTED)
   @VisibleForTesting
-  private @Nullable AtomicLong liveness;
+  private final AtomicLong liveness = new AtomicLong(System.nanoTime());
 
   /**
    * Creates a WriterToken based on a SimpleLock acquired before, assuming it is a MongoDbLock. The
@@ -58,51 +59,35 @@ public class MongoDbWriterToken implements WriterToken {
       @NonNull SimpleLock lock,
       @NonNull LockConfiguration lockConfiguration,
       @NonNull Duration keepaliveInterval) {
-    this.lock = lock;
+    this.lock = new AtomicReference<>(lock);
     this.lockConfiguration = lockConfiguration;
-    this.liveness = new AtomicLong(System.currentTimeMillis());
     this.scheduler = new Timer(lockConfiguration.getName() + System.currentTimeMillis(), true);
     this.keepaliveInterval = keepaliveInterval.toMillis();
     startWriterTokenKeepalive();
   }
 
   /**
-   * Attempts to extend the lock, which will only succeed of the lock is either free or held by the
-   * instance.
+   * Reports whether the lease acquired by the last successful extension still covers now. A
+   * shedlock SimpleLock can only be extended once, so extending is left to the keepalive.
    */
   @Override
   public boolean isValid() {
-    if (alreadyClosed()) return false;
-    // before extending check if the lock was extended.
-    long lastCheck = liveness.get();
-    if (System.currentTimeMillis() - lastCheck < keepaliveInterval) {
-      return true;
+    if (closed.get() || lockLost.get()) {
+      return false;
     }
-    try {
-      Optional<SimpleLock> extendedLock =
-          lock.extend(lockConfiguration.getLockAtMostFor(), lockConfiguration.getLockAtLeastFor());
-      log.debug(
-          "WriterToken {} validity check, when attempting to extend lock for: {}",
-          extendedLock.isPresent() ? "passed" : "failed",
-          lockConfiguration.getName());
-      if (extendedLock.isPresent()) {
-        this.lock = extendedLock.get();
-        return true;
-      }
-    } catch (IllegalStateException e) {
-      log.warn("Failed to extend lock for projection: {}", lockConfiguration.getName());
-    }
-    return false;
+    return System.nanoTime() - liveness.get() < lockConfiguration.getLockAtMostFor().toNanos();
   }
 
   @Override
   public void close() {
+    if (!closed.compareAndSet(false, true)) {
+      return;
+    }
+    scheduler.cancel();
     try {
-      lock.unlock();
+      lock.get().unlock();
     } catch (IllegalStateException e) {
       log.warn("Failed to unlock, it is no longer valid: {}", e.getMessage());
-    } finally {
-      liveness = null;
     }
   }
 
@@ -115,43 +100,39 @@ public class MongoDbWriterToken implements WriterToken {
         new TimerTask() {
           @Override
           public void run() {
-            if (alreadyClosed()) {
-              scheduler.cancel();
-            } else {
-              Optional<SimpleLock> extendedLock = Optional.empty();
-              try {
-                extendedLock =
-                    lock.extend(
-                        lockConfiguration.getLockAtMostFor(),
-                        lockConfiguration.getLockAtLeastFor());
-                if (extendedLock.isPresent()) {
-                  lock = extendedLock.get();
-                  liveness.set(System.currentTimeMillis());
-                } else {
-                  // could not extend the lock.
-                  invalidateLock();
-                }
-              } catch (IllegalStateException e) {
-                invalidateLock();
-              } finally {
-                log.debug(
-                    "{} to extend lock for projection: {}",
-                    extendedLock.isPresent() ? "Succeeded" : "Failed",
-                    lockConfiguration.getName());
-              }
-            }
+            extendLock();
           }
         },
         keepaliveInterval,
         keepaliveInterval);
   }
 
-  private void invalidateLock() {
-    liveness = null;
-    scheduler.cancel();
+  private void extendLock() {
+    if (closed.get()) {
+      return;
+    }
+    try {
+      Optional<SimpleLock> extendedLock =
+          lock.get()
+              .extend(lockConfiguration.getLockAtMostFor(), lockConfiguration.getLockAtLeastFor());
+      if (extendedLock.isPresent()) {
+        lock.set(extendedLock.get());
+        liveness.set(System.nanoTime());
+        log.debug("Extended lock for projection: {}", lockConfiguration.getName());
+        return;
+      }
+      log.warn("Failed to extend lock for projection: {}", lockConfiguration.getName());
+    } catch (IllegalStateException e) {
+      log.warn(
+          "Failed to extend lock for projection: {}, {}",
+          lockConfiguration.getName(),
+          e.getMessage());
+    }
+    invalidateLock();
   }
 
-  private boolean alreadyClosed() {
-    return liveness == null;
+  private void invalidateLock() {
+    lockLost.set(true);
+    scheduler.cancel();
   }
 }
