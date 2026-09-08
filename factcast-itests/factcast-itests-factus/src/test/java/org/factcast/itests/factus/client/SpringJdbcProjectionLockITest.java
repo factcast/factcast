@@ -17,6 +17,7 @@ package org.factcast.itests.factus.client;
 
 import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 
 import java.sql.Timestamp;
@@ -29,6 +30,7 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.core.LockConfiguration;
 import net.javacrumbs.shedlock.provider.jdbctemplate.JdbcTemplateLockProvider;
+import net.javacrumbs.shedlock.support.LockException;
 import org.factcast.core.FactStreamPosition;
 import org.factcast.factus.Factus;
 import org.factcast.factus.Handler;
@@ -62,6 +64,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 public class SpringJdbcProjectionLockITest extends AbstractFactCastIntegrationTest {
 
   private static final String LOCK_TABLE = JdbcWriterTokenManager.DEFAULT_LOCK_TABLE_NAME;
+  private static final String HIDDEN_LOCK_TABLE = LOCK_TABLE + "_hidden";
 
   /** short enough for a takeover test to observe an expiring lease within seconds */
   private static final Duration LEASE = Duration.ofSeconds(2);
@@ -218,8 +221,53 @@ public class SpringJdbcProjectionLockITest extends AbstractFactCastIntegrationTe
       assertThat(incoming.isValid()).isTrue();
     }
 
+    /**
+     * The same instance reacquiring is the case a differing lease owner cannot save us from: both
+     * tokens carry the very locked_by that shedlock matches its unlock on.
+     */
+    @Test
+    void closingATokenThatQuietlyLostItsLeaseDoesNotReleaseItsSuccessor() {
+      JdbcWriterTokenManager instance = instanceWithLease(SLOW_KEEPALIVE_LEASE);
+      WriterToken outgoing = acquire(instance, NO_WAIT);
+      assertThat(outgoing).isNotNull();
+
+      hideLockTable();
+      // renewals now fail without ever reporting the lease lost, so the token only ages out. The
+      // poll delay lands halfway between two renewals, so none can slip into the takeover below.
+      await()
+          .atMost(SLOW_KEEPALIVE_LEASE.plusSeconds(4))
+          .pollDelay(SLOW_KEEPALIVE_LEASE.plusMillis(1500))
+          .until(() -> !outgoing.isValid());
+      revealLockTable();
+
+      WriterToken incoming = acquire(instance, NO_WAIT);
+      assertThat(incoming).isNotNull();
+
+      closeQuietly(outgoing);
+
+      assertThat(acquire(NO_WAIT)).isNull();
+      assertThat(incoming.isValid()).isTrue();
+    }
+
     private String hostPartOf(String lockedBy) {
       return lockedBy.substring(0, lockedBy.indexOf('/'));
+    }
+  }
+
+  @Nested
+  class Diagnostics {
+
+    @Test
+    void aNameColumnTooNarrowForTheLockNameSaysSo() {
+      projectionKey = "jdbc_lock_itest_with_a_name_beyond_sixty_four_characters_" + randomUUID();
+      lockName = ProjectionNames.lockName(projectionKey);
+      narrowTheNameColumnTo64Characters();
+
+      assertThatThrownBy(() -> acquire(NO_WAIT))
+          .isInstanceOf(LockException.class)
+          .hasMessageContaining(projectionKey)
+          .hasMessageContaining(lockName)
+          .hasMessageContaining(String.valueOf(ProjectionNames.MAX_NAME_LENGTH));
     }
   }
 
@@ -297,9 +345,17 @@ public class SpringJdbcProjectionLockITest extends AbstractFactCastIntegrationTe
   }
 
   private WriterToken acquire(Duration lease, Duration maxWait) {
-    WriterToken token =
-        JdbcWriterTokenManager.create(jdbcTemplate, projectionKey, LOCK_TABLE, lease, Duration.ZERO)
-            .acquireWriteToken(maxWait);
+    return acquire(instanceWithLease(lease), maxWait);
+  }
+
+  /** One manager stands for one application instance: all its tokens share a lease owner. */
+  private JdbcWriterTokenManager instanceWithLease(Duration lease) {
+    return JdbcWriterTokenManager.create(
+        jdbcTemplate, projectionKey, LOCK_TABLE, lease, Duration.ZERO);
+  }
+
+  private WriterToken acquire(JdbcWriterTokenManager instance, Duration maxWait) {
+    WriterToken token = instance.acquireWriteToken(maxWait);
     if (token != null) {
       handedOutTokens.add(token);
     }
@@ -336,6 +392,19 @@ public class SpringJdbcProjectionLockITest extends AbstractFactCastIntegrationTe
     assertThat(updated).isOne();
   }
 
+  /** Takes the lock table away from a token's keepalive without touching its row. */
+  private void hideLockTable() {
+    jdbcTemplate.execute("ALTER TABLE " + LOCK_TABLE + " RENAME TO " + HIDDEN_LOCK_TABLE);
+  }
+
+  private void revealLockTable() {
+    jdbcTemplate.execute("ALTER TABLE " + HIDDEN_LOCK_TABLE + " RENAME TO " + LOCK_TABLE);
+  }
+
+  private void narrowTheNameColumnTo64Characters() {
+    jdbcTemplate.execute("ALTER TABLE " + LOCK_TABLE + " ALTER COLUMN name TYPE varchar(64)");
+  }
+
   private Timestamp lockUntil() {
     return jdbcTemplate.queryForObject(
         "SELECT lock_until FROM " + LOCK_TABLE + " WHERE name = ?", Timestamp.class, lockName);
@@ -363,6 +432,7 @@ public class SpringJdbcProjectionLockITest extends AbstractFactCastIntegrationTe
   }
 
   private void createTables() {
+    jdbcTemplate.execute("DROP TABLE IF EXISTS " + HIDDEN_LOCK_TABLE + ";");
     jdbcTemplate.execute("DROP TABLE IF EXISTS " + LOCK_TABLE + ";");
     jdbcTemplate.execute(
         """

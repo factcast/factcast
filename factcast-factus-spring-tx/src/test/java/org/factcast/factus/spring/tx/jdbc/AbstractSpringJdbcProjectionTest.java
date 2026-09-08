@@ -183,6 +183,34 @@ class AbstractSpringJdbcProjectionTest {
       token.close();
       assertThat(uut.hasLock()).isFalse();
     }
+
+    @Test
+    void keepsTheTokenWhenASecondAcquisitionFinallyContendsWithIt() {
+      when(lockProvider.lock(any(LockConfiguration.class)))
+          .thenReturn(Optional.of(mock(SimpleLock.class)))
+          .thenReturn(Optional.empty());
+
+      assertThat(uut.acquireWriteToken(Duration.ZERO)).isNotNull();
+      assertThat(uut.acquireWriteToken(Duration.ZERO)).isNull();
+
+      assertThat(uut.hasLock()).isTrue();
+    }
+
+    @Test
+    void closesTheTokenItReplaces() {
+      when(lockProvider.lock(any(LockConfiguration.class)))
+          .thenReturn(Optional.of(mock(SimpleLock.class)))
+          .thenReturn(Optional.of(mock(SimpleLock.class)));
+
+      WriterToken displaced = uut.acquireWriteToken(Duration.ZERO);
+      WriterToken current = uut.acquireWriteToken(Duration.ZERO);
+
+      assertThat(displaced).isNotNull();
+      assertThat(displaced.isValid()).isFalse();
+      assertThat(current).isNotNull();
+      assertThat(current.isValid()).isTrue();
+      assertThat(uut.hasLock()).isTrue();
+    }
   }
 
   @ProjectionMetaData(name = "managed", revision = 1)

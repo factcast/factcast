@@ -56,6 +56,7 @@ public class JdbcWriterToken implements WriterToken {
       @NonNull String lockName,
       @NonNull Duration lockAtMostFor,
       @NonNull Duration lockAtLeastFor,
+      long leaseStartedAtNanos,
       @NonNull ScheduledExecutorService scheduler,
       @NonNull LongSupplier nanoTime) {
     this.lock = new AtomicReference<>(lock);
@@ -64,7 +65,7 @@ public class JdbcWriterToken implements WriterToken {
     this.lockAtLeastFor = lockAtLeastFor;
     this.leaseNanos = lockAtMostFor.toNanos();
     this.nanoTime = nanoTime;
-    this.lastSuccessfulExtension = new AtomicLong(nanoTime.getAsLong());
+    this.lastSuccessfulExtension = new AtomicLong(leaseStartedAtNanos);
 
     long intervalMillis = Math.max(1, lockAtMostFor.dividedBy(3).toMillis());
     keepalive.set(
@@ -74,10 +75,7 @@ public class JdbcWriterToken implements WriterToken {
 
   @Override
   public boolean isValid() {
-    if (closed.get() || invalidated.get()) {
-      return false;
-    }
-    return nanoTime.getAsLong() - lastSuccessfulExtension.get() < leaseNanos;
+    return !closed.get() && !invalidated.get() && leaseIsLive();
   }
 
   @Override
@@ -86,6 +84,12 @@ public class JdbcWriterToken implements WriterToken {
       return;
     }
     cancelKeepalive();
+    if (invalidated.get() || !leaseIsLive()) {
+      // shedlock's unlock matches on name and locked_by only, and every token of this projection
+      // shares one locked_by: once our lease is gone, that row may be our successor's.
+      log.debug("Not releasing lock {}, its lease is gone", lockName);
+      return;
+    }
     try {
       lock.get().unlock();
     } catch (IllegalStateException e) {
@@ -93,24 +97,36 @@ public class JdbcWriterToken implements WriterToken {
     }
   }
 
+  private boolean leaseIsLive() {
+    return nanoTime.getAsLong() - lastSuccessfulExtension.get() < leaseNanos;
+  }
+
   private void extendLease() {
     if (closed.get() || invalidated.get()) {
       cancelKeepalive();
       return;
     }
+    if (!leaseIsLive()) {
+      // shedlock only extends a row whose lock_until is still in the future, so past our own
+      // lease there is nothing left to retry
+      log.warn("Lease of lock {} ran out, invalidating writer token", lockName);
+      invalidate();
+      return;
+    }
+    long extendedFrom = nanoTime.getAsLong();
     try {
       Optional<SimpleLock> extended = lock.get().extend(lockAtMostFor, lockAtLeastFor);
       if (extended.isPresent()) {
         lock.set(extended.get());
-        lastSuccessfulExtension.set(nanoTime.getAsLong());
+        lastSuccessfulExtension.set(extendedFrom);
         log.trace("Extended lock {}", lockName);
       } else {
         log.warn("Lost lock {}, invalidating writer token", lockName);
         invalidate();
       }
     } catch (RuntimeException e) {
-      log.warn("Failed to extend lock {}, invalidating writer token", lockName, e);
-      invalidate();
+      // a failing round trip does not tell us the lease is gone, so let the next tick retry
+      log.warn("Failed to extend lock {}, will retry", lockName, e);
     }
   }
 

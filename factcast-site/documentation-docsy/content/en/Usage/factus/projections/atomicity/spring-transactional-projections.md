@@ -167,6 +167,25 @@ projection tries to acquire its token.
 
 {{% / alert %}}
 
+### Supported databases
+
+The lease is timed by the **database's** clock, not by the clock of the instance that holds it, so
+instances whose clocks drift apart cannot outlive each other's lease. That is ShedLock's
+`usingDbTime()`, and Factus switches it on unconditionally. ShedLock 7.10.0 ships those statements
+for:
+
+- PostgreSQL (and CockroachDB, which reports itself as PostgreSQL)
+- MySQL and MariaDB
+- Oracle
+- Microsoft SQL Server
+- DB2
+- H2 and HSQLDB
+
+Every other database fails on the first attempt to acquire a token, with a `LockException` that
+says so. ShedLock reads the product from the JDBC metadata of the first connection it gets and
+treats a product it could not read as unsupported, so the same error can also mean the database was
+unreachable at that very moment.
+
 ### Lease semantics
 
 The write token is a lease, not a permanent lock. It is held for 60 seconds and renewed in the
@@ -177,6 +196,53 @@ stops an instance that lost its lease from writing on.
 
 Every instance identifies itself by hostname _and_ a random id, so two instances on the same host
 (or in the same JVM) cannot renew or release each other's lease.
+
+A renewal that fails because the database could not be reached is retried on the next turn instead
+of ending the token right away, so a connection blip does not cost you the projection. Should the
+renewals keep failing, the token turns invalid anyway once the lease has run out.
+
+`JdbcWriterTokenManager` lets you pick another lease length, down to a second. Anything shorter is
+rejected: renewals run every third of the lease, so a lease of milliseconds would put the keepalive
+into a hot loop against your database.
+
+### Waiting for the lock
+
+`acquireWriteToken(maxWait)` retries with an exponential backoff, starting at 500ms and capped at
+30 seconds, until `maxWait` is up, and then returns `null`. A database it cannot reach counts as a
+failed attempt rather than an error, so a restarting database or a briefly exhausted connection
+pool does not abort the caller.
+
+How long that wait is depends on who asks:
+
+- `factus.subscribeAndBlock(projection)` waits 5 minutes per attempt by default and keeps trying
+  until it gets a token, so a subscription starts as soon as the other instance is gone.
+- `factus.update(projection)` on a managed projection goes through `ManagedProjection.withLock`,
+  which asks for the token with `FactusConstants.FOREVER` (365 days). While another instance holds
+  the lock, `update` therefore **blocks** instead of failing. That is not limited to a holder that
+  died without releasing its token: an instance that is alive and keeps the lock blocks the others
+  for as long as it runs. The `update(projection, maxWaitTime)` overload does not change that, as
+  its timeout never reaches the token. If you need `update` to give up, acquire the token yourself,
+  for instance through `JdbcWriterTokenManager`.
+
+### Knowing whether you hold the lock
+
+`AbstractSpringJdbcSubscribedProjection` remembers the token it handed to Factus and offers
+`hasLock()` to your subclass. Use it to gate work on the projection that is triggered from outside
+the fact stream, like a cleanup schedule or an HTTP endpoint, so that only the instance which is
+actually writing does it:
+
+```java
+@Scheduled(fixedRate = 60_000)
+public void pruneStaleRows() {
+    if (hasLock()) {
+        jdbcTemplate.update("DELETE FROM users WHERE ...");
+    }
+}
+```
+
+It reports `false` before the first token was acquired, after the subscription closed, and as soon
+as the lease behind the current token has run out. Managed projections have no equivalent: they hold
+their token only for the duration of a single `factus.update(...)`.
 
 {{% alert title="Note" color="warning" %}}
 

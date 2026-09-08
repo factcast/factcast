@@ -15,6 +15,7 @@
  */
 package org.factcast.factus.spring.tx.jdbc;
 
+import jakarta.annotation.Nullable;
 import java.time.Duration;
 import lombok.NonNull;
 import lombok.experimental.Delegate;
@@ -75,6 +76,7 @@ public abstract class AbstractSpringJdbcManagedProjection
     this.factStreamPosition = factStreamPosition;
   }
 
+  @Nullable
   @Override
   public WriterToken acquireWriteToken(@NonNull Duration maxWait) {
     return writerTokenManager.acquireWriteToken(maxWait);

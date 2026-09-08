@@ -16,6 +16,7 @@
 package org.factcast.factus.spring.tx.jdbc;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -29,6 +30,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import javax.sql.DataSource;
 import net.javacrumbs.shedlock.core.LockConfiguration;
 import net.javacrumbs.shedlock.core.LockProvider;
 import net.javacrumbs.shedlock.core.SimpleLock;
@@ -42,7 +44,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.jdbc.CannotGetJdbcConnectionException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.CannotCreateTransactionException;
 
 @ExtendWith(MockitoExtension.class)
 class JdbcWriterTokenManagerTest {
@@ -148,16 +152,60 @@ class JdbcWriterTokenManagerTest {
     }
 
     @Test
-    void returnsNullAndKeepsInterruptFlagWhenInterrupted() {
+    void returnsNullWithoutRestoringTheInterruptFlagWhenInterrupted() {
       when(lockProvider.lock(any(LockConfiguration.class))).thenReturn(Optional.empty());
       timing.interruptOnSleep = true;
 
       try {
         assertThat(uut.acquireWriteToken(Duration.ofSeconds(60))).isNull();
-        assertThat(Thread.currentThread().isInterrupted()).isTrue();
+        // a restored flag would make every retry of our callers fail its sleep instantly
+        assertThat(Thread.currentThread().isInterrupted()).isFalse();
       } finally {
         Thread.interrupted();
       }
+    }
+
+    @Test
+    void startsTheLeaseBeforeTheRoundTrip() {
+      when(lockProvider.lock(any(LockConfiguration.class)))
+          .thenAnswer(
+              invocation -> {
+                timing.advance(JdbcWriterTokenManager.DEFAULT_LOCK_AT_MOST_FOR.plusSeconds(1));
+                return Optional.of(mock(SimpleLock.class));
+              });
+
+      WriterToken token = uut.acquireWriteToken(Duration.ofSeconds(60));
+
+      assertThat(token).isNotNull();
+      assertThat(token.isValid()).isFalse();
+    }
+
+    @Test
+    void retriesWhenTheDatabaseIsUnreachable() {
+      when(lockProvider.lock(any(LockConfiguration.class)))
+          .thenThrow(new CannotCreateTransactionException("pool exhausted"))
+          .thenThrow(new CannotGetJdbcConnectionException("connection refused"))
+          .thenThrow(new CannotCreateTransactionException("pool exhausted"))
+          .thenThrow(new CannotGetJdbcConnectionException("connection refused"));
+
+      assertThat(uut.acquireWriteToken(Duration.ofSeconds(2))).isNull();
+
+      verify(lockProvider, times(4)).lock(any(LockConfiguration.class));
+    }
+
+    @Test
+    void namesTheUnsupportedDatabaseWhenDbTimeIsUnavailable() {
+      when(lockProvider.lock(any(LockConfiguration.class)))
+          .thenThrow(
+              new UnsupportedOperationException(
+                  "useDbTime() is not supported for database product: FooDB"));
+
+      assertThatThrownBy(() -> uut.acquireWriteToken(Duration.ofSeconds(1)))
+          .isInstanceOf(LockException.class)
+          .hasMessageContaining(KEY)
+          .hasMessageContaining("does not support")
+          .hasMessageContaining("PostgreSQL")
+          .hasRootCauseMessage("useDbTime() is not supported for database product: FooDB");
     }
 
     @Test
@@ -185,6 +233,44 @@ class JdbcWriterTokenManagerTest {
       assertThat(lockConfigCaptor.getValue().getName())
           .isEqualTo(ProjectionNames.lockName(longKey))
           .hasSizeLessThanOrEqualTo(ProjectionNames.MAX_NAME_LENGTH);
+    }
+  }
+
+  @Nested
+  class WhenTheLeaseIsTooShortToRenew {
+
+    @Test
+    void isRejectedOnConstruction() {
+      assertThatThrownBy(
+              () ->
+                  new JdbcWriterTokenManager(
+                      lockProvider, KEY, Duration.ofMillis(2), Duration.ZERO))
+          .isInstanceOf(IllegalArgumentException.class)
+          .hasMessageContaining("lockAtMostFor")
+          .hasMessageContaining(JdbcWriterTokenManager.MINIMUM_LOCK_AT_MOST_FOR.toString());
+    }
+
+    @Test
+    void isRejectedByTheJdbcTemplateFactory() {
+      JdbcTemplate jdbcTemplate = new JdbcTemplate(mock(DataSource.class));
+
+      assertThatThrownBy(
+              () ->
+                  JdbcWriterTokenManager.create(
+                      jdbcTemplate, KEY, "locks", Duration.ofMillis(2), Duration.ZERO))
+          .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void acceptsTheMinimum() {
+      assertThatCode(
+              () ->
+                  new JdbcWriterTokenManager(
+                      lockProvider,
+                      KEY,
+                      JdbcWriterTokenManager.MINIMUM_LOCK_AT_MOST_FOR,
+                      Duration.ZERO))
+          .doesNotThrowAnyException();
     }
   }
 
@@ -235,6 +321,10 @@ class JdbcWriterTokenManagerTest {
     @Override
     public long nanoTime() {
       return nanos;
+    }
+
+    void advance(Duration elapsed) {
+      nanos += elapsed.toNanos();
     }
 
     @Override

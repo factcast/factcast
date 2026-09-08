@@ -35,7 +35,9 @@ import net.javacrumbs.shedlock.core.SimpleLock;
 import net.javacrumbs.shedlock.provider.jdbctemplate.JdbcTemplateLockProvider;
 import net.javacrumbs.shedlock.support.LockException;
 import org.factcast.factus.projection.WriterToken;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.TransactionException;
 
 /**
  * Hands out {@link WriterToken}s for a single projection, backed by a shedlock lease in a plain
@@ -49,6 +51,13 @@ public class JdbcWriterTokenManager {
   public static final Duration DEFAULT_LOCK_AT_MOST_FOR = Duration.ofSeconds(60);
 
   public static final Duration DEFAULT_LOCK_AT_LEAST_FOR = Duration.ZERO;
+
+  /** Shortest lease that still leaves a sane renewal interval, see {@link JdbcWriterToken}. */
+  public static final Duration MINIMUM_LOCK_AT_MOST_FOR = Duration.ofSeconds(1);
+
+  /** Database products shedlock 7.10.0 has db-time lock statements for. */
+  private static final String SUPPORTED_DATABASES =
+      "PostgreSQL, CockroachDB, MySQL, MariaDB, Oracle, MS SQL Server, DB2, H2 and HSQLDB";
 
   private static final long INITIAL_RETRY_INTERVAL_MILLIS = 500;
   private static final long MAX_RETRY_INTERVAL_MILLIS = Duration.ofSeconds(30).toMillis();
@@ -90,6 +99,11 @@ public class JdbcWriterTokenManager {
       @NonNull Duration lockAtLeastFor,
       @NonNull ScheduledExecutorService scheduler,
       @NonNull Timing timing) {
+    if (lockAtMostFor.compareTo(MINIMUM_LOCK_AT_MOST_FOR) < 0) {
+      throw new IllegalArgumentException(
+          "lockAtMostFor must be at least %s but was %s: the lease is renewed every third of it, so anything shorter turns the keepalive into a hot loop against the database."
+              .formatted(MINIMUM_LOCK_AT_MOST_FOR, lockAtMostFor));
+    }
     this.lockProvider = lockProvider;
     this.projectionKey = projectionKey;
     this.lockName = ProjectionNames.lockName(projectionKey);
@@ -139,11 +153,20 @@ public class JdbcWriterTokenManager {
     long backoffMillis = INITIAL_RETRY_INTERVAL_MILLIS;
     try {
       while (true) {
+        // the row's lock_until is CURRENT_TIMESTAMP + lease as of the statement, so the lease
+        // starts before the round trip, not after it
+        long leaseStartedAt = timing.nanoTime();
         Optional<SimpleLock> lock = tryLock();
         if (lock.isPresent()) {
           log.debug("Acquired lock {}", lockName);
           return new JdbcWriterToken(
-              lock.get(), lockName, lockAtMostFor, lockAtLeastFor, scheduler, timing::nanoTime);
+              lock.get(),
+              lockName,
+              lockAtMostFor,
+              lockAtLeastFor,
+              leaseStartedAt,
+              scheduler,
+              timing::nanoTime);
         }
         long remainingMillis = TimeUnit.NANOSECONDS.toMillis(deadline - timing.nanoTime());
         if (remainingMillis <= 0) {
@@ -154,8 +177,9 @@ public class JdbcWriterTokenManager {
         backoffMillis = Math.min(MAX_RETRY_INTERVAL_MILLIS, backoffMillis * 2);
       }
     } catch (InterruptedException e) {
+      // deliberately not restoring the flag: callers retry without sleeping themselves, so a set
+      // interrupt flag would turn their retry loop into a spin against the lock table
       log.info("Interrupted while trying to acquire lock {}", lockName);
-      Thread.currentThread().interrupt();
       return null;
     }
   }
@@ -165,11 +189,23 @@ public class JdbcWriterTokenManager {
         new LockConfiguration(Instant.now(), lockName, lockAtMostFor, lockAtLeastFor);
     try {
       return lockProvider.lock(lockConfiguration);
+    } catch (DataAccessException | TransactionException e) {
+      // shedlock lets a failure to even get a connection through unwrapped, and for us that is
+      // indistinguishable from somebody else holding the lock
+      log.warn("Attempt to acquire lock {} failed, will retry", lockName, e);
+      return Optional.empty();
     } catch (LockException e) {
       throw new LockException(
           "Could not acquire the write lock for projection '%s' (lock name '%s', %d chars). Make sure the lock table exists and that its name column holds at least %d characters."
               .formatted(
                   projectionKey, lockName, lockName.length(), ProjectionNames.MAX_NAME_LENGTH),
+          e);
+    } catch (UnsupportedOperationException e) {
+      // shedlock reports a database product it could not read at all as unsupported, so this is
+      // not necessarily a permanent misconfiguration
+      throw new LockException(
+          "Could not acquire the write lock for projection '%s': its database does not support the server-side timestamps this lock is based on, or could not be asked which product it is. Supported are %s."
+              .formatted(projectionKey, SUPPORTED_DATABASES),
           e);
     }
   }
