@@ -15,11 +15,23 @@
  */
 package org.factcast.factus.projector;
 
-/**
- * this exception is supposed to fail the application start, thats why it is a runtime exception.
- */
-public class IllegalAnnotationForTargetClassException extends RuntimeException {
-  public IllegalAnnotationForTargetClassException(String s) {
-    super(s);
+import java.util.UUID;
+import lombok.Getter;
+import org.factcast.factus.FilterByAggIdProperty;
+import org.factcast.factus.Handler;
+import org.factcast.factus.projection.Aggregate;
+
+class FilterByAggIdPropertyAggregate extends Aggregate {
+
+  FilterByAggIdPropertyAggregate(UUID aggregateId) {
+    super(aggregateId);
+  }
+
+  @Getter private int appliedCount = 0;
+
+  @Handler
+  @FilterByAggIdProperty("recommendedUserId")
+  void apply(FilterByAggIdPropertyEvent e) {
+    appliedCount++;
   }
 }

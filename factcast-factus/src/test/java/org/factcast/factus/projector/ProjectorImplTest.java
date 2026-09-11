@@ -203,6 +203,117 @@ class ProjectorImplTest {
   }
 
   @Nested
+  class WhenFilteringByAggIdProperty {
+
+    @Test
+    void appliesWhenPropertyMatchesAggregateId() {
+      // INIT
+      UUID recommendedUserId = UUID.randomUUID();
+      UUID recommendedByUserId = UUID.randomUUID();
+      FilterByAggIdPropertyEvent event =
+          new FilterByAggIdPropertyEvent(recommendedUserId, recommendedByUserId);
+      Fact fact = eventConverter.toFact(event);
+
+      FilterByAggIdPropertyAggregate aggregate =
+          new FilterByAggIdPropertyAggregate(recommendedUserId);
+
+      // RUN
+      new ProjectorImpl<>(aggregate, eventSerializer).apply(Collections.singletonList(fact));
+
+      // ASSERT
+      assertThat(aggregate.appliedCount()).isEqualTo(1);
+    }
+
+    @Test
+    void skipsWhenPropertyDoesNotMatchAggregateId() {
+      // INIT
+      UUID recommendedUserId = UUID.randomUUID();
+      UUID recommendedByUserId = UUID.randomUUID();
+      FilterByAggIdPropertyEvent event =
+          new FilterByAggIdPropertyEvent(recommendedUserId, recommendedByUserId);
+      Fact fact = eventConverter.toFact(event);
+
+      // fetched for the *recommender*: the fact carries that id as an aggId, but the
+      // recommendedUserId property does not match, so the handler must be skipped
+      FilterByAggIdPropertyAggregate aggregate =
+          new FilterByAggIdPropertyAggregate(recommendedByUserId);
+
+      // RUN
+      new ProjectorImpl<>(aggregate, eventSerializer).apply(Collections.singletonList(fact));
+
+      // ASSERT
+      assertThat(aggregate.appliedCount()).isZero();
+    }
+
+    @Test
+    void skipsWhenPropertyIsNull() {
+      // INIT
+      UUID recommendedByUserId = UUID.randomUUID();
+      // the filtered property is null (optional reference not set on this fact)
+      FilterByAggIdPropertyEvent event = new FilterByAggIdPropertyEvent(null, recommendedByUserId);
+      Fact fact = eventConverter.toFact(event);
+
+      FilterByAggIdPropertyAggregate aggregate =
+          new FilterByAggIdPropertyAggregate(recommendedByUserId);
+
+      // RUN
+      new ProjectorImpl<>(aggregate, eventSerializer).apply(Collections.singletonList(fact));
+
+      // ASSERT: a null property never matches, so the fact is skipped
+      assertThat(aggregate.appliedCount()).isZero();
+    }
+
+    @Test
+    void appliesOnlyMatchingFactsOfABatch() {
+      // INIT
+      UUID recommendedUserId = UUID.randomUUID();
+      Fact firstRecommendation =
+          eventConverter.toFact(
+              new FilterByAggIdPropertyEvent(recommendedUserId, UUID.randomUUID()));
+      // recommended by, rather than recommending: must not be applied
+      Fact recommendationMade =
+          eventConverter.toFact(
+              new FilterByAggIdPropertyEvent(UUID.randomUUID(), recommendedUserId));
+      Fact secondRecommendation =
+          eventConverter.toFact(
+              new FilterByAggIdPropertyEvent(recommendedUserId, UUID.randomUUID()));
+
+      FilterByAggIdPropertyAggregate aggregate =
+          new FilterByAggIdPropertyAggregate(recommendedUserId);
+
+      // RUN
+      new ProjectorImpl<>(aggregate, eventSerializer)
+          .apply(Lists.newArrayList(firstRecommendation, recommendationMade, secondRecommendation));
+
+      // ASSERT
+      assertThat(aggregate.appliedCount()).isEqualTo(2);
+    }
+
+    @Test
+    void filtersWhenEventIsNotTheFirstParameter() {
+      // INIT
+      UUID recommendedUserId = UUID.randomUUID();
+      UUID recommendedByUserId = UUID.randomUUID();
+      Fact fact =
+          eventConverter.toFact(
+              new FilterByAggIdPropertyEvent(recommendedUserId, recommendedByUserId));
+
+      FilterByAggIdPropertyHeaderFirstAggregate recommended =
+          new FilterByAggIdPropertyHeaderFirstAggregate(recommendedUserId);
+      FilterByAggIdPropertyHeaderFirstAggregate recommender =
+          new FilterByAggIdPropertyHeaderFirstAggregate(recommendedByUserId);
+
+      // RUN
+      new ProjectorImpl<>(recommended, eventSerializer).apply(Collections.singletonList(fact));
+      new ProjectorImpl<>(recommender, eventSerializer).apply(Collections.singletonList(fact));
+
+      // ASSERT
+      assertThat(recommended.appliedCount()).isEqualTo(1);
+      assertThat(recommender.appliedCount()).isZero();
+    }
+  }
+
+  @Nested
   class WhenCreatingFactSpec {
 
     @Test
@@ -1232,8 +1343,7 @@ class ProjectorImplTest {
     void invalidPath() {
       Assertions.assertThatThrownBy(
               () -> {
-                ReflectionUtils.verifyUuidPropertyExpressionAgainstClass(
-                    "a.x.y.id", SomeEvent.class);
+                ReflectionUtils.resolveUuidPropertyFieldChain("a.x.y.id", SomeEvent.class);
               })
           .isInstanceOf(IllegalAggregateIdPropertyPathException.class);
     }
@@ -1242,7 +1352,7 @@ class ProjectorImplTest {
     void notAUuid() {
       Assertions.assertThatThrownBy(
               () -> {
-                ReflectionUtils.verifyUuidPropertyExpressionAgainstClass("a.b", SomeEvent.class);
+                ReflectionUtils.resolveUuidPropertyFieldChain("a.b", SomeEvent.class);
               })
           .isInstanceOf(IllegalAggregateIdPropertyPathException.class);
     }
@@ -1250,8 +1360,7 @@ class ProjectorImplTest {
     @Test
     void happyPath() {
       org.junit.jupiter.api.Assertions.assertDoesNotThrow(
-          () ->
-              ReflectionUtils.verifyUuidPropertyExpressionAgainstClass("a.b.id", SomeEvent.class));
+          () -> ReflectionUtils.resolveUuidPropertyFieldChain("a.b.id", SomeEvent.class));
     }
   }
 }
