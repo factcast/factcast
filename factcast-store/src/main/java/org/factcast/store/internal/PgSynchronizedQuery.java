@@ -119,6 +119,14 @@ class PgSynchronizedQuery {
     }
   }
 
+  void fail(@NonNull Throwable cause) {
+    try {
+      pipe.process(Signal.of(cause));
+    } catch (PipelineAlreadyClosedException ignored) {
+      // The subscription is already closed, so there is nothing left to do.
+    }
+  }
+
   @RequiredArgsConstructor
   static class FactRowCallbackHandler implements RowCallbackHandler {
     final PushbackServerPipeline pipe;

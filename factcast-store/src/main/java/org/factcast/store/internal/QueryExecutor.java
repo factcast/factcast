@@ -92,6 +92,7 @@ class QueryExecutor {
       target.run(false);
     } catch (Exception e) {
       log.error("cannot run Target: ", e);
+      target.fail(e);
     }
   }
 
