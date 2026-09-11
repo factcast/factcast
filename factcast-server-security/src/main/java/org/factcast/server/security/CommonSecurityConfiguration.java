@@ -98,7 +98,7 @@ public class CommonSecurityConfiguration {
       return account
           .flatMap(
               a ->
-                  Optional.of(secrets.getSecrets().get(a.id()))
+                  Optional.ofNullable(secrets.getSecrets().get(a.id()))
                       .map(rawPassword -> toUser(a, passwordEncoder.encode(rawPassword))))
           .orElseThrow(() -> new UsernameNotFoundException(username));
     };
@@ -148,16 +148,15 @@ public class CommonSecurityConfiguration {
       List<String> ids = cfg.accounts().stream().map(FactCastAccount::id).toList();
       for (String id : ids) {
         if (!accessSecrets.getSecrets().containsKey(id)) {
-          throw new IllegalArgumentException("Missing secret for account: '" + id + "'");
+          log.warn("Missing secret for account: '{}'", id);
         }
       }
 
       for (String k : accessSecrets.getSecrets().keySet()) {
         if (!ids.contains(k)) {
           log.warn(
-              "Secret found for account '"
-                  + k
-                  + "' but the account is not defined in FactCastAccessConfiguration");
+              "Secret found for account '{}' but the account is not defined in FactCastAccessConfiguration",
+              k);
         }
       }
 
