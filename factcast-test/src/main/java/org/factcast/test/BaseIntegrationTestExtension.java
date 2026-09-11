@@ -158,13 +158,15 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
 
     try (Connection con = ds.getConnection();
         Statement st = con.createStatement()) {
+      // shedlock tables are exempt: it caches the row names it has seen and only ever UPDATEs them
+      // afterwards, so wiping a row under a live LockProvider stops it from acquiring ever again.
       st.execute(
           "DO $$ DECLARE\n"
               + "    r RECORD;\n"
               + "BEGIN\n"
               + "    FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = current_schema()"
               + " AND (NOT ((tablename like 'databasechangelog%') OR (tablename like 'qrtz%') OR"
-              + " (tablename = 'schedlock')))) LOOP\n"
+              + " (tablename = 'shedlock') OR (tablename = 'factcast_projection_locks')))) LOOP\n"
               + "        EXECUTE 'TRUNCATE TABLE ' || quote_ident(r.tablename) || ' cascade';\n"
               + "    END LOOP;\n"
               + "END $$;");

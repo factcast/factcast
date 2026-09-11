@@ -15,20 +15,15 @@
  */
 package org.factcast.itests.factus.proj;
 
-import java.time.Duration;
 import java.util.List;
-import java.util.UUID;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.core.FactStreamPosition;
 import org.factcast.factus.Handler;
-import org.factcast.factus.projection.WriterToken;
 import org.factcast.factus.serializer.ProjectionMetaData;
-import org.factcast.factus.spring.tx.AbstractSpringTxManagedProjection;
 import org.factcast.factus.spring.tx.SpringTransactional;
+import org.factcast.factus.spring.tx.jdbc.AbstractSpringJdbcManagedProjection;
 import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.itests.factus.event.UserDeleted;
-import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.PlatformTransactionManager;
 
@@ -37,13 +32,14 @@ public class SpringJdbcTransactionalProjectionExample {
   @Slf4j
   @ProjectionMetaData(revision = 1)
   @SpringTransactional
-  public static class UserNames extends AbstractSpringTxManagedProjection {
+  public static class UserNames extends AbstractSpringJdbcManagedProjection {
 
     private final JdbcTemplate jdbcTemplate;
 
     public UserNames(
-        @NonNull PlatformTransactionManager platformTransactionManager, JdbcTemplate jdbcTemplate) {
-      super(platformTransactionManager);
+        @NonNull PlatformTransactionManager platformTransactionManager,
+        @NonNull JdbcTemplate jdbcTemplate) {
+      super(platformTransactionManager, jdbcTemplate);
       this.jdbcTemplate = jdbcTemplate;
     }
 
@@ -62,36 +58,6 @@ public class SpringJdbcTransactionalProjectionExample {
     void apply(UserDeleted e) {
       log.info("received event: " + e);
       jdbcTemplate.update("DELETE FROM users where id = ?", e.aggregateId());
-    }
-
-    @Override
-    public FactStreamPosition factStreamPosition() {
-      try {
-        return FactStreamPosition.withoutSerial(
-            jdbcTemplate.queryForObject(
-                "SELECT fact_stream_position FROM fact_stream_positions WHERE projection_name = ?",
-                UUID.class,
-                getScopedName().asString()));
-      } catch (IncorrectResultSizeDataAccessException e) {
-        // no state yet, just return null
-        return null;
-      }
-    }
-
-    @Override
-    public void factStreamPosition(@NonNull FactStreamPosition factStreamPosition) {
-      jdbcTemplate.update(
-          "INSERT INTO fact_stream_positions (projection_name, fact_stream_position) "
-              + "VALUES (?, ?) "
-              + "ON CONFLICT (projection_name) DO UPDATE SET fact_stream_position = ?",
-          getScopedName().asString(),
-          factStreamPosition.factId(),
-          factStreamPosition.factId());
-    }
-
-    @Override
-    public WriterToken acquireWriteToken(@NonNull Duration maxWait) {
-      return () -> {};
     }
   }
 }
