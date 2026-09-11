@@ -146,7 +146,7 @@ class LockingLockedLocksTest extends AbstractFactCastIntegrationTest {
     }
   }
 
-  @ProjectionMetaData(revision = 1)
+  @ProjectionMetaData(revisionId = "1")
   static class ParallelUpdatesAwareProjection extends AbstractRedisManagedProjection {
 
     final CountDownLatch beforeSleep = new CountDownLatch(1);

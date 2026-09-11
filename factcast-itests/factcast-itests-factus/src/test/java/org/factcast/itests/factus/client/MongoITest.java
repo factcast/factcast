@@ -158,14 +158,14 @@ public class MongoITest extends AbstractFactCastIntegrationTest {
   }
 
   // Managed Test Projections
-  @ProjectionMetaData(revision = 1)
+  @ProjectionMetaData(revisionId = "1")
   static class ManagedUserNames extends TrackingMongoDbManagedUserNames {
     public ManagedUserNames(MongoDatabase mongoDb) {
       super(mongoDb);
     }
   }
 
-  @ProjectionMetaData(revision = 1)
+  @ProjectionMetaData(revisionId = "1")
   static class ManagedUserNamesSizeBlowAt7th extends TrackingMongoDbManagedUserNames {
     private int count;
 
@@ -198,14 +198,14 @@ public class MongoITest extends AbstractFactCastIntegrationTest {
   }
 
   // Subscribed Test Projections
-  @ProjectionMetaData(revision = 1)
+  @ProjectionMetaData(revisionId = "1")
   static class SubscribedUserNames extends TrackingMongoDbSubscribedUserNames {
     public SubscribedUserNames(MongoDatabase mongoDb) {
       super(mongoDb);
     }
   }
 
-  @ProjectionMetaData(revision = 1)
+  @ProjectionMetaData(revisionId = "1")
   static class SubscribedUserNamesSizeBlowAt7th extends TrackingMongoDbSubscribedUserNames {
     private int count;
 
@@ -223,7 +223,7 @@ public class MongoITest extends AbstractFactCastIntegrationTest {
   }
 
   @Getter
-  @ProjectionMetaData(revision = 1)
+  @ProjectionMetaData(revisionId = "1")
   static class SubscribedUserNamesTokenExposedAndThrowsError
       extends TrackingMongoDbSubscribedUserNames {
     private final CountDownLatch latch = new CountDownLatch(1);

@@ -106,7 +106,7 @@ class SnapshotFileHelperTest {
     void happyPath() {
       File root = Files.createTempDir();
 
-      @ProjectionMetaData(name = "foobarbaz", revision = 1)
+      @ProjectionMetaData(name = "foobarbaz", revisionId = "1")
       class foobarbaz implements SnapshotProjection {}
       File f = SnapshotFileHelper.createFile(root, new SnapshotIdentifier(foobarbaz.class, null));
       File p = f.getParentFile();
@@ -133,14 +133,14 @@ class SnapshotFileHelperTest {
       // some bytes for directory itself
       Assertions.assertThat(SnapshotFileHelper.getTotalSize(root)).isZero();
 
-      @ProjectionMetaData(name = "foobarbaz", revision = 1)
+      @ProjectionMetaData(name = "foobarbaz", revisionId = "1")
       class foobarbaz implements SnapshotProjection {}
 
       File f = SnapshotFileHelper.createFile(root, new SnapshotIdentifier(foobarbaz.class, null));
       f.getParentFile().mkdirs();
       Files.write(new byte[1024], f);
 
-      @ProjectionMetaData(name = "foobarbaz2", revision = 1)
+      @ProjectionMetaData(name = "foobarbaz2", revisionId = "1")
       class foobarbaz2 implements SnapshotProjection {}
 
       File f2 = SnapshotFileHelper.createFile(root, new SnapshotIdentifier(foobarbaz2.class, null));

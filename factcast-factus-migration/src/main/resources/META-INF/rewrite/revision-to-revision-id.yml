@@ -1,0 +1,7 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: org.factcast.factus.migration.RevisionToRevisionId
+displayName: Migrate @ProjectionMetaData revision to revisionId
+description: Replaces the deprecated numeric revision attribute of @ProjectionMetaData with an equivalent revisionId string attribute, keeping persisted projection keys unchanged.
+recipeList:
+  - org.factcast.factus.migration.RevisionToRevisionIdRecipe

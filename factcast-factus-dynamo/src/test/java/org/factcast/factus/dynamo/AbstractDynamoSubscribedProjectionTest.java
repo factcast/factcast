@@ -55,7 +55,7 @@ class AbstractDynamoSubscribedProjectionTest {
     }
   }
 
-  @ProjectionMetaData(revision = 1)
+  @ProjectionMetaData(revisionId = "1")
   static class TestProjection extends AbstractDynamoSubscribedProjection {
     public TestProjection(@NonNull DynamoDbClient dynamoDb) {
       super(dynamoDb, "stateTable");

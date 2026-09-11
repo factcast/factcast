@@ -24,7 +24,7 @@ import org.factcast.factus.serializer.ProjectionMetaData;
 import org.springframework.stereotype.Component;
 
 @Slf4j
-@ProjectionMetaData(revision = 1)
+@ProjectionMetaData(revisionId = "1")
 @Component
 public class SubscribedLucasNames extends LocalSubscribedProjection {
 

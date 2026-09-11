@@ -22,7 +22,7 @@ import org.factcast.factus.mongodb.AbstractMongoDbManagedProjection;
 import org.factcast.factus.serializer.ProjectionMetaData;
 
 @Slf4j
-@ProjectionMetaData(revision = 1)
+@ProjectionMetaData(revisionId = "1")
 public class MongoDbManagedUserNames extends AbstractMongoDbManagedProjection
     implements MongoDbUserNames {
 
