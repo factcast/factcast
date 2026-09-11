@@ -15,12 +15,13 @@
  */
 package org.factcast.factus.mongodb;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.ZonedDateTime;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,7 +39,8 @@ public class MongoDbWriterTokenManager {
 
   protected static final Duration MIN_LEASE_DURATION_SECONDS = Duration.ofSeconds(1);
   protected static final Duration MAX_LEASE_DURATION_SECONDS = Duration.ofSeconds(60);
-  private static final long MAX_RETRY_INTERVAL_MILLISECONDS = 30_000;
+  private static final long INITIAL_RETRY_INTERVAL_MILLISECONDS = 500;
+  private static final long MAX_RETRY_INTERVAL_MILLISECONDS = Duration.ofSeconds(30).toMillis();
 
   @NonNull private final LockProvider lockProvider;
   @NonNull private final String projectionKey;
@@ -51,38 +53,52 @@ public class MongoDbWriterTokenManager {
   }
 
   @Nullable
-  public WriterToken acquireWriteToken(@NonNull Duration maxWait) {
-    final LockConfiguration lockConfiguration = getLockConfiguration(projectionKey + "_lock");
-    Optional<SimpleLock> acquiredLock =
-        tryToAcquireLock(lockConfiguration, ZonedDateTime.now().plus(maxWait));
-    return acquiredLock.map(l -> new MongoDbWriterToken(l, lockConfiguration)).orElse(null);
-  }
-
-  private static LockConfiguration getLockConfiguration(String lockKey) {
-    return new LockConfiguration(
-        Instant.now(), lockKey, MAX_LEASE_DURATION_SECONDS, MIN_LEASE_DURATION_SECONDS);
-  }
-
   @SuppressWarnings("java:S2142")
-  private Optional<SimpleLock> tryToAcquireLock(
-      @NonNull LockConfiguration lockConfig, @NonNull ZonedDateTime retryUntil) {
+  public WriterToken acquireWriteToken(@NonNull Duration maxWait) {
+    final long deadline = nanoTime() + maxWait.toNanos();
     try {
-      long retryBackoffDuration = 500;
-      do {
+      long retryBackoffDuration = INITIAL_RETRY_INTERVAL_MILLISECONDS;
+      while (true) {
+        // MongoLockProvider is not on database time: it writes lockUntil as createdAt plus the
+        // lease, so a configuration reused across retries would grant an already expired lease
+        LockConfiguration lockConfiguration = getLockConfiguration(projectionKey + "_lock");
         log.debug("Trying to acquire lock for projection: {}", projectionKey);
-        Optional<SimpleLock> acquiredLock = lockProvider.lock(lockConfig);
+        Optional<SimpleLock> acquiredLock = lockProvider.lock(lockConfiguration);
         if (acquiredLock.isPresent()) {
           log.debug("Acquired lock for projection: {}", projectionKey);
-          return acquiredLock;
+          return new MongoDbWriterToken(acquiredLock.get(), lockConfiguration);
         }
-        Thread.sleep(retryBackoffDuration);
-        retryBackoffDuration =
-            Math.min(MAX_RETRY_INTERVAL_MILLISECONDS * 1000, retryBackoffDuration * 2);
-      } while (ZonedDateTime.now().isBefore(retryUntil));
+        long remainingMilliseconds = TimeUnit.NANOSECONDS.toMillis(deadline - nanoTime());
+        if (remainingMilliseconds <= 0) {
+          return null;
+        }
+        sleep(Math.min(retryBackoffDuration, remainingMilliseconds));
+        retryBackoffDuration = Math.min(MAX_RETRY_INTERVAL_MILLISECONDS, retryBackoffDuration * 2);
+      }
     } catch (InterruptedException e) {
       log.info("Interrupted while trying to acquire lock: {}", e.getMessage());
       Thread.currentThread().interrupt();
+      return null;
     }
-    return Optional.empty();
+  }
+
+  private LockConfiguration getLockConfiguration(String lockKey) {
+    return new LockConfiguration(
+        now(), lockKey, MAX_LEASE_DURATION_SECONDS, MIN_LEASE_DURATION_SECONDS);
+  }
+
+  @VisibleForTesting
+  long nanoTime() {
+    return System.nanoTime();
+  }
+
+  @VisibleForTesting
+  Instant now() {
+    return Instant.now();
+  }
+
+  @VisibleForTesting
+  void sleep(long milliseconds) throws InterruptedException {
+    Thread.sleep(milliseconds);
   }
 }
