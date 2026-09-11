@@ -4,6 +4,26 @@ type = "docs"
 weight = 100015
 +++
 
+## Upgrading to 0.12.0
+
+### New exclusion mechanism replaces former "Blacklist"
+
+Maintaining a separate table of factIds to be filtered out of every result turned out to be inefficient.
+Therefore, a new `exclusion_reason` column is introduced on the fact table, causing all facts with a non-NULL
+value to be ignored at query time. To migrate from the previous solution, follow the steps described below:
+
+1. The feature is guarded behind the new property `factcast.store.useInternalExclusion`, which defaults to `false`.
+   Ensure FactCast is deployed once with this default to trigger the changeset, which migrates all entries from the blacklist into the new column.
+   It also establishes a procedure syncing changes from the blacklist table to the fact table to keep both in sync until the blacklist table is finally removed in the future.
+   1. For tables with more than 10,000,000 entries, the automated migration is skipped and have to be conducted manually:
+      ```sql
+      -- adjust the batch size depending on your needs
+      CALL migrate_blacklist_to_exclusion_reason(10000);
+      ```
+2. To switch to the new behavior, deploy FactCast again with `factcast.store.useInternalExclusion` set to `true`.
+   Attempts to add new entries to the old blacklist table will then trigger a warning, but are still synced.
+3. To not prevent any rollbacks, it's recommended to keep the deprecated table around for some time.
+
 ## Upgrading to 0.11.0
 
 ### `Projection.postprocess` now takes a `Collection` instead of a `List`

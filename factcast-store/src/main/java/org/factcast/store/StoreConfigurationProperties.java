@@ -216,6 +216,13 @@ public class StoreConfigurationProperties implements InitializingBean {
 
   @Valid LogSuppressionProperties logSuppression = new LogSuppressionProperties();
 
+  /**
+   * When true, fact queries ignore excluded facts via the migrated {@code exclusion_reason} column
+   * on the fact table instead of relying on post query filtering based on a separate blacklist
+   * table. Defaults to false.
+   */
+  boolean useInternalExclusion = false;
+
   public boolean isSchemaRegistryConfigured() {
     return schemaRegistryUrl != null;
   }

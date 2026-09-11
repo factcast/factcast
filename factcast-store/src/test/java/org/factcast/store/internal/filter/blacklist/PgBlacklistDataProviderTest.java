@@ -15,12 +15,15 @@
  */
 package org.factcast.store.internal.filter.blacklist;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 import com.google.common.collect.Sets;
 import com.google.common.eventbus.EventBus;
 import java.util.*;
 import lombok.SneakyThrows;
+import nl.altindag.log.LogCaptor;
+import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.notification.BlacklistChangeNotification;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,6 +38,7 @@ class PgBlacklistDataProviderTest {
   @Spy private EventBus bus = new EventBus();
   @Mock private JdbcTemplate jdbc;
   @Mock private Blacklist blacklist;
+  @Mock private StoreConfigurationProperties storeProperties;
   @InjectMocks private PgBlacklistDataProvider underTest;
 
   @Nested
@@ -102,6 +106,34 @@ class PgBlacklistDataProviderTest {
       underTest.on(signal);
       verify(jdbc).queryForList("SELECT id FROM blacklist", UUID.class);
       verify(blacklist).accept(any());
+    }
+  }
+
+  @Nested
+  class WhenUsingInternalExclusion {
+    @BeforeEach
+    void setup() {
+      when(storeProperties.isUseInternalExclusion()).thenReturn(true);
+    }
+
+    @Test
+    void skipsInitialFetchButRegistersOnBus() {
+      underTest.afterSingletonsInstantiated();
+
+      verify(bus).register(underTest);
+      verify(blacklist, never()).accept(any());
+    }
+
+    @Test
+    void warnsAndDoesNotUpdateOnChange() {
+      LogCaptor captor = LogCaptor.forClass(PgBlacklistDataProvider.class);
+      underTest.on(new BlacklistChangeNotification(1));
+
+      verifyNoInteractions(jdbc);
+      verify(blacklist, never()).accept(any());
+      List<String> warnLogs = captor.getWarnLogs();
+      assertThat(warnLogs).isNotEmpty();
+      assertThat(warnLogs.get(0)).contains("A change to the blacklist table was detected");
     }
   }
 }

@@ -30,6 +30,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -39,6 +41,7 @@ class PgQueryBuilderTest {
   @Nested
   class WhenCreatingStatementSetter {
     @Mock private @NonNull AtomicLong serial;
+    private final boolean useInternalExclusion = false;
 
     @BeforeEach
     void setup() {}
@@ -54,7 +57,7 @@ class PgQueryBuilderTest {
       var spec4 = FactSpec.ns("ns4").aggId(new UUID(0, 1), new UUID(0, 2));
       var spec5 = FactSpec.ns("*").type("t3");
       var specs = Lists.newArrayList(spec1, spec2, spec3, spec4, spec5);
-      var underTest = new PgQueryBuilder(specs);
+      var underTest = new PgQueryBuilder(specs, useInternalExclusion);
       var setter = underTest.createStatementSetter(serial);
       var ps = mock(PreparedStatement.class);
 
@@ -99,16 +102,18 @@ class PgQueryBuilderTest {
   class WhenCreatingSQL {
 
     @SneakyThrows
-    @Test
-    void happyPath() {
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void happyPath(boolean useInternalExclusion) {
       var spec1 = FactSpec.ns("ns1").type("t1").meta("foo", "bar").aggId(new UUID(0, 1));
       var spec2 = FactSpec.ns("ns2").type("t2").meta("foo", "bar");
       var specs = Lists.newArrayList(spec1, spec2);
-      var underTest = new PgQueryBuilder(specs);
+      var underTest = new PgQueryBuilder(specs, useInternalExclusion);
       var sql = normalized(underTest.createSQL());
 
       var expected =
-          """
+          String.format(
+              """
 SELECT ser, header, payload,
   header->>'id' AS id, header->>'aggIds' AS aggIds,
   header->>'ns' AS ns, header->>'type' AS type,
@@ -117,14 +122,16 @@ SELECT ser, header, payload,
   WHERE (
   (true AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)) OR
   (true AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)))
-  AND ser>?
+  %sAND ser>?
   ORDER BY ser ASC
-""";
+""",
+              addExclusionStatement(useInternalExclusion));
       assertThat(normalized(sql)).isEqualTo(normalized(expected));
     }
 
-    @Test
-    void withAggIdProperties() {
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void withAggIdProperties(boolean useInternalExclusion) {
       UUID id1 = new UUID(0, 1);
       var spec1 =
           FactSpec.ns("ns1")
@@ -134,11 +141,12 @@ SELECT ser, header, payload,
               .aggIdProperty("myId", id1)
               .version(1);
       var specs = Lists.newArrayList(spec1);
-      var underTest = new PgQueryBuilder(specs);
+      var underTest = new PgQueryBuilder(specs, useInternalExclusion);
       var sql = underTest.createSQL();
 
       var expected =
-          """
+          String.format(
+              """
 SELECT ser, header, payload,
   header->>'id' AS id,
   header->>'aggIds' AS aggIds,
@@ -155,14 +163,16 @@ WHERE (
     AND (header @> ?::jsonb OR header @> ?::jsonb)
     )
   )
-  AND ser>? ORDER BY ser ASC
-""";
+  %sAND ser>? ORDER BY ser ASC
+""",
+              addExclusionStatement(useInternalExclusion));
 
       assertThat(normalized(sql)).isEqualTo(normalized(expected));
     }
 
-    @Test
-    void withAggIdMultiplePropertiesWithoutVersionInformation() {
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void withAggIdMultiplePropertiesWithoutVersionInformation(boolean useInternalExclusion) {
       UUID id1 = new UUID(0, 1);
       UUID id2 = new UUID(0, 2);
       var spec1 =
@@ -173,12 +183,13 @@ WHERE (
               .aggIdProperty("myId", id1)
               .aggIdProperty("schnick.schnack.schnuck.orgId", id2);
       var specs = Lists.newArrayList(spec1);
-      var underTest = new PgQueryBuilder(specs);
+      var underTest = new PgQueryBuilder(specs, useInternalExclusion);
       var sql = underTest.createSQL();
 
       // note that filtering cannot be done in the database, as the version is not defined.
       var expected =
-          """
+          String.format(
+              """
 SELECT
   ser,
   header,
@@ -203,16 +214,18 @@ WHERE
       )
     )
   )
-  AND ser > ?
+  %sAND ser>?
 ORDER BY
   ser ASC
 
-            """;
+            """,
+              addExclusionStatement(useInternalExclusion));
       assertThat(normalized(sql)).isEqualTo(normalized(expected));
     }
 
-    @Test
-    void withAggIdMultipleProperties() {
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void withAggIdMultipleProperties(boolean useInternalExclusion) {
       UUID id1 = new UUID(0, 1);
       UUID id2 = new UUID(0, 2);
       var spec1 =
@@ -224,11 +237,12 @@ ORDER BY
               .aggIdProperty("myId", id1)
               .aggIdProperty("schnick.schnack.schnuck.orgId", id2);
       var specs = Lists.newArrayList(spec1);
-      var underTest = new PgQueryBuilder(specs);
+      var underTest = new PgQueryBuilder(specs, useInternalExclusion);
       var sql = underTest.createSQL();
 
       var expected =
-          """
+          String.format(
+              """
 SELECT
   ser,
   header,
@@ -267,15 +281,17 @@ WHERE
       )
     )
   )
-  AND ser > ?
+  %sAND ser>?
 ORDER BY
   ser ASC
-                    """;
+                    """,
+              addExclusionStatement(useInternalExclusion));
       assertThat(normalized(sql)).isEqualTo(normalized(expected));
     }
 
-    @Test
-    void happyPathWithMetaExists() {
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void happyPathWithMetaExists(boolean useInternalExclusion) {
       var spec1 =
           FactSpec.ns("ns1")
               .type("t1")
@@ -285,10 +301,11 @@ ORDER BY
               .metaDoesNotExist("mustNotExist");
       var spec2 = FactSpec.ns("ns2").type("t2").meta("foo", "bar");
       var specs = Lists.newArrayList(spec1, spec2);
-      var underTest = new PgQueryBuilder(specs);
+      var underTest = new PgQueryBuilder(specs, useInternalExclusion);
       var sql = underTest.createSQL();
       var expected =
-          """
+          String.format(
+              """
 SELECT ser, header, payload,
  header->>'id' AS id,
  header->>'aggIds' AS aggIds,
@@ -299,23 +316,26 @@ SELECT ser, header, payload,
  WHERE (
  (true AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb) AND jsonb_path_exists(header, ?::jsonpath) AND NOT jsonb_path_exists(header, ?::jsonpath)) OR
  (true AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)) )
- AND ser>?
+ %sAND ser>?
  ORDER BY ser ASC
-""";
+""",
+              addExclusionStatement(useInternalExclusion));
 
       assertThat(normalized(sql)).isEqualTo(normalized(expected));
     }
 
-    @Test
-    void nsWildcardAndType() {
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void nsWildcardAndType(boolean useInternalExclusion) {
       var spec1 = FactSpec.ns("foo").type("bar");
       var spec2 = FactSpec.ns("foo").type("*");
       var spec3 = FactSpec.ns("*").type("*");
       var specs = Lists.newArrayList(spec1, spec2, spec3);
-      var underTest = new PgQueryBuilder(specs);
+      var underTest = new PgQueryBuilder(specs, useInternalExclusion);
       var sql = underTest.createSQL();
       var expected =
-          """
+          String.format(
+              """
 SELECT ser, header, payload,
  header->>'id' AS id,
  header->>'aggIds' AS aggIds,
@@ -327,9 +347,10 @@ SELECT ser, header, payload,
  (true AND header @> ?::jsonb AND header @> ?::jsonb) OR
  (true AND header @> ?::jsonb) OR
  (true) )
- AND ser>?
+ %sAND ser>?
  ORDER BY ser ASC
-""";
+""",
+              addExclusionStatement(useInternalExclusion));
 
       assertThat(normalized(sql)).isEqualTo(normalized(expected));
     }
@@ -339,23 +360,26 @@ SELECT ser, header, payload,
   class WhenCreatingStateSQL {
 
     @SneakyThrows
-    @Test
-    void happyPath() {
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void happyPath(boolean useInternalExclusion) {
       var spec1 = FactSpec.ns("ns1").type("t1").meta("foo", "bar").aggId(new UUID(0, 1));
       var spec2 = FactSpec.ns("ns2").type("t2").meta("foo", "bar");
       var spec3 = FactSpec.ns("ns3").type("t3").aggId(new UUID(0, 1), new UUID(0, 2));
       var specs = Lists.newArrayList(spec1, spec2, spec3);
-      var underTest = new PgQueryBuilder(specs);
+      var underTest = new PgQueryBuilder(specs, useInternalExclusion);
       var sql = underTest.createStateSQL();
       var expected =
-          """
+          String.format(
+              """
 SELECT ser FROM fact
 WHERE (
 (true AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)) OR
 (true AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)) OR
 (true AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb))
-AND ser > ? ORDER BY ser DESC LIMIT 1
-""";
+%sAND ser>? ORDER BY ser DESC LIMIT 1
+""",
+              addExclusionStatement(useInternalExclusion));
 
       assertThat(normalized(sql)).isEqualTo(normalized(expected));
     }
@@ -364,5 +388,9 @@ AND ser > ? ORDER BY ser DESC LIMIT 1
   @SneakyThrows
   private String normalized(String query) {
     return CCJSqlParserUtil.parse(query).toString();
+  }
+
+  private String addExclusionStatement(boolean enabled) {
+    return enabled ? "AND exclusion_reason IS NULL " : "";
   }
 }

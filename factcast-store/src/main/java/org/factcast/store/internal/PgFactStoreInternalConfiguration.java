@@ -274,10 +274,11 @@ public class PgFactStoreInternalConfiguration {
       Blacklist blacklist,
       EventBus eventBus,
       JdbcTemplate jdbc,
-      BlacklistConfigurationProperties blacklistConfiguration) {
+      BlacklistConfigurationProperties blacklistConfiguration,
+      StoreConfigurationProperties storeConfiguration) {
     switch (blacklistConfiguration.getType()) {
       case POSTGRES:
-        return new PgBlacklistDataProvider(eventBus, jdbc, blacklist);
+        return new PgBlacklistDataProvider(eventBus, jdbc, blacklist, storeConfiguration);
       case RESOURCE:
         return new ResourceBasedBlacklistDataProvider(
             resourceLoader, blacklistConfiguration, blacklist);
@@ -285,7 +286,7 @@ public class PgFactStoreInternalConfiguration {
         log.warn(
             "No Provider found for blacklist type {}. Using default postgres provider.",
             blacklistConfiguration.getType());
-        return new PgBlacklistDataProvider(eventBus, jdbc, blacklist);
+        return new PgBlacklistDataProvider(eventBus, jdbc, blacklist, storeConfiguration);
     }
   }
 
