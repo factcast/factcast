@@ -100,6 +100,21 @@ public class InMemTransformationCache implements TransformationCache {
   }
 
   @Override
+  public void invalidateTransformationFor(String ns, String type, int fromVersion, int toVersion) {
+    synchronized (cache) {
+      cache
+          .entrySet()
+          .removeIf(
+              e ->
+                  e.getValue().ns().equals(ns)
+                      && Objects.equals(e.getValue().type(), type)
+                      && Collections.indexOfSubList(
+                              e.getKey().path(), List.of(fromVersion, toVersion))
+                          >= 0);
+    }
+  }
+
+  @Override
   public void invalidateTransformationFor(@Nonnull UUID factId) {
     synchronized (cache) {
       Set<Key> toBeInvalidated =

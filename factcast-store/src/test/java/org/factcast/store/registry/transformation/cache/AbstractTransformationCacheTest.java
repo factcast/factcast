@@ -146,6 +146,23 @@ public abstract class AbstractTransformationCacheTest {
   }
 
   @Test
+  void invalidatesOnlyPathsContainingTheChangedEdge() {
+    PgFact fact = PgFact.from(Fact.builder().ns("ns").type("type").version(3).build("{}"));
+    var affected = TransformationCache.Key.of(fact.id(), 3, List.of(1, 2, 3));
+    var bypass = TransformationCache.Key.of(fact.id(), 3, List.of(1, 3));
+    var reversed = TransformationCache.Key.of(fact.id(), 3, List.of(2, 1, 3));
+    var nonAdjacent = TransformationCache.Key.of(fact.id(), 3, List.of(1, 4, 2, 3));
+    for (var key : List.of(affected, bypass, reversed, nonAdjacent)) {
+      uut.put(key, fact);
+    }
+    uut.invalidateTransformationFor("ns", "type", 1, 2);
+    assertThat(uut.find(affected)).isEmpty();
+    for (var key : List.of(bypass, reversed, nonAdjacent)) {
+      assertThat(uut.find(key)).contains(fact);
+    }
+  }
+
+  @Test
   void testInvalidateTransformationForMatchingFactId() {
     UUID matchingFactId = UUID.randomUUID();
     PgFact f1 = PgFact.from(Fact.builder().id(matchingFactId).version(1).build("{}"));
