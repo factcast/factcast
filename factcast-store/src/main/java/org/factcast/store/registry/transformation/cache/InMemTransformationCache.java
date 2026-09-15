@@ -108,10 +108,12 @@ public class InMemTransformationCache implements TransformationCache {
               e ->
                   e.getValue().ns().equals(ns)
                       && Objects.equals(e.getValue().type(), type)
-                      && Collections.indexOfSubList(
-                              e.getKey().path(), List.of(fromVersion, toVersion))
-                          >= 0);
+                      && containsAnyOf(e.getKey().path(), fromVersion, toVersion));
     }
+  }
+
+  private boolean containsAnyOf(@NonNull List<Integer> path, int fromVersion, int toVersion) {
+    return path.stream().anyMatch(i -> (i == fromVersion) || (i == toVersion));
   }
 
   @Override

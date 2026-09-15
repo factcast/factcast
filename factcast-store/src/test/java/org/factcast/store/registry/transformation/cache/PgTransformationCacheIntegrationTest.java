@@ -18,8 +18,7 @@ package org.factcast.store.registry.transformation.cache;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.sql.Connection;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import javax.sql.DataSource;
 import org.factcast.core.Fact;
 import org.factcast.store.StoreConfigurationProperties;
@@ -71,15 +70,35 @@ class PgTransformationCacheIntegrationTest {
 
   @Test
   void invalidatesOnlyTheChangedEdgeWithinNamespaceAndType() {
-    PgFact fact = PgFact.from(Fact.builder().ns("ns").type("type").version(3).build("{}"));
-    var affected = TransformationCache.Key.of(fact.id(), 3, List.of(1, 2, 3));
+    var factId = UUID.randomUUID();
+    var affected =
+        List.of(
+            TransformationCache.Key.of(factId, 3, List.of(2, 3)),
+            TransformationCache.Key.of(factId, 3, List.of(1, 2, 3)),
+            TransformationCache.Key.of(factId, 4, List.of(1, 2, 3, 4)),
+            TransformationCache.Key.of(factId, 4, List.of(2, 3, 4)),
+            TransformationCache.Key.of(factId, 4, List.of(3, 4)),
+            TransformationCache.Key.of(factId, 6, List.of(1, 2, 3, 4, 5, 6)));
+
     var survivors =
         List.of(
-            TransformationCache.Key.of(fact.id(), 3, List.of(1, 3)),
-            TransformationCache.Key.of(fact.id(), 3, List.of(2, 1, 3)),
-            TransformationCache.Key.of(fact.id(), 3, List.of(1, 4, 2, 3)));
-    uut.put(affected, fact);
-    survivors.forEach(key -> uut.put(key, fact));
+            TransformationCache.Key.of(factId, 2, List.of(1, 2)),
+            TransformationCache.Key.of(factId, 5, List.of(1, 5)),
+            TransformationCache.Key.of(factId, 5, List.of(5, 6)));
+
+    affected.forEach(
+        key ->
+            uut.put(
+                key,
+                PgFact.from(
+                    Fact.builder().ns("ns").type("type").version(key.version()).build("{}"))));
+    survivors.forEach(
+        key ->
+            uut.put(
+                key,
+                PgFact.from(
+                    Fact.builder().ns("ns").type("type").version(key.version()).build("{}"))));
+
     PgFact otherNs = PgFact.from(Fact.builder().ns("other").type("type").version(3).build("{}"));
     PgFact otherType = PgFact.from(Fact.builder().ns("ns").type("other").version(3).build("{}"));
     var otherNsKey = TransformationCache.Key.of(otherNs.id(), 3, List.of(1, 2, 3));
@@ -87,15 +106,18 @@ class PgTransformationCacheIntegrationTest {
     uut.put(otherNsKey, otherNs);
     uut.put(otherTypeKey, otherType);
 
-    uut.invalidateTransformationFor("ns", "type", 1, 2);
+    // should invalidate all affected
+    uut.invalidateTransformationFor("ns", "type", 3, 4);
 
-    assertThat(uut.find(affected)).isEmpty();
+    affected.forEach(key -> assertThat(uut.find(key)).isEmpty());
     survivors.forEach(key -> assertThat(uut.find(key)).isPresent());
+    // others are untouched
     assertThat(uut.find(otherNsKey)).isPresent();
     assertThat(uut.find(otherTypeKey)).isPresent();
 
     // Legacy notifications still invalidate all paths for the namespace and type.
     uut.invalidateTransformationFor("ns", "type");
+
     survivors.forEach(key -> assertThat(uut.find(key)).isEmpty());
     assertThat(uut.find(otherNsKey)).isPresent();
     assertThat(uut.find(otherTypeKey)).isPresent();
