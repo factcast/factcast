@@ -58,6 +58,23 @@ class TransformationStoreChangeNotificationTest {
   @Nested
   class WhenUniquingId {
     @Test
+    void distinguishesEdgesInTheSameTransaction() {
+      Notification notification =
+          new Notification(
+              PgConstants.CHANNEL_TRANSFORMATIONSTORE_CHANGE,
+              1,
+              "{\"ns\":\"ns1\",\"type\":\"type1\",\"txId\":1,\"fromVersion\":2,\"toVersion\":3}");
+      var signal = TransformationStoreChangeNotification.from(notification);
+      assertThat(signal).isNotNull();
+      assertThat(signal.fromVersion()).isEqualTo(2);
+      assertThat(signal.toVersion()).isEqualTo(3);
+      assertThat(signal.uniqueId())
+          .isEqualTo("transformationstore_change-ns1-type1-1-2-3")
+          .isNotEqualTo(
+              new TransformationStoreChangeNotification("ns1", "type1", 1, 1, 2).uniqueId());
+    }
+
+    @Test
     void happyPath() {
       Notification n1 =
           new Notification(
