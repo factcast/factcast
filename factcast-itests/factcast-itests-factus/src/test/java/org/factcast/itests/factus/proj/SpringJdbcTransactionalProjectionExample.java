@@ -35,7 +35,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 public class SpringJdbcTransactionalProjectionExample {
 
   @Slf4j
-  @ProjectionMetaData(revision = 1)
+  @ProjectionMetaData(revisionId = "1")
   @SpringTransactional
   public static class UserNames extends AbstractSpringTxManagedProjection {
 
