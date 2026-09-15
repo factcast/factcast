@@ -67,15 +67,28 @@ public class SpringJdbcTransactionalProjectionExampleITest extends AbstractFactC
   }
 
   protected void createTables() {
-    jdbcTemplate.execute("DROP TABLE IF EXISTS fact_stream_positions;");
+    jdbcTemplate.execute("DROP TABLE IF EXISTS factcast_projection_locks;");
     jdbcTemplate.execute(
         """
-        CREATE TABLE fact_stream_positions (
+        CREATE TABLE factcast_projection_locks (
 
-            projection_name TEXT,
-            fact_stream_position UUID,
+            name       varchar(255) NOT NULL PRIMARY KEY,
+            lock_until timestamp    NOT NULL,
+            locked_at  timestamp    NOT NULL,
+            locked_by  varchar(255) NOT NULL
+        );\
+        """);
 
-            PRIMARY KEY (projection_name)
+    jdbcTemplate.execute("DROP TABLE IF EXISTS managed_projection;");
+    jdbcTemplate.execute(
+        """
+        CREATE TABLE managed_projection (
+
+            name   varchar(255),
+            state  UUID,
+            serial bigint DEFAULT -1,
+
+            PRIMARY KEY (name)
         );\
         """);
 
