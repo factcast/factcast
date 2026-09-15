@@ -1,0 +1,16 @@
+= FactCast
+:icons: font
+
+
+
+
+pass:[<div class="mx-auto"><p class="lead mt-2 py-5"><b>A 'good enough' Event-store based on PostgreSQL.</b></p></div>]
+
+image:https://github.com/factcast/factcast/actions/workflows/maven.yaml/badge.svg?branch=main[Actions Status, link="https://github.com/factcast/factcast/actions"]
+image:https://codecov.io/gh/factcast/factcast/graph/badge.svg?token=1RROU58AAV[codecov, link="https://codecov.io/gh/factcast/factcast"]
+image:https://www.codefactor.io/repository/github/factcast/factcast/badge[CodeFactor, link="https://www.codefactor.io/repository/github/factcast/factcast"]
+image:https://img.shields.io/maven-central/v/org.factcast/factcast/0.12.svg[Maven Central, link="http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22org.factcast"]
+image:https://img.shields.io/docker/v/factcast/factcast?label=dockerhub[DockerHub, link="https://hub.docker.com/repository/docker/factcast/factcast/tags"]
+image:https://img.shields.io/github/license/factcast/factcast[License, link="https://www.apache.org/licenses/LICENSE-2.0"]
+
+pass:[<p class="mt-5">This is work in progress and neither the Documentation, nor the code is in a "released" state.<br />Please keep that in mind when poking around.</p>]
