@@ -15,7 +15,6 @@
  */
 package org.factcast.store.internal.filter.blacklist;
 
-import com.google.common.collect.Sets;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -38,8 +37,9 @@ public final class Blacklist implements Consumer<Set<UUID>> {
   @Override
   public void accept(@NonNull Set<UUID> currentList) {
     // we should not just replace it in order to not mess with the reference
-    Sets.SetView<UUID> toRemove = Sets.difference(blocked, currentList);
-    blocked.removeAll(toRemove);
-    blocked.addAll(currentList);
+    synchronized (blocked) {
+      blocked.retainAll(currentList);
+      blocked.addAll(currentList);
+    }
   }
 }
