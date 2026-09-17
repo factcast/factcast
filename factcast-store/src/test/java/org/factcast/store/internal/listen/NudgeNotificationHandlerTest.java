@@ -25,11 +25,15 @@ import io.micrometer.core.instrument.Timer;
 import java.sql.ResultSet;
 import java.util.*;
 import java.util.concurrent.*;
+import org.factcast.core.subscription.observer.HighWaterMark;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.*;
+import org.factcast.store.internal.checkpoint.FactStreamCheckpoint;
+import org.factcast.store.internal.checkpoint.FactStreamCheckpointProvider;
 import org.factcast.store.internal.notification.*;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataAccessResourceFailureException;
@@ -47,6 +51,8 @@ class NudgeNotificationHandlerTest {
 
   @Mock private PgMetrics metrics;
 
+  @Mock private FactStreamCheckpointProvider checkpointProvider;
+
   @Mock ResultSet rs;
   private NudgeNotificationHandler handler;
   private @Mock Timer timer;
@@ -58,7 +64,11 @@ class NudgeNotificationHandlerTest {
     lenient().when(metrics.timer(any())).thenReturn(timer);
     lenient().when(metrics.startSample()).thenReturn(sample);
     lenient().doNothing().when(jdbc).execute(anyString());
-    handler = spy(new NudgeNotificationHandler(bus, jdbc, props, metrics, false));
+    lenient()
+        .when(checkpointProvider.advance())
+        .thenReturn(new FactStreamCheckpoint(HighWaterMark.of(UUID.randomUUID(), 200), 200));
+    handler =
+        spy(new NudgeNotificationHandler(bus, jdbc, props, metrics, checkpointProvider, false));
   }
 
   @AfterEach
@@ -71,7 +81,7 @@ class NudgeNotificationHandlerTest {
     handler.destroy();
     when(props.isReadOnlyModeEnabled()).thenReturn(true);
 
-    handler = new NudgeNotificationHandler(bus, jdbc, props, metrics);
+    handler = new NudgeNotificationHandler(bus, jdbc, props, metrics, checkpointProvider);
     awaitInitialTimerTasks();
 
     verifyNoInteractions(jdbc);
@@ -81,7 +91,7 @@ class NudgeNotificationHandlerTest {
   void writableModeRunsCleanup() throws Exception {
     handler.destroy();
 
-    handler = new NudgeNotificationHandler(bus, jdbc, props, metrics);
+    handler = new NudgeNotificationHandler(bus, jdbc, props, metrics, checkpointProvider);
     awaitInitialTimerTasks();
 
     verify(jdbc).execute("CALL notificationCleanup()");
@@ -108,14 +118,14 @@ class NudgeNotificationHandlerTest {
   }
 
   @Test
-  void testNudgeInitialCallFetchesMaxSerAndPostsInternalNotification() {
+  void testNudgeInitialCallAdvancesCheckpointAndPostsInternalNotification() {
     // Given
 
     // When
     handler.nudge(new NudgeNotification(12));
 
     // Then
-    verify(jdbc).queryForObject(contains("SELECT max(ser) FROM notification"), eq(Long.class));
+    verify(checkpointProvider).advance();
     verify(bus).post(any(FactInsertionNotification.class));
   }
 
@@ -208,6 +218,13 @@ class NudgeNotificationHandlerTest {
     verify(bus).post(eq(FactInsertionNotification.internal("ns", "t3")));
     verify(bus).register(any());
     verifyNoMoreInteractions(bus);
+    assertThat(handler.notificationSer).hasValue(200);
+
+    ArgumentCaptor<Object[]> parameters = ArgumentCaptor.forClass(Object[].class);
+    verify(jdbc)
+        .query(
+            contains("notification.ser <= ?"), any(DataClassRowMapper.class), parameters.capture());
+    assertThat(parameters.getValue()).containsExactly(102L, 200L);
   }
 
   @Test
@@ -216,6 +233,10 @@ class NudgeNotificationHandlerTest {
     when(props.getMaxNotificationPollLatencyInMillis()).thenReturn(50L);
     // Access notificationSer to set it > 0
     handler.notificationSer.set(100L);
+    when(checkpointProvider.advance())
+        .thenReturn(
+            new FactStreamCheckpoint(HighWaterMark.of(UUID.randomUUID(), 200), 200),
+            new FactStreamCheckpoint(HighWaterMark.of(UUID.randomUUID(), 201), 201));
 
     // Stub BASE_EXISTS_SQL to return true
     lenient()
@@ -308,8 +329,16 @@ class NudgeNotificationHandlerTest {
   }
 
   @Test
-  void fetchPairsAndDispatchOnlyExecutesOnceWhenCalledConcurrently() throws Exception {
+  void fetchPairsAndDispatchRepeatsForRequestArrivingDuringRefresh() throws Exception {
     // Given
+    handler.notificationSer.set(100);
+    when(checkpointProvider.advance())
+        .thenReturn(
+            new FactStreamCheckpoint(HighWaterMark.of(UUID.randomUUID(), 200), 200),
+            new FactStreamCheckpoint(HighWaterMark.of(UUID.randomUUID(), 201), 201));
+    when(jdbc.queryForObject(
+            eq(NudgeNotificationHandler.BASE_EXISTS_SQL), eq(Boolean.class), anyLong()))
+        .thenReturn(true);
     CountDownLatch letGo = new CountDownLatch(1);
     CountDownLatch hasLock = new CountDownLatch(1);
     // Mock queryForList to hold execution
@@ -337,16 +366,46 @@ class NudgeNotificationHandlerTest {
     t1.join();
 
     // Then
-    verify(jdbc, times(1)).query(anyString(), any(DataClassRowMapper.class), any(Object[].class));
+    verify(jdbc, times(2)).query(anyString(), any(DataClassRowMapper.class), any(Object[].class));
   }
 
   @Test
   void emitsMetricsWhenFetching() {
+    handler.notificationSer.set(100);
+    when(jdbc.queryForObject(NudgeNotificationHandler.BASE_EXISTS_SQL, Boolean.class, 100L))
+        .thenReturn(true);
+
     // When
     handler.fetchPairsAndDispatch();
 
     // Then
     verify(metrics).startSample();
     verify(sample).stop(timer);
+  }
+
+  @Test
+  void emptyBoundedFetchStillAdvancesNotificationCursor() {
+    handler.notificationSer.set(100);
+    when(jdbc.queryForObject(NudgeNotificationHandler.BASE_EXISTS_SQL, Boolean.class, 100L))
+        .thenReturn(true);
+
+    handler.fetchPairsAndDispatch();
+
+    assertThat(handler.notificationSer).hasValue(200);
+    verify(bus, never()).post(any());
+  }
+
+  @Test
+  void failedBoundedFetchDoesNotAdvanceNotificationCursor() {
+    handler.notificationSer.set(100);
+    when(jdbc.queryForObject(NudgeNotificationHandler.BASE_EXISTS_SQL, Boolean.class, 100L))
+        .thenReturn(true);
+    when(jdbc.query(anyString(), any(DataClassRowMapper.class), any(Object[].class)))
+        .thenThrow(new DataAccessResourceFailureException("database unavailable"));
+
+    assertThatCode(handler::fetchPairsAndDispatch)
+        .isInstanceOf(DataAccessResourceFailureException.class);
+
+    assertThat(handler.notificationSer).hasValue(100);
   }
 }

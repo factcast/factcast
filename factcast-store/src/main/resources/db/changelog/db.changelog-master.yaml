@@ -743,3 +743,14 @@ databaseChangeLog:
             relativeToChangelogFile: true
             splitStatements: false
             stripComments: true
+
+  - changeSet:
+      id: safe-hwm-checkpoint
+      author: uweschaefer
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/safe_hwm/create_factstream_checkpoint.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true

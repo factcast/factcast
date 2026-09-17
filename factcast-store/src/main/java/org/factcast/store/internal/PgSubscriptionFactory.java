@@ -26,6 +26,7 @@ import org.factcast.core.subscription.MissingTransformationInformationException;
 import org.factcast.core.subscription.observer.*;
 import org.factcast.store.*;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
+import org.factcast.store.internal.checkpoint.FactStreamCheckpointProvider;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.logsuppression.LogSuppression;
 import org.factcast.store.internal.pipeline.*;
@@ -44,7 +45,7 @@ public class PgSubscriptionFactory implements AutoCloseable {
 
   final PgCatchupFactory catchupFactory;
 
-  final HighWaterMarkFetcher hwmFetcher;
+  final FactStreamCheckpointProvider checkpointProvider;
   final ServerPipelineFactory pipelineFactory;
   final ExecutorService es;
   final PgStoreTelemetry telemetry;
@@ -60,7 +61,7 @@ public class PgSubscriptionFactory implements AutoCloseable {
       PgFactIdToSerialMapper idToSerialMapper,
       StoreConfigurationProperties props,
       PgCatchupFactory catchupFactory,
-      HighWaterMarkFetcher hwmFetcher,
+      FactStreamCheckpointProvider checkpointProvider,
       ServerPipelineFactory pipelineFactory,
       PgMetrics metrics,
       PgStoreTelemetry telemetry,
@@ -69,7 +70,7 @@ public class PgSubscriptionFactory implements AutoCloseable {
     this.eventBus = eventBus;
     this.idToSerialMapper = idToSerialMapper;
     this.catchupFactory = catchupFactory;
-    this.hwmFetcher = hwmFetcher;
+    this.checkpointProvider = checkpointProvider;
     this.pipelineFactory = pipelineFactory;
     this.telemetry = telemetry;
     this.props = props;
@@ -95,7 +96,7 @@ public class PgSubscriptionFactory implements AutoCloseable {
             eventBus,
             idToSerialMapper,
             catchupFactory,
-            hwmFetcher,
+            checkpointProvider,
             new PushbackServerPipeline(pipe),
             telemetry,
             req,

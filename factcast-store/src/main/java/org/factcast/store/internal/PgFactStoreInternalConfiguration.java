@@ -33,11 +33,11 @@ import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock;
 import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock.InterceptMode;
 import net.javacrumbs.shedlock.support.KeepAliveLockProvider;
 import org.factcast.core.store.*;
-import org.factcast.core.subscription.observer.HighWaterMarkFetcher;
 import org.factcast.store.*;
 import org.factcast.store.internal.catchup.PgCatchUpFactoryImpl;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.check.IndexCheck;
+import org.factcast.store.internal.checkpoint.*;
 import org.factcast.store.internal.filter.blacklist.*;
 import org.factcast.store.internal.listen.*;
 import org.factcast.store.internal.lock.*;
@@ -155,7 +155,7 @@ public class PgFactStoreInternalConfiguration {
       PgFactIdToSerialMapper pgFactIdToSerialMapper,
       StoreConfigurationProperties props,
       PgCatchupFactory pgCatchupFactory,
-      HighWaterMarkFetcher hwmFetcher,
+      FactStreamCheckpointProvider checkpointProvider,
       PgStoreTelemetry telemetry,
       ServerPipelineFactory pipelineFactory,
       PgMetrics metrics,
@@ -167,7 +167,7 @@ public class PgFactStoreInternalConfiguration {
         pgFactIdToSerialMapper,
         props,
         pgCatchupFactory,
-        hwmFetcher,
+        checkpointProvider,
         pipelineFactory,
         metrics,
         telemetry,
@@ -216,6 +216,26 @@ public class PgFactStoreInternalConfiguration {
   @Bean
   public FactTableWriteLock factTableWriteLock(JdbcTemplate tpl) {
     return new AdvisoryWriteLock(tpl);
+  }
+
+  @Bean
+  @IsReadAndWriteEnv
+  @DependsOnDatabaseInitialization
+  public FactStreamCheckpointProvider factStreamCheckpointProvider(
+      DataSource dataSource,
+      JdbcTemplate jdbcTemplate,
+      FactTableWriteLock factTableWriteLock,
+      PgMetrics metrics,
+      PlatformTransactionManager transactionManager) {
+    return new PgFactStreamCheckpointProvider(
+        dataSource, jdbcTemplate, factTableWriteLock, metrics, transactionManager);
+  }
+
+  @Bean
+  @IsReadOnlyEnv
+  @DependsOnDatabaseInitialization
+  public FactStreamCheckpointProvider readOnlyFactStreamCheckpointProvider(DataSource dataSource) {
+    return new ReadOnlyPgFactStreamCheckpointProvider(dataSource);
   }
 
   @Bean
@@ -342,8 +362,9 @@ public class PgFactStoreInternalConfiguration {
       EventBus bus,
       JdbcTemplate jdbcTemplate,
       StoreConfigurationProperties props,
-      PgMetrics metrics) {
-    return new NudgeNotificationHandler(bus, jdbcTemplate, props, metrics);
+      PgMetrics metrics,
+      FactStreamCheckpointProvider checkpointProvider) {
+    return new NudgeNotificationHandler(bus, jdbcTemplate, props, metrics, checkpointProvider);
   }
 
   @Bean

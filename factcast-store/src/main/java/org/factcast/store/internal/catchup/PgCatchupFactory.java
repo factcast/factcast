@@ -27,6 +27,7 @@ public interface PgCatchupFactory {
       @NonNull SubscriptionRequestTO request,
       @NonNull PushbackServerPipeline pipeline,
       @NonNull AtomicLong serial,
+      long upperSerial,
       @NonNull SingleConnectionDataSource ds,
       @NonNull Phase phase);
 

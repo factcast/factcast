@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2023 factcast.org
+ * Copyright © 2017-2026 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,72 +16,31 @@
 package org.factcast.store.internal.tail;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.when;
 
-import java.sql.*;
 import java.util.UUID;
 import javax.sql.DataSource;
 import org.factcast.core.subscription.observer.HighWaterMark;
-import org.junit.jupiter.api.*;
+import org.factcast.store.internal.checkpoint.FactStreamCheckpoint;
+import org.factcast.store.internal.checkpoint.FactStreamCheckpointProvider;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.jdbc.core.*;
 
 @ExtendWith(MockitoExtension.class)
-public class SimpleHighWaterMarkFetcherTest {
+class SimpleHighWaterMarkFetcherTest {
 
-  @Mock private JdbcTemplate jdbc;
-  @Mock private DataSource ds;
-  @InjectMocks @Spy private SimpleHighWaterMarkFetcher uut;
-
-  @BeforeEach
-  void setup() {
-    lenient().doReturn(jdbc).when(uut).jdbcTemplate(ds);
-  }
+  @Mock private DataSource dataSource;
+  @Mock private FactStreamCheckpointProvider checkpointProvider;
+  @InjectMocks private SimpleHighWaterMarkFetcher underTest;
 
   @Test
-  void fetches() {
+  void readsPersistedCheckpointFromRequestedDataSource() {
+    HighWaterMark expected = HighWaterMark.of(UUID.randomUUID(), 42);
+    when(checkpointProvider.read(dataSource)).thenReturn(new FactStreamCheckpoint(expected, 7));
 
-    UUID id = UUID.randomUUID();
-    long ser = 42L;
-
-    when(jdbc.queryForObject(anyString(), any(RowMapper.class)))
-        .thenReturn(HighWaterMark.of(id, ser), HighWaterMark.of(id, ser + 1));
-
-    HighWaterMark highWaterMark = uut.highWaterMark(ds);
-    assertThat(highWaterMark.targetId()).isEqualTo(id);
-    assertThat(highWaterMark.targetSer()).isEqualTo(ser);
-
-    assertThat(uut.highWaterMark(ds)).isNotSameAs(highWaterMark);
-    highWaterMark = uut.highWaterMark(ds);
-    assertThat(highWaterMark.targetId()).isEqualTo(id);
-    assertThat(highWaterMark.targetSer()).isEqualTo(ser + 1);
-  }
-
-  @Test
-  void returnsEmpty() {
-    when(jdbc.queryForObject(anyString(), any(RowMapper.class)))
-        .thenThrow(EmptyResultDataAccessException.class);
-
-    HighWaterMark highWaterMark = uut.highWaterMark(ds);
-    assertThat(highWaterMark.isEmpty()).isTrue();
-  }
-
-  @Test
-  void extracts() throws SQLException {
-    UUID id = UUID.randomUUID();
-    ResultSet rs = mock(ResultSet.class);
-    when(rs.getLong("targetSer")).thenReturn(42L);
-    when(rs.getObject("targetId", UUID.class)).thenReturn(id);
-
-    HighWaterMark res = uut.extract(rs, 1);
-
-    assertThat(res.isEmpty()).isFalse();
-    assertThat(res.targetSer()).isEqualTo(42L);
-    assertThat(res.targetId()).isEqualTo(id);
+    assertThat(underTest.highWaterMark(dataSource)).isSameAs(expected);
   }
 }

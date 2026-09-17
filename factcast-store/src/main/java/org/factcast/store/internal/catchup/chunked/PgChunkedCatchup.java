@@ -47,9 +47,10 @@ public class PgChunkedCatchup extends AbstractPgCatchup {
       @NonNull SubscriptionRequestTO req,
       @NonNull PushbackServerPipeline pipeline,
       @NonNull AtomicLong serial,
+      long upperSerial,
       @NonNull SingleConnectionDataSource ds,
       PgCatchupFactory.@NonNull Phase phase) {
-    super(props, metrics, req, pipeline, serial, ds, phase);
+    super(props, metrics, req, pipeline, serial, upperSerial, ds, phase);
   }
 
   @SneakyThrows
@@ -143,7 +144,7 @@ public class PgChunkedCatchup extends AbstractPgCatchup {
     b.useTempTable(tempTableName);
 
     final var fromSerial = new AtomicLong(Math.max(serial.get(), fastForward));
-    final var catchupSQL = b.createSQL();
+    final var catchupSQL = b.createBoundedSQL();
     log.trace("{} catchup {} - facts starting with SER={}", req, phase, fromSerial.get());
     log.trace("{} catchup {} - preparing temp table {}", req, phase, tempTableName);
 
@@ -151,7 +152,10 @@ public class PgChunkedCatchup extends AbstractPgCatchup {
     final var timer = metrics.timer(StoreMetrics.OP.RESULT_STREAM_START, isFromScratch);
     Timer.Sample sample = metrics.startSample();
 
-    int matches = jdbc.update(catchupSQL, b.createStatementSetter(fromSerial));
+    int matches =
+        fromSerial.get() >= upperSerial
+            ? 0
+            : jdbc.update(catchupSQL, b.createBoundedStatementSetter(fromSerial, upperSerial));
     log.trace("{} catchup {} - Temp table has {} matching serials", req, phase, matches);
     logIfAboveThreshold(Duration.ofNanos(sample.stop(timer)));
     return matches;
