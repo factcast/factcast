@@ -5,17 +5,6 @@ weight: 200
 description: Properties you can use to configure FactCast
 ---
 
-### State queries
-
-`factcast.store.state-query-backward-scan-window` (default: `512`) controls the recent serial
-range searched backwards when finding the latest matching fact. A recent match returns immediately;
-otherwise the query searches all matching facts using a materialized query. Both searches use the
-same database snapshot. Set this property to `0` to use only the materialized query.
-
-The window counts serial positions, not rows or milliseconds. Tune it against representative hit
-and miss workloads: larger windows can find more recent matches but add work before falling back.
-The fallback deliberately has no additional upper serial bound, preserving its index choices.
-
 ### Schemaregistry
 
 | Property                                 | Description                                                                                                                                                                                                                                                                              | Default                                      |
@@ -81,6 +70,7 @@ The fallback deliberately has no additional upper serial bound, preserving its i
 | factcast.store.offload.jndi-name                                    | same as any DataSource                                                                                                                                                                                                                                                                                                                                                                                                                              |                                          |
 | factcast.store.offload.generate-unique-name                         | same as any DataSource                                                                                                                                                                                                                                                                                                                                                                                                                              |                                          |
 | factcast.store.offload.name                                         | same as any DataSource                                                                                                                                                                                                                                                                                                                                                                                                                              |                                          |
+| factcast.store.state-query-backward-scan-window                     | amount of rows to load in a backwards scan to find the latest matching one for creating a statetoken, before falling back to an on average more expensive, but also more predictive method using the GIN indexes for filtering.                                                                                                                                                                                                                     | 20000                                    |
 
 ---
 
