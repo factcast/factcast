@@ -53,20 +53,29 @@ public class PgQueryBuilder {
   }
 
   public PreparedStatementSetter createStatementSetter(@NonNull AtomicLong serial) {
-    return p -> {
-      int count = 0;
-      for (FactSpec spec : factSpecs) {
-        count = setNs(p, count, spec);
-        count = setType(p, count, spec);
-        // version is intentionally not used here
-        count = setAggIds(p, count, spec);
-        count = setAggProperties(p, count, spec);
-        count = setMeta(p, count, spec);
-        count = setMetaKeyExists(p, count, spec);
-      }
+    return p -> setParameters(p, serial.get(), 0);
+  }
 
-      p.setLong(++count, serial.get());
+  /** differs from createStatementSetter as it applies the parameters twice. */
+  public PreparedStatementSetter createStateStatementSetter(long serial) {
+    return p -> {
+      int count = setParameters(p, serial, 0);
+      setParameters(p, serial, count);
     };
+  }
+
+  private int setParameters(PreparedStatement p, long serial, int count) throws SQLException {
+    for (FactSpec spec : factSpecs) {
+      count = setNs(p, count, spec);
+      count = setType(p, count, spec);
+      // version is intentionally not used here
+      count = setAggIds(p, count, spec);
+      count = setAggProperties(p, count, spec);
+      count = setMeta(p, count, spec);
+      count = setMetaKeyExists(p, count, spec);
+    }
+    p.setLong(++count, serial);
+    return count;
   }
 
   @SneakyThrows
@@ -248,18 +257,40 @@ public class PgQueryBuilder {
     return tempTableName != null;
   }
 
-  public String createStateSQL() {
-
-    String sql =
-        "WITH subq AS MATERIALIZED (SELECT "
+  /**
+   * Probes a bounded recent serial range before searching all matches. Both branches share one
+   * statement snapshot, and COALESCE skips the fallback when the recent probe succeeds.
+   */
+  public String createStateSQL(long backwardScanWindow) {
+    String matchingSerials =
+        "SELECT "
             + PgConstants.COLUMN_SER
             + FROM
             + PgConstants.TABLE_FACT
             + WHERE
-            + createWhereClause()
-            + ") SELECT COALESCE(MAX("
-            + PgConstants.COLUMN_SER
-            + "), 0) FROM subq";
+            + createWhereClause();
+    // sql query is not easy to grasp, but roughly does something like:
+    // select COALESCE( <most recent quick lookup> , <most recent full GIN search>)
+    //
+    // for 90% of the cases, the first is faster, but if we're looking for a very rarely inserted
+    // facts, it might have a catastrophic runtime.
+    //
+    // Therefore we limit the search for "most recent" to the last $backwardScanWindow facts, and
+    // fall back to the safer method of using a GIN (probably still tail) to search.
+    String sql =
+        "WITH boundary AS MATERIALIZED (SELECT MAX(ser)-"
+            + backwardScanWindow
+            + " AS cutoff FROM fact)"
+            + "SELECT COALESCE(("
+            // try backwards scan downto cutoff, means: find the most recent matching ser or NULL if
+            // none was found within the last 20k facts
+            + matchingSerials
+            + " AND ser > (SELECT cutoff FROM boundary) ORDER BY ser DESC LIMIT 1),"
+            //
+            // only if the above returns NULL, we try the GIN index approach instead:
+            + " (WITH subq AS MATERIALIZED ("
+            + matchingSerials
+            + ") SELECT MAX(ser) FROM subq), 0)";
     log.trace("creating state SQL for {} - SQL={}", factSpecs, sql);
     return sql;
   }

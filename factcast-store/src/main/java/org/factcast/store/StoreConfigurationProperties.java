@@ -42,6 +42,13 @@ public class StoreConfigurationProperties implements InitializingBean {
   /** defines the fetchSize of a database query */
   @Positive int pageSize = 50;
 
+  /**
+   * Recent serial range to probe backwards before searching all matching facts for state queries.
+   * This counts serial positions, not rows or milliseconds. Set to zero to disable the probe.
+   */
+  @Min(0)
+  int stateQueryBackwardScanWindow = 20000;
+
   /** defines the max number of Facts being scheduled for transformation */
   @Positive
   @Max(5000)

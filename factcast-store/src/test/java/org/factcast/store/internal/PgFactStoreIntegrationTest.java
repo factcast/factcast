@@ -31,10 +31,14 @@ import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.*;
 import org.factcast.core.subscription.*;
 import org.factcast.core.subscription.observer.*;
+import org.factcast.store.StoreConfigurationProperties;
+import org.factcast.store.internal.query.PgQueryBuilder;
 import org.factcast.store.test.AbstractFactStoreTest;
 import org.factcast.test.IntegrationTest;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -52,6 +56,8 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
       "select TRUNC(EXTRACT(EPOCH FROM now()::timestamptz(3)) * 1000);";
 
   @Autowired FactStore fs;
+
+  @Autowired StoreConfigurationProperties storeProperties;
 
   @Autowired PgMetrics metrics;
 
@@ -267,6 +273,82 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
     assertThat(pgFactStore.doGetState(specs, ser3).serialOfLastMatchingFact()).isZero();
     // If lastMatchingSerial is beyond ser3 -> returns 0L
     assertThat(pgFactStore.doGetState(specs, ser3 + 10L).serialOfLastMatchingFact()).isZero();
+  }
+
+  @ParameterizedTest
+  @ValueSource(ints = {0, 1, 2, 512})
+  void hybridStateQueryRespectsBoundariesAndThresholds(int window) {
+    int previousWindow = storeProperties.getStateQueryBackwardScanWindow();
+    storeProperties.setStateQueryBackwardScanWindow(window);
+    try {
+      PgFactStore target = AopTestUtils.getUltimateTargetObject(fs);
+      var matching = List.of(FactSpec.ns("hybrid").type("match"));
+      assertThat(target.doGetState(matching, 0).serialOfLastMatchingFact()).isZero();
+
+      Fact older = Fact.builder().ns("hybrid").type("older").buildWithoutPayload();
+      Fact padding = Fact.builder().ns("unrelated").buildWithoutPayload();
+      Fact boundary = Fact.builder().ns("hybrid").type("boundary").buildWithoutPayload();
+      Fact recent = Fact.builder().ns("hybrid").type("match").buildWithoutPayload();
+      Fact newest = Fact.builder().ns("unrelated").buildWithoutPayload();
+      fs.publish(List.of(older, padding, boundary, recent, newest));
+
+      long olderSerial = fs.serialOf(older.id()).orElseThrow();
+      long boundarySerial = fs.serialOf(boundary.id()).orElseThrow();
+      long recentSerial = fs.serialOf(recent.id()).orElseThrow();
+      long highestSerial = fs.serialOf(newest.id()).orElseThrow();
+      // With a window of two, boundary belongs to the fallback and recent to the probe.
+      assertThat(boundarySerial).isEqualTo(highestSerial - 2);
+      assertThat(recentSerial).isEqualTo(highestSerial - 1);
+      assertThat(target.doGetState(matching, 0).serialOfLastMatchingFact()).isEqualTo(recentSerial);
+      assertThat(target.doGetState(matching, recentSerial).serialOfLastMatchingFact()).isZero();
+      assertThat(target.doGetState(matching, highestSerial + 10).serialOfLastMatchingFact())
+          .isZero();
+      assertThat(
+              target
+                  .doGetState(List.of(FactSpec.ns("hybrid").type("boundary")), olderSerial)
+                  .serialOfLastMatchingFact())
+          .isEqualTo(boundarySerial);
+      assertThat(
+              target
+                  .doGetState(List.of(FactSpec.ns("hybrid").type("older")), 0)
+                  .serialOfLastMatchingFact())
+          .isEqualTo(olderSerial);
+      assertThat(
+              target
+                  .doGetState(List.of(FactSpec.ns("hybrid").type("older")), olderSerial)
+                  .serialOfLastMatchingFact())
+          .isZero();
+      assertThat(target.doGetState(List.of(FactSpec.ns("absent")), 0).serialOfLastMatchingFact())
+          .isZero();
+      assertThat(
+              target
+                  .doGetState(
+                      List.of(
+                          FactSpec.ns("hybrid").type("older"), FactSpec.ns("hybrid").type("match")),
+                      0)
+                  .serialOfLastMatchingFact())
+          .isEqualTo(recentSerial);
+
+      // Removing a fact leaves a serial gap; the window still refers to serial positions.
+      jdbcTemplate.update("DELETE FROM fact WHERE ser = ?", recentSerial);
+      assertThat(target.doGetState(List.of(FactSpec.ns("hybrid")), 0).serialOfLastMatchingFact())
+          .isEqualTo(boundarySerial);
+    } finally {
+      storeProperties.setStateQueryBackwardScanWindow(previousWindow);
+    }
+  }
+
+  @Test
+  void hybridStateQueryDoesNotExecuteFallbackOnRecentHit() {
+    fs.publish(List.of(Fact.builder().ns("recent").buildWithoutPayload()));
+    var builder = new PgQueryBuilder(List.of(FactSpec.ns("recent")));
+    var plan =
+        jdbcTemplate.query(
+            "EXPLAIN (ANALYZE, BUFFERS) " + builder.createStateSQL(512),
+            builder.createStateStatementSetter(0),
+            (rs, row) -> rs.getString(1));
+    assertThat(plan)
+        .anySatisfy(line -> assertThat(line).contains("CTE Scan on subq", "never executed"));
   }
 
   @Test
