@@ -16,7 +16,6 @@
 package org.factcast.store.internal.notification;
 
 import jakarta.annotation.Nullable;
-import java.util.UUID;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 import lombok.Value;
@@ -44,7 +43,8 @@ public class NudgeNotification extends StoreNotification {
 
   @Override
   public String uniqueId() {
-    return PgConstants.CHANNEL_NUDGE + "-" + (txId > 0 ? txId : UUID.randomUUID());
+    if (txId == 0) return null;
+    else return PgConstants.CHANNEL_NUDGE + "-" + txId;
   }
 
   @Override
