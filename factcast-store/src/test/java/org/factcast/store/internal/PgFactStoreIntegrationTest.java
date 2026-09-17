@@ -40,6 +40,7 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.jdbc.*;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
+import org.springframework.test.util.AopTestUtils;
 
 @SpringJUnitConfig(classes = {PgTestConfiguration.class})
 @Sql(scripts = "/wipe.sql", config = @SqlConfig(separator = "#"))
@@ -255,7 +256,7 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
     assertThat(state.get().serialOfLastMatchingFact()).isEqualTo(ser3);
 
     // Verify doGetState with serial threshold
-    PgFactStore pgFactStore = (PgFactStore) fs;
+    PgFactStore pgFactStore = AopTestUtils.getUltimateTargetObject(fs);
     var specs = Lists.newArrayList(FactSpec.ns("ns1").type("t1"));
 
     // If lastMatchingSerial is before ser1, latest matching serial is ser3
