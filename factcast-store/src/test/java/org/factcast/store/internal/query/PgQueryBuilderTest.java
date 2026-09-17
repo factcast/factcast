@@ -349,14 +349,36 @@ SELECT ser, header, payload,
       var sql = underTest.createStateSQL();
       var expected =
           """
-SELECT ser FROM fact
-WHERE (
-(true AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)) OR
-(true AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)) OR
-(true AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb))
-AND ser > ? ORDER BY ser DESC LIMIT 1
+WITH subq AS MATERIALIZED (
+  SELECT ser FROM fact
+  WHERE (
+  (true AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)) OR
+  (true AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)) OR
+  (true AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb))
+  AND ser > ?
+)
+SELECT COALESCE(MAX(ser), 0) FROM subq
 """;
 
+      assertThat(normalized(sql)).isEqualTo(normalized(expected));
+    }
+
+    @SneakyThrows
+    @Test
+    void singleSpec() {
+      var spec1 = FactSpec.ns("ns1").type("t1");
+      var underTest = new PgQueryBuilder(Lists.newArrayList(spec1));
+      var sql = underTest.createStateSQL();
+      var expected =
+          """
+WITH subq AS MATERIALIZED (
+  SELECT ser FROM fact
+  WHERE (
+    (true AND header @> ?::jsonb AND header @> ?::jsonb)
+  ) AND ser > ?
+)
+SELECT COALESCE(MAX(ser), 0) FROM subq
+""";
       assertThat(normalized(sql)).isEqualTo(normalized(expected));
     }
   }

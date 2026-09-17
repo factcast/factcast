@@ -251,15 +251,15 @@ public class PgQueryBuilder {
   public String createStateSQL() {
 
     String sql =
-        "SELECT "
+        "WITH subq AS MATERIALIZED (SELECT "
             + PgConstants.COLUMN_SER
             + FROM
             + PgConstants.TABLE_FACT
             + WHERE
             + createWhereClause()
-            + ORDER_BY
+            + ") SELECT COALESCE(MAX("
             + PgConstants.COLUMN_SER
-            + " DESC LIMIT 1";
+            + "), 0) FROM subq";
     log.trace("creating state SQL for {} - SQL={}", factSpecs, sql);
     return sql;
   }

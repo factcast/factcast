@@ -235,6 +235,101 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
     assertThat(state.get()).extracting(State::serialOfLastMatchingFact).isEqualTo(0L);
   }
 
+  @Test
+  void getStateForMatchingFactsReturnsMaxSerial() {
+    Fact fact1 = Fact.builder().ns("ns1").type("t1").buildWithoutPayload();
+    Fact fact2 = Fact.builder().ns("unrelated").type("t2").buildWithoutPayload();
+    Fact fact3 = Fact.builder().ns("ns1").type("t1").buildWithoutPayload();
+    Fact fact4 = Fact.builder().ns("unrelated").type("t2").buildWithoutPayload();
+
+    store.publish(Lists.newArrayList(fact1, fact2, fact3, fact4));
+
+    long ser1 = store.serialOf(fact1.id()).orElseThrow();
+    long ser3 = store.serialOf(fact3.id()).orElseThrow();
+
+    StateToken token = store.stateFor(Lists.newArrayList(FactSpec.ns("ns1").type("t1")));
+    assertThat(token).isNotNull();
+
+    Optional<State> state = tokenStore.get(token);
+    assertThat(state).isNotEmpty();
+    assertThat(state.get().serialOfLastMatchingFact()).isEqualTo(ser3);
+
+    // Verify doGetState with serial threshold
+    PgFactStore pgFactStore = (PgFactStore) fs;
+    var specs = Lists.newArrayList(FactSpec.ns("ns1").type("t1"));
+
+    // If lastMatchingSerial is before ser1, latest matching serial is ser3
+    assertThat(pgFactStore.doGetState(specs, 0L).serialOfLastMatchingFact()).isEqualTo(ser3);
+    // If lastMatchingSerial is ser1, newer matching fact exists (ser3)
+    assertThat(pgFactStore.doGetState(specs, ser1).serialOfLastMatchingFact()).isEqualTo(ser3);
+    // If lastMatchingSerial is ser3, no newer matching facts exist -> returns 0L
+    assertThat(pgFactStore.doGetState(specs, ser3).serialOfLastMatchingFact()).isZero();
+    // If lastMatchingSerial is beyond ser3 -> returns 0L
+    assertThat(pgFactStore.doGetState(specs, ser3 + 10L).serialOfLastMatchingFact()).isZero();
+  }
+
+  @Test
+  void getStateForNonMatchingSpecsWithPopulatedFactsReturns0() {
+    Fact fact1 = Fact.builder().ns("ns1").type("t1").buildWithoutPayload();
+    Fact fact2 = Fact.builder().ns("ns2").type("t2").buildWithoutPayload();
+    store.publish(Lists.newArrayList(fact1, fact2));
+
+    StateToken token =
+        store.stateFor(Lists.newArrayList(FactSpec.ns("nonExistentNs").type("nonExistentType")));
+    assertThat(token).isNotNull();
+
+    Optional<State> state = tokenStore.get(token);
+    assertThat(state).isNotEmpty();
+    assertThat(state.get().serialOfLastMatchingFact()).isZero();
+  }
+
+  @Test
+  void getStateForMultipleFactSpecs() {
+    Fact fact1 = Fact.builder().ns("ns1").type("t1").buildWithoutPayload();
+    Fact fact2 = Fact.builder().ns("ns2").type("t2").buildWithoutPayload();
+    Fact fact3 = Fact.builder().ns("unrelated").type("t3").buildWithoutPayload();
+    store.publish(Lists.newArrayList(fact1, fact2, fact3));
+
+    long ser1 = store.serialOf(fact1.id()).orElseThrow();
+    long ser2 = store.serialOf(fact2.id()).orElseThrow();
+    assertThat(ser2).isGreaterThan(ser1);
+
+    StateToken token =
+        store.stateFor(
+            Lists.newArrayList(FactSpec.ns("ns1").type("t1"), FactSpec.ns("ns2").type("t2")));
+    assertThat(token).isNotNull();
+
+    Optional<State> state = tokenStore.get(token);
+    assertThat(state).isNotEmpty();
+    assertThat(state.get().serialOfLastMatchingFact()).isEqualTo(ser2);
+  }
+
+  @Test
+  void publishIfUnchangedValidatesStateCorrectly() {
+    Fact initialFact = Fact.builder().ns("counter").type("tick").buildWithoutPayload();
+    store.publish(Collections.singletonList(initialFact));
+
+    var specs = Collections.singletonList(FactSpec.ns("counter").type("tick"));
+    StateToken token = store.stateFor(specs);
+
+    // State is unchanged, conditional publish succeeds
+    Fact updateFact = Fact.builder().ns("counter").type("tick").buildWithoutPayload();
+    boolean published =
+        store.publishIfUnchanged(Collections.singletonList(updateFact), Optional.of(token));
+    assertThat(published).isTrue();
+
+    // Now obtain a state token, publish another matching fact to change the state, then attempt
+    // publish with old token
+    StateToken token2 = store.stateFor(specs);
+    Fact concurrentFact = Fact.builder().ns("counter").type("tick").buildWithoutPayload();
+    store.publish(Collections.singletonList(concurrentFact));
+
+    Fact conflictingFact = Fact.builder().ns("counter").type("tick").buildWithoutPayload();
+    boolean rejected =
+        store.publishIfUnchanged(Collections.singletonList(conflictingFact), Optional.of(token2));
+    assertThat(rejected).isFalse();
+  }
+
   @SuppressWarnings("deprecation")
   @Nested
   class FactStoreTest {
