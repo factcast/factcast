@@ -170,10 +170,21 @@ public class NudgeNotificationHandler implements DisposableBean {
     long lowerSerial = notificationSer.get();
     long upperSerial = checkpoint.notificationSerial();
 
+    boolean cursorMissing =
+        lowerSerial > 0
+            && Boolean.FALSE.equals(
+                jdbc.queryForObject(BASE_EXISTS_SQL, Boolean.class, lowerSerial));
+
+    if (cursorMissing) {
+      log.trace("No reliable notification cursor, waking all subscribers");
+      bus.post(FactInsertionNotification.internal());
+      notificationSer.set(upperSerial);
+      return;
+    }
+
     if (upperSerial <= lowerSerial) return;
 
-    if (lowerSerial == 0
-        || Boolean.FALSE.equals(jdbc.queryForObject(BASE_EXISTS_SQL, Boolean.class, lowerSerial))) {
+    if (lowerSerial == 0) {
       log.trace("No reliable notification cursor, waking all subscribers");
       bus.post(FactInsertionNotification.internal());
       notificationSer.set(upperSerial);

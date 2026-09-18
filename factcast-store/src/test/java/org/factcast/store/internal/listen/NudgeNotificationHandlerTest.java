@@ -396,6 +396,19 @@ class NudgeNotificationHandlerTest {
   }
 
   @Test
+  void missingCursorWakesSubscribersEvenWhenCheckpointDidNotAdvance() {
+    handler.notificationSer.set(200);
+    when(jdbc.queryForObject(NudgeNotificationHandler.BASE_EXISTS_SQL, Boolean.class, 200L))
+        .thenReturn(false);
+
+    handler.fetchPairsAndDispatch();
+
+    verify(bus).post(FactInsertionNotification.internal());
+    verify(jdbc, never()).query(anyString(), any(DataClassRowMapper.class), any(Object[].class));
+    assertThat(handler.notificationSer).hasValue(200);
+  }
+
+  @Test
   void failedBoundedFetchDoesNotAdvanceNotificationCursor() {
     handler.notificationSer.set(100);
     when(jdbc.queryForObject(NudgeNotificationHandler.BASE_EXISTS_SQL, Boolean.class, 100L))
