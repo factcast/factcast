@@ -44,7 +44,16 @@ public class ScopedName {
       name = ClassUtils.getNameFor(clazz);
     }
 
-    return ScopedName.of(name + NAME_SEPARATOR + metaData.revision());
+    return ScopedName.of(name + NAME_SEPARATOR + revisionIdentifier(metaData));
+  }
+
+  private static @NonNull String revisionIdentifier(@NonNull ProjectionMetaData metaData) {
+    // 0 is the default value therefore we assume revision is not set.
+    if (metaData.revision() != 0) {
+      return String.valueOf(metaData.revision());
+    } else {
+      return metaData.revisionId().replace(" ", "_");
+    }
   }
 
   public static ScopedName of(@NonNull String name, long serial) {
