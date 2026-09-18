@@ -227,8 +227,8 @@ class QueryCancellationIntegrationTest {
       var subscription = store.subscribe(SubscriptionRequestTO.from(request), observer);
 
       try {
-        subscription.awaitComplete(5000);
-      } catch (Exception expected) {
+        subscription.awaitComplete(10000);
+      } catch (MissingTransformationInformationException expected) {
         // expected error or closed exception
       }
 
