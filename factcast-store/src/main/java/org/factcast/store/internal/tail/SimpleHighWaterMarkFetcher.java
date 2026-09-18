@@ -20,16 +20,16 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.factcast.core.subscription.observer.HighWaterMark;
 import org.factcast.core.subscription.observer.HighWaterMarkFetcher;
-import org.factcast.store.internal.checkpoint.FactStreamCheckpointProvider;
+import org.factcast.store.internal.horizon.FactStreamHorizonProvider;
 
 @RequiredArgsConstructor
 public class SimpleHighWaterMarkFetcher implements HighWaterMarkFetcher {
 
-  @NonNull private final FactStreamCheckpointProvider checkpointProvider;
+  @NonNull private final FactStreamHorizonProvider horizonProvider;
 
   @Override
   @NonNull
   public HighWaterMark highWaterMark(@NonNull DataSource ds) {
-    return checkpointProvider.read(ds).highWaterMark();
+    return horizonProvider.read(ds).highWaterMark();
   }
 }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.internal.checkpoint;
+package org.factcast.store.internal.horizon;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -32,7 +32,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 
 @ExtendWith(MockitoExtension.class)
-class ReadOnlyPgFactStreamCheckpointProviderTest {
+final class ReadOnlyPgFactStreamHorizonProviderTest {
 
   @Mock DataSource primaryDataSource;
   @Mock DataSource otherDataSource;
@@ -42,14 +42,12 @@ class ReadOnlyPgFactStreamCheckpointProviderTest {
   @Test
   @SuppressWarnings("unchecked")
   void advanceReadsPrimaryAndUpdatesCurrentWhileReadCanUseAnotherDataSource() {
-    FactStreamCheckpoint primary =
-        new FactStreamCheckpoint(HighWaterMark.of(UUID.randomUUID(), 42), 7);
-    FactStreamCheckpoint other =
-        new FactStreamCheckpoint(HighWaterMark.of(UUID.randomUUID(), 21), 4);
+    FactStreamHorizon primary = new FactStreamHorizon(HighWaterMark.of(UUID.randomUUID(), 42), 7);
+    FactStreamHorizon other = new FactStreamHorizon(HighWaterMark.of(UUID.randomUUID(), 21), 4);
     when(primaryJdbcTemplate.query(anyString(), any(RowMapper.class))).thenReturn(List.of(primary));
     when(otherJdbcTemplate.query(anyString(), any(RowMapper.class))).thenReturn(List.of(other));
-    ReadOnlyPgFactStreamCheckpointProvider underTest =
-        new ReadOnlyPgFactStreamCheckpointProvider(primaryDataSource) {
+    ReadOnlyPgFactStreamHorizonProvider underTest =
+        new ReadOnlyPgFactStreamHorizonProvider(primaryDataSource) {
           @Override
           protected JdbcTemplate jdbcTemplate(DataSource dataSource) {
             return dataSource == primaryDataSource ? primaryJdbcTemplate : otherJdbcTemplate;
@@ -64,10 +62,10 @@ class ReadOnlyPgFactStreamCheckpointProviderTest {
 
   @Test
   @SuppressWarnings("unchecked")
-  void missingSingletonRowFailsInsteadOfReturningAnUnsafeEmptyCheckpoint() {
+  void missingSingletonRowFailsInsteadOfReturningAnUnsafeEmptyHorizon() {
     when(primaryJdbcTemplate.query(anyString(), any(RowMapper.class))).thenReturn(List.of());
-    ReadOnlyPgFactStreamCheckpointProvider underTest =
-        new ReadOnlyPgFactStreamCheckpointProvider(primaryDataSource) {
+    ReadOnlyPgFactStreamHorizonProvider underTest =
+        new ReadOnlyPgFactStreamHorizonProvider(primaryDataSource) {
           @Override
           protected JdbcTemplate jdbcTemplate(DataSource dataSource) {
             return primaryJdbcTemplate;
@@ -76,7 +74,7 @@ class ReadOnlyPgFactStreamCheckpointProviderTest {
 
     assertThatThrownBy(underTest::advance)
         .isInstanceOf(IllegalStateException.class)
-        .hasMessage(ReadOnlyPgFactStreamCheckpointProvider.MISSING_CHECKPOINT);
-    assertThat(underTest.current()).isEqualTo(FactStreamCheckpoint.empty());
+        .hasMessage(ReadOnlyPgFactStreamHorizonProvider.MISSING_HORIZON);
+    assertThat(underTest.current()).isEqualTo(FactStreamHorizon.empty());
   }
 }

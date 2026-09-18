@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.internal.checkpoint;
+package org.factcast.store.internal.horizon;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -38,21 +38,21 @@ import org.springframework.transaction.*;
 import org.springframework.transaction.support.SimpleTransactionStatus;
 
 @ExtendWith(MockitoExtension.class)
-class PgFactStreamCheckpointProviderTest {
+final class PgFactStreamHorizonProviderTest {
 
   @Mock DataSource dataSource;
   @Mock JdbcTemplate jdbcTemplate;
   @Mock FactTableWriteLock factTableWriteLock;
   @Mock PlatformTransactionManager transactionManager;
 
-  PgFactStreamCheckpointProvider underTest;
+  PgFactStreamHorizonProvider underTest;
 
   @BeforeEach
   void setUp() {
     when(transactionManager.getTransaction(any(TransactionDefinition.class)))
         .thenReturn(new SimpleTransactionStatus());
     underTest =
-        new PgFactStreamCheckpointProvider(
+        new PgFactStreamHorizonProvider(
             dataSource,
             jdbcTemplate,
             factTableWriteLock,
@@ -62,23 +62,23 @@ class PgFactStreamCheckpointProviderTest {
 
   @Test
   @SuppressWarnings("unchecked")
-  void locksBeforeReadingAndPublishesCheckpointOnlyAfterCommit() {
+  void locksBeforeReadingAndPublishesHorizonOnlyAfterCommit() {
     UUID id = UUID.randomUUID();
     HighWaterMark liveHighWaterMark = HighWaterMark.of(id, 42);
-    FactStreamCheckpoint persisted = new FactStreamCheckpoint(liveHighWaterMark, 11);
+    FactStreamHorizon persisted = new FactStreamHorizon(liveHighWaterMark, 11);
     when(jdbcTemplate.query(eq(PgConstants.HIGHWATER_MARK), any(RowMapper.class)))
         .thenReturn(List.of(liveHighWaterMark));
     when(jdbcTemplate.queryForObject(
-            PgFactStreamCheckpointProvider.HIGHWATER_NOTIFICATION, Long.class))
+            PgFactStreamHorizonProvider.HIGHWATER_NOTIFICATION, Long.class))
         .thenReturn(10L);
     when(jdbcTemplate.query(
-            eq(PgFactStreamCheckpointProvider.UPDATE_CHECKPOINT),
+            eq(PgFactStreamHorizonProvider.UPDATE_HORIZON),
             any(RowMapper.class),
             any(Object[].class)))
         .thenReturn(List.of(persisted));
     doAnswer(
             ignored -> {
-              assertThat(underTest.current()).isEqualTo(FactStreamCheckpoint.empty());
+              assertThat(underTest.current()).isEqualTo(FactStreamHorizon.empty());
               return null;
             })
         .when(transactionManager)
@@ -93,11 +93,11 @@ class PgFactStreamCheckpointProviderTest {
     order.verify(jdbcTemplate).query(eq(PgConstants.HIGHWATER_MARK), any(RowMapper.class));
     order
         .verify(jdbcTemplate)
-        .queryForObject(PgFactStreamCheckpointProvider.HIGHWATER_NOTIFICATION, Long.class);
+        .queryForObject(PgFactStreamHorizonProvider.HIGHWATER_NOTIFICATION, Long.class);
     order
         .verify(jdbcTemplate)
         .query(
-            eq(PgFactStreamCheckpointProvider.UPDATE_CHECKPOINT),
+            eq(PgFactStreamHorizonProvider.UPDATE_HORIZON),
             any(RowMapper.class),
             any(Object[].class));
     order.verify(transactionManager).commit(any());
@@ -111,9 +111,9 @@ class PgFactStreamCheckpointProviderTest {
 
   @Test
   @SuppressWarnings("unchecked")
-  void commitFailureLeavesCurrentCheckpointUntouched() {
+  void commitFailureLeavesCurrentHorizonUntouched() {
     HighWaterMark highWaterMark = HighWaterMark.of(UUID.randomUUID(), 42);
-    FactStreamCheckpoint persisted = new FactStreamCheckpoint(highWaterMark, 10);
+    FactStreamHorizon persisted = new FactStreamHorizon(highWaterMark, 10);
     when(jdbcTemplate.query(eq(PgConstants.HIGHWATER_MARK), any(RowMapper.class)))
         .thenReturn(List.of(highWaterMark));
     when(jdbcTemplate.queryForObject(anyString(), eq(Long.class))).thenReturn(10L);
@@ -123,12 +123,12 @@ class PgFactStreamCheckpointProviderTest {
 
     assertThatThrownBy(underTest::advance).isInstanceOf(TransactionSystemException.class);
 
-    assertThat(underTest.current()).isEqualTo(FactStreamCheckpoint.empty());
+    assertThat(underTest.current()).isEqualTo(FactStreamHorizon.empty());
   }
 
   @Test
   @SuppressWarnings("unchecked")
-  void failedCheckpointWriteRollsBackAndPreservesCurrentCheckpoint() {
+  void failedHorizonWriteRollsBackAndPreservesCurrentHorizon() {
     HighWaterMark highWaterMark = HighWaterMark.of(UUID.randomUUID(), 42);
     when(jdbcTemplate.query(eq(PgConstants.HIGHWATER_MARK), any(RowMapper.class)))
         .thenReturn(List.of(highWaterMark));
@@ -141,6 +141,6 @@ class PgFactStreamCheckpointProviderTest {
         .hasMessage("write failed");
 
     verify(transactionManager).rollback(any());
-    assertThat(underTest.current()).isEqualTo(FactStreamCheckpoint.empty());
+    assertThat(underTest.current()).isEqualTo(FactStreamHorizon.empty());
   }
 }

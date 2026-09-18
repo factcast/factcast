@@ -26,8 +26,8 @@ import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.*;
-import org.factcast.store.internal.checkpoint.FactStreamCheckpoint;
-import org.factcast.store.internal.checkpoint.FactStreamCheckpointProvider;
+import org.factcast.store.internal.horizon.FactStreamHorizon;
+import org.factcast.store.internal.horizon.FactStreamHorizonProvider;
 import org.factcast.store.internal.notification.*;
 import org.springframework.beans.factory.*;
 import org.springframework.jdbc.core.*;
@@ -39,7 +39,7 @@ public class NudgeNotificationHandler implements DisposableBean {
   private final @NonNull JdbcTemplate jdbc;
   private final @NonNull StoreConfigurationProperties props;
   private final @NonNull PgMetrics metrics;
-  private final @NonNull FactStreamCheckpointProvider checkpointProvider;
+  private final @NonNull FactStreamHorizonProvider horizonProvider;
   @VisibleForTesting protected final AtomicLong notificationSer = new AtomicLong(0);
   @VisibleForTesting protected final Timer timer = new Timer(true);
   // this we need in order to skip obsolete tasks
@@ -54,8 +54,8 @@ public class NudgeNotificationHandler implements DisposableBean {
       @NonNull JdbcTemplate jdbc,
       @NonNull StoreConfigurationProperties props,
       @NonNull PgMetrics metrics,
-      @NonNull FactStreamCheckpointProvider checkpointProvider) {
-    this(bus, jdbc, props, metrics, checkpointProvider, !props.isReadOnlyModeEnabled());
+      @NonNull FactStreamHorizonProvider horizonProvider) {
+    this(bus, jdbc, props, metrics, horizonProvider, !props.isReadOnlyModeEnabled());
   }
 
   @VisibleForTesting
@@ -64,13 +64,13 @@ public class NudgeNotificationHandler implements DisposableBean {
       @NonNull JdbcTemplate jdbc,
       @NonNull StoreConfigurationProperties props,
       @NonNull PgMetrics metrics,
-      @NonNull FactStreamCheckpointProvider checkpointProvider,
+      @NonNull FactStreamHorizonProvider horizonProvider,
       boolean scheduleCleanupTask) {
     this.bus = bus;
     this.jdbc = jdbc;
     this.props = props;
     this.metrics = metrics;
-    this.checkpointProvider = checkpointProvider;
+    this.horizonProvider = horizonProvider;
     bus.register(this);
     if (scheduleCleanupTask)
       timer.scheduleAtFixedRate(new ScheduledCleanup(), 0, Duration.ofMinutes(1).toMillis());
@@ -166,9 +166,9 @@ public class NudgeNotificationHandler implements DisposableBean {
   }
 
   private void fetchPairsAndDispatchOnce() {
-    FactStreamCheckpoint checkpoint = checkpointProvider.advance();
+    FactStreamHorizon horizon = horizonProvider.advance();
     long lowerSerial = notificationSer.get();
-    long upperSerial = checkpoint.notificationSerial();
+    long upperSerial = horizon.notificationSerial();
 
     boolean cursorMissing =
         lowerSerial > 0

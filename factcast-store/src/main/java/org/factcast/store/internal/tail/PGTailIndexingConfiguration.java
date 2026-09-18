@@ -19,7 +19,7 @@ import org.factcast.core.subscription.observer.HighWaterMarkFetcher;
 import org.factcast.store.IsReadAndWriteEnv;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgMetrics;
-import org.factcast.store.internal.checkpoint.FactStreamCheckpointProvider;
+import org.factcast.store.internal.horizon.FactStreamHorizonProvider;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.sql.init.dependency.DependsOnDatabaseInitialization;
@@ -41,8 +41,7 @@ public class PGTailIndexingConfiguration {
   @Bean
   @ConditionalOnMissingBean
   @DependsOnDatabaseInitialization
-  public HighWaterMarkFetcher highWaterMarkFetcher(
-      FactStreamCheckpointProvider checkpointProvider) {
-    return new SimpleHighWaterMarkFetcher(checkpointProvider);
+  public HighWaterMarkFetcher highWaterMarkFetcher(FactStreamHorizonProvider horizonProvider) {
+    return new SimpleHighWaterMarkFetcher(horizonProvider);
   }
 }

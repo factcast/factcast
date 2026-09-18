@@ -37,8 +37,8 @@ import org.factcast.store.*;
 import org.factcast.store.internal.catchup.PgCatchUpFactoryImpl;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.check.IndexCheck;
-import org.factcast.store.internal.checkpoint.*;
 import org.factcast.store.internal.filter.blacklist.*;
+import org.factcast.store.internal.horizon.*;
 import org.factcast.store.internal.listen.*;
 import org.factcast.store.internal.lock.*;
 import org.factcast.store.internal.logsuppression.*;
@@ -155,7 +155,7 @@ public class PgFactStoreInternalConfiguration {
       PgFactIdToSerialMapper pgFactIdToSerialMapper,
       StoreConfigurationProperties props,
       PgCatchupFactory pgCatchupFactory,
-      FactStreamCheckpointProvider checkpointProvider,
+      FactStreamHorizonProvider horizonProvider,
       PgStoreTelemetry telemetry,
       ServerPipelineFactory pipelineFactory,
       PgMetrics metrics,
@@ -167,7 +167,7 @@ public class PgFactStoreInternalConfiguration {
         pgFactIdToSerialMapper,
         props,
         pgCatchupFactory,
-        checkpointProvider,
+        horizonProvider,
         pipelineFactory,
         metrics,
         telemetry,
@@ -221,21 +221,21 @@ public class PgFactStoreInternalConfiguration {
   @Bean
   @IsReadAndWriteEnv
   @DependsOnDatabaseInitialization
-  public FactStreamCheckpointProvider factStreamCheckpointProvider(
+  public FactStreamHorizonProvider factStreamHorizonProvider(
       DataSource dataSource,
       JdbcTemplate jdbcTemplate,
       FactTableWriteLock factTableWriteLock,
       PgMetrics metrics,
       PlatformTransactionManager transactionManager) {
-    return new PgFactStreamCheckpointProvider(
+    return new PgFactStreamHorizonProvider(
         dataSource, jdbcTemplate, factTableWriteLock, metrics, transactionManager);
   }
 
   @Bean
   @IsReadOnlyEnv
   @DependsOnDatabaseInitialization
-  public FactStreamCheckpointProvider readOnlyFactStreamCheckpointProvider(DataSource dataSource) {
-    return new ReadOnlyPgFactStreamCheckpointProvider(dataSource);
+  public FactStreamHorizonProvider readOnlyFactStreamHorizonProvider(DataSource dataSource) {
+    return new ReadOnlyPgFactStreamHorizonProvider(dataSource);
   }
 
   @Bean
@@ -363,8 +363,8 @@ public class PgFactStoreInternalConfiguration {
       JdbcTemplate jdbcTemplate,
       StoreConfigurationProperties props,
       PgMetrics metrics,
-      FactStreamCheckpointProvider checkpointProvider) {
-    return new NudgeNotificationHandler(bus, jdbcTemplate, props, metrics, checkpointProvider);
+      FactStreamHorizonProvider horizonProvider) {
+    return new NudgeNotificationHandler(bus, jdbcTemplate, props, metrics, horizonProvider);
   }
 
   @Bean

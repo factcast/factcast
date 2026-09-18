@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.internal.checkpoint;
+package org.factcast.store.internal.horizon;
 
 import java.util.List;
 import java.util.Objects;
@@ -31,26 +31,26 @@ import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
- * Advances the persisted checkpoint behind the publication advisory-lock barrier.
+ * Advances the persisted horizon behind the publication advisory-lock barrier.
  *
  * <p>Regular publishers hold the PUBLISH lock shared for their entire transaction. Taking it
  * exclusively therefore waits for all earlier publishers and prevents a later publisher from
  * consuming a serial until both maxima have been read and persisted.
  */
-public class PgFactStreamCheckpointProvider extends ReadOnlyPgFactStreamCheckpointProvider {
+public class PgFactStreamHorizonProvider extends ReadOnlyPgFactStreamHorizonProvider {
 
   static final String HIGHWATER_NOTIFICATION = "SELECT COALESCE(MAX(ser),0) FROM notification";
-  static final String UPDATE_CHECKPOINT =
-      "UPDATE factstream_checkpoint "
+  static final String UPDATE_HORIZON =
+      "UPDATE factstream_horizon "
           + "SET fact_ser=?, fact_id=?, notification_ser=GREATEST(notification_ser, ?) "
-          + "WHERE id=1 RETURNING fact_ser, fact_id, notification_ser";
+          + "WHERE id = 1 RETURNING fact_ser, fact_id, notification_ser";
 
   private final @NonNull JdbcTemplate jdbcTemplate;
   private final @NonNull FactTableWriteLock factTableWriteLock;
   private final @NonNull PgMetrics metrics;
   private final @NonNull TransactionTemplate transactionTemplate;
 
-  public PgFactStreamCheckpointProvider(
+  public PgFactStreamHorizonProvider(
       @NonNull DataSource primaryDataSource,
       @NonNull JdbcTemplate jdbcTemplate,
       @NonNull FactTableWriteLock factTableWriteLock,
@@ -65,22 +65,22 @@ public class PgFactStreamCheckpointProvider extends ReadOnlyPgFactStreamCheckpoi
   }
 
   @Override
-  public synchronized @NonNull FactStreamCheckpoint advance() {
-    FactStreamCheckpoint checkpoint =
+  public synchronized @NonNull FactStreamHorizon advance() {
+    FactStreamHorizon horizon =
         metrics.time(
-            StoreMetrics.OP.ADVANCE_FACT_STREAM_CHECKPOINT,
+            StoreMetrics.OP.ADVANCE_FACT_STREAM_HORIZON,
             () ->
                 Objects.requireNonNull(
                     transactionTemplate.execute(
                         ignored -> {
                           factTableWriteLock.acquireExclusiveTXLock();
-                          FactStreamCheckpoint next = liveCheckpoint();
+                          FactStreamHorizon next = liveHorizon();
                           HighWaterMark highWaterMark = next.highWaterMark();
-                          List<FactStreamCheckpoint> persisted =
+                          List<FactStreamHorizon> persisted =
                               jdbcTemplate.query(
-                                  UPDATE_CHECKPOINT,
+                                  UPDATE_HORIZON,
                                   (rs, rowNum) ->
-                                      new FactStreamCheckpoint(
+                                      new FactStreamHorizon(
                                           HighWaterMark.of(
                                               rs.getObject("fact_id", UUID.class),
                                               rs.getLong("fact_ser")),
@@ -89,17 +89,17 @@ public class PgFactStreamCheckpointProvider extends ReadOnlyPgFactStreamCheckpoi
                                   highWaterMark.targetId(),
                                   next.notificationSerial());
                           if (persisted.isEmpty()) {
-                            throw new IllegalStateException(MISSING_CHECKPOINT);
+                            throw new IllegalStateException(MISSING_HORIZON);
                           }
                           return persisted.get(0);
                         })));
 
     // TransactionTemplate returns only after the transaction committed successfully.
-    updateCurrent(checkpoint);
-    return checkpoint;
+    updateCurrent(horizon);
+    return horizon;
   }
 
-  private @NonNull FactStreamCheckpoint liveCheckpoint() {
+  private @NonNull FactStreamHorizon liveHorizon() {
     List<HighWaterMark> highWaterMarks =
         jdbcTemplate.query(
             PgConstants.HIGHWATER_MARK,
@@ -108,7 +108,7 @@ public class PgFactStreamCheckpointProvider extends ReadOnlyPgFactStreamCheckpoi
     HighWaterMark highWaterMark =
         highWaterMarks.isEmpty() ? HighWaterMark.empty() : highWaterMarks.get(0);
     Long notificationSerial = jdbcTemplate.queryForObject(HIGHWATER_NOTIFICATION, Long.class);
-    return new FactStreamCheckpoint(
+    return new FactStreamHorizon(
         highWaterMark, notificationSerial == null ? 0 : notificationSerial);
   }
 }

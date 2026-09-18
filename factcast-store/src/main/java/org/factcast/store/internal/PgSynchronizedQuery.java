@@ -24,7 +24,7 @@ import java.util.function.*;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.store.internal.checkpoint.FactStreamCheckpointProvider;
+import org.factcast.store.internal.horizon.FactStreamHorizonProvider;
 import org.factcast.store.internal.listen.*;
 import org.factcast.store.internal.pipeline.*;
 import org.springframework.jdbc.core.*;
@@ -57,7 +57,7 @@ class PgSynchronizedQuery {
   @NonNull final PushbackServerPipeline pipe;
   @NonNull final AtomicLong serialToContinueFrom;
 
-  @NonNull final FactStreamCheckpointProvider checkpointProvider;
+  @NonNull final FactStreamHorizonProvider horizonProvider;
 
   private final @NonNull PgConnectionSupplier connectionSupplier;
 
@@ -69,11 +69,11 @@ class PgSynchronizedQuery {
       @NonNull LongFunction<PreparedStatementSetter> setterFactory,
       @NonNull Supplier<Boolean> isConnected,
       @NonNull AtomicLong serialToContinueFrom,
-      @NonNull FactStreamCheckpointProvider checkpointProvider) {
+      @NonNull FactStreamHorizonProvider horizonProvider) {
     this.debugInfo = debugInfo;
     this.pipe = pipe;
     this.serialToContinueFrom = serialToContinueFrom;
-    this.checkpointProvider = checkpointProvider;
+    this.horizonProvider = horizonProvider;
     this.connectionSupplier = connectionSupplier;
     this.sql = sql;
     this.setterFactory = setterFactory;
@@ -85,7 +85,7 @@ class PgSynchronizedQuery {
   // the synchronized here is crucial!
   @SuppressWarnings({"SameReturnValue", "java:S1181"})
   public synchronized void run(boolean useIndex) throws PipelineAlreadyClosedException {
-    long upperSerial = checkpointProvider.current().highWaterMark().targetSer();
+    long upperSerial = horizonProvider.current().highWaterMark().targetSer();
     boolean queryCompleted = false;
     List<ConnectionModifier> filters =
         Lists.newArrayList(ConnectionModifier.withApplicationName(debugInfo));

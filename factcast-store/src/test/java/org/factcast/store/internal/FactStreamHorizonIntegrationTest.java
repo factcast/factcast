@@ -18,6 +18,7 @@ package org.factcast.store.internal;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
+import java.nio.charset.StandardCharsets;
 import java.sql.*;
 import java.time.Duration;
 import java.util.List;
@@ -28,12 +29,14 @@ import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.*;
-import org.factcast.store.internal.checkpoint.FactStreamCheckpoint;
-import org.factcast.store.internal.checkpoint.FactStreamCheckpointProvider;
+import org.factcast.store.internal.horizon.FactStreamHorizon;
+import org.factcast.store.internal.horizon.FactStreamHorizonProvider;
 import org.factcast.store.internal.lock.AdvisoryLocks;
 import org.factcast.test.IntegrationTest;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
@@ -42,17 +45,51 @@ import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 @SpringJUnitConfig(classes = PgTestConfiguration.class)
 @Sql(scripts = "/wipe.sql", config = @SqlConfig(separator = "#"))
 @IntegrationTest
-class FactStreamCheckpointIntegrationTest {
+final class FactStreamHorizonIntegrationTest {
 
-  private static final String NS = "safe-checkpoint";
+  private static final String NS = "safe-horizon";
 
   @Autowired FactStore store;
   @Autowired DataSource dataSource;
   @Autowired JdbcTemplate jdbcTemplate;
-  @Autowired FactStreamCheckpointProvider checkpointProvider;
+  @Autowired FactStreamHorizonProvider horizonProvider;
+
+  @BeforeEach
+  void refreshHorizonAfterDatabaseWipe() {
+    horizonProvider.advance();
+  }
 
   @Test
-  void checkpointWaitsForLowerSerialBeforeFollowQueryCanAdvancePastIt() throws Exception {
+  void migrationSeedsHorizonFromExistingFactsAndNotifications() throws Exception {
+    Fact first = Fact.builder().id(UUID.randomUUID()).ns(NS).type("first").buildWithoutPayload();
+    Fact latest = Fact.builder().id(UUID.randomUUID()).ns(NS).type("latest").buildWithoutPayload();
+    store.publish(List.of(first, latest));
+
+    long expectedFactSerial = store.serialOf(latest.id()).orElseThrow();
+    Long expectedNotificationSerial =
+        jdbcTemplate.queryForObject("SELECT MAX(ser) FROM notification", Long.class);
+    ClassPathResource migrationScriptResource =
+        new ClassPathResource(
+            "db/changelog/factcast/safe_hwm/create_factstream_horizon.sql",
+            getClass().getClassLoader());
+    String migrationScript = migrationScriptResource.getContentAsString(StandardCharsets.UTF_8);
+
+    try (Connection connection = dataSource.getConnection();
+        Statement statement = connection.createStatement()) {
+      connection.setAutoCommit(false);
+      statement.executeUpdate("DELETE FROM factstream_horizon WHERE id=1");
+      statement.execute(migrationScript);
+      connection.commit();
+    }
+
+    FactStreamHorizon horizon = horizonProvider.read(dataSource);
+    assertThat(horizon.highWaterMark().targetId()).isEqualTo(latest.id());
+    assertThat(horizon.highWaterMark().targetSer()).isEqualTo(expectedFactSerial);
+    assertThat(horizon.notificationSerial()).isEqualTo(expectedNotificationSerial);
+  }
+
+  @Test
+  void horizonWaitsForLowerSerialBeforeFollowQueryCanAdvancePastIt() throws Exception {
     List<UUID> received = new CopyOnWriteArrayList<>();
     SubscriptionRequest request =
         SubscriptionRequest.follow(FactSpec.ns(NS).meta("projection", "match")).fromScratch();
@@ -81,8 +118,8 @@ class FactStreamCheckpointIntegrationTest {
             CompletableFuture.runAsync(() -> store.publish(List.of(higherCoarseMatch)));
         higherPublish.get(5, TimeUnit.SECONDS);
 
-        CompletableFuture<FactStreamCheckpoint> advancingCheckpoint =
-            CompletableFuture.supplyAsync(checkpointProvider::advance);
+        CompletableFuture<FactStreamHorizon> advancingHorizon =
+            CompletableFuture.supplyAsync(horizonProvider::advance);
 
         await()
             .atMost(Duration.ofSeconds(5))
@@ -94,18 +131,18 @@ class FactStreamCheckpointIntegrationTest {
                                 + "WHERE locktype='advisory' AND mode='ExclusiveLock' "
                                 + "AND granted=false)",
                             Boolean.class)));
-        assertThat(advancingCheckpoint).isNotDone();
+        assertThat(advancingHorizon).isNotDone();
         assertThat(received).isEmpty();
 
         insert(lowerTransaction, reservedLowerSerial, lowerMatching);
         lowerTransaction.commit();
 
-        FactStreamCheckpoint checkpoint = advancingCheckpoint.get(5, TimeUnit.SECONDS);
+        FactStreamHorizon horizon = advancingHorizon.get(5, TimeUnit.SECONDS);
         long lowerSerial = store.serialOf(lowerMatching.id()).orElseThrow();
         long higherSerial = store.serialOf(higherCoarseMatch.id()).orElseThrow();
         assertThat(lowerSerial).isEqualTo(reservedLowerSerial);
         assertThat(lowerSerial).isLessThan(higherSerial);
-        assertThat(checkpoint.highWaterMark().targetSer()).isGreaterThanOrEqualTo(higherSerial);
+        assertThat(horizon.highWaterMark().targetSer()).isGreaterThanOrEqualTo(higherSerial);
       }
 
       await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertThat(received).hasSize(1));

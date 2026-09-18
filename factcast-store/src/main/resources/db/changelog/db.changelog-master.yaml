@@ -745,12 +745,12 @@ databaseChangeLog:
             stripComments: true
 
   - changeSet:
-      id: safe-hwm-checkpoint
+      id: safe-hwm-horizon
       author: uweschaefer
       changes:
         - sqlFile:
             encoding: utf8
-            path: factcast/safe_hwm/create_factstream_checkpoint.sql
+            path: factcast/safe_hwm/create_factstream_horizon.sql
             relativeToChangelogFile: true
             splitStatements: false
             stripComments: true

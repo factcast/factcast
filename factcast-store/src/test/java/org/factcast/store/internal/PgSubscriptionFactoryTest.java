@@ -27,7 +27,7 @@ import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
-import org.factcast.store.internal.checkpoint.FactStreamCheckpointProvider;
+import org.factcast.store.internal.horizon.FactStreamHorizonProvider;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.logsuppression.*;
 import org.factcast.store.internal.pipeline.ServerPipelineFactory;
@@ -50,7 +50,7 @@ class PgSubscriptionFactoryTest {
 
   @Mock private StoreConfigurationProperties props;
 
-  @Mock private FactStreamCheckpointProvider checkpointProvider;
+  @Mock private FactStreamHorizonProvider horizonProvider;
   @Mock private PgMetrics metrics;
   @Mock private PgStoreTelemetry telemetry;
 
@@ -73,7 +73,7 @@ class PgSubscriptionFactoryTest {
             idToSerialMapper,
             props,
             catchupFactory,
-            checkpointProvider,
+            horizonProvider,
             pipelineFactory,
             metrics,
             telemetry,

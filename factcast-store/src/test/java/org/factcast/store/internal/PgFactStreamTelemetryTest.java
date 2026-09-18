@@ -26,9 +26,9 @@ import org.factcast.core.subscription.observer.*;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
-import org.factcast.store.internal.checkpoint.FactStreamCheckpoint;
-import org.factcast.store.internal.checkpoint.FactStreamCheckpointProvider;
 import org.factcast.store.internal.filter.blacklist.Blacklist;
+import org.factcast.store.internal.horizon.FactStreamHorizon;
+import org.factcast.store.internal.horizon.FactStreamHorizonProvider;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.logsuppression.LogSuppression;
 import org.factcast.store.internal.pipeline.PushbackServerPipeline;
@@ -49,7 +49,7 @@ class PgFactStreamTelemetryTest {
   @Mock PgFactIdToSerialMapper idToSerMapper;
   @Mock SubscriptionImpl subscription;
   @Mock PgCatchupFactory pgCatchupFactory;
-  @Mock FactStreamCheckpointProvider checkpointProvider;
+  @Mock FactStreamHorizonProvider horizonProvider;
   @Mock FactTransformerService transformationService;
   @Mock Blacklist blacklist;
   @Mock PgMetrics metrics;
@@ -69,8 +69,8 @@ class PgFactStreamTelemetryTest {
   void setup() {
     lenient().doReturn(Collections.emptyList()).when(uut).catchupConnectionModifiers(any());
     lenient()
-        .when(checkpointProvider.advance())
-        .thenReturn(new FactStreamCheckpoint(HighWaterMark.empty(), 0));
+        .when(horizonProvider.advance())
+        .thenReturn(new FactStreamHorizon(HighWaterMark.empty(), 0));
   }
 
   @Test

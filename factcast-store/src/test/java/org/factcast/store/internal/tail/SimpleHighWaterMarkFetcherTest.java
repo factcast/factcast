@@ -21,8 +21,8 @@ import static org.mockito.Mockito.when;
 import java.util.UUID;
 import javax.sql.DataSource;
 import org.factcast.core.subscription.observer.HighWaterMark;
-import org.factcast.store.internal.checkpoint.FactStreamCheckpoint;
-import org.factcast.store.internal.checkpoint.FactStreamCheckpointProvider;
+import org.factcast.store.internal.horizon.FactStreamHorizon;
+import org.factcast.store.internal.horizon.FactStreamHorizonProvider;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -33,13 +33,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class SimpleHighWaterMarkFetcherTest {
 
   @Mock private DataSource dataSource;
-  @Mock private FactStreamCheckpointProvider checkpointProvider;
+  @Mock private FactStreamHorizonProvider horizonProvider;
   @InjectMocks private SimpleHighWaterMarkFetcher underTest;
 
   @Test
-  void readsPersistedCheckpointFromRequestedDataSource() {
+  void readsPersistedHorizonFromRequestedDataSource() {
     HighWaterMark expected = HighWaterMark.of(UUID.randomUUID(), 42);
-    when(checkpointProvider.read(dataSource)).thenReturn(new FactStreamCheckpoint(expected, 7));
+    when(horizonProvider.read(dataSource)).thenReturn(new FactStreamHorizon(expected, 7));
 
     assertThat(underTest.highWaterMark(dataSource)).isSameAs(expected);
   }

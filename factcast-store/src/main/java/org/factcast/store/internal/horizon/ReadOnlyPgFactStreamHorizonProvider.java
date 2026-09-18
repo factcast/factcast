@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.internal.checkpoint;
+package org.factcast.store.internal.horizon;
 
 import java.util.List;
 import java.util.UUID;
@@ -25,50 +25,50 @@ import org.factcast.core.subscription.observer.HighWaterMark;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 @RequiredArgsConstructor
-public class ReadOnlyPgFactStreamCheckpointProvider implements FactStreamCheckpointProvider {
+public class ReadOnlyPgFactStreamHorizonProvider implements FactStreamHorizonProvider {
 
-  static final String MISSING_CHECKPOINT = "The singleton fact-stream checkpoint row is missing";
-  static final String READ_CHECKPOINT =
-      "SELECT fact_ser, fact_id, notification_ser FROM factstream_checkpoint WHERE id=1";
+  static final String MISSING_HORIZON = "The singleton fact-stream horizon row is missing";
+  static final String READ_HORIZON =
+      "SELECT fact_ser, fact_id, notification_ser FROM factstream_horizon WHERE id = 1";
 
   @NonNull private final DataSource primaryDataSource;
-  private final AtomicReference<FactStreamCheckpoint> current =
-      new AtomicReference<>(FactStreamCheckpoint.empty());
+  private final AtomicReference<FactStreamHorizon> current =
+      new AtomicReference<>(FactStreamHorizon.empty());
 
   @Override
-  public synchronized @NonNull FactStreamCheckpoint advance() {
-    FactStreamCheckpoint checkpoint = read(primaryDataSource);
-    current.set(checkpoint);
-    return checkpoint;
+  public synchronized @NonNull FactStreamHorizon advance() {
+    FactStreamHorizon horizon = read(primaryDataSource);
+    current.set(horizon);
+    return horizon;
   }
 
   @Override
-  public @NonNull FactStreamCheckpoint current() {
+  public @NonNull FactStreamHorizon current() {
     return current.get();
   }
 
   @Override
-  public @NonNull FactStreamCheckpoint read(@NonNull DataSource dataSource) {
-    List<FactStreamCheckpoint> checkpoints =
+  public @NonNull FactStreamHorizon read(@NonNull DataSource dataSource) {
+    List<FactStreamHorizon> horizons =
         jdbcTemplate(dataSource)
             .query(
-                READ_CHECKPOINT,
+                READ_HORIZON,
                 (rs, rowNum) ->
-                    new FactStreamCheckpoint(
+                    new FactStreamHorizon(
                         HighWaterMark.of(
                             rs.getObject("fact_id", UUID.class), rs.getLong("fact_ser")),
                         rs.getLong("notification_ser")));
-    if (checkpoints.isEmpty()) {
-      throw new IllegalStateException(MISSING_CHECKPOINT);
+    if (horizons.isEmpty()) {
+      throw new IllegalStateException(MISSING_HORIZON);
     }
-    return checkpoints.get(0);
+    return horizons.get(0);
   }
 
   protected JdbcTemplate jdbcTemplate(@NonNull DataSource dataSource) {
     return new JdbcTemplate(dataSource);
   }
 
-  protected final void updateCurrent(@NonNull FactStreamCheckpoint checkpoint) {
-    current.set(checkpoint);
+  protected final void updateCurrent(@NonNull FactStreamHorizon horizon) {
+    current.set(horizon);
   }
 }

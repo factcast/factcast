@@ -28,8 +28,8 @@ import org.assertj.core.api.Assertions;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.HighWaterMark;
-import org.factcast.store.internal.checkpoint.FactStreamCheckpoint;
-import org.factcast.store.internal.checkpoint.FactStreamCheckpointProvider;
+import org.factcast.store.internal.horizon.FactStreamHorizon;
+import org.factcast.store.internal.horizon.FactStreamHorizonProvider;
 import org.factcast.store.internal.listen.*;
 import org.factcast.store.internal.pipeline.*;
 import org.junit.jupiter.api.Nested;
@@ -60,13 +60,12 @@ class PgSynchronizedQueryTest {
   @Mock PushbackServerPipeline pipeline;
   @Mock PgConnectionSupplier connectionSupplier;
 
-  @Mock FactStreamCheckpointProvider checkpointProvider;
+  @Mock FactStreamHorizonProvider horizonProvider;
 
   private PgSynchronizedQuery queryWithUpper(long upperSerial) {
-    when(checkpointProvider.current())
+    when(horizonProvider.current())
         .thenReturn(
-            new FactStreamCheckpoint(
-                HighWaterMark.of(UUID.randomUUID(), upperSerial), upperSerial));
+            new FactStreamHorizon(HighWaterMark.of(UUID.randomUUID(), upperSerial), upperSerial));
     return new PgSynchronizedQuery(
         "test",
         pipeline,
@@ -75,7 +74,7 @@ class PgSynchronizedQueryTest {
         ignored -> setter,
         () -> true,
         serialToContinueFrom,
-        checkpointProvider);
+        horizonProvider);
   }
 
   @SneakyThrows
@@ -140,15 +139,15 @@ class PgSynchronizedQueryTest {
 
   @Test
   @SneakyThrows
-  void usesOneCheckpointBoundAndFastForwardsAfterSuccessfulFlush() {
+  void usesOneHorizonBoundAndFastForwardsAfterSuccessfulFlush() {
     AtomicLong cursor = new AtomicLong(5);
     AtomicLong suppliedUpper = new AtomicLong();
     SingleConnectionDataSource ds = mock(SingleConnectionDataSource.class);
     Connection con = mock(Connection.class);
     PreparedStatement statement = mock(PreparedStatement.class);
     ResultSet rs = mock(ResultSet.class);
-    when(checkpointProvider.current())
-        .thenReturn(new FactStreamCheckpoint(HighWaterMark.of(UUID.randomUUID(), 42), 42));
+    when(horizonProvider.current())
+        .thenReturn(new FactStreamHorizon(HighWaterMark.of(UUID.randomUUID(), 42), 42));
     when(connectionSupplier.getPooledAsSingleDataSource(anyList())).thenReturn(ds);
     when(ds.getConnection()).thenReturn(con);
     when(con.prepareStatement(sql)).thenReturn(statement);
@@ -166,13 +165,13 @@ class PgSynchronizedQueryTest {
             },
             () -> true,
             cursor,
-            checkpointProvider);
+            horizonProvider);
 
     uut.run(false);
 
     assertThat(suppliedUpper).hasValue(42);
     assertThat(cursor).hasValue(42);
-    verify(checkpointProvider).current();
+    verify(horizonProvider).current();
   }
 
   @Test
@@ -182,8 +181,8 @@ class PgSynchronizedQueryTest {
     SingleConnectionDataSource ds = mock(SingleConnectionDataSource.class);
     Connection con = mock(Connection.class);
     PreparedStatement statement = mock(PreparedStatement.class);
-    when(checkpointProvider.current())
-        .thenReturn(new FactStreamCheckpoint(HighWaterMark.of(UUID.randomUUID(), 42), 42));
+    when(horizonProvider.current())
+        .thenReturn(new FactStreamHorizon(HighWaterMark.of(UUID.randomUUID(), 42), 42));
     when(connectionSupplier.getPooledAsSingleDataSource(anyList())).thenReturn(ds);
     when(ds.getConnection()).thenReturn(con);
     when(con.prepareStatement(sql)).thenReturn(statement);
@@ -197,7 +196,7 @@ class PgSynchronizedQueryTest {
             ignored -> setter,
             () -> true,
             cursor,
-            checkpointProvider);
+            horizonProvider);
 
     assertThatThrownBy(() -> uut.run(false)).isInstanceOf(Exception.class);
 
@@ -206,10 +205,10 @@ class PgSynchronizedQueryTest {
 
   @Test
   @SneakyThrows
-  void skipsDatabaseWhenCursorAlreadyReachedCheckpoint() {
+  void skipsDatabaseWhenCursorAlreadyReachedHorizon() {
     AtomicLong cursor = new AtomicLong(42);
-    when(checkpointProvider.current())
-        .thenReturn(new FactStreamCheckpoint(HighWaterMark.of(UUID.randomUUID(), 42), 42));
+    when(horizonProvider.current())
+        .thenReturn(new FactStreamHorizon(HighWaterMark.of(UUID.randomUUID(), 42), 42));
     uut =
         new PgSynchronizedQuery(
             "test",
@@ -219,7 +218,7 @@ class PgSynchronizedQueryTest {
             ignored -> setter,
             () -> true,
             cursor,
-            checkpointProvider);
+            horizonProvider);
 
     uut.run(false);
 

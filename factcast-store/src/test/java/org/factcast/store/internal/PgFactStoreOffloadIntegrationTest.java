@@ -121,7 +121,7 @@ class PgFactStoreOffloadIntegrationTest {
 
     subscription.get(10, TimeUnit.SECONDS);
 
-    // The third fact was published after this finite subscription captured its checkpoint.
+    // The third fact was published after this finite subscription captured its horizon.
     assertThat(observer.facts()).hasValue(2);
     assertThat(observer.catchups()).hasValue(1);
     assertThat(observer.completes()).hasValue(1);

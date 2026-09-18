@@ -35,7 +35,7 @@ import org.factcast.core.util.ExceptionHelper;
 import org.factcast.store.*;
 import org.factcast.store.internal.catchup.*;
 import org.factcast.store.internal.catchup.CatchupDataSource;
-import org.factcast.store.internal.checkpoint.FactStreamCheckpointProvider;
+import org.factcast.store.internal.horizon.FactStreamHorizonProvider;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.logsuppression.LogSuppression;
 import org.factcast.store.internal.pipeline.*;
@@ -60,7 +60,7 @@ public class PgFactStream {
   final EventBus eventBus;
   final PgFactIdToSerialMapper idToSerMapper;
   final PgCatchupFactory pgCatchupFactory;
-  final FactStreamCheckpointProvider checkpointProvider;
+  final FactStreamHorizonProvider horizonProvider;
   final PushbackServerPipeline pipeline;
   final PgStoreTelemetry telemetry;
 
@@ -83,7 +83,7 @@ public class PgFactStream {
       EventBus eventBus,
       PgFactIdToSerialMapper idToSerMapper,
       PgCatchupFactory pgCatchupFactory,
-      FactStreamCheckpointProvider checkpointProvider,
+      FactStreamHorizonProvider horizonProvider,
       PushbackServerPipeline pipeline,
       PgStoreTelemetry telemetry,
       SubscriptionRequestTO request,
@@ -94,7 +94,7 @@ public class PgFactStream {
         eventBus,
         idToSerMapper,
         pgCatchupFactory,
-        checkpointProvider,
+        horizonProvider,
         pipeline,
         telemetry,
         request,
@@ -108,7 +108,7 @@ public class PgFactStream {
       EventBus eventBus,
       PgFactIdToSerialMapper idToSerMapper,
       PgCatchupFactory pgCatchupFactory,
-      FactStreamCheckpointProvider checkpointProvider,
+      FactStreamHorizonProvider horizonProvider,
       PushbackServerPipeline pipeline,
       PgStoreTelemetry telemetry,
       SubscriptionRequestTO request,
@@ -117,7 +117,7 @@ public class PgFactStream {
     this.eventBus = eventBus;
     this.idToSerMapper = idToSerMapper;
     this.pgCatchupFactory = pgCatchupFactory;
-    this.checkpointProvider = checkpointProvider;
+    this.horizonProvider = horizonProvider;
     // we need that subtype
     this.pipeline = pipeline;
     this.telemetry = telemetry;
@@ -134,7 +134,7 @@ public class PgFactStream {
     try {
       if (request.ephemeral()) {
         // just fast forward to the latest event published by now
-        serial.set(checkpointProvider.advance().highWaterMark().targetSer());
+        serial.set(horizonProvider.advance().highWaterMark().targetSer());
       } else {
         doCatchup();
       }
@@ -170,7 +170,7 @@ public class PgFactStream {
         upperSerial -> q.createBoundedStatementSetter(serial, upperSerial),
         this::isConnected,
         serial,
-        checkpointProvider);
+        horizonProvider);
   }
 
   @VisibleForTesting
@@ -245,7 +245,7 @@ public class PgFactStream {
     try (var suppression = logSuppression.forCatchup(request)) {
       if (!isConnected()) return;
 
-      HighWaterMark highWaterMark = checkpointProvider.advance().highWaterMark();
+      HighWaterMark highWaterMark = horizonProvider.advance().highWaterMark();
       sendFactStreamInfo(highWaterMark);
 
       if (!isConnected()) return;
@@ -289,7 +289,7 @@ public class PgFactStream {
           createCatchupDataSource(offloadDataSource, pipeline)) {
         long offloadUpperSerial =
             Math.min(
-                primaryUpperSerial, checkpointProvider.read(secondary).highWaterMark().targetSer());
+                primaryUpperSerial, horizonProvider.read(secondary).highWaterMark().targetSer());
         return catchupPhaseOne(secondary, offloadUpperSerial);
       } catch (SQLException | DataAccessException | PipelineAlreadyClosedException e) {
         // SQLException is interesting, as we cannot distinguish between a cancellation and a

@@ -13,28 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.internal.checkpoint;
+package org.factcast.store.internal.horizon;
 
 import javax.sql.DataSource;
 import lombok.NonNull;
 
 /**
- * Supplies commit-safe stream boundaries.
+ * Provides commit-safe stream boundaries.
  *
  * <p>A fact query may fast-forward through a returned boundary only when the query itself is
  * bounded by that value.
  */
-public interface FactStreamCheckpointProvider {
+public interface FactStreamHorizonProvider {
 
-  /** Advances or refreshes the checkpoint through the provider's default data source. */
+  /** Advances or refreshes the horizon through the provider's default data source. */
   @NonNull
-  FactStreamCheckpoint advance();
+  FactStreamHorizon advance();
 
-  /** Returns the last checkpoint observed by {@link #advance()} without database access. */
+  /** Returns the last horizon observed by {@link #advance()} without database access. */
   @NonNull
-  FactStreamCheckpoint current();
+  FactStreamHorizon current();
 
-  /** Reads the persisted checkpoint through a specific data source without advancing it. */
+  /** Reads the persisted horizon through a specific data source without advancing it. */
   @NonNull
-  FactStreamCheckpoint read(@NonNull DataSource dataSource);
+  FactStreamHorizon read(@NonNull DataSource dataSource);
 }

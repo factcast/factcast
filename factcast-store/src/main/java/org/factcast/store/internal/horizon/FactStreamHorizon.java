@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.internal.checkpoint;
+package org.factcast.store.internal.horizon;
 
 import lombok.NonNull;
 import org.factcast.core.subscription.observer.HighWaterMark;
 
-/** Inclusive, persisted upper bounds for fact and notification queries. */
-public record FactStreamCheckpoint(@NonNull HighWaterMark highWaterMark, long notificationSerial) {
+/** The inclusive, persisted upper bounds for fact and notification queries. */
+public record FactStreamHorizon(@NonNull HighWaterMark highWaterMark, long notificationSerial) {
 
-  public static FactStreamCheckpoint empty() {
-    return new FactStreamCheckpoint(HighWaterMark.empty(), 0);
+  public static FactStreamHorizon empty() {
+    return new FactStreamHorizon(HighWaterMark.empty(), 0);
   }
 }
