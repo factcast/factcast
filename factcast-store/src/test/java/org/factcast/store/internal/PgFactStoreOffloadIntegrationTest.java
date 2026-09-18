@@ -179,11 +179,11 @@ class PgFactStoreOffloadIntegrationTest {
         @NonNull SubscriptionRequestTO request,
         @NonNull PushbackServerPipeline pipeline,
         @NonNull AtomicLong serial,
-        long upperSerial,
+        long horizonSerial,
         @NonNull SingleConnectionDataSource ds,
         @NonNull Phase phase) {
       catchupDataSources.add(new CatchupPhaseDataSource(phase, ds));
-      return delegate.create(request, pipeline, serial, upperSerial, ds, phase);
+      return delegate.create(request, pipeline, serial, horizonSerial, ds, phase);
     }
 
     void reset() {

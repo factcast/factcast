@@ -85,7 +85,7 @@ class PgSynchronizedQuery {
   // the synchronized here is crucial!
   @SuppressWarnings({"SameReturnValue", "java:S1181"})
   public synchronized void run(boolean useIndex) throws PipelineAlreadyClosedException {
-    long upperSerial = horizonProvider.current().highWaterMark().targetSer();
+    long horizonSerial = horizonProvider.current().highWaterMark().targetSer();
     boolean queryCompleted = false;
     List<ConnectionModifier> filters =
         Lists.newArrayList(ConnectionModifier.withApplicationName(debugInfo));
@@ -100,10 +100,10 @@ class PgSynchronizedQuery {
     // it does not make much sense to track the statement here, as we expect this to be executed
     // quickly, as we're in a follow scenario
     try {
-      if (serialToContinueFrom.get() < upperSerial) {
+      if (serialToContinueFrom.get() < horizonSerial) {
         try (SingleConnectionDataSource ds =
             connectionSupplier.getPooledAsSingleDataSource(filters)) {
-          new JdbcTemplate(ds).query(sql, setterFactory.apply(upperSerial), rowHandler);
+          new JdbcTemplate(ds).query(sql, setterFactory.apply(horizonSerial), rowHandler);
         }
       }
       queryCompleted = true;
@@ -112,7 +112,7 @@ class PgSynchronizedQuery {
         // involves transformation & IO, so can throw exception
         pipe.process(Signal.flush());
         if (queryCompleted) {
-          serialToContinueFrom.accumulateAndGet(upperSerial, Math::max);
+          serialToContinueFrom.accumulateAndGet(horizonSerial, Math::max);
         }
       } catch (Throwable e) {
         // this is necessary to end this subscription, so that the client can resubscribe using the

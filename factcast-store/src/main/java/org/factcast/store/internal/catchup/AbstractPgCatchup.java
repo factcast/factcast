@@ -39,7 +39,7 @@ public abstract class AbstractPgCatchup implements PgCatchup {
   @NonNull protected final SubscriptionRequestTO req;
   @NonNull protected final PushbackServerPipeline pipeline;
   @NonNull protected final AtomicLong serial;
-  protected final long upperSerial;
+  protected final long horizonSerial;
   @NonNull protected final DataSource ds;
   @NonNull protected final PgCatchupFactory.Phase phase;
 

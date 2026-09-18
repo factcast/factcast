@@ -47,10 +47,10 @@ class AbstractPgCatchupTest {
         SubscriptionRequestTO req,
         PushbackServerPipeline pipeline,
         AtomicLong serial,
-        long upperSerial,
+        long horizonSerial,
         DataSource ds,
         PgCatchupFactory.Phase phase) {
-      super(props, metrics, req, pipeline, serial, upperSerial, ds, phase);
+      super(props, metrics, req, pipeline, serial, horizonSerial, ds, phase);
     }
 
     @Override

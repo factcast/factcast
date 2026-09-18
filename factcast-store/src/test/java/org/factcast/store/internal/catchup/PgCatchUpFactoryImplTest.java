@@ -63,7 +63,7 @@ class PgCatchUpFactoryImplTest {
           underTest.create(request, pipeline, serial, 42, ds, PgCatchupFactory.Phase.PHASE_2);
 
       assertThat(result).isInstanceOf(PgCursorCatchup.class);
-      assertThat(((AbstractPgCatchup) result).upperSerial).isEqualTo(42);
+      assertThat(((AbstractPgCatchup) result).horizonSerial).isEqualTo(42);
     }
 
     @Test

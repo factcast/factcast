@@ -168,7 +168,7 @@ public class NudgeNotificationHandler implements DisposableBean {
   private void fetchPairsAndDispatchOnce() {
     FactStreamHorizon horizon = horizonProvider.advance();
     long lowerSerial = notificationSer.get();
-    long upperSerial = horizon.notificationSerial();
+    long horizonSerial = horizon.notificationSerial();
 
     boolean cursorMissing =
         lowerSerial > 0
@@ -178,16 +178,16 @@ public class NudgeNotificationHandler implements DisposableBean {
     if (cursorMissing) {
       log.trace("No reliable notification cursor, waking all subscribers");
       bus.post(FactInsertionNotification.internal());
-      notificationSer.set(upperSerial);
+      notificationSer.set(horizonSerial);
       return;
     }
 
-    if (upperSerial <= lowerSerial) return;
+    if (horizonSerial <= lowerSerial) return;
 
     if (lowerSerial == 0) {
       log.trace("No reliable notification cursor, waking all subscribers");
       bus.post(FactInsertionNotification.internal());
-      notificationSer.set(upperSerial);
+      notificationSer.set(horizonSerial);
       return;
     }
 
@@ -199,13 +199,13 @@ public class NudgeNotificationHandler implements DisposableBean {
                 + "GROUP BY DISTINCT(ns,type) ORDER BY max",
             DataClassRowMapper.newInstance(FetchNotificationTuple.class),
             lowerSerial,
-            upperSerial);
+            horizonSerial);
 
     timerSample.stop(metricsTimer);
     if (!tuples.isEmpty()) {
       log.trace("Fetched {} notification{}", tuples.size(), tuples.size() > 1 ? "s" : "");
       tuples.forEach(t -> bus.post(t.toFactInsertionNotification()));
     }
-    notificationSer.set(upperSerial);
+    notificationSer.set(horizonSerial);
   }
 }

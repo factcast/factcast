@@ -187,7 +187,7 @@ class PgCursorCatchupTest {
 
   @Test
   @SneakyThrows
-  void runUsesBoundedSqlAndUpperSerial() {
+  void runUsesBoundedSqlAndHorizonSerial() {
     PgQueryBuilder queryBuilder = mock(PgQueryBuilder.class);
     PreparedStatementSetter setter = mock(PreparedStatementSetter.class);
     when(serial.get()).thenReturn(5L);
@@ -209,7 +209,7 @@ class PgCursorCatchupTest {
 
   @Test
   @SneakyThrows
-  void runSkipsQueryWhenLowerBoundReachedUpperBound() {
+  void runSkipsQueryWhenLowerBoundReachedHorizon() {
     when(serial.get()).thenReturn(42L);
     underTest =
         new PgCursorCatchup(

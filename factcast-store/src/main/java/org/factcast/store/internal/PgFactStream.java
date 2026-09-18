@@ -167,7 +167,7 @@ public class PgFactStream {
         pipeline,
         connectionSupplier,
         sql,
-        upperSerial -> q.createBoundedStatementSetter(serial, upperSerial),
+        horizonSerial -> q.createBoundedStatementSetter(serial, horizonSerial),
         this::isConnected,
         serial,
         horizonProvider);
@@ -281,16 +281,16 @@ public class PgFactStream {
     }
   }
 
-  private long executePhaseOne(PrimaryDataSourceSupplier primary, long primaryUpperSerial)
+  private long executePhaseOne(PrimaryDataSourceSupplier primary, long primaryHorizonSerial)
       throws CatchupException {
     if (offloadDataSource != null) {
       // we're creating a SCDS for offload, that we destroy right after
       try (SingleConnectionDataSource secondary =
           createCatchupDataSource(offloadDataSource, pipeline)) {
-        long offloadUpperSerial =
+        long offloadHorizonSerial =
             Math.min(
-                primaryUpperSerial, horizonProvider.read(secondary).highWaterMark().targetSer());
-        return catchupPhaseOne(secondary, offloadUpperSerial);
+                primaryHorizonSerial, horizonProvider.read(secondary).highWaterMark().targetSer());
+        return catchupPhaseOne(secondary, offloadHorizonSerial);
       } catch (SQLException | DataAccessException | PipelineAlreadyClosedException e) {
         // SQLException is interesting, as we cannot distinguish between a cancellation and a
         // temporary error with the offload datasource, that would make it reasonable to fall back
@@ -309,7 +309,7 @@ public class PgFactStream {
 
     // either we have a tmp failure on secondary, or secondary is not defined.
     try {
-      return catchupPhaseOne(primary.get(), primaryUpperSerial);
+      return catchupPhaseOne(primary.get(), primaryHorizonSerial);
     } catch (Exception any) {
       throw new CatchupException(any);
     }
@@ -317,7 +317,7 @@ public class PgFactStream {
 
   @VisibleForTesting
   void catchupPhaseTwo(
-      PrimaryDataSourceSupplier primary, long phase1HighwaterMark, long primaryUpperSerial)
+      PrimaryDataSourceSupplier primary, long phase1HighwaterMark, long primaryHorizonSerial)
       throws CatchupException {
     // proceed to phase 2 on the primary
     PgCatchup pgCatchup =
@@ -325,7 +325,7 @@ public class PgFactStream {
             request,
             pipeline,
             serial,
-            primaryUpperSerial,
+            primaryHorizonSerial,
             primary.get(),
             PgCatchupFactory.Phase.PHASE_2);
     // before starting to run phase2, we'll ffwd to what phase1 returned as HWM.
@@ -348,10 +348,10 @@ public class PgFactStream {
   }
 
   @VisibleForTesting
-  long catchupPhaseOne(@NonNull SingleConnectionDataSource dataSourceToUseForP1, long upperSerial)
+  long catchupPhaseOne(@NonNull SingleConnectionDataSource dataSourceToUseForP1, long horizonSerial)
       throws SQLException, PipelineAlreadyClosedException {
     long from = serial.get();
-    if (upperSerial <= from) {
+    if (horizonSerial <= from) {
       // it does not make any sense to try to query for data we know is not there.
       // this may happen a lot, if the offload datasource has a considerable lag.
       return from;
@@ -362,18 +362,18 @@ public class PgFactStream {
               request,
               pipeline,
               serial,
-              upperSerial,
+              horizonSerial,
               dataSourceToUseForP1,
               PgCatchupFactory.Phase.PHASE_1)
           .run();
 
-      // serial may be smaller when no fact near the upper bound matched. In that case, continue
+      // serial may be smaller when no fact near the horizon matched. In that case, continue
       // from the bound so phase 2 does not query the already covered range again.
       //
       // Note that any kind of exceptional behavior like cancellation, random SQLExceptions or the
       // like are expect to THROW, so that a "between phases ffwd" only happens, if we know that
       // there a cannot be any matches between ser and hwm, if hwm is greater.
-      return Math.max(serial.get(), upperSerial);
+      return Math.max(serial.get(), horizonSerial);
     }
   }
 

@@ -49,10 +49,10 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
       @NonNull SubscriptionRequestTO req,
       @NonNull PushbackServerPipeline pipeline,
       @NonNull AtomicLong serial,
-      long upperSerial,
+      long horizonSerial,
       @NonNull SingleConnectionDataSource ds,
       @NonNull PgCatchupFactory.Phase phase) {
-    super(props, metrics, req, pipeline, serial, upperSerial, ds, phase);
+    super(props, metrics, req, pipeline, serial, horizonSerial, ds, phase);
   }
 
   @SneakyThrows
@@ -90,7 +90,7 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
 
     final var extractor = new PgFactExtractor(serial);
     final var fromSerial = new AtomicLong(Math.max(serial.get(), fastForward));
-    if (fromSerial.get() >= upperSerial) {
+    if (fromSerial.get() >= horizonSerial) {
       return false;
     }
 
@@ -147,7 +147,7 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
     final var timer = metrics.timer(StoreMetrics.OP.RESULT_STREAM_START, fromSerial.get() <= 0);
     final var timerSample = metrics.startSample();
 
-    cursor.declare(queryBuilder, fromSerial, upperSerial);
+    cursor.declare(queryBuilder, fromSerial, horizonSerial);
 
     log.debug("{} catchup {}, fetching first chunk", req, phase);
 
@@ -198,7 +198,7 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
     @VisibleForTesting
     @SuppressWarnings("java:S2077")
     void declare(
-        @NonNull PgQueryBuilder queryBuilder, @NonNull AtomicLong fromSerial, long upperSerial)
+        @NonNull PgQueryBuilder queryBuilder, @NonNull AtomicLong fromSerial, long horizonSerial)
         throws SQLException {
 
       Preconditions.checkArgument(chunkSize >= 1000, "chunkSize must be >= 1000");
@@ -231,7 +231,7 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
           sql);
 
       try (PreparedStatement declare = ds.getConnection().prepareStatement(sql)) {
-        queryBuilder.createBoundedStatementSetter(fromSerial, upperSerial).setValues(declare);
+        queryBuilder.createBoundedStatementSetter(fromSerial, horizonSerial).setValues(declare);
         declare.execute();
         log.trace("{} catchup {}, cursor-with-hold declared", req, phase);
       }

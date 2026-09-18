@@ -96,7 +96,7 @@ class PgQueryBuilderTest {
 
     @SneakyThrows
     @Test
-    void boundedSetterAppendsImmutableUpperSerial() {
+    void boundedSetterAppendsImmutableHorizonSerial() {
       when(serial.get()).thenReturn(12L);
       var underTest = new PgQueryBuilder(Lists.newArrayList(FactSpec.ns("*")));
       var ps = mock(PreparedStatement.class);
@@ -114,7 +114,7 @@ class PgQueryBuilderTest {
 
     @SneakyThrows
     @Test
-    void boundedQueryIncludesInclusiveUpperSerial() {
+    void boundedQueryIncludesInclusiveHorizonSerial() {
       var underTest = new PgQueryBuilder(Lists.newArrayList(FactSpec.ns("*")));
 
       assertThat(normalized(underTest.createBoundedSQL()))

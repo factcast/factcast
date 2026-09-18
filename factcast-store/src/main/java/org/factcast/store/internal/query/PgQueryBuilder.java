@@ -57,12 +57,12 @@ public class PgQueryBuilder {
   }
 
   public PreparedStatementSetter createBoundedStatementSetter(
-      @NonNull AtomicLong serial, long upperSerial) {
-    return createStatementSetter(serial, upperSerial);
+      @NonNull AtomicLong serial, long horizonSerial) {
+    return createStatementSetter(serial, horizonSerial);
   }
 
   private PreparedStatementSetter createStatementSetter(
-      @NonNull AtomicLong serial, Long upperSerial) {
+      @NonNull AtomicLong serial, Long horizonSerial) {
     return p -> {
       int count = 0;
       for (FactSpec spec : factSpecs) {
@@ -76,8 +76,8 @@ public class PgQueryBuilder {
       }
 
       p.setLong(++count, serial.get());
-      if (upperSerial != null) {
-        p.setLong(++count, upperSerial);
+      if (horizonSerial != null) {
+        p.setLong(++count, horizonSerial);
       }
     };
   }

@@ -45,24 +45,25 @@ public class PgCatchUpFactoryImpl implements PgCatchupFactory {
       @NonNull SubscriptionRequestTO request,
       @NonNull PushbackServerPipeline pipeline,
       @NonNull AtomicLong serial,
-      long upperSerial,
+      long horizonSerial,
       @NonNull SingleConnectionDataSource ds,
       @NonNull Phase phase) {
 
     // does not make sense to use in phase 2 altogether, as we're not expecting many facts there.
     if (phase == Phase.PHASE_2) {
-      return new PgCursorCatchup(props, metrics, request, pipeline, serial, upperSerial, ds, phase);
+      return new PgCursorCatchup(
+          props, metrics, request, pipeline, serial, horizonSerial, ds, phase);
     }
 
     log.debug("Using catchup strategy {}", props.getCatchupStrategy());
     return switch (props.getCatchupStrategy()) {
       case CHUNKED ->
-          new PgChunkedCatchup(props, metrics, request, pipeline, serial, upperSerial, ds, phase);
+          new PgChunkedCatchup(props, metrics, request, pipeline, serial, horizonSerial, ds, phase);
       case CHUNKED_WITH_HOLD ->
           new PgChunkedWithHoldCursorCatchup(
-              props, metrics, request, pipeline, serial, upperSerial, ds, phase);
+              props, metrics, request, pipeline, serial, horizonSerial, ds, phase);
       case CURSOR ->
-          new PgCursorCatchup(props, metrics, request, pipeline, serial, upperSerial, ds, phase);
+          new PgCursorCatchup(props, metrics, request, pipeline, serial, horizonSerial, ds, phase);
     };
   }
 }

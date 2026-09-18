@@ -47,10 +47,10 @@ public class PgChunkedCatchup extends AbstractPgCatchup {
       @NonNull SubscriptionRequestTO req,
       @NonNull PushbackServerPipeline pipeline,
       @NonNull AtomicLong serial,
-      long upperSerial,
+      long horizonSerial,
       @NonNull SingleConnectionDataSource ds,
       PgCatchupFactory.@NonNull Phase phase) {
-    super(props, metrics, req, pipeline, serial, upperSerial, ds, phase);
+    super(props, metrics, req, pipeline, serial, horizonSerial, ds, phase);
   }
 
   @SneakyThrows
@@ -153,9 +153,9 @@ public class PgChunkedCatchup extends AbstractPgCatchup {
     Timer.Sample sample = metrics.startSample();
 
     int matches =
-        fromSerial.get() >= upperSerial
+        fromSerial.get() >= horizonSerial
             ? 0
-            : jdbc.update(catchupSQL, b.createBoundedStatementSetter(fromSerial, upperSerial));
+            : jdbc.update(catchupSQL, b.createBoundedStatementSetter(fromSerial, horizonSerial));
     log.trace("{} catchup {} - Temp table has {} matching serials", req, phase, matches);
     logIfAboveThreshold(Duration.ofNanos(sample.stop(timer)));
     return matches;

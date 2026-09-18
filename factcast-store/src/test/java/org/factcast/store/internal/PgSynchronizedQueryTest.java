@@ -62,10 +62,11 @@ class PgSynchronizedQueryTest {
 
   @Mock FactStreamHorizonProvider horizonProvider;
 
-  private PgSynchronizedQuery queryWithUpper(long upperSerial) {
+  private PgSynchronizedQuery queryWithHorizon(long horizonSerial) {
     when(horizonProvider.current())
         .thenReturn(
-            new FactStreamHorizon(HighWaterMark.of(UUID.randomUUID(), upperSerial), upperSerial));
+            new FactStreamHorizon(
+                HighWaterMark.of(UUID.randomUUID(), horizonSerial), horizonSerial));
     return new PgSynchronizedQuery(
         "test",
         pipeline,
@@ -92,7 +93,7 @@ class PgSynchronizedQueryTest {
     when(rs.next()).thenReturn(false);
     when(p.executeQuery()).thenReturn(rs);
 
-    uut = queryWithUpper(10);
+    uut = queryWithHorizon(10);
 
     uut.run(true);
 
@@ -113,7 +114,7 @@ class PgSynchronizedQueryTest {
     ResultSet rs = Mockito.mock(ResultSet.class);
     when(rs.next()).thenReturn(false);
     when(p.executeQuery()).thenReturn(rs);
-    uut = queryWithUpper(10);
+    uut = queryWithHorizon(10);
     uut.run(false);
     assertThat(cap.getValue()).contains(ConnectionModifier.withBitmapScanDisabled());
   }
@@ -121,7 +122,7 @@ class PgSynchronizedQueryTest {
   @Test
   @SneakyThrows
   void test_exception_during_query() {
-    uut = queryWithUpper(10);
+    uut = queryWithHorizon(10);
     SingleConnectionDataSource ds = Mockito.mock(SingleConnectionDataSource.class);
     Connection con = Mockito.mock(Connection.class);
     PreparedStatement p = mock(PreparedStatement.class);
@@ -141,7 +142,7 @@ class PgSynchronizedQueryTest {
   @SneakyThrows
   void usesOneHorizonBoundAndFastForwardsAfterSuccessfulFlush() {
     AtomicLong cursor = new AtomicLong(5);
-    AtomicLong suppliedUpper = new AtomicLong();
+    AtomicLong suppliedHorizonSerial = new AtomicLong();
     SingleConnectionDataSource ds = mock(SingleConnectionDataSource.class);
     Connection con = mock(Connection.class);
     PreparedStatement statement = mock(PreparedStatement.class);
@@ -159,8 +160,8 @@ class PgSynchronizedQueryTest {
             pipeline,
             connectionSupplier,
             sql,
-            upper -> {
-              suppliedUpper.set(upper);
+            horizonSerial -> {
+              suppliedHorizonSerial.set(horizonSerial);
               return setter;
             },
             () -> true,
@@ -169,7 +170,7 @@ class PgSynchronizedQueryTest {
 
     uut.run(false);
 
-    assertThat(suppliedUpper).hasValue(42);
+    assertThat(suppliedHorizonSerial).hasValue(42);
     assertThat(cursor).hasValue(42);
     verify(horizonProvider).current();
   }
@@ -367,7 +368,7 @@ class PgSynchronizedQueryTest {
       try (MockedStatic<PgFact> mockStatic = Mockito.mockStatic(PgFact.class)) {
         mockStatic.when(() -> PgFact.from(rs)).thenReturn(factToBeTransformed);
 
-        uut = queryWithUpper(10);
+        uut = queryWithHorizon(10);
 
         // lets assume a random exception during flush
         doNothing().when(pipeline).process(any(Signal.FactSignal.class));
