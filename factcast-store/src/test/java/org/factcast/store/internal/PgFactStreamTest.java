@@ -574,6 +574,7 @@ class PgFactStreamTest {
                     hwmFetcher,
                     pipeline,
                     telemetry,
+                    props,
                     reqTo,
                     logSuppression));
         lenient().doReturn(true).when(uut).isConnected();
@@ -601,6 +602,7 @@ class PgFactStreamTest {
                     hwmFetcher,
                     pipeline,
                     telemetry,
+                    props,
                     reqTo,
                     logSuppression));
         lenient().doReturn(true).when(uut).isConnected();
@@ -681,6 +683,7 @@ class PgFactStreamTest {
                   hwmFetcher,
                   pipeline,
                   telemetry,
+                  props,
                   reqTo,
                   new NopLogSuppression()));
 
