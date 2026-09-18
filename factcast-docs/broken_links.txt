@@ -1,0 +1,232 @@
+# Broken Links Report
+# Scanned: 91 HTML files
+# Total actual broken links found: 66
+
+- Source: `About/index.html`
+  Link: `#design.adoc`
+  Reason: Anchor #design.adoc missing
+
+- Source: `About/index.html`
+  Link: `#motivation.adoc`
+  Reason: Anchor #motivation.adoc missing
+
+- Source: `About/migration.html`
+  Link: `#../Usage/lowlevel/java/optimistic-locking.adoc`
+  Reason: Anchor #../Usage/lowlevel/java/optimistic-locking.adoc missing
+
+- Source: `About/migration.html`
+  Link: `#compression.adoc`
+  Reason: Anchor #compression.adoc missing
+
+- Source: `About/migration.html`
+  Link: `#redis-transactional-projections.adoc`
+  Reason: Anchor #redis-transactional-projections.adoc missing
+
+- Source: `About/migration.html`
+  Link: `#snapshot-caching.adoc`
+  Reason: Anchor #snapshot-caching.adoc missing
+
+- Source: `About/releases.html`
+  Link: `#changelog.adoc`
+  Reason: Anchor #changelog.adoc missing
+
+- Source: `About/releases.html`
+  Link: `#migration.adoc`
+  Reason: Anchor #migration.adoc missing
+
+- Source: `Concept/blacklisting.html`
+  Link: `../Setup/properties.html#blacklist`
+  Reason: Anchor #blacklist not in target target/site/docs/latest/Setup/properties.html
+
+- Source: `Concept/factspec.html`
+  Link: `../factstreams`
+  Reason: Target not found: target/site/docs/latest/factstreams
+
+- Source: `Concept/factstreams.html`
+  Link: `#factspec.adoc`
+  Reason: Anchor #factspec.adoc missing
+
+- Source: `Concept/index.html`
+  Link: `#../Usage/lowlevel/java/optimistic-locking.adoc`
+  Reason: Anchor #../Usage/lowlevel/java/optimistic-locking.adoc missing
+
+- Source: `Concept/tail-index.html`
+  Link: `#fact.adoc#read-subscribe`
+  Reason: Anchor #fact.adoc#read-subscribe missing
+
+- Source: `Concept/tail-index.html`
+  Link: `../Setup/properties.html#performance—​reliability`
+  Reason: Anchor #performance—​reliability not in target target/site/docs/latest/Setup/properties.html
+
+- Source: `Guides/projection-selection.html`
+  Link: `../Usage/factus/projections/snapshots/index.html#serials`
+  Reason: Anchor #serials not in target target/site/docs/latest/Usage/factus/projections/snapshots/index.html
+
+- Source: `Guides/testing.html`
+  Link: `#local-managed-projection.adoc`
+  Reason: Anchor #local-managed-projection.adoc missing
+
+- Source: `Ops/metrics.html`
+  Link: `#telemetry.adoc`
+  Reason: Anchor #telemetry.adoc missing
+
+- Source: `Setup/compression.html`
+  Link: `#properties.adoc#factcast-client-specific`
+  Reason: Anchor #properties.adoc#factcast-client-specific missing
+
+- Source: `Setup/fatjar-tls.html`
+  Link: `#ports.adoc`
+  Reason: Anchor #ports.adoc missing
+
+- Source: `Setup/fatjar-tls.html`
+  Link: `../fatjar`
+  Reason: Target not found: target/site/docs/latest/fatjar
+
+- Source: `Setup/fatjar.html`
+  Link: `#ports.adoc`
+  Reason: Anchor #ports.adoc missing
+
+- Source: `Setup/gRPC Client/grpc-resilience.html`
+  Link: `#../properties.adoc`
+  Reason: Anchor #../properties.adoc missing
+
+- Source: `Setup/properties.html`
+  Link: `#tail-index.adoc`
+  Reason: Anchor #tail-index.adoc missing
+
+- Source: `UI/Setup/deployment-options.html`
+  Link: `../security`
+  Reason: Target not found: target/site/docs/latest/UI/security
+
+- Source: `UI/Setup/index.html`
+  Link: `report-storage`
+  Reason: Target not found: target/site/docs/latest/UI/Setup/report-storage
+
+- Source: `UI/index.html`
+  Link: `setup`
+  Reason: Target not found: target/site/docs/latest/UI/setup
+
+- Source: `Usage/factus/handler-parameters.html`
+  Link: `#fact.adoc`
+  Reason: Anchor #fact.adoc missing
+
+- Source: `Usage/factus/handler-parameters.html`
+  Link: `#fact.adoc#the-header`
+  Reason: Anchor #fact.adoc#the-header missing
+
+- Source: `Usage/factus/handler-parameters.html`
+  Link: `#introduction.adoc#eventobjects`
+  Reason: Anchor #introduction.adoc#eventobjects missing
+
+- Source: `Usage/factus/handler-parameters.html`
+  Link: `#projections.adoc#projections-in-general`
+  Reason: Anchor #projections.adoc#projections-in-general missing
+
+- Source: `Usage/factus/handler-parameters.html`
+  Link: `#redis-transactional-projections.adoc`
+  Reason: Anchor #redis-transactional-projections.adoc missing
+
+- Source: `Usage/factus/index.html`
+  Link: `#../lowlevel/index.adoc`
+  Reason: Anchor #../lowlevel/index.adoc missing
+
+- Source: `Usage/factus/introduction.html`
+  Link: `../setup`
+  Reason: Target not found: target/site/docs/latest/Usage/setup
+
+- Source: `Usage/factus/metrics.html`
+  Link: `#aggregates.adoc`
+  Reason: Anchor #aggregates.adoc missing
+
+- Source: `Usage/factus/metrics.html`
+  Link: `#managed-projection.adoc`
+  Reason: Anchor #managed-projection.adoc missing
+
+- Source: `Usage/factus/metrics.html`
+  Link: `#optimistic-locking.adoc`
+  Reason: Anchor #optimistic-locking.adoc missing
+
+- Source: `Usage/factus/metrics.html`
+  Link: `#snapshot-projections.adoc`
+  Reason: Anchor #snapshot-projections.adoc missing
+
+- Source: `Usage/factus/projections/atomicity/redis-transactional-projections.html`
+  Link: `#atomicity`
+  Reason: Anchor #atomicity missing
+
+- Source: `Usage/factus/projections/atomicity/redis-transactional-projections.html`
+  Link: `#managed-projection.adoc`
+  Reason: Anchor #managed-projection.adoc missing
+
+- Source: `Usage/factus/projections/atomicity/redis-transactional-projections.html`
+  Link: `#spring-transactional-projections.adoc`
+  Reason: Anchor #spring-transactional-projections.adoc missing
+
+- Source: `Usage/factus/projections/atomicity/redis-transactional-projections.html`
+  Link: `#subscribed-projection.adoc`
+  Reason: Anchor #subscribed-projection.adoc missing
+
+- Source: `Usage/factus/projections/callbacks.html`
+  Link: `#factspec.adoc#specification`
+  Reason: Anchor #factspec.adoc#specification missing
+
+- Source: `Usage/factus/projections/example/example-redis-tx.html`
+  Link: `#example-spring-tx.adoc`
+  Reason: Anchor #example-spring-tx.adoc missing
+
+- Source: `Usage/factus/projections/filtering.html`
+  Link: `#factspec.adoc#specification`
+  Reason: Anchor #factspec.adoc#specification missing
+
+- Source: `Usage/factus/projections/filtering.html`
+  Link: `#handler-parameters.adoc`
+  Reason: Anchor #handler-parameters.adoc missing
+
+- Source: `Usage/factus/projections/snapshots/index.html`
+  Link: `#snapshot-caching.adoc`
+  Reason: Anchor #snapshot-caching.adoc missing
+
+- Source: `Usage/factus/projections/snapshots/snapshot-caching.html`
+  Link: `../../../../Setup/properties.html#inmem-snapshots`
+  Reason: Anchor #inmem-snapshots not in target target/site/docs/latest/Setup/properties.html
+
+- Source: `Usage/factus/projections/snapshots/snapshot-caching.html`
+  Link: `../../../../Setup/properties.html#inmemanddisk-snapshots`
+  Reason: Anchor #inmemanddisk-snapshots not in target target/site/docs/latest/Setup/properties.html
+
+- Source: `Usage/factus/projections/snapshots/snapshot-caching.html`
+  Link: `../../../../Setup/properties.html#jdbc-snapshots`
+  Reason: Anchor #jdbc-snapshots not in target target/site/docs/latest/Setup/properties.html
+
+- Source: `Usage/factus/projections/snapshots/snapshot-caching.html`
+  Link: `../../../../Setup/properties.html#mongodb-snapshots`
+  Reason: Anchor #mongodb-snapshots not in target target/site/docs/latest/Setup/properties.html
+
+- Source: `Usage/factus/projections/snapshots/snapshot-caching.html`
+  Link: `../../../../Setup/properties.html#redissnapshots`
+  Reason: Anchor #redissnapshots not in target target/site/docs/latest/Setup/properties.html
+
+- Source: `Usage/index.html`
+  Link: `#factus/index.adoc`
+  Reason: Anchor #factus/index.adoc missing
+
+- Source: `Usage/lowlevel/cli/3rd-party-cli.html`
+  Link: `#factcast-cli.adoc`
+  Reason: Anchor #factcast-cli.adoc missing
+
+- Source: `Usage/lowlevel/index.html`
+  Link: `#../factus/index.adoc`
+  Reason: Anchor #../factus/index.adoc missing
+
+- Source: `Usage/lowlevel/java/grpc-consumer.html`
+  Link: `../../../Concept/fact.html#read-subscribe`
+  Reason: Anchor #read-subscribe not in target target/site/docs/latest/Concept/fact.html
+
+- Source: `Usage/lowlevel/java/index.html`
+  Link: `#../../factus/index.adoc`
+  Reason: Anchor #../../factus/index.adoc missing
+
+- Source: `Usage/lowlevel/js/index.html`
+  Link: `#../../factus/index.adoc`
+  Reason: Anchor #../../factus/index.adoc missing
+

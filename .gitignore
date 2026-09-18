@@ -25,6 +25,6 @@ package-lock.json
 .idea
 
 **/AGENTS.md
-.junie/**
+**/.junie/**
 **/.agent-logs
 .agent-logs
