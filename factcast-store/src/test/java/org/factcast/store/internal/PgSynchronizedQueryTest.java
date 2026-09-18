@@ -27,7 +27,9 @@ import lombok.SneakyThrows;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.core.subscription.observer.HighWaterMarkFetcher;
+import org.factcast.core.subscription.observer.HighWaterMark;
+import org.factcast.store.internal.horizon.FactStreamHorizon;
+import org.factcast.store.internal.horizon.FactStreamHorizonProvider;
 import org.factcast.store.internal.listen.*;
 import org.factcast.store.internal.pipeline.*;
 import org.junit.jupiter.api.Nested;
@@ -58,7 +60,23 @@ class PgSynchronizedQueryTest {
   @Mock PushbackServerPipeline pipeline;
   @Mock PgConnectionSupplier connectionSupplier;
 
-  final HighWaterMarkFetcher fetcher = HighWaterMarkFetcher.forTest();
+  @Mock FactStreamHorizonProvider horizonProvider;
+
+  private PgSynchronizedQuery queryWithHorizon(long horizonSerial) {
+    when(horizonProvider.current())
+        .thenReturn(
+            new FactStreamHorizon(
+                HighWaterMark.of(UUID.randomUUID(), horizonSerial), horizonSerial));
+    return new PgSynchronizedQuery(
+        "test",
+        pipeline,
+        connectionSupplier,
+        sql,
+        ignored -> setter,
+        () -> true,
+        serialToContinueFrom,
+        horizonProvider);
+  }
 
   @SneakyThrows
   @Test
@@ -75,16 +93,7 @@ class PgSynchronizedQueryTest {
     when(rs.next()).thenReturn(false);
     when(p.executeQuery()).thenReturn(rs);
 
-    uut =
-        new PgSynchronizedQuery(
-            "test",
-            pipeline,
-            connectionSupplier,
-            sql,
-            setter,
-            () -> true,
-            serialToContinueFrom,
-            fetcher);
+    uut = queryWithHorizon(10);
 
     uut.run(true);
 
@@ -105,16 +114,7 @@ class PgSynchronizedQueryTest {
     ResultSet rs = Mockito.mock(ResultSet.class);
     when(rs.next()).thenReturn(false);
     when(p.executeQuery()).thenReturn(rs);
-    uut =
-        new PgSynchronizedQuery(
-            "test",
-            pipeline,
-            connectionSupplier,
-            sql,
-            setter,
-            () -> true,
-            serialToContinueFrom,
-            fetcher);
+    uut = queryWithHorizon(10);
     uut.run(false);
     assertThat(cap.getValue()).contains(ConnectionModifier.withBitmapScanDisabled());
   }
@@ -122,16 +122,7 @@ class PgSynchronizedQueryTest {
   @Test
   @SneakyThrows
   void test_exception_during_query() {
-    uut =
-        new PgSynchronizedQuery(
-            "test",
-            pipeline,
-            connectionSupplier,
-            sql,
-            setter,
-            () -> true,
-            serialToContinueFrom,
-            fetcher);
+    uut = queryWithHorizon(10);
     SingleConnectionDataSource ds = Mockito.mock(SingleConnectionDataSource.class);
     Connection con = Mockito.mock(Connection.class);
     PreparedStatement p = mock(PreparedStatement.class);
@@ -145,6 +136,96 @@ class PgSynchronizedQueryTest {
     assertThatThrownBy(() -> uut.run(false))
         // should be thrown unchanged
         .isSameAs(exc);
+  }
+
+  @Test
+  @SneakyThrows
+  void usesOneHorizonBoundAndFastForwardsAfterSuccessfulFlush() {
+    AtomicLong cursor = new AtomicLong(5);
+    AtomicLong suppliedHorizonSerial = new AtomicLong();
+    SingleConnectionDataSource ds = mock(SingleConnectionDataSource.class);
+    Connection con = mock(Connection.class);
+    PreparedStatement statement = mock(PreparedStatement.class);
+    ResultSet rs = mock(ResultSet.class);
+    when(horizonProvider.current())
+        .thenReturn(new FactStreamHorizon(HighWaterMark.of(UUID.randomUUID(), 42), 42));
+    when(connectionSupplier.getPooledAsSingleDataSource(anyList())).thenReturn(ds);
+    when(ds.getConnection()).thenReturn(con);
+    when(con.prepareStatement(sql)).thenReturn(statement);
+    when(statement.executeQuery()).thenReturn(rs);
+    when(rs.next()).thenReturn(false);
+    uut =
+        new PgSynchronizedQuery(
+            "test",
+            pipeline,
+            connectionSupplier,
+            sql,
+            horizonSerial -> {
+              suppliedHorizonSerial.set(horizonSerial);
+              return setter;
+            },
+            () -> true,
+            cursor,
+            horizonProvider);
+
+    uut.run(false);
+
+    assertThat(suppliedHorizonSerial).hasValue(42);
+    assertThat(cursor).hasValue(42);
+    verify(horizonProvider).current();
+  }
+
+  @Test
+  @SneakyThrows
+  void doesNotFastForwardWhenBoundedQueryFails() {
+    AtomicLong cursor = new AtomicLong(5);
+    SingleConnectionDataSource ds = mock(SingleConnectionDataSource.class);
+    Connection con = mock(Connection.class);
+    PreparedStatement statement = mock(PreparedStatement.class);
+    when(horizonProvider.current())
+        .thenReturn(new FactStreamHorizon(HighWaterMark.of(UUID.randomUUID(), 42), 42));
+    when(connectionSupplier.getPooledAsSingleDataSource(anyList())).thenReturn(ds);
+    when(ds.getConnection()).thenReturn(con);
+    when(con.prepareStatement(sql)).thenReturn(statement);
+    when(statement.executeQuery()).thenThrow(new SQLException("boom"));
+    uut =
+        new PgSynchronizedQuery(
+            "test",
+            pipeline,
+            connectionSupplier,
+            sql,
+            ignored -> setter,
+            () -> true,
+            cursor,
+            horizonProvider);
+
+    assertThatThrownBy(() -> uut.run(false)).isInstanceOf(Exception.class);
+
+    assertThat(cursor).hasValue(5);
+  }
+
+  @Test
+  @SneakyThrows
+  void skipsDatabaseWhenCursorAlreadyReachedHorizon() {
+    AtomicLong cursor = new AtomicLong(42);
+    when(horizonProvider.current())
+        .thenReturn(new FactStreamHorizon(HighWaterMark.of(UUID.randomUUID(), 42), 42));
+    uut =
+        new PgSynchronizedQuery(
+            "test",
+            pipeline,
+            connectionSupplier,
+            sql,
+            ignored -> setter,
+            () -> true,
+            cursor,
+            horizonProvider);
+
+    uut.run(false);
+
+    verifyNoInteractions(connectionSupplier);
+    verify(pipeline).process(argThat(Signal::indicatesFlush));
+    assertThat(cursor).hasValue(42);
   }
 
   @Nested
@@ -287,16 +368,7 @@ class PgSynchronizedQueryTest {
       try (MockedStatic<PgFact> mockStatic = Mockito.mockStatic(PgFact.class)) {
         mockStatic.when(() -> PgFact.from(rs)).thenReturn(factToBeTransformed);
 
-        uut =
-            new PgSynchronizedQuery(
-                "test",
-                pipeline,
-                connectionSupplier,
-                sql,
-                setter,
-                () -> true,
-                serialToContinueFrom,
-                fetcher);
+        uut = queryWithHorizon(10);
 
         // lets assume a random exception during flush
         doNothing().when(pipeline).process(any(Signal.FactSignal.class));

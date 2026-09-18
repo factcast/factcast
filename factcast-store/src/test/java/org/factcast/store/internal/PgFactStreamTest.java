@@ -29,10 +29,13 @@ import javax.sql.DataSource;
 import lombok.SneakyThrows;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.*;
+import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.*;
 import org.factcast.store.*;
 import org.factcast.store.internal.catchup.*;
+import org.factcast.store.internal.horizon.FactStreamHorizon;
+import org.factcast.store.internal.horizon.FactStreamHorizonProvider;
 import org.factcast.store.internal.listen.*;
 import org.factcast.store.internal.logsuppression.*;
 import org.factcast.store.internal.pipeline.PushbackServerPipeline;
@@ -45,6 +48,7 @@ import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.postgresql.util.*;
 import org.slf4j.MDC;
+import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
 @ExtendWith(MockitoExtension.class)
@@ -55,7 +59,7 @@ class PgFactStreamTest {
   @Mock EventBus eventBus;
   @Mock PgFactIdToSerialMapper id2ser;
   @Mock PgCatchupFactory pgCatchupFactory;
-  @Mock HighWaterMarkFetcher hwmFetcher;
+  @Mock FactStreamHorizonProvider horizonProvider;
   @Mock PushbackServerPipeline pipeline;
   @Mock PgStoreTelemetry telemetry;
   @Mock StoreConfigurationProperties props;
@@ -64,6 +68,10 @@ class PgFactStreamTest {
   @Mock CatchupDataSource mds;
 
   @InjectMocks @Spy PgFactStream uut;
+
+  private static FactStreamHorizon horizon(HighWaterMark highWaterMark) {
+    return new FactStreamHorizon(highWaterMark, highWaterMark.targetSer());
+  }
 
   @Nested
   class WhenConnecting {
@@ -82,7 +90,7 @@ class PgFactStreamTest {
       lenient().doReturn(pgSynchronizedQuery).when(uut).createPgSynchronizedQuery();
       // doNothing().when(uut).catchupAndFastForward(any(), any(), any());
       lenient().doNothing().when(uut).follow(any(), any());
-      lenient().when(hwmFetcher.highWaterMark(any())).thenReturn(hwm);
+      lenient().when(horizonProvider.advance()).thenReturn(horizon(hwm));
       lenient().when(connectionSupplier.dataSource()).thenReturn(ds);
       lenient().when(reqTo.debugInfo()).thenReturn("foo");
       lenient().when(uut.catchupConnectionModifiers(reqTo)).thenReturn(Collections.emptyList());
@@ -112,7 +120,7 @@ class PgFactStreamTest {
     @Test
     void sendsStreamInfoSignal() {
 
-      when(pgCatchupFactory.create(any(), any(), any(), any(), any()))
+      when(pgCatchupFactory.create(any(), any(), any(), anyLong(), any(), any()))
           .thenReturn(
               new PgCatchup() {
                 @Override
@@ -120,7 +128,7 @@ class PgFactStreamTest {
 
                 public void run() {}
               });
-      lenient().when(uut.catchupPhaseOne(ds)).thenReturn(12L);
+      lenient().when(uut.catchupPhaseOne(ds, 0)).thenReturn(12L);
 
       when(reqTo.streamInfo()).thenReturn(true);
       uut.doCatchup();
@@ -162,7 +170,7 @@ class PgFactStreamTest {
     void setup() {
       lenient().doNothing().when(uut).doCatchup();
       lenient().when(reqTo.debugInfo()).thenReturn("foo");
-      lenient().when(hwmFetcher.highWaterMark(any())).thenReturn(hwm);
+      lenient().when(horizonProvider.advance()).thenReturn(horizon(hwm));
     }
 
     @SneakyThrows
@@ -252,6 +260,17 @@ class PgFactStreamTest {
       verify(pipeline, times(1)).process(any(Signal.CompleteSignal.class));
       verify(telemetry, times(1)).onComplete(reqTo);
       verifyNoInteractions(eventBus);
+    }
+
+    @Test
+    void createsDatabaseBoundedFollowQuery() {
+      when(reqTo.specs()).thenReturn(List.of(FactSpec.ns("*")));
+      when(reqTo.debugInfo()).thenReturn("test");
+
+      PgSynchronizedQuery query = uut.createPgSynchronizedQuery();
+
+      assertThat(query).extracting("sql").asString().contains("ser<=?");
+      assertThat(query).extracting("horizonProvider").isSameAs(horizonProvider);
     }
   }
 
@@ -428,9 +447,8 @@ class PgFactStreamTest {
     void setup() {
       lenient().when(reqTo.debugInfo()).thenReturn("test-debug-info");
       lenient()
-          .doReturn(HighWaterMark.of(UUID.randomUUID(), 24))
-          .when(hwmFetcher)
-          .highWaterMark(any());
+          .when(horizonProvider.advance())
+          .thenReturn(horizon(HighWaterMark.of(UUID.randomUUID(), 24)));
       lenient().doReturn(ds).when(connectionSupplier).dataSource();
       lenient().doReturn(mds).when(uut).createCatchupDataSource(ds, pipeline);
       lenient().when(uut.isConnected()).thenReturn(true);
@@ -450,14 +468,13 @@ class PgFactStreamTest {
     @Test
     void ifConnected_catchupTwice() {
       when(uut.isConnected()).thenReturn(true);
-      doReturn(12L).when(uut).catchupPhaseOne(any());
-      doNothing().when(uut).catchupPhaseTwo(any(), same(12L));
+      doReturn(12L).when(uut).catchupPhaseOne(any(), eq(24L));
+      doNothing().when(uut).catchupPhaseTwo(any(), same(12L), eq(24L));
       doReturn(mds).when(uut).createCatchupDataSource(any(), any());
-      doReturn(HighWaterMark.of(UUID.randomUUID(), 24)).when(hwmFetcher).highWaterMark(any());
       uut.doCatchup();
 
-      verify(uut).catchupPhaseOne(any());
-      verify(uut).catchupPhaseTwo(any(), same(12L));
+      verify(uut).catchupPhaseOne(any(), eq(24L));
+      verify(uut).catchupPhaseTwo(any(), same(12L), eq(24L));
     }
 
     @SneakyThrows
@@ -466,7 +483,7 @@ class PgFactStreamTest {
       PgCatchup catchup1 = mock(PgCatchup.class);
       PgCatchup catchup2 = mock(PgCatchup.class);
       when(uut.isConnected()).thenReturn(true);
-      when(pgCatchupFactory.create(any(), any(), any(), any(), any()))
+      when(pgCatchupFactory.create(any(), any(), any(), anyLong(), any(), any()))
           .thenReturn(catchup1, catchup2);
       uut.doCatchup();
 
@@ -476,6 +493,7 @@ class PgFactStreamTest {
               same(reqTo),
               same(pipeline),
               same(serial),
+              eq(24L),
               same(mds),
               eq(PgCatchupFactory.Phase.PHASE_1));
       verify(pgCatchupFactory)
@@ -483,12 +501,13 @@ class PgFactStreamTest {
               same(reqTo),
               same(pipeline),
               same(serial),
+              eq(24L),
               same(mds),
               eq(PgCatchupFactory.Phase.PHASE_2));
 
       // or equivalent:
-      verify(uut).catchupPhaseOne(mds);
-      verify(uut).catchupPhaseTwo(ArgumentMatchers.argThat(p -> p.get() == mds), same(24L));
+      verify(uut).catchupPhaseOne(mds, 24L);
+      verify(uut).catchupPhaseTwo(ArgumentMatchers.argThat(p -> p.get() == mds), eq(24L), eq(24L));
 
       verify(catchup2).fastForward(24L);
     }
@@ -499,16 +518,17 @@ class PgFactStreamTest {
       long phase1Hwm = 123L;
 
       PgCatchup catchup2 = mock(PgCatchup.class);
-      when(pgCatchupFactory.create(any(), any(), any(), any(), eq(PgCatchupFactory.Phase.PHASE_2)))
+      when(pgCatchupFactory.create(
+              any(), any(), any(), anyLong(), any(), eq(PgCatchupFactory.Phase.PHASE_2)))
           .thenReturn(catchup2);
 
-      doReturn(phase1Hwm).when(uut).catchupPhaseOne(any());
+      doReturn(phase1Hwm).when(uut).catchupPhaseOne(any(), anyLong());
 
       uut.doCatchup();
 
       verify(uut)
           .catchupPhaseTwo(
-              ArgumentMatchers.argThat(supplier -> supplier.get() == mds), eq(phase1Hwm));
+              ArgumentMatchers.argThat(supplier -> supplier.get() == mds), eq(phase1Hwm), eq(24L));
     }
 
     @SneakyThrows
@@ -527,10 +547,11 @@ class PgFactStreamTest {
       }
       when(connectionSupplier.dataSource()).thenReturn(ds);
       doReturn(Collections.emptyList()).when(uut).catchupConnectionModifiers(any());
-      when(hwmFetcher.highWaterMark(any())).thenReturn(initialHwm);
-      when(pgCatchupFactory.create(any(), any(), any(), any(), eq(PgCatchupFactory.Phase.PHASE_2)))
+      when(horizonProvider.advance()).thenReturn(horizon(initialHwm));
+      when(pgCatchupFactory.create(
+              any(), any(), any(), anyLong(), any(), eq(PgCatchupFactory.Phase.PHASE_2)))
           .thenReturn(pgCatchup2);
-      doReturn(phase1Hwm).when(uut).catchupPhaseOne(any());
+      doReturn(phase1Hwm).when(uut).catchupPhaseOne(any(), eq(initialHwm.targetSer()));
 
       uut.doCatchup();
 
@@ -547,7 +568,7 @@ class PgFactStreamTest {
       @Mock EventBus eventBus;
       @Mock PgFactIdToSerialMapper idToSerMapper;
       @Mock PgCatchupFactory pgCatchupFactory;
-      @Mock HighWaterMarkFetcher hwmFetcher;
+      @Mock FactStreamHorizonProvider horizonProvider;
       @Mock PushbackServerPipeline pipeline;
       @Mock PgStoreTelemetry telemetry;
       @Mock StoreConfigurationProperties props;
@@ -571,20 +592,22 @@ class PgFactStreamTest {
                     eventBus,
                     idToSerMapper,
                     pgCatchupFactory,
-                    hwmFetcher,
+                    horizonProvider,
                     pipeline,
                     telemetry,
                     reqTo,
                     logSuppression));
         lenient().doReturn(true).when(uut).isConnected();
         lenient().doReturn(mds).when(uut).createCatchupDataSource(any(DataSource.class), any());
-        lenient().when(hwmFetcher.highWaterMark(any())).thenReturn(HighWaterMark.empty());
-        lenient().doReturn(123L).when(uut).catchupPhaseOne(any());
-        lenient().doNothing().when(uut).catchupPhaseTwo(any(), anyLong());
+        lenient()
+            .when(horizonProvider.advance())
+            .thenReturn(horizon(HighWaterMark.of(UUID.randomUUID(), 123)));
+        lenient().doReturn(123L).when(uut).catchupPhaseOne(any(), eq(123L));
+        lenient().doNothing().when(uut).catchupPhaseTwo(any(), anyLong(), anyLong());
 
         uut.doCatchup();
 
-        verify(uut).catchupPhaseOne(mds);
+        verify(uut).catchupPhaseOne(mds, 123L);
       }
 
       @SneakyThrows
@@ -598,22 +621,87 @@ class PgFactStreamTest {
                     eventBus,
                     idToSerMapper,
                     pgCatchupFactory,
-                    hwmFetcher,
+                    horizonProvider,
                     pipeline,
                     telemetry,
                     reqTo,
                     logSuppression));
         lenient().doReturn(true).when(uut).isConnected();
         lenient().doReturn(mds).when(uut).createCatchupDataSource(any(DataSource.class), any());
-        lenient().when(hwmFetcher.highWaterMark(any())).thenReturn(HighWaterMark.empty());
-        lenient().doReturn(123L).when(uut).catchupPhaseOne(any());
-        lenient().doNothing().when(uut).catchupPhaseTwo(any(), anyLong());
+        lenient()
+            .when(horizonProvider.advance())
+            .thenReturn(horizon(HighWaterMark.of(UUID.randomUUID(), 123)));
+        lenient()
+            .when(horizonProvider.read(mds))
+            .thenReturn(horizon(HighWaterMark.of(UUID.randomUUID(), 100)));
+        lenient().doReturn(100L).when(uut).catchupPhaseOne(any(), eq(100L));
+        lenient().doNothing().when(uut).catchupPhaseTwo(any(), anyLong(), anyLong());
 
         uut.doCatchup();
 
-        verify(uut).catchupPhaseOne(mds);
+        verify(uut).catchupPhaseOne(mds, 100L);
         // Verify that createCatchupDataSource was called with offloadDataSource
         verify(uut).createCatchupDataSource(offloadDataSource, pipeline);
+      }
+
+      @SneakyThrows
+      @Test
+      void capsOffloadHorizonAtPrimaryHorizon() {
+        PgFactStream uut =
+            spy(
+                new PgFactStream(
+                    connectionSupplier,
+                    offloadDataSource,
+                    eventBus,
+                    idToSerMapper,
+                    pgCatchupFactory,
+                    horizonProvider,
+                    pipeline,
+                    telemetry,
+                    reqTo,
+                    logSuppression));
+        lenient().doReturn(true).when(uut).isConnected();
+        lenient().doReturn(mds).when(uut).createCatchupDataSource(any(DataSource.class), any());
+        when(horizonProvider.advance())
+            .thenReturn(horizon(HighWaterMark.of(UUID.randomUUID(), 123)));
+        when(horizonProvider.read(mds))
+            .thenReturn(horizon(HighWaterMark.of(UUID.randomUUID(), 200)));
+        doReturn(123L).when(uut).catchupPhaseOne(mds, 123L);
+        doNothing().when(uut).catchupPhaseTwo(any(), anyLong(), anyLong());
+
+        uut.doCatchup();
+
+        verify(uut).catchupPhaseOne(mds, 123L);
+      }
+
+      @SneakyThrows
+      @Test
+      void offloadHorizonReadFailureLeavesWholeRangeForPrimaryPhaseTwo() {
+        PgFactStream uut =
+            spy(
+                new PgFactStream(
+                    connectionSupplier,
+                    offloadDataSource,
+                    eventBus,
+                    idToSerMapper,
+                    pgCatchupFactory,
+                    horizonProvider,
+                    pipeline,
+                    telemetry,
+                    reqTo,
+                    logSuppression));
+        uut.serial().set(5);
+        lenient().doReturn(true).when(uut).isConnected();
+        lenient().doReturn(mds).when(uut).createCatchupDataSource(any(DataSource.class), any());
+        when(horizonProvider.advance())
+            .thenReturn(horizon(HighWaterMark.of(UUID.randomUUID(), 123)));
+        when(horizonProvider.read(mds))
+            .thenThrow(new DataAccessResourceFailureException("offload unavailable"));
+        doNothing().when(uut).catchupPhaseTwo(any(), anyLong(), anyLong());
+
+        uut.doCatchup();
+
+        verify(uut).catchupPhaseTwo(any(), eq(5L), eq(123L));
       }
     }
 
@@ -626,9 +714,10 @@ class PgFactStreamTest {
       // serial is 0 by default → from scratch
 
       PgCatchup catchup = mock(PgCatchup.class);
-      when(pgCatchupFactory.create(any(), any(), any(), any(), any())).thenReturn(catchup);
+      when(pgCatchupFactory.create(any(), any(), any(), anyLong(), any(), any()))
+          .thenReturn(catchup);
       when(uut.isConnected()).thenReturn(true);
-      doNothing().when(uut).catchupPhaseTwo(any(), anyLong());
+      doNothing().when(uut).catchupPhaseTwo(any(), anyLong(), anyLong());
 
       doAnswer(
               invocation -> {
@@ -653,7 +742,8 @@ class PgFactStreamTest {
       uut.serial().set(42L);
       PgCatchup catchup = mock(PgCatchup.class);
       when(uut.isConnected()).thenReturn(true);
-      when(pgCatchupFactory.create(any(), any(), any(), any(), any())).thenReturn(catchup, catchup);
+      when(pgCatchupFactory.create(any(), any(), any(), anyLong(), any(), any()))
+          .thenReturn(catchup, catchup);
 
       doAnswer(
               invocation -> {
@@ -678,7 +768,7 @@ class PgFactStreamTest {
                   eventBus,
                   id2ser,
                   pgCatchupFactory,
-                  hwmFetcher,
+                  horizonProvider,
                   pipeline,
                   telemetry,
                   reqTo,
@@ -689,7 +779,8 @@ class PgFactStreamTest {
 
       PgCatchup catchup = mock(PgCatchup.class);
       when(uut.isConnected()).thenReturn(true);
-      when(pgCatchupFactory.create(any(), any(), any(), any(), any())).thenReturn(catchup, catchup);
+      when(pgCatchupFactory.create(any(), any(), any(), anyLong(), any(), any()))
+          .thenReturn(catchup, catchup);
 
       doAnswer(
               invocation -> {
@@ -707,7 +798,8 @@ class PgFactStreamTest {
     void clearsMdcEvenOnException() {
       PgCatchup catchup = mock(PgCatchup.class);
       when(uut.isConnected()).thenReturn(true);
-      when(pgCatchupFactory.create(any(), any(), any(), any(), any())).thenReturn(catchup);
+      when(pgCatchupFactory.create(any(), any(), any(), anyLong(), any(), any()))
+          .thenReturn(catchup);
 
       doAnswer(
               i -> {

@@ -59,7 +59,8 @@ class PgChunkedWithHoldCursorCatchupTest {
     lenient().when(ds.getConnection()).thenReturn(connection);
     underTest =
         Mockito.spy(
-            new PgChunkedWithHoldCursorCatchup(props, metrics, req, pipeline, serial, ds, phase));
+            new PgChunkedWithHoldCursorCatchup(
+                props, metrics, req, pipeline, serial, Long.MAX_VALUE, ds, phase));
   }
 
   @Nested
@@ -200,11 +201,13 @@ class PgChunkedWithHoldCursorCatchupTest {
     @SneakyThrows
     void testDeclare() {
       when(connection.prepareStatement(anyString())).thenReturn(ps);
-      when(queryBuilder.createStatementSetter(any())).thenReturn(pss);
+      when(queryBuilder.createBoundedStatementSetter(any(), anyLong())).thenReturn(pss);
 
       PgChunkedWithHoldCursorCatchup.Cursor cursor = underTest.new Cursor(1000);
-      cursor.declare(queryBuilder, new AtomicLong(0));
+      cursor.declare(queryBuilder, new AtomicLong(0), 42);
 
+      verify(queryBuilder).createBoundedSQL();
+      verify(queryBuilder).createBoundedStatementSetter(any(AtomicLong.class), eq(42L));
       verify(ps).execute();
       verify(pss).setValues(ps);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2023 factcast.org
+ * Copyright © 2017-2026 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.internal.tail;
+package org.factcast.store.internal.horizon;
 
-import javax.sql.DataSource;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import org.factcast.core.subscription.observer.HighWaterMark;
-import org.factcast.core.subscription.observer.HighWaterMarkFetcher;
-import org.factcast.store.internal.horizon.FactStreamHorizonProvider;
 
-@RequiredArgsConstructor
-public class SimpleHighWaterMarkFetcher implements HighWaterMarkFetcher {
+/** The inclusive, persisted upper bounds for fact and notification queries. */
+public record FactStreamHorizon(@NonNull HighWaterMark highWaterMark, long notificationSerial) {
 
-  @NonNull private final FactStreamHorizonProvider horizonProvider;
-
-  @Override
-  @NonNull
-  public HighWaterMark highWaterMark(@NonNull DataSource ds) {
-    return horizonProvider.read(ds).highWaterMark();
+  public static FactStreamHorizon empty() {
+    return new FactStreamHorizon(HighWaterMark.empty(), 0);
   }
 }

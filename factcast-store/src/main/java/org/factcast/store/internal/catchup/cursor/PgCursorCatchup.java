@@ -46,9 +46,10 @@ public class PgCursorCatchup extends AbstractPgCatchup {
       @NonNull SubscriptionRequestTO req,
       @NonNull PushbackServerPipeline pipeline,
       @NonNull AtomicLong serial,
+      long horizonSerial,
       @NonNull SingleConnectionDataSource ds,
       PgCatchupFactory.@NonNull Phase phase) {
-    super(props, metrics, req, pipeline, serial, ds, phase);
+    super(props, metrics, req, pipeline, serial, horizonSerial, ds, phase);
   }
 
   @Override
@@ -57,8 +58,17 @@ public class PgCursorCatchup extends AbstractPgCatchup {
 
       final var b = createPgQueryBuilder(req.specs());
       final var extractor = new PgFactExtractor(serial);
-      final var fromSerial = serial.get() < fastForward ? new AtomicLong(fastForward) : serial;
-      final var catchupSQL = b.createSQL();
+      final var fromSerial = new AtomicLong(Math.max(serial.get(), fastForward));
+      if (fromSerial.get() >= horizonSerial) {
+        log.trace(
+            "{} catchup {} - no facts between SER={} and horizon {}",
+            req,
+            phase,
+            fromSerial.get(),
+            horizonSerial);
+        return;
+      }
+      final var catchupSQL = b.createBoundedSQL();
       final var isFromScratch = (fromSerial.get() <= 0);
       log.trace("{} catchup {} - facts starting with SER={}", req, phase, fromSerial.get());
 
@@ -68,7 +78,7 @@ public class PgCursorCatchup extends AbstractPgCatchup {
         conn.setAutoCommit(false);
         prep.setFetchSize(props.getPageSize());
         prep.setQueryTimeout(0);
-        b.createStatementSetter(fromSerial).setValues(prep);
+        b.createBoundedStatementSetter(fromSerial, horizonSerial).setValues(prep);
 
         final var timer = metrics.timer(StoreMetrics.OP.RESULT_STREAM_START, isFromScratch);
         final var timerSample = metrics.startSample();

@@ -93,10 +93,37 @@ class PgQueryBuilderTest {
       verify(ps).setLong(++index, serial.get());
       verifyNoMoreInteractions(ps);
     }
+
+    @SneakyThrows
+    @Test
+    void boundedSetterAppendsImmutableHorizonSerial() {
+      when(serial.get()).thenReturn(12L);
+      var underTest = new PgQueryBuilder(Lists.newArrayList(FactSpec.ns("*")));
+      var ps = mock(PreparedStatement.class);
+
+      underTest.createBoundedStatementSetter(serial, 42L).setValues(ps);
+
+      verify(ps).setLong(1, 12L);
+      verify(ps).setLong(2, 42L);
+      verifyNoMoreInteractions(ps);
+    }
   }
 
   @Nested
   class WhenCreatingSQL {
+
+    @SneakyThrows
+    @Test
+    void boundedQueryIncludesInclusiveHorizonSerial() {
+      var underTest = new PgQueryBuilder(Lists.newArrayList(FactSpec.ns("*")));
+
+      assertThat(normalized(underTest.createBoundedSQL()))
+          .isEqualTo(
+              normalized(
+                  "SELECT "
+                      + org.factcast.store.internal.PgConstants.PROJECTION_FACT
+                      + " FROM fact WHERE ((true)) AND ser>? AND ser<=? ORDER BY ser ASC"));
+    }
 
     @SneakyThrows
     @Test

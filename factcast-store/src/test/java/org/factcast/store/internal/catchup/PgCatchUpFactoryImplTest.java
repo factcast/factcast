@@ -59,16 +59,19 @@ class PgCatchUpFactoryImplTest {
       underTest = new PgCatchUpFactoryImpl(props, metrics);
 
       // even if CHUNKED is configured, PHASE_2 must use cursor
-      var result = underTest.create(request, pipeline, serial, ds, PgCatchupFactory.Phase.PHASE_2);
+      var result =
+          underTest.create(request, pipeline, serial, 42, ds, PgCatchupFactory.Phase.PHASE_2);
 
       assertThat(result).isInstanceOf(PgCursorCatchup.class);
+      assertThat(((AbstractPgCatchup) result).horizonSerial).isEqualTo(42);
     }
 
     @Test
     void returnsChunkedInPhase1WhenStrategyIsChunked() {
       when(props.getCatchupStrategy()).thenReturn(CatchupStrategy.CHUNKED);
 
-      var result = underTest.create(request, pipeline, serial, ds, PgCatchupFactory.Phase.PHASE_1);
+      var result =
+          underTest.create(request, pipeline, serial, 42, ds, PgCatchupFactory.Phase.PHASE_1);
 
       assertThat(result).isInstanceOf(PgChunkedCatchup.class);
     }
@@ -77,7 +80,8 @@ class PgCatchUpFactoryImplTest {
     void returnsFetchingInPhase1WhenStrategyIsFetching() {
       when(props.getCatchupStrategy()).thenReturn(CatchupStrategy.CURSOR);
 
-      var result = underTest.create(request, pipeline, serial, ds, PgCatchupFactory.Phase.PHASE_1);
+      var result =
+          underTest.create(request, pipeline, serial, 42, ds, PgCatchupFactory.Phase.PHASE_1);
 
       assertThat(result).isInstanceOf(PgCursorCatchup.class);
     }
@@ -86,7 +90,8 @@ class PgCatchUpFactoryImplTest {
     void returnsHoldCursorInPhase1WhenStrategyIsHoldCursor() {
       when(props.getCatchupStrategy()).thenReturn(CatchupStrategy.CHUNKED_WITH_HOLD);
 
-      var result = underTest.create(request, pipeline, serial, ds, PgCatchupFactory.Phase.PHASE_1);
+      var result =
+          underTest.create(request, pipeline, serial, 42, ds, PgCatchupFactory.Phase.PHASE_1);
 
       assertThat(result).isInstanceOf(PgChunkedWithHoldCursorCatchup.class);
     }

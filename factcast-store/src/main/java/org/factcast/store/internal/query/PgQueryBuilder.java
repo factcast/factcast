@@ -53,6 +53,16 @@ public class PgQueryBuilder {
   }
 
   public PreparedStatementSetter createStatementSetter(@NonNull AtomicLong serial) {
+    return createStatementSetter(serial, null);
+  }
+
+  public PreparedStatementSetter createBoundedStatementSetter(
+      @NonNull AtomicLong serial, long horizonSerial) {
+    return createStatementSetter(serial, horizonSerial);
+  }
+
+  private PreparedStatementSetter createStatementSetter(
+      @NonNull AtomicLong serial, Long horizonSerial) {
     return p -> {
       int count = 0;
       for (FactSpec spec : factSpecs) {
@@ -66,6 +76,9 @@ public class PgQueryBuilder {
       }
 
       p.setLong(++count, serial.get());
+      if (horizonSerial != null) {
+        p.setLong(++count, horizonSerial);
+      }
     };
   }
 
@@ -160,7 +173,7 @@ public class PgQueryBuilder {
   }
 
   @SuppressWarnings("java:S3776")
-  private String createWhereClause() {
+  private String createWhereClause(boolean bounded) {
     List<String> predicates = new LinkedList<>();
     factSpecs.forEach(
         spec -> {
@@ -213,10 +226,22 @@ public class PgQueryBuilder {
           predicates.add(sb.toString());
         });
     String predicatesAsString = String.join(OR, predicates);
-    return "( " + predicatesAsString + " ) " + AND + PgConstants.COLUMN_SER + ">?";
+    String where = "( " + predicatesAsString + " ) " + AND + PgConstants.COLUMN_SER + ">?";
+    if (bounded) {
+      where += AND + PgConstants.COLUMN_SER + "<=?";
+    }
+    return where;
   }
 
   public String createSQL() {
+    return createSQL(false);
+  }
+
+  public String createBoundedSQL() {
+    return createSQL(true);
+  }
+
+  private String createSQL(boolean bounded) {
 
     if (useTemporaryTable()) {
       return "INSERT INTO "
@@ -228,7 +253,7 @@ public class PgQueryBuilder {
           + FROM
           + PgConstants.TABLE_FACT
           + WHERE
-          + createWhereClause();
+          + createWhereClause(bounded);
       // we don't need the order by here, because it will be ordered when reading from the temp
       // table
 
@@ -238,7 +263,7 @@ public class PgQueryBuilder {
           + FROM
           + PgConstants.TABLE_FACT
           + WHERE
-          + createWhereClause()
+          + createWhereClause(bounded)
           + ORDER_BY
           + PgConstants.COLUMN_SER
           + " ASC";
@@ -256,7 +281,7 @@ public class PgQueryBuilder {
             + FROM
             + PgConstants.TABLE_FACT
             + WHERE
-            + createWhereClause()
+            + createWhereClause(false)
             + ORDER_BY
             + PgConstants.COLUMN_SER
             + " DESC LIMIT 1";
