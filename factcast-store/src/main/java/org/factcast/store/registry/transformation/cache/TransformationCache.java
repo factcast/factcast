@@ -36,6 +36,8 @@ public interface TransformationCache {
 
   void invalidateTransformationFor(String ns, String type);
 
+  void invalidateTransformationFor(String ns, String type, int fromVersion, int toVersion);
+
   void invalidateTransformationFor(UUID factId);
 
   void flush();
