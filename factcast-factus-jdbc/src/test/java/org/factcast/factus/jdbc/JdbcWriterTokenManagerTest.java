@@ -13,17 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.spring.tx.jdbc;
+package org.factcast.factus.jdbc;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.sql.SQLException;
+import java.sql.SQLNonTransientConnectionException;
+import java.sql.SQLTransientConnectionException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +38,7 @@ import javax.sql.DataSource;
 import net.javacrumbs.shedlock.core.LockConfiguration;
 import net.javacrumbs.shedlock.core.LockProvider;
 import net.javacrumbs.shedlock.core.SimpleLock;
-import net.javacrumbs.shedlock.provider.jdbctemplate.JdbcTemplateLockProvider;
+import net.javacrumbs.shedlock.provider.jdbc.JdbcLockProvider;
 import net.javacrumbs.shedlock.support.LockException;
 import org.factcast.factus.projection.WriterToken;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,9 +48,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.jdbc.CannotGetJdbcConnectionException;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.transaction.CannotCreateTransactionException;
 
 @ExtendWith(MockitoExtension.class)
 class JdbcWriterTokenManagerTest {
@@ -183,10 +184,10 @@ class JdbcWriterTokenManagerTest {
     @Test
     void retriesWhenTheDatabaseIsUnreachable() {
       when(lockProvider.lock(any(LockConfiguration.class)))
-          .thenThrow(new CannotCreateTransactionException("pool exhausted"))
-          .thenThrow(new CannotGetJdbcConnectionException("connection refused"))
-          .thenThrow(new CannotCreateTransactionException("pool exhausted"))
-          .thenThrow(new CannotGetJdbcConnectionException("connection refused"));
+          .thenThrow(lockFailure(new SQLTransientConnectionException("pool exhausted")))
+          .thenThrow(lockFailure(new SQLNonTransientConnectionException("connection refused")))
+          .thenThrow(lockFailure(new SQLTransientConnectionException("pool exhausted")))
+          .thenThrow(lockFailure(new SQLNonTransientConnectionException("connection refused")));
 
       assertThat(uut.acquireWriteToken(Duration.ofSeconds(2))).isNull();
 
@@ -211,7 +212,8 @@ class JdbcWriterTokenManagerTest {
     @Test
     void namesProjectionAndColumnWidthWhenLockProviderBlowsUp() {
       when(lockProvider.lock(any(LockConfiguration.class)))
-          .thenThrow(new LockException("value too long for type character varying(64)"));
+          .thenThrow(
+              lockFailure(new SQLException("value too long for type character varying(64)")));
 
       assertThatThrownBy(() -> uut.acquireWriteToken(Duration.ofSeconds(1)))
           .isInstanceOf(LockException.class)
@@ -219,6 +221,20 @@ class JdbcWriterTokenManagerTest {
           .hasMessageContaining(KEY + "_lock")
           .hasMessageContaining(String.valueOf(ProjectionNames.MAX_NAME_LENGTH))
           .hasRootCauseMessage("value too long for type character varying(64)");
+    }
+
+    @Test
+    void doesNotRetryAMissingLockTable() {
+      when(lockProvider.lock(any(LockConfiguration.class)))
+          .thenThrow(
+              lockFailure(
+                  new SQLException("relation \"factcast_projection_locks\" does not exist")));
+
+      assertThatThrownBy(() -> uut.acquireWriteToken(Duration.ofMinutes(10)))
+          .isInstanceOf(LockException.class);
+
+      verify(lockProvider).lock(any(LockConfiguration.class));
+      assertThat(timing.sleeps).isEmpty();
     }
 
     @Test
@@ -251,13 +267,11 @@ class JdbcWriterTokenManagerTest {
     }
 
     @Test
-    void isRejectedByTheJdbcTemplateFactory() {
-      JdbcTemplate jdbcTemplate = new JdbcTemplate(mock(DataSource.class));
-
+    void isRejectedByTheDataSourceFactory() {
       assertThatThrownBy(
               () ->
                   JdbcWriterTokenManager.create(
-                      jdbcTemplate, KEY, "locks", Duration.ofMillis(2), Duration.ZERO))
+                      mock(DataSource.class), KEY, "locks", Duration.ofMillis(2), Duration.ZERO))
           .isInstanceOf(IllegalArgumentException.class);
     }
 
@@ -277,23 +291,23 @@ class JdbcWriterTokenManagerTest {
   @Nested
   class WhenConfiguringTheLockProvider {
 
-    private final JdbcTemplate jdbcTemplate = mock(JdbcTemplate.class);
+    private final DataSource dataSource = mock(DataSource.class);
 
     @Test
     void usesDedicatedTableAndDbTime() {
-      JdbcTemplateLockProvider.Configuration config =
+      JdbcLockProvider.Configuration config =
           JdbcWriterTokenManager.lockProviderConfiguration(
-              jdbcTemplate, JdbcWriterTokenManager.DEFAULT_LOCK_TABLE_NAME);
+              dataSource, JdbcWriterTokenManager.DEFAULT_LOCK_TABLE_NAME);
 
       assertThat(config.getTableName()).isEqualTo("factcast_projection_locks");
       assertThat(config.getUseDbTime()).isTrue();
-      assertThat(config.getJdbcTemplate()).isSameAs(jdbcTemplate);
+      assertThat(config.getDataSource()).isSameAs(dataSource);
     }
 
     @Test
     void honoursCustomTableName() {
       assertThat(
-              JdbcWriterTokenManager.lockProviderConfiguration(jdbcTemplate, "my_locks")
+              JdbcWriterTokenManager.lockProviderConfiguration(dataSource, "my_locks")
                   .getTableName())
           .isEqualTo("my_locks");
     }
@@ -301,16 +315,76 @@ class JdbcWriterTokenManagerTest {
     @Test
     void distinguishesInstancesOnTheSameHost() {
       String first =
-          JdbcWriterTokenManager.lockProviderConfiguration(jdbcTemplate, "locks")
-              .getLockedByValue();
+          JdbcWriterTokenManager.lockProviderConfiguration(dataSource, "locks").getLockedByValue();
       String second =
-          JdbcWriterTokenManager.lockProviderConfiguration(jdbcTemplate, "locks")
-              .getLockedByValue();
+          JdbcWriterTokenManager.lockProviderConfiguration(dataSource, "locks").getLockedByValue();
 
       assertThat(first).isNotEqualTo(second).contains("/");
       assertThat(first.substring(0, first.indexOf('/')))
           .isEqualTo(second.substring(0, second.indexOf('/')));
     }
+  }
+
+  @Nested
+  class WhenTrackingTheLastIssuedToken {
+
+    @Test
+    void reportsNoLockBeforeATokenWasIssued() {
+      assertThat(uut.hasLock()).isFalse();
+    }
+
+    @Test
+    void reportsTheLockWhileTheLeaseIsLive() {
+      when(lockProvider.lock(any(LockConfiguration.class)))
+          .thenReturn(Optional.of(mock(SimpleLock.class)));
+
+      uut.acquireWriteToken(Duration.ofSeconds(60));
+
+      assertThat(uut.hasLock()).isTrue();
+    }
+
+    @Test
+    void reportsNoLockOnceTheLeaseRanOut() {
+      when(lockProvider.lock(any(LockConfiguration.class)))
+          .thenReturn(Optional.of(mock(SimpleLock.class)));
+      uut.acquireWriteToken(Duration.ofSeconds(60));
+
+      timing.advance(JdbcWriterTokenManager.DEFAULT_LOCK_AT_MOST_FOR.plusSeconds(1));
+
+      assertThat(uut.hasLock()).isFalse();
+    }
+
+    @Test
+    void closesTheTokenItDisplaces() {
+      SimpleLock displaced = mock(SimpleLock.class);
+      when(lockProvider.lock(any(LockConfiguration.class)))
+          .thenReturn(Optional.of(displaced))
+          .thenReturn(Optional.of(mock(SimpleLock.class)));
+
+      WriterToken first = uut.acquireWriteToken(Duration.ofSeconds(60));
+      uut.acquireWriteToken(Duration.ofSeconds(60));
+
+      verify(displaced).unlock();
+      assertThat(first.isValid()).isFalse();
+    }
+
+    @Test
+    void survivesATokenThatFailsToClose() {
+      SimpleLock displaced = mock(SimpleLock.class);
+      doThrow(new IllegalStateException("gone")).when(displaced).unlock();
+      when(lockProvider.lock(any(LockConfiguration.class)))
+          .thenReturn(Optional.of(displaced))
+          .thenReturn(Optional.of(mock(SimpleLock.class)));
+      uut.acquireWriteToken(Duration.ofSeconds(60));
+
+      assertThatCode(() -> uut.acquireWriteToken(Duration.ofSeconds(60)))
+          .doesNotThrowAnyException();
+      assertThat(uut.hasLock()).isTrue();
+    }
+  }
+
+  private static LockException lockFailure(SQLException cause) {
+    return new LockException("Unexpected exception when locking", cause);
   }
 
   static class VirtualTiming implements JdbcWriterTokenManager.Timing {

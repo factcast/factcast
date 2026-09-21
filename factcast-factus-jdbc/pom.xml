@@ -9,7 +9,7 @@
     <version>0.12.3-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
-  <artifactId>factcast-factus-spring-tx</artifactId>
+  <artifactId>factcast-factus-jdbc</artifactId>
   <name>${project.groupId}:${project.artifactId}</name>
   <properties></properties>
 
@@ -17,7 +17,7 @@
     <dependencies>
       <dependency>
         <groupId>org.factcast</groupId>
-        <artifactId>factcast-internal-dep-boot</artifactId>
+        <artifactId>factcast-internal-dep</artifactId>
         <version>${project.version}</version>
         <type>pom</type>
         <scope>import</scope>
@@ -39,29 +39,15 @@
     </dependency>
 
     <dependency>
-      <groupId>org.factcast</groupId>
-      <artifactId>factcast-factus-jdbc</artifactId>
-      <version>${project.version}</version>
+      <groupId>net.javacrumbs.shedlock</groupId>
+      <artifactId>shedlock-provider-jdbc</artifactId>
+      <version>${shedlock.version}</version>
     </dependency>
 
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-simple</artifactId>
       <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.springframework</groupId>
-      <artifactId>spring-tx</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework</groupId>
-      <artifactId>spring-jdbc</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>jakarta.annotation</groupId>
-      <artifactId>jakarta.annotation-api</artifactId>
-      <scope>provided</scope>
     </dependency>
   </dependencies>
 

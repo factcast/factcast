@@ -13,11 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.spring.tx.jdbc;
+package org.factcast.factus.jdbc;
 
 import jakarta.annotation.Nullable;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.sql.SQLNonTransientConnectionException;
+import java.sql.SQLRecoverableException;
+import java.sql.SQLTransientException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
@@ -27,22 +30,24 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import javax.sql.DataSource;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.core.LockConfiguration;
 import net.javacrumbs.shedlock.core.LockProvider;
 import net.javacrumbs.shedlock.core.SimpleLock;
-import net.javacrumbs.shedlock.provider.jdbctemplate.JdbcTemplateLockProvider;
+import net.javacrumbs.shedlock.provider.jdbc.JdbcLockProvider;
 import net.javacrumbs.shedlock.support.LockException;
 import org.factcast.factus.projection.WriterToken;
-import org.springframework.dao.DataAccessException;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.transaction.TransactionException;
 
 /**
  * Hands out {@link WriterToken}s for a single projection, backed by a shedlock lease in a plain
  * JDBC table. Usable standalone, for projections that cannot extend {@link
- * AbstractSpringJdbcManagedProjection} or {@link AbstractSpringJdbcSubscribedProjection}.
+ * AbstractJdbcManagedProjection} or {@link AbstractJdbcSubscribedProjection}.
+ *
+ * <p>The {@link DataSource} must not be one that joins an ongoing transaction: the lease has to be
+ * committed when it is taken, not when the caller's transaction ends.
  */
 @Slf4j
 public class JdbcWriterTokenManager {
@@ -73,6 +78,7 @@ public class JdbcWriterTokenManager {
   private final Duration lockAtLeastFor;
   private final ScheduledExecutorService scheduler;
   private final Timing timing;
+  private final AtomicReference<WriterToken> lastIssued = new AtomicReference<>();
 
   public JdbcWriterTokenManager(@NonNull LockProvider lockProvider, @NonNull String projectionKey) {
     this(lockProvider, projectionKey, DEFAULT_LOCK_AT_MOST_FOR, DEFAULT_LOCK_AT_LEAST_FOR);
@@ -114,9 +120,9 @@ public class JdbcWriterTokenManager {
   }
 
   public static JdbcWriterTokenManager create(
-      @NonNull JdbcTemplate jdbcTemplate, @NonNull String projectionKey) {
+      @NonNull DataSource dataSource, @NonNull String projectionKey) {
     return create(
-        jdbcTemplate,
+        dataSource,
         projectionKey,
         DEFAULT_LOCK_TABLE_NAME,
         DEFAULT_LOCK_AT_MOST_FOR,
@@ -124,23 +130,22 @@ public class JdbcWriterTokenManager {
   }
 
   public static JdbcWriterTokenManager create(
-      @NonNull JdbcTemplate jdbcTemplate,
+      @NonNull DataSource dataSource,
       @NonNull String projectionKey,
       @NonNull String lockTableName,
       @NonNull Duration lockAtMostFor,
       @NonNull Duration lockAtLeastFor) {
     log.debug("Configuring lock provider: JDBC, table {}", lockTableName);
     return new JdbcWriterTokenManager(
-        new JdbcTemplateLockProvider(lockProviderConfiguration(jdbcTemplate, lockTableName)),
+        new JdbcLockProvider(lockProviderConfiguration(dataSource, lockTableName)),
         projectionKey,
         lockAtMostFor,
         lockAtLeastFor);
   }
 
-  static JdbcTemplateLockProvider.Configuration lockProviderConfiguration(
-      @NonNull JdbcTemplate jdbcTemplate, @NonNull String lockTableName) {
-    return JdbcTemplateLockProvider.Configuration.builder()
-        .withJdbcTemplate(jdbcTemplate)
+  static JdbcLockProvider.Configuration lockProviderConfiguration(
+      @NonNull DataSource dataSource, @NonNull String lockTableName) {
+    return JdbcLockProvider.Configuration.builder(dataSource)
         .withTableName(lockTableName)
         .withLockedByValue(lockedByValue())
         .usingDbTime()
@@ -149,6 +154,26 @@ public class JdbcWriterTokenManager {
 
   @Nullable
   public WriterToken acquireWriteToken(@NonNull Duration maxWait) {
+    WriterToken token = tryAcquire(maxWait);
+    if (token != null) {
+      // a displaced token shares its lease owner with the new one, so its keepalive would keep
+      // renewing the new one's lease and report the displaced token valid again
+      closeQuietly(lastIssued.getAndSet(token));
+    }
+    return token;
+  }
+
+  /**
+   * Whether the token last handed out is still held. Use it to gate work that is triggered from
+   * outside the fact stream, like a cleanup schedule.
+   */
+  public boolean hasLock() {
+    WriterToken token = lastIssued.get();
+    return token != null && token.isValid();
+  }
+
+  @Nullable
+  private WriterToken tryAcquire(@NonNull Duration maxWait) {
     long deadline = timing.nanoTime() + maxWait.toNanos();
     long backoffMillis = INITIAL_RETRY_INTERVAL_MILLIS;
     try {
@@ -184,17 +209,28 @@ public class JdbcWriterTokenManager {
     }
   }
 
+  private void closeQuietly(@Nullable WriterToken displaced) {
+    if (displaced == null) {
+      return;
+    }
+    try {
+      displaced.close();
+    } catch (Exception e) {
+      log.warn("Failed to close the writer token replaced by a new one", e);
+    }
+  }
+
   private Optional<SimpleLock> tryLock() {
     LockConfiguration lockConfiguration =
         new LockConfiguration(Instant.now(), lockName, lockAtMostFor, lockAtLeastFor);
     try {
       return lockProvider.lock(lockConfiguration);
-    } catch (DataAccessException | TransactionException e) {
-      // shedlock lets a failure to even get a connection through unwrapped, and for us that is
-      // indistinguishable from somebody else holding the lock
-      log.warn("Attempt to acquire lock {} failed, will retry", lockName, e);
-      return Optional.empty();
     } catch (LockException e) {
+      if (isTemporary(e.getCause())) {
+        // not reaching the database is indistinguishable from somebody else holding the lock
+        log.warn("Attempt to acquire lock {} failed, will retry", lockName, e);
+        return Optional.empty();
+      }
       throw new LockException(
           "Could not acquire the write lock for projection '%s' (lock name '%s', %d chars). Make sure the lock table exists and that its name column holds at least %d characters."
               .formatted(
@@ -208,6 +244,16 @@ public class JdbcWriterTokenManager {
               .formatted(projectionKey, SUPPORTED_DATABASES),
           e);
     }
+  }
+
+  /**
+   * shedlock wraps everything that went wrong into a LockException, so only the cause tells a
+   * database we could not reach apart from one that rejected our statement.
+   */
+  private static boolean isTemporary(@Nullable Throwable cause) {
+    return cause instanceof SQLTransientException
+        || cause instanceof SQLRecoverableException
+        || cause instanceof SQLNonTransientConnectionException;
   }
 
   /**

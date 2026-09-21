@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.spring.tx.jdbc;
+package org.factcast.factus.jdbc;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -29,6 +29,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.sql.SQLTransientConnectionException;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.ScheduledExecutorService;
@@ -36,13 +37,13 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import net.javacrumbs.shedlock.core.SimpleLock;
+import net.javacrumbs.shedlock.support.LockException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.dao.TransientDataAccessResourceException;
 
 @ExtendWith(MockitoExtension.class)
 class JdbcWriterTokenTest {
@@ -189,7 +190,10 @@ class JdbcWriterTokenTest {
     @Test
     void survivesATransientFailureAndRetriesOnTheSameLock() {
       when(lock.extend(LEASE, Duration.ZERO))
-          .thenThrow(new TransientDataAccessResourceException("connection reset"))
+          .thenThrow(
+              new LockException(
+                  "Unexpected exception when locking",
+                  new SQLTransientConnectionException("connection reset")))
           .thenReturn(Optional.of(mock(SimpleLock.class)));
       JdbcWriterToken uut = tokenFor(lock);
 
@@ -210,7 +214,10 @@ class JdbcWriterTokenTest {
     @Test
     void givesUpOnceTheLeaseRanOutWhileExtendingKeptFailing() {
       when(lock.extend(LEASE, Duration.ZERO))
-          .thenThrow(new TransientDataAccessResourceException("connection reset"));
+          .thenThrow(
+              new LockException(
+                  "Unexpected exception when locking",
+                  new SQLTransientConnectionException("connection reset")));
       JdbcWriterToken uut = tokenFor(lock);
 
       keepaliveTask.run();

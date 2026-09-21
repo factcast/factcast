@@ -26,21 +26,22 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import javax.sql.DataSource;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.core.LockConfiguration;
-import net.javacrumbs.shedlock.provider.jdbctemplate.JdbcTemplateLockProvider;
+import net.javacrumbs.shedlock.provider.jdbc.JdbcLockProvider;
 import net.javacrumbs.shedlock.support.LockException;
 import org.factcast.core.FactStreamPosition;
 import org.factcast.factus.Factus;
 import org.factcast.factus.Handler;
+import org.factcast.factus.jdbc.JdbcWriterTokenManager;
+import org.factcast.factus.jdbc.ProjectionNames;
 import org.factcast.factus.projection.WriterToken;
 import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.factus.spring.tx.SpringTransactional;
 import org.factcast.factus.spring.tx.jdbc.AbstractSpringJdbcManagedProjection;
 import org.factcast.factus.spring.tx.jdbc.AbstractSpringJdbcSubscribedProjection;
-import org.factcast.factus.spring.tx.jdbc.JdbcWriterTokenManager;
-import org.factcast.factus.spring.tx.jdbc.ProjectionNames;
 import org.factcast.itests.TestFactusApplication;
 import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.itests.factus.event.UserDeleted;
@@ -351,7 +352,11 @@ public class SpringJdbcProjectionLockITest extends AbstractFactCastIntegrationTe
   /** One manager stands for one application instance: all its tokens share a lease owner. */
   private JdbcWriterTokenManager instanceWithLease(Duration lease) {
     return JdbcWriterTokenManager.create(
-        jdbcTemplate, projectionKey, LOCK_TABLE, lease, Duration.ZERO);
+        dataSource(), projectionKey, LOCK_TABLE, lease, Duration.ZERO);
+  }
+
+  private DataSource dataSource() {
+    return jdbcTemplate.getDataSource();
   }
 
   private WriterToken acquire(JdbcWriterTokenManager instance, Duration maxWait) {
@@ -366,10 +371,9 @@ public class SpringJdbcProjectionLockITest extends AbstractFactCastIntegrationTe
    * Stands in for an instance that was killed before it could unlock, so its lease has to lapse.
    */
   private void simulateHolderThatDiedWithoutUnlocking() {
-    JdbcTemplateLockProvider provider =
-        new JdbcTemplateLockProvider(
-            JdbcTemplateLockProvider.Configuration.builder()
-                .withJdbcTemplate(jdbcTemplate)
+    JdbcLockProvider provider =
+        new JdbcLockProvider(
+            JdbcLockProvider.Configuration.builder(dataSource())
                 .withTableName(LOCK_TABLE)
                 .withLockedByValue("dead-holder/" + randomUUID())
                 .usingDbTime()

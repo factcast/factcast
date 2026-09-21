@@ -31,13 +31,13 @@ import org.factcast.core.FactStreamPosition;
 import org.factcast.factus.Factus;
 import org.factcast.factus.Handler;
 import org.factcast.factus.event.EventObject;
+import org.factcast.factus.jdbc.JdbcWriterTokenManager;
 import org.factcast.factus.projection.WriterToken;
 import org.factcast.factus.projection.tx.TransactionException;
 import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.factus.spring.tx.AbstractSpringTxManagedProjection;
 import org.factcast.factus.spring.tx.AbstractSpringTxSubscribedProjection;
 import org.factcast.factus.spring.tx.SpringTransactional;
-import org.factcast.factus.spring.tx.jdbc.JdbcWriterTokenManager;
 import org.factcast.itests.TestFactusApplication;
 import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.test.AbstractFactCastIntegrationTest;
@@ -405,7 +405,7 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       super(platformTransactionManager);
       this.jdbcTemplate = jdbcTemplate;
       this.writerTokenManager =
-          JdbcWriterTokenManager.create(jdbcTemplate, getScopedName().asString());
+          JdbcWriterTokenManager.create(jdbcTemplate.getDataSource(), getScopedName().asString());
     }
 
     @Override
@@ -470,7 +470,7 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
       super(platformTransactionManager);
       this.jdbcTemplate = jdbcTemplate;
       this.writerTokenManager =
-          JdbcWriterTokenManager.create(jdbcTemplate, getScopedName().asString());
+          JdbcWriterTokenManager.create(jdbcTemplate.getDataSource(), getScopedName().asString());
     }
 
     @Override

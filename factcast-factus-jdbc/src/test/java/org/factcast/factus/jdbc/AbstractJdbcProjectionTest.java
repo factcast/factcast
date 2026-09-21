@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.spring.tx.jdbc;
+package org.factcast.factus.jdbc;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -28,14 +28,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Duration;
 import java.util.Optional;
-import java.util.UUID;
 import javax.sql.DataSource;
 import net.javacrumbs.shedlock.core.LockConfiguration;
 import net.javacrumbs.shedlock.core.LockProvider;
 import net.javacrumbs.shedlock.core.SimpleLock;
-import org.factcast.core.FactStreamPosition;
-import org.factcast.factus.jdbc.JdbcFactStreamPosition;
-import org.factcast.factus.jdbc.JdbcWriterTokenManager;
 import org.factcast.factus.projection.WriterToken;
 import org.factcast.factus.serializer.ProjectionMetaData;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,14 +40,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.transaction.PlatformTransactionManager;
 
 @ExtendWith(MockitoExtension.class)
-class AbstractSpringJdbcProjectionTest {
+class AbstractJdbcProjectionTest {
 
-  @Mock private PlatformTransactionManager platformTransactionManager;
-  @Mock private JdbcTemplate jdbcTemplate;
   @Mock private DataSource dataSource;
   @Mock private Connection connection;
   @Mock private PreparedStatement statement;
@@ -62,65 +54,39 @@ class AbstractSpringJdbcProjectionTest {
 
     @BeforeEach
     void setUp() throws SQLException {
-      when(jdbcTemplate.getDataSource()).thenReturn(dataSource);
       when(dataSource.getConnection()).thenReturn(connection);
       when(connection.prepareStatement(anyString())).thenReturn(statement);
+      when(statement.executeQuery()).thenReturn(resultSet);
     }
 
     @Test
-    void readsItsPositionFromTheManagedTable() throws SQLException {
-      when(statement.executeQuery()).thenReturn(resultSet);
-      when(resultSet.next()).thenReturn(true);
-      UUID factId = UUID.randomUUID();
-      when(resultSet.getObject("state", UUID.class)).thenReturn(factId);
-      when(resultSet.getLong("serial")).thenReturn(7L);
+    void managedProjectionsUseTheManagedTable() throws SQLException {
+      new MyManagedProjection(dataSource).factStreamPosition();
 
-      MyManagedProjection uut = new MyManagedProjection(platformTransactionManager, jdbcTemplate);
-
-      assertThat(uut.factStreamPosition()).isEqualTo(FactStreamPosition.of(factId, 7L));
       verify(connection)
           .prepareStatement("SELECT state, serial FROM managed_projection WHERE name = ?");
       verify(statement).setString(1, "managed_1");
     }
 
     @Test
-    void writesItsPositionToTheManagedTable() throws SQLException {
-      when(statement.executeUpdate()).thenReturn(1);
-      MyManagedProjection uut = new MyManagedProjection(platformTransactionManager, jdbcTemplate);
-      UUID factId = UUID.randomUUID();
-
-      uut.factStreamPosition(FactStreamPosition.of(factId, 7L));
-
-      verify(connection)
-          .prepareStatement("UPDATE managed_projection SET state = ?, serial = ? WHERE name = ?");
-      verify(statement).setObject(1, factId);
-      verify(statement).setLong(2, 7L);
-      verify(statement).setString(3, "managed_1");
-    }
-
-    @Test
-    void readsItsPositionFromTheSubscribedTable() throws SQLException {
-      when(statement.executeQuery()).thenReturn(resultSet);
-
-      new MySubscribedProjection(platformTransactionManager, jdbcTemplate).factStreamPosition();
+    void subscribedProjectionsUseTheSubscribedTable() throws SQLException {
+      new MySubscribedProjection(dataSource).factStreamPosition();
 
       verify(connection)
           .prepareStatement("SELECT state, serial FROM subscribed_projection WHERE name = ?");
+      verify(statement).setString(1, "subscribed_1");
     }
 
     @Test
     void honoursCustomTableNames() throws SQLException {
-      when(statement.executeQuery()).thenReturn(resultSet);
-
-      new MyManagedProjection(platformTransactionManager, jdbcTemplate, "my_locks", "my_positions")
-          .factStreamPosition();
+      new MyManagedProjection(dataSource, "my_locks", "my_positions").factStreamPosition();
 
       verify(connection).prepareStatement("SELECT state, serial FROM my_positions WHERE name = ?");
     }
   }
 
   @Nested
-  class SubscribedProjectionLock {
+  class TokenWiring {
 
     @Mock private LockProvider lockProvider;
 
@@ -130,10 +96,15 @@ class AbstractSpringJdbcProjectionTest {
     void setUp() {
       uut =
           new MySubscribedProjection(
-              platformTransactionManager,
+              dataSource,
               new JdbcWriterTokenManager(lockProvider, "subscribed_1"),
               new JdbcFactStreamPosition(
                   dataSource, JdbcFactStreamPosition.ProjectionType.SUBSCRIBED, "subscribed_1"));
+    }
+
+    @Test
+    void exposesTheDataSource() {
+      assertThat(uut.dataSource()).isSameAs(dataSource);
     }
 
     @Test
@@ -154,36 +125,37 @@ class AbstractSpringJdbcProjectionTest {
       token.close();
       assertThat(uut.hasLock()).isFalse();
     }
+
+    @Test
+    void returnsNoTokenWhenTheLockIsTaken() {
+      when(lockProvider.lock(any(LockConfiguration.class))).thenReturn(Optional.empty());
+
+      assertThat(uut.acquireWriteToken(Duration.ZERO)).isNull();
+    }
   }
 
   @ProjectionMetaData(name = "managed", revision = 1)
-  static class MyManagedProjection extends AbstractSpringJdbcManagedProjection {
-    MyManagedProjection(
-        PlatformTransactionManager platformTransactionManager, JdbcTemplate jdbcTemplate) {
-      super(platformTransactionManager, jdbcTemplate);
+  static class MyManagedProjection extends AbstractJdbcManagedProjection {
+    MyManagedProjection(DataSource dataSource) {
+      super(dataSource);
     }
 
-    MyManagedProjection(
-        PlatformTransactionManager platformTransactionManager,
-        JdbcTemplate jdbcTemplate,
-        String lockTableName,
-        String positionTableName) {
-      super(platformTransactionManager, jdbcTemplate, lockTableName, positionTableName);
+    MyManagedProjection(DataSource dataSource, String lockTableName, String positionTableName) {
+      super(dataSource, lockTableName, positionTableName);
     }
   }
 
   @ProjectionMetaData(name = "subscribed", revision = 1)
-  static class MySubscribedProjection extends AbstractSpringJdbcSubscribedProjection {
-    MySubscribedProjection(
-        PlatformTransactionManager platformTransactionManager, JdbcTemplate jdbcTemplate) {
-      super(platformTransactionManager, jdbcTemplate);
+  static class MySubscribedProjection extends AbstractJdbcSubscribedProjection {
+    MySubscribedProjection(DataSource dataSource) {
+      super(dataSource);
     }
 
     MySubscribedProjection(
-        PlatformTransactionManager platformTransactionManager,
+        DataSource dataSource,
         JdbcWriterTokenManager writerTokenManager,
         JdbcFactStreamPosition factStreamPosition) {
-      super(platformTransactionManager, writerTokenManager, factStreamPosition);
+      super(dataSource, writerTokenManager, factStreamPosition);
     }
   }
 }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.spring.tx.jdbc;
+package org.factcast.factus.jdbc;
 
 import java.time.Duration;
 import java.util.Optional;

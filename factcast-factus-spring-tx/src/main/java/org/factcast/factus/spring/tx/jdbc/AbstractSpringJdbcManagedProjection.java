@@ -19,17 +19,20 @@ import jakarta.annotation.Nullable;
 import java.time.Duration;
 import lombok.NonNull;
 import lombok.experimental.Delegate;
+import org.factcast.factus.jdbc.JdbcFactStreamPosition;
+import org.factcast.factus.jdbc.JdbcFactStreamPosition.ProjectionType;
+import org.factcast.factus.jdbc.JdbcWriterTokenManager;
 import org.factcast.factus.projection.FactStreamPositionAware;
 import org.factcast.factus.projection.WriterToken;
 import org.factcast.factus.spring.tx.AbstractSpringTxManagedProjection;
-import org.factcast.factus.spring.tx.jdbc.JdbcFactStreamPosition.ProjectionType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.PlatformTransactionManager;
 
 /**
  * Managed projection that gets both its write token and its fact stream position from plain JDBC,
- * so that no additional infrastructure is needed. See {@link JdbcWriterTokenManager} and {@link
- * JdbcFactStreamPosition} for the tables involved.
+ * so that no additional infrastructure is needed. Unlike {@link
+ * org.factcast.factus.jdbc.AbstractJdbcManagedProjection}, the position is written on the
+ * connection of the ongoing transaction, so it commits together with the projection's own updates.
  */
 public abstract class AbstractSpringJdbcManagedProjection
     extends AbstractSpringTxManagedProjection {
@@ -58,13 +61,14 @@ public abstract class AbstractSpringJdbcManagedProjection
     String projectionKey = getScopedName().asString();
     this.writerTokenManager =
         JdbcWriterTokenManager.create(
-            jdbcTemplate,
+            SpringJdbcDataSources.forLock(jdbcTemplate),
             projectionKey,
             lockTableName,
             JdbcWriterTokenManager.DEFAULT_LOCK_AT_MOST_FOR,
             JdbcWriterTokenManager.DEFAULT_LOCK_AT_LEAST_FOR);
     this.factStreamPosition =
-        new JdbcFactStreamPosition(jdbcTemplate, positionTableName, projectionKey);
+        new JdbcFactStreamPosition(
+            SpringJdbcDataSources.forPosition(jdbcTemplate), positionTableName, projectionKey);
   }
 
   protected AbstractSpringJdbcManagedProjection(
