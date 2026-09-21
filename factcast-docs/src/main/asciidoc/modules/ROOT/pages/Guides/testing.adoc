@@ -132,7 +132,7 @@ internal `userEmails` map's values copied to a new `Set`.
 
 === Unit Tests
 
-Unit testing this projection is very easier, as there are no external dependencies. We use `Fact` objects as input and
+Unit testing this projection is much easier, as there are no external dependencies. We use `Fact` objects as input and
 check the customized view of the internal map.
 
 Let's look at an example for the `UserAdded` fact:
