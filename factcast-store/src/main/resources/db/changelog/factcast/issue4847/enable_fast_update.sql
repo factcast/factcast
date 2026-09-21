@@ -1,3 +1,5 @@
+-- This change is shipped together with the recommendation to reduce the autovacuum_naptime. Update the docs
+-- accordingly when changing this behavior in the future
 ALTER INDEX idx_fact_header SET (
     fastupdate = true,
     -- 64 MB

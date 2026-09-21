@@ -143,7 +143,7 @@ public class StoreConfigurationProperties implements InitializingBean {
   boolean tailIndexingEnabled = true;
 
   /** defines, if tail indexes should enable the fastUpdate feature */
-  boolean tailIndexingFastUpdateEnabled;
+  boolean tailIndexingFastUpdateEnabled = true;
 
   /** parameter will only be used, if fastUpdate is enabled */
   int tailIndexingPendingListLimit = 4096;

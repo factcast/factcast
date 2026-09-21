@@ -6,6 +6,12 @@ weight = 100015
 
 ## Upgrading to 0.11.3
 
+### Re-enabling `fastupdate` for the main GIN indexes
+
+As described in [General Operation Tips](../Ops/ops-tips.md#optimize-gin-indexes-updates), `fastupdate` was enabled
+again on the `idx_fact_header` GIN and the corresponding tail indexes. We recommend to also configure the
+`autovacuum_naptime` setting of database to '10s'.
+
 ### `@ProjectionMetaData(revision = …)` is deprecated in favor of `revisionId`
 
 `@ProjectionMetaData` used to identify a projection's revision with a `long`. It now offers a `String` attribute
