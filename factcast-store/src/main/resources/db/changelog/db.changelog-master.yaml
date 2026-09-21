@@ -749,6 +749,11 @@ databaseChangeLog:
       author: benediktkaiser
       runInTransaction: false
       comment: (Re-)enables fastupdate of the idx_fact_header, triggered by an autovacuum every 1000 facts
+      preConditions:
+        - onFail: MARK_RAN
+        - sqlCheck:
+            expectedResult: t
+            sql: SELECT count_estimate('SELECT * FROM fact') < 10000000;
       changes:
         - sqlFile:
             encoding: utf8

@@ -65,5 +65,5 @@ default_statistics_target:100
 # allows to deploy major version updates via blue/green deployments, significantly reducing downtime
 rds.logical_replication:'1'
 # when enabling fastupdate we recommend to set naptime to 10s to prevent the pending list from growing to big
-autovacuum_naptime:'10s'
+autovacuum_naptime:'10'
 ```
