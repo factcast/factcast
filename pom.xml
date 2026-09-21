@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.factcast</groupId>
   <artifactId>factcast</artifactId>
-  <version>0.12.3-SNAPSHOT</version>
+  <version>0.12.5-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>factcast</name>
   <description>factcast is a 'good enough' event store using PostgreSQL
@@ -125,15 +125,15 @@
     <testcontainers.version>2.0.5</testcontainers.version>
     <arrow.version>2.1.1</arrow.version>
     <micronaut.version>4.7.5</micronaut.version>
-    <kotlin.version>2.4.10</kotlin.version>
+    <kotlin.version>2.4.20</kotlin.version>
     <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
     <mockk.version>1.14.11</mockk.version>
     <graaljs.version>25.3.4.1</graaljs.version>
     <redisson.version>4.7.0</redisson.version>
-    <aws-sdk.version>2.54.13</aws-sdk.version>
-    <mongodb-driver.version>5.11.0</mongodb-driver.version>
-    <shedlock.version>7.10.0</shedlock.version>
-    <byte-buddy.version>1.18.13-jdk5</byte-buddy.version>
+    <aws-sdk.version>2.55.1</aws-sdk.version>
+    <mongodb-driver.version>5.12.0</mongodb-driver.version>
+    <shedlock.version>7.10.1</shedlock.version>
+    <byte-buddy.version>1.18.14-jdk5</byte-buddy.version>
     <rewrite-java.version>8.90.4</rewrite-java.version>
     <skipUnitTests>false</skipUnitTests>
     <postgres.version>15</postgres.version>
@@ -239,7 +239,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-deploy-plugin</artifactId>
-          <version>3.1.4</version>
+          <version>3.2.0</version>
         </plugin>
         <!--This plugin's configuration is used to store Eclipse m2e settings
           only. It has no influence on the Maven build itself. -->

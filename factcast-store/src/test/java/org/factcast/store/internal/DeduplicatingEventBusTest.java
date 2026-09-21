@@ -17,11 +17,12 @@ package org.factcast.store.internal;
 
 import com.google.common.eventbus.Subscribe;
 import java.time.Duration;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import lombok.SneakyThrows;
 import org.assertj.core.api.Assertions;
 import org.awaitility.Awaitility;
-import org.factcast.store.internal.notification.SchemaStoreChangeNotification;
+import org.factcast.store.internal.notification.*;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -83,6 +84,26 @@ class DeduplicatingEventBusTest {
 
       Awaitility.waitAtMost(MAX_WAIT_MS)
           .untilAsserted(() -> Assertions.assertThat(hit.get()).isEqualTo(10));
+    }
+
+    @SneakyThrows
+    @Test
+    void doesNotDedupNudgeFromTxId_0() {
+      CountDownLatch c = new CountDownLatch(4);
+      class NudgeListener {
+        @Subscribe
+        void on(NudgeNotification o) {
+          c.countDown();
+        }
+      }
+      underTest.register(new NudgeListener());
+
+      underTest.post(new NudgeNotification(0));
+      underTest.post(new NudgeNotification(0));
+      underTest.post(new NudgeNotification(0));
+      underTest.post(new NudgeNotification(0));
+
+      org.junit.jupiter.api.Assertions.assertTrue(c.await(3, TimeUnit.SECONDS));
     }
   }
 }

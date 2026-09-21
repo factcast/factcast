@@ -250,21 +250,21 @@ class DynamoITest extends AbstractFactCastIntegrationTest {
     }
   }
 
-  @ProjectionMetaData(revision = 1)
+  @ProjectionMetaData(revisionId = "1")
   static class ManagedUserNames extends TrackingDynamoManagedUserNames {
     public ManagedUserNames(DynamoDbClient dynamoDbClient) {
       super(dynamoDbClient);
     }
   }
 
-  @ProjectionMetaData(revision = 1)
+  @ProjectionMetaData(revisionId = "1")
   static class SubscribedUserNames extends TrackingDynamoSubscribedUserNames {
     public SubscribedUserNames(DynamoDbClient dynamoDbClient) {
       super(dynamoDbClient);
     }
   }
 
-  @ProjectionMetaData(revision = 1)
+  @ProjectionMetaData(revisionId = "1")
   static class DynamoManagedUserNamesSizeBlowAt7th extends TrackingDynamoManagedUserNames {
     private int count;
 
@@ -282,7 +282,7 @@ class DynamoITest extends AbstractFactCastIntegrationTest {
   }
 
   @Getter
-  @ProjectionMetaData(revision = 1)
+  @ProjectionMetaData(revisionId = "1")
   static class TxDynamoSubscribedUserNamesTokenExposedAndThrowsError
       extends TrackingDynamoSubscribedUserNames {
     private final CountDownLatch latch = new CountDownLatch(1);
@@ -305,7 +305,7 @@ class DynamoITest extends AbstractFactCastIntegrationTest {
     }
   }
 
-  @ProjectionMetaData(revision = 1)
+  @ProjectionMetaData(revisionId = "1")
   static class DynamoSubscribedUserNamesSizeBlowAt7Th extends TrackingDynamoSubscribedUserNames {
     private int count;
 

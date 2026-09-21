@@ -30,7 +30,7 @@ import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.itests.factus.event.UserFired;
 
 @Slf4j
-@ProjectionMetaData(revision = 1)
+@ProjectionMetaData(revisionId = "1")
 public class LocalUserNamesFilterByMultipleAggregateIds extends LocalManagedProjection {
   ConcurrentHashMap<UUID, String> map = new ConcurrentHashMap<>();
 

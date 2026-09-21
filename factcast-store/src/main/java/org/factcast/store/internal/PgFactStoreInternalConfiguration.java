@@ -83,7 +83,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 })
 public class PgFactStoreInternalConfiguration {
 
-  public static final int LISTENER_POOL_MAX_SIZE = 64;
+  public static final int LISTENER_POOL_MAX_SIZE = 16;
   public static final int LISTENER_POOL_CORE_SIZE = LISTENER_POOL_MAX_SIZE;
   public static final long LISTENER_POOL_KEEP_ALIVE_SECONDS = 30;
 
