@@ -205,6 +205,8 @@ public FactStreamPosition factStreamPosition() {
 
 The write token, on the other hand, is worth reusing rather than reimplementing: `JdbcWriterTokenManager`
 is public API and only needs the lock table from the [Preparation](#preparation) section.
+`SpringJdbcDataSources.forLock` hands it a DataSource that stays out of your transaction, so the
+lease is committed as it is taken.
 
 ```java
 private final JdbcWriterTokenManager writerTokenManager;
@@ -215,7 +217,8 @@ public UserNames(
     super(platformTransactionManager);
     this.jdbcTemplate = jdbcTemplate;
     this.writerTokenManager =
-            JdbcWriterTokenManager.create(jdbcTemplate, getScopedName().asString());
+            JdbcWriterTokenManager.create(
+                    SpringJdbcDataSources.forLock(jdbcTemplate), getScopedName().asString());
 }
 
 @Override
@@ -232,3 +235,6 @@ To study the full example see
 - [example code using this projection](https://github.com/factcast/factcast/blob/main/factcast-itests/factcast-itests-factus/src/test/java/org/factcast/itests/factus/client/SpringJdbcTransactionalProjectionExampleITest.java),
 - [the write token and fact-stream-position integration tests](https://github.com/factcast/factcast/blob/main/factcast-itests/factcast-itests-factus/src/test/java/org/factcast/itests/factus/client/SpringJdbcProjectionLockITest.java) and
 - [the Factus integration tests](https://github.com/factcast/factcast/blob/main/factcast-itests/factcast-itests-factus/src/test/java/org/factcast/itests/factus/client/SpringTransactionalITest.java) including managed- and subscribed projections.
+
+For the same projections without Spring, see
+[the plain JDBC integration tests](https://github.com/factcast/factcast/blob/main/factcast-itests/factcast-itests-factus/src/test/java/org/factcast/itests/factus/client/JdbcProjectionLockITest.java).
