@@ -33,7 +33,7 @@ import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
-@ProjectionMetaData(revision = 1)
+@ProjectionMetaData(revisionId = "1")
 public class UserMongoDbTxManagedProjection extends AbstractMongoDbTxManagedProjection {
 
   final MongoTemplate mongoTemplate;

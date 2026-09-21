@@ -67,7 +67,7 @@ class AbstractRedisTxManagedProjectionTest {
   class WhenInspectingClass {
 
     @RedisTransactional(bulkSize = 12, responseTimeout = 112)
-    @ProjectionMetaData(revision = 1)
+    @ProjectionMetaData(revisionId = "1")
     class ProjectionWithBulkSet extends AbstractRedisTxProjection {
       protected ProjectionWithBulkSet(RedissonClient redisson) {
         super(redisson);
@@ -238,7 +238,7 @@ class AbstractRedisTxManagedProjectionTest {
     }
   }
 
-  @ProjectionMetaData(revision = 1)
+  @ProjectionMetaData(revisionId = "1")
   static class TestProjection extends AbstractRedisTxManagedProjection {
 
     TestProjection(@NonNull RedissonClient redisson) {
