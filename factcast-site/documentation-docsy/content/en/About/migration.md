@@ -4,7 +4,16 @@ type = "docs"
 weight = 100015
 +++
 
-## Upgrading to 0.11.3
+## Upgrading to 0.12.5
+
+### Re-enabling `fastupdate` for the main GIN indexes
+
+As described in [General Operation Tips](../Ops/ops-tips.md#optimize-gin-indexes-updates), `fastupdate` was enabled
+again on the `idx_fact_header` GIN and for future tail indexes. We recommend to also configure the `autovacuum_naptime`
+setting of database to '10s'.
+
+The linked change set is **not executed automatically** if the attached condition senses a larger setup (> 10 million
+events). In this case please execute the change set manually to enable the `fastupdate` setting.
 
 ### `@ProjectionMetaData(revision = …)` is deprecated in favor of `revisionId`
 

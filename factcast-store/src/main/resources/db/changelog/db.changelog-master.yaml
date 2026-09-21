@@ -743,3 +743,21 @@ databaseChangeLog:
             relativeToChangelogFile: true
             splitStatements: false
             stripComments: true
+
+  - changeSet:
+      id: issue4847_enable_fastupdate
+      author: benediktkaiser
+      runInTransaction: false
+      comment: (Re-)enables fastupdate of the idx_fact_header, triggered by an autovacuum every 1000 facts
+      preConditions:
+        - onFail: MARK_RAN
+        - sqlCheck:
+            expectedResult: t
+            sql: SELECT count_estimate('SELECT * FROM fact') < 10000000;
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue4847/enable_fast_update.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
