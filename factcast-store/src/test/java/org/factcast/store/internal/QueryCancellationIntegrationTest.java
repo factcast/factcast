@@ -142,7 +142,7 @@ class QueryCancellationIntegrationTest {
 
             @Override
             protected PgQueryBuilder createPgQueryBuilder(List<FactSpec> specs) {
-              return new PgQueryBuilder(specs) {
+              return new PgQueryBuilder(specs, false) {
                 public String createSQL() {
                   var sql = super.createSQL();
 

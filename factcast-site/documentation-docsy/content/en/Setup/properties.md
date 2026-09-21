@@ -70,6 +70,7 @@ description: Properties you can use to configure FactCast
 | factcast.store.offload.jndi-name                                    | same as any DataSource                                                                                                                                                                                                                                                                                                                                                                                                                              |                                          |
 | factcast.store.offload.generate-unique-name                         | same as any DataSource                                                                                                                                                                                                                                                                                                                                                                                                                              |                                          |
 | factcast.store.offload.name                                         | same as any DataSource                                                                                                                                                                                                                                                                                                                                                                                                                              |                                          |
+| factcast.store.use-internal-exclusion                               | Enable only after finishing the blacklist migration described [here]({{< ref "migration.md#upgrading-to-0130">}}). Disables the blacklist entirely and instead enables filtering via exclusion column on the database level.                                                                                                                                                                                                                        | false                                    |
 
 ---
 
@@ -176,7 +177,9 @@ spring.grpc.server.keep-alive.permit-time=100
 
 ---
 
-### Blacklist
+### Blacklist (deprecated in version `0.13.0`)
+
+> The following properties only take effect as long as `factcast.store.internalExclusionEnabled` is set to false.
 
 | Property                    | Description                                                                                                | Default                  | Example                            |
 | --------------------------- | :--------------------------------------------------------------------------------------------------------- | :----------------------- | :--------------------------------- |
