@@ -46,7 +46,7 @@ public class StoreConfigurationProperties implements InitializingBean {
    * Recent serial range to probe backwards before searching all matching facts for state queries.
    * This counts serial positions, not rows or milliseconds. Set to zero to disable the probe.
    */
-  @Min(0)
+  @Min(1)
   int stateQueryBackwardScanWindow = 20000;
 
   /** defines the max number of Facts being scheduled for transformation */
