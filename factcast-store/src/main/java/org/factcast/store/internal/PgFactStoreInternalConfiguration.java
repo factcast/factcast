@@ -132,6 +132,7 @@ public class PgFactStoreInternalConfiguration {
       FactTransformerService factTransformerService,
       PgFactIdToSerialMapper pgFactIdToSerialMapper,
       PgMetrics pgMetrics,
+      FactStreamHorizonProvider horizonProvider,
       StoreConfigurationProperties props,
       PlatformTransactionManager platformTransactionManager) {
     return new PgFactStore(
@@ -143,6 +144,7 @@ public class PgFactStoreInternalConfiguration {
         factTransformerService,
         pgFactIdToSerialMapper,
         pgMetrics,
+        horizonProvider,
         props,
         platformTransactionManager);
   }

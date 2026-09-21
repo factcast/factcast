@@ -52,7 +52,7 @@ public class PgQueryBuilder {
     factSpecs = specs;
   }
 
-  public PreparedStatementSetter createStatementSetter(@NonNull AtomicLong serial) {
+  public PreparedStatementSetter createUnboundedStatementSetter(@NonNull AtomicLong serial) {
     return createStatementSetter(serial, null);
   }
 
@@ -233,15 +233,15 @@ public class PgQueryBuilder {
     return where;
   }
 
-  public String createSQL() {
-    return createSQL(false);
+  public String createUnboundedSQL() {
+    return createUnboundedSQL(false);
   }
 
   public String createBoundedSQL() {
-    return createSQL(true);
+    return createUnboundedSQL(true);
   }
 
-  private String createSQL(boolean bounded) {
+  private String createUnboundedSQL(boolean bounded) {
 
     if (useTemporaryTable()) {
       return "INSERT INTO "
@@ -273,7 +273,7 @@ public class PgQueryBuilder {
     return tempTableName != null;
   }
 
-  public String createStateSQL() {
+  private String createStateSQL(boolean bounded) {
 
     String sql =
         "SELECT "
@@ -281,7 +281,7 @@ public class PgQueryBuilder {
             + FROM
             + PgConstants.TABLE_FACT
             + WHERE
-            + createWhereClause(false)
+            + createWhereClause(bounded)
             + ORDER_BY
             + PgConstants.COLUMN_SER
             + " DESC LIMIT 1";

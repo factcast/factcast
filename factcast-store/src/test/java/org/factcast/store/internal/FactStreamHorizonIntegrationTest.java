@@ -28,6 +28,9 @@ import javax.sql.DataSource;
 import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
+import org.factcast.core.store.State;
+import org.factcast.core.store.StateToken;
+import org.factcast.core.store.TokenStore;
 import org.factcast.core.subscription.*;
 import org.factcast.store.internal.horizon.FactStreamHorizon;
 import org.factcast.store.internal.horizon.FactStreamHorizonProvider;
@@ -50,6 +53,7 @@ final class FactStreamHorizonIntegrationTest {
   private static final String NS = "safe-horizon";
 
   @Autowired FactStore store;
+  @Autowired TokenStore tokenStore;
   @Autowired DataSource dataSource;
   @Autowired JdbcTemplate jdbcTemplate;
   @Autowired FactStreamHorizonProvider horizonProvider;
@@ -86,6 +90,46 @@ final class FactStreamHorizonIntegrationTest {
     assertThat(horizon.highWaterMark().targetId()).isEqualTo(latest.id());
     assertThat(horizon.highWaterMark().targetSer()).isEqualTo(expectedFactSerial);
     assertThat(horizon.notificationSerial()).isEqualTo(expectedNotificationSerial);
+  }
+
+  @Test
+  void stateTokenWaitsForHorizonBeforeCapturingState() throws Exception {
+    Fact lowerMatching =
+        Fact.builder().id(UUID.randomUUID()).ns(NS).type("matching-type").buildWithoutPayload();
+    Fact higherNonMatching =
+        Fact.builder().id(UUID.randomUUID()).ns(NS).type("different-type").buildWithoutPayload();
+    FactSpec matchingSpec = FactSpec.ns(NS).type("matching-type");
+
+    try (Connection lowerTransaction = dataSource.getConnection()) {
+      lowerTransaction.setAutoCommit(false);
+      acquireSharedPublishLock(lowerTransaction);
+      long reservedLowerSerial = reserveFactSerial(lowerTransaction);
+
+      CompletableFuture.runAsync(() -> store.publish(List.of(higherNonMatching)))
+          .get(5, TimeUnit.SECONDS);
+
+      CompletableFuture<StateToken> tokenCreation =
+          CompletableFuture.supplyAsync(() -> store.stateFor(List.of(matchingSpec)));
+
+      await()
+          .atMost(Duration.ofSeconds(5))
+          .until(
+              () ->
+                  Boolean.TRUE.equals(
+                      jdbcTemplate.queryForObject(
+                          "SELECT EXISTS (SELECT 1 FROM pg_locks "
+                              + "WHERE locktype='advisory' AND mode='ExclusiveLock' "
+                              + "AND granted=false)",
+                          Boolean.class)));
+      assertThat(tokenCreation).isNotDone();
+
+      insert(lowerTransaction, reservedLowerSerial, lowerMatching);
+      lowerTransaction.commit();
+
+      StateToken token = tokenCreation.get(5, TimeUnit.SECONDS);
+      State state = tokenStore.get(token).orElseThrow();
+      assertThat(state.serialOfLastMatchingFact()).isEqualTo(reservedLowerSerial);
+    }
   }
 
   @Test

@@ -40,7 +40,10 @@ import org.factcast.core.store.TokenStore;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.subscription.observer.HighWaterMark;
 import org.factcast.store.StoreConfigurationProperties;
+import org.factcast.store.internal.horizon.FactStreamHorizon;
+import org.factcast.store.internal.horizon.FactStreamHorizonProvider;
 import org.factcast.store.internal.lock.FactTableWriteLock;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgQueryBuilder;
@@ -79,6 +82,8 @@ class PgFactStoreTest {
   PgMetrics metrics;
 
   @Mock @NonNull TokenStore tokenStore;
+
+  @Mock @NonNull FactStreamHorizonProvider horizonProvider;
 
   @Spy
   StoreConfigurationProperties storeConfigurationProperties = new StoreConfigurationProperties();
@@ -507,14 +512,14 @@ class PgFactStoreTest {
 
     @SneakyThrows
     @Test
-    void name() {
+    void validationUsesUnboundedQuery() {
       FactSpec spec1 = FactSpec.ns("ns1").type("type1");
       List<FactSpec> specs = Lists.newArrayList(spec1);
 
       PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs);
-      String stateSQL = pgQueryBuilder.createStateSQL();
+      String stateSQL = pgQueryBuilder.createStateSQL(false);
       PreparedStatementSetter statementSetter =
-          pgQueryBuilder.createStatementSetter(new AtomicLong(0));
+          pgQueryBuilder.createUnboundedStatementSetter(new AtomicLong(0));
 
       ArgumentCaptor<PreparedStatementSetter> captor =
           ArgumentCaptor.forClass(PreparedStatementSetter.class);
@@ -525,6 +530,29 @@ class PgFactStoreTest {
       PreparedStatement ps = mock(PreparedStatement.class);
       captor.getValue().setValues(ps);
       verify(ps).setLong(3, 16L);
+    }
+
+    @SneakyThrows
+    @Test
+    void tokenCreationUsesBoundedQueryAtHorizon() {
+      FactSpec spec = FactSpec.ns("ns1").type("type1");
+      List<FactSpec> specs = Lists.newArrayList(spec);
+      when(horizonProvider.advance())
+          .thenReturn(new FactStreamHorizon(HighWaterMark.of(UUID.randomUUID(), 42), 42));
+
+      PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs);
+      String stateSQL = pgQueryBuilder.createStateSQL(true);
+      ArgumentCaptor<PreparedStatementSetter> captor =
+          ArgumentCaptor.forClass(PreparedStatementSetter.class);
+      when(jdbcTemplate.query(eq(stateSQL), captor.capture(), any(ResultSetExtractor.class)))
+          .thenReturn(32L);
+
+      assertThat(underTest.getStateFor(specs).serialOfLastMatchingFact()).isEqualTo(32L);
+
+      PreparedStatement ps = mock(PreparedStatement.class);
+      captor.getValue().setValues(ps);
+      verify(ps).setLong(3, 0L);
+      verify(ps).setLong(4, 42L);
     }
   }
 
@@ -545,9 +573,9 @@ class PgFactStoreTest {
       List<FactSpec> specs = Lists.newArrayList(spec1);
 
       PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs);
-      String stateSQL = pgQueryBuilder.createStateSQL();
+      String stateSQL = pgQueryBuilder.createStateSQL(false);
       PreparedStatementSetter statementSetter =
-          pgQueryBuilder.createStatementSetter(new AtomicLong(12));
+          pgQueryBuilder.createUnboundedStatementSetter(new AtomicLong(12));
       ArgumentCaptor<PreparedStatementSetter> captor =
           ArgumentCaptor.forClass(PreparedStatementSetter.class);
       when(jdbcTemplate.query(eq(stateSQL), captor.capture(), any(ResultSetExtractor.class)))
@@ -571,14 +599,15 @@ class PgFactStoreTest {
 
     @SneakyThrows
     @Test
-    void name() {
+    void usesHorizonInsteadOfRawFactMaximum() {
       FactSpec spec1 = FactSpec.ns("ns1").type("type1");
       List<FactSpec> specs = Lists.newArrayList(spec1);
 
-      PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs);
-      String stateSQL = pgQueryBuilder.createStateSQL();
-      when(jdbcTemplate.queryForObject(PgConstants.LAST_SERIAL_IN_LOG, Long.class)).thenReturn(32L);
+      when(horizonProvider.advance())
+          .thenReturn(new FactStreamHorizon(HighWaterMark.of(UUID.randomUUID(), 32), 32));
+
       assertThat(underTest.getCurrentStateFor(specs).serialOfLastMatchingFact()).isEqualTo(32L);
+      verifyNoInteractions(jdbcTemplate);
     }
   }
 

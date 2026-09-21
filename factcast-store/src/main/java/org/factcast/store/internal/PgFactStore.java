@@ -31,6 +31,7 @@ import org.factcast.core.subscription.*;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.core.util.ExceptionHelper;
 import org.factcast.store.StoreConfigurationProperties;
+import org.factcast.store.internal.horizon.FactStreamHorizonProvider;
 import org.factcast.store.internal.lock.FactTableWriteLock;
 import org.factcast.store.internal.query.*;
 import org.factcast.store.internal.transformation.*;
@@ -62,6 +63,8 @@ public class PgFactStore extends AbstractFactStore {
 
   @NonNull private final PgMetrics metrics;
 
+  @NonNull private final FactStreamHorizonProvider horizonProvider;
+
   @NonNull private final StoreConfigurationProperties props;
 
   private final @NonNull UnconditionalPublishQueue queue;
@@ -76,6 +79,7 @@ public class PgFactStore extends AbstractFactStore {
       @NonNull FactTransformerService factTransformerService,
       @NonNull PgFactIdToSerialMapper pgFactIdToSerialMapper,
       @NonNull PgMetrics metrics,
+      @NonNull FactStreamHorizonProvider horizonProvider,
       @NonNull StoreConfigurationProperties props,
       @NonNull PlatformTransactionManager platformTransactionManager) {
     super(tokenStore);
@@ -86,6 +90,7 @@ public class PgFactStore extends AbstractFactStore {
     this.lock = lock;
     this.pgFactIdToSerialMapper = pgFactIdToSerialMapper;
     this.metrics = metrics;
+    this.horizonProvider = horizonProvider;
     this.factTransformerService = factTransformerService;
     this.props = props;
 
@@ -293,7 +298,8 @@ public class PgFactStore extends AbstractFactStore {
   @Override
   @NonNull
   protected State getStateFor(@NonNull Collection<FactSpec> specs) {
-    return doGetState(specs, 0);
+    long horizonSerial = horizonProvider.advance().highWaterMark().targetSer();
+    return doGetState(specs, 0, OptionalLong.of(horizonSerial));
   }
 
   @Override
@@ -304,13 +310,28 @@ public class PgFactStore extends AbstractFactStore {
 
   @VisibleForTesting
   State doGetState(@NotNull Collection<FactSpec> specs, long lastMatchingSerial) {
+    return doGetState(specs, lastMatchingSerial, OptionalLong.empty());
+  }
+
+  private State doGetState(
+      @NotNull Collection<FactSpec> specs,
+      long lastMatchingSerial,
+      @NonNull OptionalLong horizonSerial) {
     return metrics.time(
         StoreMetrics.OP.GET_STATE_FOR,
         () -> {
           PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs);
-          String stateSQL = pgQueryBuilder.createStateSQL();
+          String stateSQL;
+          stateSQL =
+              horizonSerial.isPresent()
+                  ? pgQueryBuilder.createStateSQL(true)
+                  : pgQueryBuilder.createStateSQL(false);
           PreparedStatementSetter statementSetter =
-              pgQueryBuilder.createStatementSetter(new AtomicLong(lastMatchingSerial));
+              horizonSerial.isPresent()
+                  ? pgQueryBuilder.createBoundedStatementSetter(
+                      new AtomicLong(lastMatchingSerial), horizonSerial.getAsLong())
+                  : pgQueryBuilder.createUnboundedStatementSetter(
+                      new AtomicLong(lastMatchingSerial));
 
           ResultSetExtractor<Long> rch =
               resultSet -> {
@@ -330,12 +351,7 @@ public class PgFactStore extends AbstractFactStore {
   protected State getCurrentStateFor(Collection<FactSpec> specs) {
     return metrics.time(
         StoreMetrics.OP.GET_STATE_FOR,
-        () -> {
-          long max =
-              Objects.requireNonNull(
-                  jdbcTemplate.queryForObject(PgConstants.LAST_SERIAL_IN_LOG, Long.class));
-          return State.of(specs, max);
-        });
+        () -> State.of(specs, horizonProvider.advance().highWaterMark().targetSer()));
   }
 
   @SuppressWarnings("DataFlowIssue")
