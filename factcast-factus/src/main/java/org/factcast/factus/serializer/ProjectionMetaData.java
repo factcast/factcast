@@ -47,6 +47,7 @@ public @interface ProjectionMetaData {
       return metaData;
     }
 
+    @SuppressWarnings("removal")
     private static void validate(Class<?> clazz, ProjectionMetaData md) {
       boolean hasRevisionSet = md.revision() != 0;
       boolean hasIdSet = !md.revisionId().equals(DEFAULT_REVISION_ID);

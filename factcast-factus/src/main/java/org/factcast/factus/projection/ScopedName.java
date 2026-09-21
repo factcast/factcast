@@ -47,6 +47,7 @@ public class ScopedName {
     return ScopedName.of(name + NAME_SEPARATOR + revisionIdentifier(metaData));
   }
 
+  @SuppressWarnings("removal")
   private static @NonNull String revisionIdentifier(@NonNull ProjectionMetaData metaData) {
     // 0 is the default value therefore we assume revision is not set.
     if (metaData.revision() != 0) {
