@@ -38,7 +38,7 @@ public final class Blacklist implements Consumer<Set<UUID>> {
   public void accept(@NonNull Set<UUID> currentList) {
     // we should not just replace it in order to not mess with the reference
     synchronized (blocked) {
-      blocked.retainAll(currentList);
+      blocked.clear();
       blocked.addAll(currentList);
     }
   }
