@@ -7,7 +7,7 @@
 @file:Repository("https://bindings.krzeminski.it")
 
 @file:DependsOn("actions:checkout:v7")
-@file:DependsOn("actions:setup-java:v5")
+@file:DependsOn("actions:setup-java:v6")
 
 import io.github.typesafegithub.workflows.actions.actions.Checkout
 import io.github.typesafegithub.workflows.actions.actions.SetupJava

@@ -29,7 +29,7 @@ import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
-@ProjectionMetaData(revision = 1)
+@ProjectionMetaData(revisionId = "1")
 public class UserMongoDbSubscribedProjection extends AbstractMongoDbSubscribedProjection {
 
   private final MongoCollection<UserSchema> userCollection;

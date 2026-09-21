@@ -16,6 +16,7 @@
 package org.factcast.store.internal.listen;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -31,6 +32,7 @@ import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.jdbc.core.*;
 
 @SuppressWarnings({"java:S6068", "unchecked"})
@@ -62,6 +64,41 @@ class NudgeNotificationHandlerTest {
   @AfterEach
   void tearDown() throws Exception {
     handler.destroy();
+  }
+
+  @Test
+  void readOnlyModeDoesNotScheduleCleanup() throws Exception {
+    handler.destroy();
+    when(props.isReadOnlyModeEnabled()).thenReturn(true);
+
+    handler = new NudgeNotificationHandler(bus, jdbc, props, metrics);
+    awaitInitialTimerTasks();
+
+    verifyNoInteractions(jdbc);
+  }
+
+  @Test
+  void writableModeRunsCleanup() throws Exception {
+    handler.destroy();
+
+    handler = new NudgeNotificationHandler(bus, jdbc, props, metrics);
+    awaitInitialTimerTasks();
+
+    verify(jdbc).execute("CALL notificationCleanup()");
+  }
+
+  private void awaitInitialTimerTasks() throws InterruptedException {
+    var completed = new CountDownLatch(1);
+    // The timer runs tasks serially, so this runs after any immediate cleanup scheduled at startup.
+    handler.timer.schedule(
+        new TimerTask() {
+          @Override
+          public void run() {
+            completed.countDown();
+          }
+        },
+        0);
+    assertThat(completed.await(5, TimeUnit.SECONDS)).isTrue();
   }
 
   @Test
@@ -245,6 +282,29 @@ class NudgeNotificationHandlerTest {
     Thread.sleep(100);
     // one for initial, one for 25,30 (initial for 2nd nudge), 55, 80, 105, 130
     verify(handler, times(1)).fetchPairsAndDispatch();
+  }
+
+  @Test
+  void scheduledPollHandlesDatabaseFailure() {
+    // Given
+    long version = handler.timerVersion.get();
+    doThrow(new DataAccessResourceFailureException("database unavailable"))
+        .when(handler)
+        .fetchPairsAndDispatch();
+
+    // When / Then
+    assertThatCode(() -> handler.new ScheduledPoll(version).run()).doesNotThrowAnyException();
+  }
+
+  @Test
+  void scheduledCleanupHandlesDatabaseFailure() {
+    // Given
+    doThrow(new DataAccessResourceFailureException("database unavailable"))
+        .when(jdbc)
+        .execute(anyString());
+
+    // When / Then
+    assertThatCode(() -> handler.new ScheduledCleanup().run()).doesNotThrowAnyException();
   }
 
   @Test

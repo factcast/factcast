@@ -60,11 +60,12 @@ class Resilience {
 
       boolean retryable = ClientExceptionHelper.isRetryable(exception);
       if (retryable) {
-        log.debug("Exception of type {} is considered retryable.", exception.getClass(), exception);
+        // there is no need to log the stacktrace
+        log.debug("Exception of type {} is considered retryable.", exception.getClass());
         return true;
       } else {
-        log.debug(
-            "Exception of type {} is not considered retryable.", exception.getClass(), exception);
+        // there is no need to log the stacktrace
+        log.debug("Exception of type {} is not considered retryable.", exception.getClass());
       }
     } else {
       log.trace("Resilience is disabled.");

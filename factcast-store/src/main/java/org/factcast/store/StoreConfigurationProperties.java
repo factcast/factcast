@@ -80,14 +80,6 @@ public class StoreConfigurationProperties implements InitializingBean {
   boolean persistentRegistry = true;
 
   /**
-   * When using the persistent impl of the transformation cache, this is the min number of days a
-   * transformation result is not read in order to be considered stale. This should free some space
-   * in a regular cleanup job. If set to -1, no cleanup is performed.
-   */
-  @Min(-1)
-  int deleteTransformationsStaleForDays = -1;
-
-  /**
    * If validation is enabled, this controls if transformed facts are persistently cached in
    * postgres, rather than in memory. (Defaults to false)
    */
@@ -266,7 +258,11 @@ public class StoreConfigurationProperties implements InitializingBean {
   @Max(50)
   long maxNotificationPollLatencyInMillis = 25;
 
-  public static class OffloadDataSourceProperties extends DataSourceProperties {}
+  @Getter
+  @Setter
+  public static class OffloadDataSourceProperties extends DataSourceProperties {
+    boolean enabled;
+  }
 
   @Valid OffloadDataSourceProperties offload = new OffloadDataSourceProperties();
 

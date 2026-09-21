@@ -95,6 +95,12 @@ class ClientExceptionHelperTest {
     }
 
     @Test
+    void doesNotConsiderUnimplementedRetryable() {
+      StatusRuntimeException ex = new StatusRuntimeException(Status.UNIMPLEMENTED);
+      assertThat(ClientExceptionHelper.isRetryable(ex)).isFalse();
+    }
+
+    @Test
     void wrapsRetryableCancelledWithMessage() {
       StatusRuntimeException ex =
           new StatusRuntimeException(

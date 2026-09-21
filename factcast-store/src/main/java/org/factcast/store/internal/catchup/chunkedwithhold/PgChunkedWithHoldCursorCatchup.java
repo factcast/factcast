@@ -23,6 +23,7 @@ import java.util.UUID;
 import java.util.concurrent.atomic.*;
 import javax.annotation.*;
 import lombok.*;
+import lombok.experimental.Accessors;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.*;
@@ -35,10 +36,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.datasource.*;
 
+@Accessors(fluent = true)
 public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
 
   private static final Logger log = LoggerFactory.getLogger(PgChunkedWithHoldCursorCatchup.class);
-  private Connection connection;
 
   @SneakyThrows
   @SuppressWarnings("java:S107")
@@ -46,29 +47,21 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
       @NonNull StoreConfigurationProperties props,
       @NonNull PgMetrics metrics,
       @NonNull SubscriptionRequestTO req,
-      @NonNull ServerPipeline pipeline,
+      @NonNull PushbackServerPipeline pipeline,
       @NonNull AtomicLong serial,
-      @NonNull CurrentStatementHolder statementHolder,
       @NonNull SingleConnectionDataSource ds,
       @NonNull PgCatchupFactory.Phase phase) {
-    super(props, metrics, req, pipeline, serial, statementHolder, ds, phase);
-    connection = ds.getConnection();
+    super(props, metrics, req, pipeline, serial, ds, phase);
   }
 
   @SneakyThrows
   @Override
   public synchronized void run() {
-    if (connection == null)
-      throw new IllegalStateException("PgChunkedWithHoldCursorCatchup is a one-shot object");
-
     try (Cursor cursor = createCursor(props.getChunkSize())) {
       if (fetchAll(cursor)) {
         log.trace("Done fetching, flushing.");
         pipeline.process(Signal.flush());
       }
-    } finally {
-      connection.close();
-      connection = null;
     }
   }
 
@@ -91,36 +84,30 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
   /** returns true if fetch was not completely empty */
   @VisibleForTesting
   boolean fetchAll(@NonNull Cursor cursor) throws SQLException {
-    final var queryBuilder = new PgQueryBuilder(req.specs(), statementHolder);
+    final var queryBuilder = new PgQueryBuilder(req.specs());
     queryBuilder.serialsOnly();
 
     final var extractor = new PgFactExtractor(serial);
     final var fromSerial = new AtomicLong(Math.max(serial.get(), fastForward));
 
-    if (statementHolder.wasCanceled()) return false;
+    Boolean moreToFetch =
+        inTransaction(() -> declareAndFetchFirst(cursor, queryBuilder, fromSerial, extractor));
 
-    try {
-      Boolean moreToFetch =
-          inTransaction(() -> declareAndFetchFirst(cursor, queryBuilder, fromSerial, extractor));
+    if (moreToFetch == null) {
+      // no rows fetched whatsoever
+      return false;
+    } else {
+      if (moreToFetch) {
+        log.trace("{} catchup {}, fetching further rows from held cursor", req, phase);
 
-      if (moreToFetch == null) {
-        // no rows fetched whatsoever
-        return false;
-      } else {
-        if (moreToFetch) {
-          log.trace("{} catchup {}, fetching further rows from held cursor", req, phase);
-
-          // thing is, we still need another transaction around, so that setFetchSize continues to
-          // work
-          //
-          // also we want to keep the transaction boundaries to one chunk only, in order not to
-          // block the index maintenance on the fact table
-          continueFetchingUntilExhausted(cursor, extractor);
-        }
-        return true;
+        // thing is, we still need another transaction around, so that setFetchSize continues to
+        // work
+        //
+        // also we want to keep the transaction boundaries to one chunk only, in order not to
+        // block the index maintenance on the fact table
+        continueFetchingUntilExhausted(cursor, extractor);
       }
-    } finally {
-      statementHolder.clear();
+      return true;
     }
   }
 
@@ -128,10 +115,8 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
   protected void continueFetchingUntilExhausted(
       @NonNull Cursor cursor, @NonNull PgFactExtractor extractor) throws SQLException {
 
-    while (!statementHolder.wasCanceled()) {
-      if (inTransaction(() -> cursor.fetchChunk(extractor)) < cursor.chunkSize())
-        // early exit, as there are no more rows to fetch
-        return;
+    while (true) {
+      if (inTransaction(() -> cursor.fetchChunk(extractor)) != cursor.chunkSize()) break;
     }
   }
 
@@ -144,6 +129,7 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
    */
   @VisibleForTesting
   @Nullable
+  @SuppressWarnings("java:S2095")
   Boolean declareAndFetchFirst(
       @NonNull Cursor cursor,
       @NonNull PgQueryBuilder queryBuilder,
@@ -152,15 +138,12 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
       throws SQLException {
 
     Preconditions.checkArgument(
-        !connection.getAutoCommit(), "We rely on this being executed in a transaction");
+        !ds.getConnection().getAutoCommit(), "We rely on this being executed in a transaction");
 
     final var timer = metrics.timer(StoreMetrics.OP.RESULT_STREAM_START, fromSerial.get() <= 0);
     final var timerSample = metrics.startSample();
 
     cursor.declare(queryBuilder, fromSerial);
-
-    // as declaring the cursor could have taken some time, we'll check again
-    if (statementHolder.wasCanceled()) return null;
 
     log.debug("{} catchup {}, fetching first chunk", req, phase);
 
@@ -186,10 +169,11 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
   }
 
   @VisibleForTesting
+  @Getter
   protected class Cursor implements AutoCloseable {
-    @Getter private final int chunkSize;
-    @Getter private final String name = "catchup_" + UUID.randomUUID().toString().replace("-", "");
-    private final @NonNull String fetchSql;
+    private final int chunkSize;
+    private final String name = "catchup_" + UUID.randomUUID().toString().replace("-", "");
+    @NonNull String fetchSql;
 
     public Cursor(int chunkSize) {
       this.chunkSize = chunkSize;
@@ -199,7 +183,7 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
     @SuppressWarnings("java:S2077")
     @VisibleForTesting
     public void close() {
-      try (PreparedStatement ps = connection.prepareStatement("CLOSE " + name); ) {
+      try (PreparedStatement ps = ds.getConnection().prepareStatement("CLOSE " + name); ) {
         ps.execute();
       } catch (Exception e) {
         // swallow as unimportant to not break the control flow
@@ -208,6 +192,7 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
     }
 
     @VisibleForTesting
+    @SuppressWarnings("java:S2077")
     void declare(@NonNull PgQueryBuilder queryBuilder, @NonNull AtomicLong fromSerial)
         throws SQLException {
 
@@ -231,7 +216,7 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
                                   )
                                   SELECT array_agg(ser ORDER BY rn) FROM numbered GROUP BY grp ORDER BY grp ASC
                               """,
-              name(), chunkSize, queryBuilder.createSQL());
+              name(), chunkSize(), queryBuilder.createSQL());
 
       log.trace(
           "{} catchup {}, declaring cursor-with-hold after SER={}\n{}",
@@ -240,7 +225,7 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
           fromSerial.get(),
           sql);
 
-      try (PreparedStatement declare = connection.prepareStatement(sql)) {
+      try (PreparedStatement declare = ds.getConnection().prepareStatement(sql)) {
         queryBuilder.createStatementSetter(fromSerial).setValues(declare);
         declare.execute();
         log.trace("{} catchup {}, cursor-with-hold declared", req, phase);
@@ -258,9 +243,8 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
         throws SQLException {
 
       final AtomicInteger rows = new AtomicInteger(0);
-      try (PreparedStatement fetch = connection.prepareStatement(fetchSql)) {
+      try (PreparedStatement fetch = ds.getConnection().prepareStatement(fetchSql)) {
         fetch.setFetchSize(props.getPageSize());
-        statementHolder.statement(fetch);
 
         log.debug(
             "{} catchup {}, query next chunk of size {} by ser \n{}",
@@ -269,27 +253,16 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
             chunkSize(),
             fetchSql);
 
-        try {
-          FetchingQuery.create(props)
-              .executeAndProcess(
-                  fetch,
-                  rs -> {
-                    if (statementHolder.wasCanceled()) {
-                      log.trace("{} catchup {}, fetch chunk statement was cancelled", req, phase);
-                    } else {
-                      PgFact fact = extractor.mapRow(rs, rows.get());
-                      pipeline.process(Signal.of(fact));
-                      rows.incrementAndGet();
-                    }
-                  },
-                  callbackAfterExecution::run);
-        } catch (SQLException e) {
-          if (statementHolder.wasCanceled()) {
-            log.trace("{} catchup {}, fetch chunk was cancelled", req, phase, e);
-            return rows.get();
-          }
-          throw e;
-        }
+        FetchingQuery.create(props)
+            .executeAndProcess(
+                fetch,
+                rs -> {
+                  PgFact fact = extractor.mapRow(rs, rows.get());
+                  // this intentionally throws PipelineAlreadyClosedException
+                  pipeline.process(Signal.of(fact));
+                  rows.incrementAndGet();
+                },
+                callbackAfterExecution::run);
         return rows.get();
       }
     }
@@ -298,7 +271,7 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
       return "SELECT "
           + PgConstants.PROJECTION_FACT
           + " FROM fetchFactsFromCursorWithHold('"
-          + name()
+          + name
           + "')";
     }
   }
@@ -324,18 +297,20 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
   }
 
   private <R> R doInTransaction(@NonNull ThrowingCallable<R> callable) throws SQLException {
-    connection.setAutoCommit(false);
-
-    try {
-      R call = callable.call();
-      connection.commit();
-      connection.setAutoCommit(true);
-      return call;
-    } catch (Exception e) {
-      connection.rollback();
-      connection.setAutoCommit(true);
-      if (e instanceof SQLException sql) throw sql;
-      throw new SQLException(e);
+    try (Connection connection = ds.getConnection(); ) {
+      boolean autocommitBefore = connection.getAutoCommit();
+      connection.setAutoCommit(false);
+      try {
+        R call = callable.call();
+        connection.commit();
+        return call;
+      } catch (Exception e) {
+        connection.rollback();
+        if (e instanceof SQLException sql) throw sql;
+        throw new SQLException(e);
+      } finally {
+        connection.setAutoCommit(autocommitBefore);
+      }
     }
   }
 }

@@ -28,7 +28,7 @@ import org.factcast.factus.Handler;
 import org.factcast.factus.mongodb.AbstractMongoDbManagedProjection;
 import org.factcast.factus.serializer.ProjectionMetaData;
 
-@ProjectionMetaData(revision = 1)
+@ProjectionMetaData(revisionId = "1")
 @Slf4j
 public class UserMongoDbManagedProjection extends AbstractMongoDbManagedProjection {
 

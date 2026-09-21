@@ -90,7 +90,7 @@ public class RedisTransactionProjectorBenchmark {
     projector.apply(facts);
   }
 
-  @ProjectionMetaData(name = "peter", revision = 12)
+  @ProjectionMetaData(name = "peter", revisionId = "12")
   static class TestProjection extends AbstractRedisTxManagedProjection {
 
     protected int count;
@@ -103,7 +103,7 @@ public class RedisTransactionProjectorBenchmark {
     void apply(UserCreated u) {}
   }
 
-  @ProjectionMetaData(name = "peter", revision = 12)
+  @ProjectionMetaData(name = "peter", revisionId = "12")
   @RedisTransactional(bulkSize = 50)
   static class TestProjection50 extends TestProjection {
     public TestProjection50(@NonNull RedissonClient redisson) {

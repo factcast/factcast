@@ -29,7 +29,7 @@ import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.filter.blacklist.Blacklist;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.logsuppression.LogSuppression;
-import org.factcast.store.internal.pipeline.ServerPipeline;
+import org.factcast.store.internal.pipeline.PushbackServerPipeline;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.telemetry.PgStoreTelemetry;
 import org.factcast.store.internal.transformation.FactTransformerService;
@@ -51,7 +51,7 @@ class PgFactStreamTelemetryTest {
   @Mock FactTransformerService transformationService;
   @Mock Blacklist blacklist;
   @Mock PgMetrics metrics;
-  @Mock ServerPipeline serverPipeline;
+  @Mock PushbackServerPipeline pipeline;
   @Mock PgStoreTelemetry telemetry;
   @Mock SubscriptionRequestTO req;
   @Mock StoreConfigurationProperties props;
@@ -71,7 +71,7 @@ class PgFactStreamTelemetryTest {
   @Test
   void postsTelemetryOnCatchup() {
     when(req.debugInfo()).thenReturn("test");
-    when(pgCatchupFactory.create(eq(req), eq(serverPipeline), any(), any(), any(), any()))
+    when(pgCatchupFactory.create(eq(req), eq(pipeline), any(), any(), any()))
         .thenReturn(mock(PgCatchup.class));
 
     when(ffwdTarget.highWaterMark(any())).thenReturn(HighWaterMark.empty());
@@ -88,7 +88,7 @@ class PgFactStreamTelemetryTest {
   void postsTelemetryOnFollow() {
     when(req.continuous()).thenReturn(true);
     when(req.debugInfo()).thenReturn("test");
-    when(pgCatchupFactory.create(eq(req), eq(serverPipeline), any(), any(), any(), any()))
+    when(pgCatchupFactory.create(eq(req), eq(pipeline), any(), any(), any()))
         .thenReturn(mock(PgCatchup.class));
     when(ffwdTarget.highWaterMark(any())).thenReturn(HighWaterMark.empty());
 
@@ -105,7 +105,7 @@ class PgFactStreamTelemetryTest {
   void postsTelemetryOnClose() {
     when(req.continuous()).thenReturn(true);
     when(req.debugInfo()).thenReturn("test");
-    when(pgCatchupFactory.create(eq(req), eq(serverPipeline), any(), any(), any(), any()))
+    when(pgCatchupFactory.create(eq(req), eq(pipeline), any(), any(), any()))
         .thenReturn(mock(PgCatchup.class));
     when(ffwdTarget.highWaterMark(any())).thenReturn(HighWaterMark.empty());
 

@@ -23,9 +23,12 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 import io.micrometer.core.instrument.Tags;
 import java.nio.charset.StandardCharsets;
+import java.sql.SQLFeatureNotSupportedException;
 import lombok.NonNull;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
@@ -146,6 +149,21 @@ class GrpcObserverAdapterTest {
     uut.onError(exception);
     verify(observer).onError(any());
     verify(serverExceptionLogger).log(exception, "foo");
+  }
+
+  @Test
+  void sendsUnsupportedJdbcFeatureAsUnimplemented() {
+    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, serverExceptionLogger);
+    var exception = new SQLFeatureNotSupportedException("Operation not yet supported");
+    ArgumentCaptor<Throwable> error = ArgumentCaptor.forClass(Throwable.class);
+
+    uut.onError(exception);
+
+    verify(observer).onError(error.capture());
+    assertThat(error.getValue())
+        .isInstanceOf(StatusRuntimeException.class)
+        .extracting(e -> ((StatusRuntimeException) e).getStatus().getCode())
+        .isEqualTo(Status.Code.UNIMPLEMENTED);
   }
 
   @Test

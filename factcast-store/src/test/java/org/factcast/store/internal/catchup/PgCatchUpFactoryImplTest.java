@@ -26,8 +26,7 @@ import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.catchup.chunked.PgChunkedCatchup;
 import org.factcast.store.internal.catchup.chunkedwithhold.PgChunkedWithHoldCursorCatchup;
 import org.factcast.store.internal.catchup.cursor.PgCursorCatchup;
-import org.factcast.store.internal.pipeline.ServerPipeline;
-import org.factcast.store.internal.query.CurrentStatementHolder;
+import org.factcast.store.internal.pipeline.PushbackServerPipeline;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -45,9 +44,8 @@ class PgCatchUpFactoryImplTest {
   @Mock PgMetrics metrics;
 
   @Mock SubscriptionRequestTO request;
-  @Mock ServerPipeline pipeline;
+  @Mock PushbackServerPipeline pipeline;
   @Mock AtomicLong serial;
-  @Mock CurrentStatementHolder holder;
   @Mock SingleConnectionDataSource ds;
 
   @InjectMocks PgCatchUpFactoryImpl underTest;
@@ -61,8 +59,7 @@ class PgCatchUpFactoryImplTest {
       underTest = new PgCatchUpFactoryImpl(props, metrics);
 
       // even if CHUNKED is configured, PHASE_2 must use cursor
-      var result =
-          underTest.create(request, pipeline, serial, holder, ds, PgCatchupFactory.Phase.PHASE_2);
+      var result = underTest.create(request, pipeline, serial, ds, PgCatchupFactory.Phase.PHASE_2);
 
       assertThat(result).isInstanceOf(PgCursorCatchup.class);
     }
@@ -71,8 +68,7 @@ class PgCatchUpFactoryImplTest {
     void returnsChunkedInPhase1WhenStrategyIsChunked() {
       when(props.getCatchupStrategy()).thenReturn(CatchupStrategy.CHUNKED);
 
-      var result =
-          underTest.create(request, pipeline, serial, holder, ds, PgCatchupFactory.Phase.PHASE_1);
+      var result = underTest.create(request, pipeline, serial, ds, PgCatchupFactory.Phase.PHASE_1);
 
       assertThat(result).isInstanceOf(PgChunkedCatchup.class);
     }
@@ -81,8 +77,7 @@ class PgCatchUpFactoryImplTest {
     void returnsFetchingInPhase1WhenStrategyIsFetching() {
       when(props.getCatchupStrategy()).thenReturn(CatchupStrategy.CURSOR);
 
-      var result =
-          underTest.create(request, pipeline, serial, holder, ds, PgCatchupFactory.Phase.PHASE_1);
+      var result = underTest.create(request, pipeline, serial, ds, PgCatchupFactory.Phase.PHASE_1);
 
       assertThat(result).isInstanceOf(PgCursorCatchup.class);
     }
@@ -91,8 +86,7 @@ class PgCatchUpFactoryImplTest {
     void returnsHoldCursorInPhase1WhenStrategyIsHoldCursor() {
       when(props.getCatchupStrategy()).thenReturn(CatchupStrategy.CHUNKED_WITH_HOLD);
 
-      var result =
-          underTest.create(request, pipeline, serial, holder, ds, PgCatchupFactory.Phase.PHASE_1);
+      var result = underTest.create(request, pipeline, serial, ds, PgCatchupFactory.Phase.PHASE_1);
 
       assertThat(result).isInstanceOf(PgChunkedWithHoldCursorCatchup.class);
     }

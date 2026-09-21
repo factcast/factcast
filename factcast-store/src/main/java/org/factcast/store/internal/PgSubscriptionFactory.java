@@ -32,7 +32,6 @@ import org.factcast.store.internal.pipeline.*;
 import org.factcast.store.internal.query.*;
 import org.factcast.store.internal.telemetry.PgStoreTelemetry;
 
-// TODO integrate with PGQuery
 @SuppressWarnings("UnstableApiUsage")
 @Slf4j
 public class PgSubscriptionFactory implements AutoCloseable {
@@ -89,7 +88,7 @@ public class PgSubscriptionFactory implements AutoCloseable {
 
     ServerPipeline pipe = pipelineFactory.create(req, subscription, maxPipelineBufferSize);
 
-    PgFactStream pgsub =
+    PgFactStream factStream =
         new PgFactStream(
             connectionSupplier,
             offloadDataSource,
@@ -97,15 +96,14 @@ public class PgSubscriptionFactory implements AutoCloseable {
             idToSerialMapper,
             catchupFactory,
             hwmFetcher,
-            pipe,
+            new PushbackServerPipeline(pipe),
             telemetry,
-            props,
             req,
             logSuppression);
 
     // when closing the subscription, also close the PgFactStream
-    subscription.onClose(pgsub::close);
-    CompletableFuture.runAsync(connect(subscription, pgsub), es);
+    subscription.onClose(factStream::close);
+    CompletableFuture.runAsync(connect(subscription, factStream), es);
 
     return subscription;
   }
