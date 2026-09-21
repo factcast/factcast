@@ -113,7 +113,7 @@ The following properties (documented for factcast) should be renamed accordingly
 [cols="1,1,1", options="header"]
 |===
 |Old Property |New Property |Notes
-|`spring.grpc.client.channels.factstore.address` |`spring.grpc.client.channel.factstore.tagrte` |
+|`spring.grpc.client.channels.factstore.address` |`spring.grpc.client.channel.factstore.target` |
 |`spring.grpc.client.channels.factstore.negotiation-type` |`spring.grpc.client.channel.factstore.ssl.enabled` |The property was replaced by a new one for SSL.
 |`spring.grpc.client.channels.factstore.enable-keep-alive` | |The property was removed.
 |`spring.grpc.client.channels.factstore.keep-alive-time` |`spring.grpc.client.channel.factstore.keepalive.time` |
