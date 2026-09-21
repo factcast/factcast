@@ -40,4 +40,4 @@ At the time of writing (Factcast version 0.3.13) the following metrics are suppo
 - `managed_projection_update_duration` - duration in milliseconds a xref:managed-projection.adoc[Managed Projection] took to update
 - `fetch_duration` - duration in milliseconds it took to fetch a xref:snapshot-projections.adoc[Snapshot projection]
 - `find_duration` - duration in milliseconds it took to find a specific xref:aggregates.adoc[Aggregate]
-- `event_processing_latency` - for those facts that arrive after catchup: time difference in milliseconds between a fact was published and recieved by a client. (In case of batch processing, this is only reported for the first/oldest fact of a batch)
+- `event_processing_latency` - for those facts that arrive after catchup: time difference in milliseconds between a fact was published and received by a client. (In case of batch processing, this is only reported for the first/oldest fact of a batch)
