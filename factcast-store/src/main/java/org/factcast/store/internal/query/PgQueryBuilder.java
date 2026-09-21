@@ -45,13 +45,13 @@ public class PgQueryBuilder {
   public static final String CONTAINS_JSONB = " @> ?::jsonb ";
 
   private final @NonNull Collection<FactSpec> factSpecs;
-  private final boolean useInternalExclusion;
+  private final boolean internalExclusionEnabled;
   private String tempTableName = null;
   private boolean serialsOnly = false;
 
-  public PgQueryBuilder(@NonNull Collection<FactSpec> specs, boolean useInternalExclusion) {
+  public PgQueryBuilder(@NonNull Collection<FactSpec> specs, boolean internalExclusionEnabled) {
     factSpecs = specs;
-    this.useInternalExclusion = useInternalExclusion;
+    this.internalExclusionEnabled = internalExclusionEnabled;
   }
 
   public PreparedStatementSetter createStatementSetter(@NonNull AtomicLong serial) {
@@ -218,7 +218,7 @@ public class PgQueryBuilder {
     StringBuilder sb = new StringBuilder("( ").append(predicatesAsString).append(" ) ");
     // when internal exclusion is enabled, only ever match non-excluded facts; matches the
     // partial GIN index idx_fact_header_active WHERE exclusion_reason IS NULL
-    if (useInternalExclusion) {
+    if (internalExclusionEnabled) {
       sb.append(AND).append(PgConstants.COLUMN_EXCLUSION_REASON).append(" IS NULL ");
     }
     return sb.append(AND).append(PgConstants.COLUMN_SER).append(">?").toString();

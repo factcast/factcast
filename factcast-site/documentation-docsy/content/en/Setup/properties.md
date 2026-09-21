@@ -177,9 +177,9 @@ spring.grpc.server.keep-alive.permit-time=100
 
 ---
 
-### Blacklist (deprecated in version `0.X.X`)
+### Blacklist (deprecated in version `0.13.0`)
 
-> The following properties only take effect as long as `factcast.store.useInternalExclusion` is set to false.
+> The following properties only take effect as long as `factcast.store.internalExclusionEnabled` is set to false.
 
 | Property                    | Description                                                                                                | Default                  | Example                            |
 | --------------------------- | :--------------------------------------------------------------------------------------------------------- | :----------------------- | :--------------------------------- |

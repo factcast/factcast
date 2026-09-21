@@ -163,7 +163,7 @@ public class PgFactStream {
   @VisibleForTesting
   @NotNull
   PgSynchronizedQuery createPgSynchronizedQuery() {
-    PgQueryBuilder q = new PgQueryBuilder(request.specs(), props.isUseInternalExclusion());
+    PgQueryBuilder q = new PgQueryBuilder(request.specs(), props.isInternalExclusionEnabled());
     String sql = q.createSQL();
     log.trace("created query SQL for {} - SQL={}", request.specs(), sql);
     PreparedStatementSetter setter = q.createStatementSetter(serial);

@@ -113,7 +113,7 @@ class PgBlacklistDataProviderTest {
   class WhenUsingInternalExclusion {
     @BeforeEach
     void setup() {
-      when(storeProperties.isUseInternalExclusion()).thenReturn(true);
+      when(storeProperties.isInternalExclusionEnabled()).thenReturn(true);
     }
 
     @Test

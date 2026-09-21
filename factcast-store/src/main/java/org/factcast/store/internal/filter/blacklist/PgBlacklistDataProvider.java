@@ -48,15 +48,15 @@ public final class PgBlacklistDataProvider
   @Override
   public void afterSingletonsInstantiated() {
     bus.register(this);
-    if (!props.isUseInternalExclusion()) updateBlacklist(); // initially necessary
+    if (!props.isInternalExclusionEnabled()) updateBlacklist(); // initially necessary
   }
 
   @Subscribe
   public void on(BlacklistChangeNotification signal) {
-    if (props.isUseInternalExclusion()) {
+    if (props.isInternalExclusionEnabled()) {
       log.warn(
           "A change to the blacklist table was detected, but filtering uses the "
-              + "internal exclusion column (factcast.store.useInternalExclusion=true). "
+              + "internal exclusion column (factcast.store.internalExclusionEnabled=true). "
               + "Changes to the legacy table are synced for now, but in the future "
               + "exclusion will be only possible via the fact table.");
       return;

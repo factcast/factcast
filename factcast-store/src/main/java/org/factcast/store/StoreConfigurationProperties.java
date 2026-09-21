@@ -221,7 +221,7 @@ public class StoreConfigurationProperties implements InitializingBean {
    * on the fact table instead of relying on post query filtering based on a separate blacklist
    * table. Defaults to false.
    */
-  boolean useInternalExclusion = false;
+  boolean internalExclusionEnabled = false;
 
   public boolean isSchemaRegistryConfigured() {
     return schemaRegistryUrl != null;

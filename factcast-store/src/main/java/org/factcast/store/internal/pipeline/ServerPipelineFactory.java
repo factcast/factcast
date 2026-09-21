@@ -48,7 +48,7 @@ public class ServerPipelineFactory {
         new BufferedTransformingServerPipeline(
             chain, factTransformerService, FactTransformers.createFor(subreq), maxBufferSize);
 
-    if (!properties.isUseInternalExclusion()) {
+    if (!properties.isInternalExclusionEnabled()) {
       chain = new BlacklistFilterServerPipeline(chain, blacklist);
     }
 
