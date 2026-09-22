@@ -34,7 +34,8 @@ public class TransformationStoreChangeNotification extends StoreNotification {
   Integer fromVersion;
   Integer toVersion;
 
-  public TransformationStoreChangeNotification(String ns, String type, long txId) {
+  public TransformationStoreChangeNotification(
+      @NonNull String ns, @NonNull String type, long txId) {
     this(ns, type, txId, null, null);
   }
 

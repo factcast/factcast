@@ -5,7 +5,7 @@ CREATE TYPE transformation_cache_entry_key AS
     path    int[]
 );
 
-CREATE PROCEDURE invalidate_transformation_cache(
+CREATE OR REPLACE PROCEDURE invalidate_transformation_cache(
     p_ns text, p_type text, p_from_version int, p_to_version int
 )
     LANGUAGE plpgsql AS

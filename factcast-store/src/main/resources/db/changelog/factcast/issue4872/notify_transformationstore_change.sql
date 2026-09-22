@@ -1,4 +1,6 @@
 DROP TRIGGER IF EXISTS tr_deferred_transformationstore_change ON transformationstore;
+-- the old one had a typo in its name,
+DROP PROCEDURE IF EXISTS notifyTrasformationStoreChange;
 
 CREATE OR REPLACE FUNCTION notifyTransformationStoreChange() RETURNS trigger AS
 $$

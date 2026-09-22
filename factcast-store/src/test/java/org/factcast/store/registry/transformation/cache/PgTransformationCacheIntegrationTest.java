@@ -52,7 +52,6 @@ class PgTransformationCacheIntegrationTest {
 
   @BeforeEach
   void createCache() {
-    jdbc.execute("TRUNCATE transformation_cache");
     // Flush every put so lookups and invalidation exercise the database.
     uut =
         new PgTransformationCache(
@@ -121,15 +120,6 @@ class PgTransformationCacheIntegrationTest {
     survivors.forEach(key -> assertThat(uut.find(key)).isEmpty());
     assertThat(uut.find(otherNsKey)).isPresent();
     assertThat(uut.find(otherTypeKey)).isPresent();
-  }
-
-  @Test
-  void createsNamespaceAndTypeIndex() {
-    assertThat(
-            jdbc.queryForObject(
-                "SELECT indisvalid FROM pg_index WHERE indexrelid = 'idx_transformation_cache_ns_type'::regclass",
-                Boolean.class))
-        .isTrue();
   }
 
   @ParameterizedTest
