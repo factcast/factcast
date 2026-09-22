@@ -1,6 +1,6 @@
 site:
   title: FactCast Documentation
-  url: https://docs.factcast.org
+  url: https://docs.factcast.org/docs/latest/About/
   start_page: ROOT:About/index.adoc
 content:
   sources:

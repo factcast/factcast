@@ -1,45 +1,84 @@
 /* Improve table readability with a distinct header and subtle zebra striping. */
 .doc table.tableblock > thead > tr > th {
-  background-color: #e9ecef;
+    background-color: #e9ecef;
 }
 
 .doc table.tableblock > tbody > tr:nth-of-type(even) {
-  background-color: #fafafa;
+    background-color: #fafafa;
+}
+
+/* Recreate the full-screen cover used by the former Docsy landing page. */
+body.landing {
+    background-image:
+        linear-gradient(rgb(0 0 0 / 30%), rgb(0 0 0 / 30%)),
+        url("../../docs/latest/_images/featured-background.jpg");
+    background-position: center top;
+    background-repeat: no-repeat;
+    background-size: cover;
+    min-height: 100vh;
+}
+
+body.landing .body,
+body.landing main.article {
+    min-height: calc(100vh - 3.5rem);
+}
+
+body.landing main.article {
+    background-color: transparent;
+}
+
+body.landing .doc {
+    color: #fff;
+    text-align: center;
+    text-shadow: 0 1px 2px rgb(0 0 0 / 60%);
 }
 
 /* Maximize main content column width and align TOC to the right */
 @media screen and (min-width: 1024px) {
-  .article {
-    max-width: none !important;
-    width: 100% !important;
-  }
-  
-  .content {
-    max-width: none !important;
-    width: 100% !important;
-    display: flex !important;
-    flex-direction: row !important;
-    justify-content: flex-start !important;
-    padding-left: 2rem !important;
-    padding-right: 2rem !important;
-  }
+    .article {
+        max-width: none !important;
+        width: 100% !important;
+    }
 
-  .doc {
-    order: 1 !important;
-    flex: 1 1 auto !important;
-    max-width: none !important;
-    width: auto !important;
-    margin-right: 2rem !important;
-  }
+    .content {
+        max-width: none !important;
+        width: 100% !important;
+        display: flex !important;
+        flex-direction: row !important;
+        justify-content: flex-start !important;
+        padding-left: 2rem !important;
+        padding-right: 2rem !important;
+    }
 
-  .toc.sidebar {
-    order: 2 !important;
-    flex: 0 0 16rem !important;
-    width: 16rem !important;
-    margin-left: 0 !important;
-    position: sticky !important;
-    top: 5rem !important;
-    height: calc(100vh - 6rem) !important;
-    overflow-y: auto !important;
-  }
+    .doc {
+        order: 1 !important;
+        flex: 1 1 auto !important;
+        max-width: none !important;
+        width: auto !important;
+        margin-right: 2rem !important;
+    }
+
+    .toc.sidebar {
+        order: 2 !important;
+        flex: 0 0 16rem !important;
+        width: 16rem !important;
+        margin-left: 0 !important;
+        position: sticky !important;
+        top: 5rem !important;
+        height: calc(100vh - 6rem) !important;
+        overflow-y: auto !important;
+    }
+
+    body.landing .doc {
+        max-width: 1200px;
+        margin: auto;
+    }
+
+    body.landing .nav-container {
+        display: none;
+    }
+
+    body.landing .toolbar {
+        display: none;
+    }
 }

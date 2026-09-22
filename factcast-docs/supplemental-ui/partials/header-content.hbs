@@ -16,9 +16,49 @@
     <div id="topbar-nav" class="navbar-menu">
      <div class="navbar-end">
 
-{{#with (resolvePage 'docs::index.adoc')}}
+{{#with (resolvePage 'docs::About/index.adoc')}}
 <a class="navbar-item" href="{{{relativize ./url}}}">
-  Home
+  About
+</a>
+{{/with}}
+
+{{#with (resolvePage 'docs::Concept/index.adoc')}}
+<a class="navbar-item" href="{{{relativize ./url}}}">
+  Concept
+</a>
+{{/with}}
+
+
+{{#with (resolvePage 'docs::Setup/index.adoc')}}
+<a class="navbar-item" href="{{{relativize ./url}}}">
+  Setup
+</a>
+{{/with}}
+
+
+
+{{#with (resolvePage 'docs::Usage/index.adoc')}}
+<a class="navbar-item" href="{{{relativize ./url}}}">
+  API
+</a>
+{{/with}}
+
+
+{{#with (resolvePage 'docs::UI/index.adoc')}}
+<a class="navbar-item" href="{{{relativize ./url}}}">
+  UI
+</a>
+{{/with}}
+
+{{#with (resolvePage 'docs::Ops/index.adoc')}}
+<a class="navbar-item" href="{{{relativize ./url}}}">
+  Ops
+</a>
+{{/with}}
+
+{{#with (resolvePage 'docs::Guides/index.adoc')}}
+<a class="navbar-item" href="{{{relativize ./url}}}">
+  Guides
 </a>
 {{/with}}
 
