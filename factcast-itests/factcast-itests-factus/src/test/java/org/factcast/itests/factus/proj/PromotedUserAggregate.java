@@ -13,32 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.factus.projector;
+package org.factcast.itests.factus.proj;
 
-import java.util.UUID;
 import lombok.Getter;
 import org.factcast.factus.FilterByAggIdProperty;
 import org.factcast.factus.Handler;
 import org.factcast.factus.projection.Aggregate;
+import org.factcast.factus.serializer.ProjectionMetaData;
+import org.factcast.itests.factus.event.UserPromoted;
 
-class FilterByAggIdPropertyAggregate extends Aggregate {
+/** only "promoted" when its id is found at the nested payload path, not as the promoter */
+@ProjectionMetaData(revisionId = "1")
+public class PromotedUserAggregate extends Aggregate {
 
-  FilterByAggIdPropertyAggregate(UUID aggregateId) {
-    super(aggregateId);
-  }
-
-  @Getter private int recommendations = 0;
-
-  @Getter private int complexEvents = 0;
+  @Getter private boolean promoted = false;
 
   @Handler
-  @FilterByAggIdProperty("recommendedUserId")
-  void apply(FilterByAggIdPropertyEvent e) {
-    recommendations++;
-  }
-
-  @Handler
-  void apply(ComplexEvent e) {
-    complexEvents++;
+  @FilterByAggIdProperty("organization.team.promotedUserId")
+  void apply(UserPromoted e) {
+    promoted = true;
   }
 }

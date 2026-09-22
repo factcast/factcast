@@ -16,29 +16,19 @@
 package org.factcast.factus.projector;
 
 import java.util.UUID;
-import lombok.Getter;
+import org.factcast.core.Fact;
 import org.factcast.factus.FilterByAggIdProperty;
-import org.factcast.factus.Handler;
+import org.factcast.factus.HandlerFor;
 import org.factcast.factus.projection.Aggregate;
 
-class FilterByAggIdPropertyAggregate extends Aggregate {
+/** illegal: there is no EventObject to verify the property path against */
+class FilterByAggIdPropertyOnHandlerForAggregate extends Aggregate {
 
-  FilterByAggIdPropertyAggregate(UUID aggregateId) {
+  FilterByAggIdPropertyOnHandlerForAggregate(UUID aggregateId) {
     super(aggregateId);
   }
 
-  @Getter private int recommendations = 0;
-
-  @Getter private int complexEvents = 0;
-
-  @Handler
-  @FilterByAggIdProperty("recommendedUserId")
-  void apply(FilterByAggIdPropertyEvent e) {
-    recommendations++;
-  }
-
-  @Handler
-  void apply(ComplexEvent e) {
-    complexEvents++;
-  }
+  @HandlerFor(ns = "test", type = "SomethingElse", version = 2)
+  @FilterByAggIdProperty("references.userId")
+  void apply(Fact f) {}
 }

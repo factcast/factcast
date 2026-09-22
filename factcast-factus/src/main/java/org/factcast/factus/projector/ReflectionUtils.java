@@ -227,11 +227,11 @@ public class ReflectionUtils {
     }
 
     if (m.getAnnotation(HandlerFor.class) != null) {
-      log.warn(
-          "Using FilterByAggIdProperty on HandlerFor method {} which means the property cannot be"
-              + " verified.",
-          m);
-      return annotation.value();
+      throw new InvalidHandlerDefinition(
+          "FilterByAggIdProperty cannot be combined with HandlerFor on "
+              + m
+              + ", as there is no EventObject to verify the property path against. Use a typed"
+              + " @Handler instead.");
     }
 
     verifyUuidPropertyExpressionAgainstClass(annotation.value(), findEventObjectParameterType(m));

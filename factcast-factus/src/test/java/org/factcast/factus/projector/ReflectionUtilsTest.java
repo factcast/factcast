@@ -137,13 +137,20 @@ class ReflectionUtilsTest {
             "apply", FilterByAggIdPropertyEvent.class);
     Method plain =
         FilterByAggIdPropertyAggregate.class.getDeclaredMethod("apply", ComplexEvent.class);
-    Method handlerFor =
-        FilterByAggIdPropertyAggregate.class.getDeclaredMethod("applyUnverified", Fact.class);
 
     Assertions.assertThat(ReflectionUtils.discoverAggIdPropertyPath(annotated))
         .isEqualTo("recommendedUserId");
     Assertions.assertThat(ReflectionUtils.discoverAggIdPropertyPath(plain)).isNull();
-    Assertions.assertThat(ReflectionUtils.discoverAggIdPropertyPath(handlerFor))
-        .isEqualTo("references.userId");
+  }
+
+  @SneakyThrows
+  @Test
+  void rejectsAggIdPropertyOnHandlerFor() {
+    Method handlerFor =
+        FilterByAggIdPropertyOnHandlerForAggregate.class.getDeclaredMethod("apply", Fact.class);
+
+    Assertions.assertThatThrownBy(() -> ReflectionUtils.discoverAggIdPropertyPath(handlerFor))
+        .isInstanceOf(InvalidHandlerDefinition.class)
+        .hasMessageContaining("HandlerFor");
   }
 }
