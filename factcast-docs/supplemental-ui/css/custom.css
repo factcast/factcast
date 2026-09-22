@@ -1,3 +1,12 @@
+/* Improve table readability with a distinct header and subtle zebra striping. */
+.doc table.tableblock > thead > tr > th {
+  background-color: #e9ecef;
+}
+
+.doc table.tableblock > tbody > tr:nth-of-type(even) {
+  background-color: #fafafa;
+}
+
 /* Maximize main content column width and align TOC to the right */
 @media screen and (min-width: 1024px) {
   .article {
