@@ -7,6 +7,10 @@
     background-color: #fafafa;
 }
 
+.datastore-logos img {
+    vertical-align: middle;
+}
+
 /* Recreate the full-screen cover used by the former Docsy landing page. */
 body.landing {
     background-image: linear-gradient(rgb(0 0 0 / 30%), rgb(0 0 0 / 30%)),

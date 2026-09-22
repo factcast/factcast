@@ -35,11 +35,11 @@ If you are new here, you might want to read up on the xref:ROOT:About/motivation
 
 **Factus** also integrates with external Datastores like
 
-pass:[<div style="text-align: center;">]
+pass:[<div class="datastore-logos" style="text-align: center;">]
 pass:[<img src="../_images/logos/postgres-logo.svg" width="100px" height="100px"/>]
-pass:[<img src="../_images/logos/maria-logo.png" width="100px" height="100px"/>]
+pass:[<img src="../_images/logos/maria-logo.png" width="100px"/>]
 pass:[<img src="../_images/logos/mysql-logo.svg" width="100px" height="100px"/>]
-pass:[<img src="../_images/logos/rds-logo.png" width="100px" height="100px"/>]
+pass:[<img src="../_images/logos/rds-logo.png" width="100px"/>]
 pass:[<img src="../_images/logos/jdbc-logo.png" width="100px" height="100px"/>]
 pass:[<img src="../_images/logos/redis-logo.png" width="100px" height="100px"/>]
 pass:[<img src="../_images/logos/valkey-logo.png" width="100px" height="100px"/>]
