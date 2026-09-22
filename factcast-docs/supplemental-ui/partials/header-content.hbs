@@ -1,0 +1,37 @@
+<header class="header" role="banner">
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <a class="navbar-item" href="{{or site.url (or siteRootUrl siteRootPath)}}">
+        {{site.title}}
+      </a>
+
+      <button class="navbar-burger" data-target="topbar-nav">
+        <span>bim</span>
+        <span>bam</span>
+        <span>bum</span>
+      </button>
+    </div>
+
+
+    <div id="topbar-nav" class="navbar-menu">
+     <div class="navbar-end">
+
+{{#with (resolvePage 'docs::index.adoc')}}
+<a class="navbar-item" href="{{{relativize ./url}}}">
+  Home
+</a>
+{{/with}}
+
+
+
+<div class="navbar-item search">
+  <input id="search-input"
+         type="text"
+         placeholder="Search docs">
+</div>
+
+
+      </div>
+    </div>
+  </nav>
+</header>

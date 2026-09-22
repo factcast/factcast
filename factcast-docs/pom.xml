@@ -26,6 +26,9 @@
         <configuration>
           <packages>
             <package>@sntke/antora-mermaid-extension</package>
+            <package>@antora/lunr-extension</package>
+            <!--suppress UnresolvedMavenProperty -->
+            <package>@asciidoctor/tabs@1.0.0-beta.6</package>
           </packages>
         </configuration>
         <executions>

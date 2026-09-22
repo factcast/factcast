@@ -18,3 +18,4 @@ asciidoc:
 antora:
   extensions:
     - require: '@sntke/antora-mermaid-extension'
+    - require: '@antora/lunr-extension'

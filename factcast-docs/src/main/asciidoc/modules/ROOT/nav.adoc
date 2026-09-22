@@ -1,4 +1,3 @@
-.About
 * xref:About/index.adoc[About]
 ** xref:About/index.adoc[Overview]
 ** xref:About/motivation.adoc[Motivation]
@@ -8,7 +7,6 @@
 ** xref:About/migration.adoc[Migration]
 ** xref:About/thanks.adoc[Contribution]
 ** xref:About/imprint.adoc[Legal notice/Imprint]
-.Concept
 * xref:Concept/index.adoc[Concept]
 ** xref:Concept/index.adoc[Overview]
 ** xref:Concept/fact.adoc[Fact Anatomy]
