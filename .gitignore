@@ -28,5 +28,4 @@ package-lock.json
 .junie/**
 **/.agent-logs
 .agent-logs
-**/.codex/*
-
+**/.codex/**

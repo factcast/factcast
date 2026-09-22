@@ -529,16 +529,28 @@ class PgTransformationCacheTest {
     void deletesFromTransformationCache() {
       underTest.invalidateTransformationFor("theNamespace", "theType");
 
-      ArgumentCaptor<String> ns = ArgumentCaptor.forClass(String.class);
-      ArgumentCaptor<String> type = ArgumentCaptor.forClass(String.class);
-
-      Mockito.verify(jdbcTemplate).execute("LOCK TABLE transformation_cache IN EXCLUSIVE MODE");
-      Mockito.verify(jdbcTemplate)
+      verify(jdbcTemplate)
           .update(
-              matches("DELETE FROM transformation_cache WHERE .*"), ns.capture(), type.capture());
+              "CALL invalidate_transformation_cache(?, ?, ?::int, ?::int)",
+              "theNamespace",
+              "theType",
+              null,
+              null);
+      verifyNoMoreInteractions(jdbcTemplate);
+    }
 
-      assertThat(ns.getAllValues().get(0)).isEqualTo("theNamespace");
-      assertThat(type.getAllValues().get(0)).isEqualTo("theType");
+    @Test
+    void invalidatesOnlyTheChangedEdge() {
+      underTest.invalidateTransformationFor("theNamespace", "theType", 1, 2);
+
+      verify(jdbcTemplate)
+          .update(
+              "CALL invalidate_transformation_cache(?, ?, ?::int, ?::int)",
+              "theNamespace",
+              "theType",
+              1,
+              2);
+      verifyNoMoreInteractions(jdbcTemplate);
     }
 
     @Test
@@ -546,6 +558,7 @@ class PgTransformationCacheTest {
       when(storeConfigurationProperties.isReadOnlyModeEnabled()).thenReturn(true);
 
       underTest.invalidateTransformationFor("theNamespace", "theType");
+      underTest.invalidateTransformationFor("theNamespace", "theType", 1, 2);
 
       verifyNoInteractions(jdbcTemplate);
     }

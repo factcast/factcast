@@ -4,7 +4,7 @@ type = "docs"
 weight = 100015
 +++
 
-## Upgrading to 0.11.3
+## Upgrading to 0.12.5
 
 ### `@ProjectionMetaData(revision = …)` is deprecated in favor of `revisionId`
 
