@@ -21,7 +21,7 @@ All nodes in this scenario need full read-write access to the factstore database
 
 === Extra read-only instance
 
-As discussed in xref:../UI/Setup/deployment-options.adoc[UI deployment options], you might come across the wish to have
+As discussed in xref:ROOT:UI/Setup/deployment-options.adoc[UI deployment options], you might come across the wish to have
 instances, that - while still having read-write access to the database - disallow any write.
 This is achieved by setting `factcast.store.read-only-mode-enabled=true`
 

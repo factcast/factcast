@@ -6,7 +6,7 @@
 This guide is targeting an audience that is already informed about the projection types offered by Factus, and about
 their concepts.
 
-We suggest to check out the "Projections" section of the xref:../Usage/factus/projections/index.adoc[Factus API docs]
+We suggest to check out the "Projections" section of the xref:ROOT:Usage/factus/projections/index.adoc[Factus API docs]
 before delving into this guide.
 ====
 
@@ -85,7 +85,7 @@ type concerning the identified requirements.
 
 === Snapshot Projection
 
-xref:../Usage/factus/projections/types/snapshot-projections.adoc[Snapshot Projection documentation]
+xref:ROOT:Usage/factus/projections/types/snapshot-projections.adoc[Snapshot Projection documentation]
 
 - **Scalability**: different modules can be used to configure the snapshot cache. Whenever scalability is a requirement,
   consider using snapshot cache modules that allow storing the snapshots in a shared database, like
@@ -103,19 +103,19 @@ xref:../Usage/factus/projections/types/snapshot-projections.adoc[Snapshot Projec
 
 - **Data consistency**: when fetched, the Snapshot Projection ensures to return the most recent representation of the
   event stream. It supports optimistic locking to handle concurrent modifications. Check out the
-  xref:../Usage/factus/optimistic-locking.adoc[Optimistic Locking] section for further details.
+  xref:ROOT:Usage/factus/optimistic-locking.adoc[Optimistic Locking] section for further details.
 
 - **Maintainability**: the projection allows to change the business logic of the event handlers, to create new data
   structures for the derived views, update existing ones, or to add new decisions. To do so, it is necessary to update
   the serial of the projection every time the projection class is changed - check out the
-  xref:../Usage/factus/projections/snapshots/index.adoc#serials[documentation].
+  xref:ROOT:Usage/factus/projections/snapshots/index.adoc#serials[documentation].
   The full event-stream will then be re-consumed on the subsequent fetch, as the previously created snapshots will get
   invalidated. The snapshots retention might need to be fine-tuned on the long run, based on the amount of resources
   available, and the frequency of the queries.
 
 === Aggregate
 
-xref:../Usage/factus/projections/types/aggregates.adoc[Aggregate documentation]
+xref:ROOT:Usage/factus/projections/types/aggregates.adoc[Aggregate documentation]
 
 - **Scalability**: same considerations made for the Snapshot Projection apply.
 
@@ -136,7 +136,7 @@ xref:../Usage/factus/projections/types/aggregates.adoc[Aggregate documentation]
 
 === Managed Projection
 
-xref:../Usage/factus/projections/types/managed-projection.adoc[Managed Projection documentation]
+xref:ROOT:Usage/factus/projections/types/managed-projection.adoc[Managed Projection documentation]
 
 Preface: considering a Managed Projection that has its state externalized in a shared database.
 
@@ -161,18 +161,18 @@ Preface: considering a Managed Projection that has its state externalized in a s
   all instances of the projection. Of course, the derived views might be stale, whenever new events are published, but
   the projection can be updated while processing queries, to ensure that the most recent state is returned. It supports
   optimistic locking to handle concurrent modifications. Check out the
-  xref:../Usage/factus/optimistic-locking.adoc[Optimistic Locking] section for further details.
+  xref:ROOT:Usage/factus/optimistic-locking.adoc[Optimistic Locking] section for further details.
 
 - **Maintainability**: a managed projection enables the construction of derived views that can potentially be queried
   even when the Event Store is unavailable. The projection allows to change the business logic of the event handlers,
   and change the underlying structure the derived views. To do so, it is necessary to update the serial of the
   projection every time the projection class is changed - check out the
-  xref:../Usage/factus/projections/snapshots/index.adoc#serials[documentation]. The full event-stream will then be
+  xref:ROOT:Usage/factus/projections/snapshots/index.adoc#serials[documentation]. The full event-stream will then be
   re-consumed on the subsequent updates, to rebuild the derived views.
 
 === Local Managed Projection
 
-xref:../Usage/factus/projections/types/local-managed-projection.adoc[Local Managed Projection documentation]
+xref:ROOT:Usage/factus/projections/types/local-managed-projection.adoc[Local Managed Projection documentation]
 
 - **Scalability**: a Local Managed Projection stores its state in-memory. Depending on the use-case, this can create
   performance, and availability issues on the long-run, whenever the derived views size increases over time or is
@@ -200,7 +200,7 @@ xref:../Usage/factus/projections/types/local-managed-projection.adoc[Local Manag
 
 === Subscribed Projection
 
-xref:../Usage/factus/projections/types/subscribed-projection.adoc[Subscribed Projection documentation]
+xref:ROOT:Usage/factus/projections/types/subscribed-projection.adoc[Subscribed Projection documentation]
 
 Preface: considering a Subscribed Projection that has its state externalized in a shared database.
 
@@ -232,12 +232,12 @@ Preface: considering a Subscribed Projection that has its state externalized in 
 - **Maintainability**: in terms of maintainability, a Subscribed Projection is similar to a Managed Projection, as it
   allows to change the business logic of the event handlers, and change the underlying structure the derived views. To
   do so, it is necessary to update the serial of the projection every time the projection class is changed - check out
-  the xref:../Usage/factus/projections/snapshots/index.adoc#serials[documentation]. The full event-stream will then be
+  the xref:ROOT:Usage/factus/projections/snapshots/index.adoc#serials[documentation]. The full event-stream will then be
   re-consumed on the next catch-up phase (when the new projection starts), to rebuild the derived views.
 
 === Local Subscribed Projection
 
-xref:../Usage/factus/projections/types/local-subscribed-projection.adoc[Local Subscribed Projection documentation]
+xref:ROOT:Usage/factus/projections/types/local-subscribed-projection.adoc[Local Subscribed Projection documentation]
 
 - **Scalability**: same considerations made for the Local Managed Projection apply.
 

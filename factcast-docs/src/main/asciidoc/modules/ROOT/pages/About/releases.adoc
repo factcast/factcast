@@ -5,7 +5,7 @@
 
 Only important releases are mentioned here.
 
-For full overview, you can look at the xref:changelog.adoc[changelog]
+For full overview, you can look at the xref:ROOT:About/changelog.adoc[changelog]
 
 ---
 
@@ -117,7 +117,7 @@ href="https://github.com/factcast/factcast/issues?q=is%3Aissue+milestone%3A0.3.0
 
 ==== Feature
 
-- high-level API called xref:../Usage/factus/index.adoc[Factus] that should make application code **MUCH** easier when using FactCast
+- high-level API called xref:ROOT:Usage/factus/index.adoc[Factus] that should make application code **MUCH** easier when using FactCast
 - plenty of new modules:
   - factcast-test
   - factcast-factus
@@ -183,10 +183,10 @@ href="https://github.com/factcast/factcast/issues?q=is%3Aissue+milestone%3A0.2.1
 
 ==== major features
 
-- Security improvements, added Roles see xref:../Setup/gRPC Client/grpc-config-basicauth.adoc[Boot gRPC BasicAuth]
-- Schema Registry tool xref:../Usage/lowlevel/cli/index.adoc[Schema Registry CLI]
-- Validation of Fact payloads against JSON Schema xref:../Concept/schema-registry.adoc[Schema validation and Registry]
-- Transformation between Versions (Up-/Downcasting) of Fact payloads xref:../Concept/transformation.adoc[Transformation and Registry]
+- Security improvements, added Roles see xref:ROOT:Setup/gRPC Client/grpc-config-basicauth.adoc[Boot gRPC BasicAuth]
+- Schema Registry tool xref:ROOT:Usage/lowlevel/cli/index.adoc[Schema Registry CLI]
+- Validation of Fact payloads against JSON Schema xref:ROOT:Concept/schema-registry.adoc[Schema validation and Registry]
+- Transformation between Versions (Up-/Downcasting) of Fact payloads xref:ROOT:Concept/transformation.adoc[Transformation and Registry]
 
 ==== minor
 
@@ -219,7 +219,7 @@ href="https://github.com/factcast/factcast/issues?q=is%3Aissue+milestone%3A0.2.1
 
 - Introduces / switches to: JUnit5, Spring Boot 2, Testcontainers
 - new example projects
-- **Not a drop-in replacement: See xref:migration.adoc[Migration Guide]**
+- **Not a drop-in replacement: See xref:ROOT:About/migration.adoc[Migration Guide]**
 
 ==== 2018-10-21 0.0.20 (milestone)
 
@@ -239,5 +239,7 @@ href="https://github.com/factcast/factcast/issues?q=is%3Aissue+milestone%3A0.2.1
 
 ==== 2018-10-03 0.0.12 (milestone)
 
-- Note that the jersey impl of the REST interface has its own <a href="https://github.com/Mercateo/factcast-rest-jersey">place on github now.</a> and got new coordinates: **org.factcast:factcast-server-rest-jersey:0.0.12.** If you use the REST Server, you'll need to change your dependencies accordingly
+- Note that the Jersey implementation of the REST interface has its own
+  https://github.com/Mercateo/factcast-rest-jersey[place on GitHub now] and got new coordinates:
+  `org.factcast:factcast-server-rest-jersey:0.0.12`. If you use the REST Server, you'll need to change your dependencies accordingly.
 - There is a BOM within FactCast at org.factcast:factcast-bom:0.0.12 you can use to conveniently pin versions - remember that factcast-server-rest-jersey might not be available for every milestone and is not part of the BOM

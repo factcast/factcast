@@ -5,7 +5,7 @@
 
 When consumers subscribe to a Stream of Events, it has to express, which Events he wants to receive. The more precise this can be done, the less resources like bandwidth, CPU-Time etc. are wasted.
 
-As discussed link:../factstreams[here], there is more than one way to do it. We decided to go for just-in-time filtering in FactCast. Here is why:
+As discussed xref:ROOT:Concept/factstreams.adoc[here], there is more than one way to do it. We decided to go for just-in-time filtering in FactCast. Here is why:
 
 ==== The problem with FactStream-IDs
 
@@ -25,6 +25,7 @@ According to a list of Fact-Specifications, the matching Facts are queried from 
 
 In order to match with a high selectivity, this query uses some (in parts optional, but defined) Attributes from the JSON-Header of a Fact. In many cases, this filtering is already sufficient to reduce the number of misses (Facts that are sent to the consumer, but discarded there) to either zero or something very near.
 
+[#specification]
 === Specification
 
 In order to efficiently select matching Facts from the Database, a consumer should provide precise information about which Facts match, and which do not.
@@ -48,7 +49,7 @@ Of course, **all** the requirements defined in a FactSpec have to be met for a F
 
 === Post-Query Filtering / Scripted Predicates
 
-As discussed link:../factstreams[here], there are situations, where these tagging/categorizing means are not enough, because you just do not have this information in the header, or you need some more fine-grained control like Range-expressions etc.
+As discussed xref:ROOT:Concept/factstreams.adoc[here], there are situations, where these tagging/categorizing means are not enough, because you just do not have this information in the header, or you need some more fine-grained control like Range-expressions etc.
 
 This is where scripted Predicates come in.
 

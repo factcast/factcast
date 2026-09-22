@@ -3,7 +3,7 @@
 
 
 
-Inside projections, Factus uses xref:projections.adoc#projections-in-general[methods annotated with `@Handler` or `@HandlerFor`]
+Inside projections, Factus uses xref:ROOT:Usage/factus/projections/index.adoc#projections-in-general[methods annotated with `@Handler` or `@HandlerFor`]
 to process events. These methods allow various parameters, also in combination, which can serve as "input" during event handling.
 
 == Common Handler Parameters
@@ -11,13 +11,13 @@ to process events. These methods allow various parameters, also in combination, 
 [cols="1,1,1,1", options="header"]
 |===
 |Parameter Type & Annotation |Description |valid on @Handler |valid on @HandlerFor
-|`Fact` |Provides access to all xref:fact.adoc[Fact] details including header (JSON) and payload (JSON) |yes |yes
-|`FactHeader` |the xref:fact.adoc#the-header[Fact header]. Provides access to event namespace, type, version, meta entries and others |yes |yes
-|`UUID` |the xref:fact.adoc#the-header[Fact ID of the Fact header] |yes |yes
+|`Fact` |Provides access to all xref:ROOT:Concept/fact.adoc[Fact] details including header (JSON) and payload (JSON) |yes |yes
+|`FactHeader` |the xref:ROOT:Concept/fact.adoc#the-header[Fact header]. Provides access to event namespace, type, version, meta entries and others |yes |yes
+|`UUID` |the xref:ROOT:Concept/fact.adoc#the-header[Fact ID of the Fact header] |yes |yes
 |`FactStreamPosition` |the FactStreamPosition that identifies the position of the given fact in the global fact stream |yes |yes
 |`@Nullable @Meta("foo") String` |if present, the value of the fact-header's meta object attribute "foo", otherwise null |yes |yes
 |`@Meta("foo") Optional<String> ` |if present, the value of the fact-header's meta object attribute "foo" wrapped in an Optional, otherwise Optional.empty |yes |yes
-|`? extends EventObject` |an instance of a concrete class xref:introduction.adoc#eventobjects[implementing `EventObject`]. |yes |no
+|`? extends EventObject` |an instance of a concrete class xref:ROOT:Usage/factus/introduction.adoc#eventobjects[implementing `EventObject`]. |yes |no
 |===
 
 == Extras on Redis atomic Projections
@@ -28,7 +28,7 @@ For instance handler methods on @RedisTransactional projections that should use:
 [cols="1,1,1,1", options="header"]
 |===
 |Parameter Type |Description |valid on @Handler |valid on @HandlerFor
-|`RTransaction` |needed in a xref:redis-transactional-projections.adoc[Redis transactional projection] |yes |yes
+|`RTransaction` |needed in a xref:ROOT:Usage/factus/projections/atomicity/redis-transactional-projections.adoc[Redis transactional projection] |yes |yes
 |===
 
 == Examples
@@ -68,8 +68,8 @@ void apply(SomethingReactivated event,
 
 These examples were all based on handling events which
 
-- xref:introduction.adoc#eventobjects[implement the `EventObject` interface] and
-- provide their specification details via xref:introduction.adoc#eventobjects[the `@Specification` annotation].
+- xref:ROOT:Usage/factus/introduction.adoc#eventobjects[implement the `EventObject` interface] and
+- provide their specification details via xref:ROOT:Usage/factus/introduction.adoc#eventobjects[the `@Specification` annotation].
 
 The next section introduces a more direct alternative.
 

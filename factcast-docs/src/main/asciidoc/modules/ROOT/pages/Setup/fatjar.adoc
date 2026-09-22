@@ -32,4 +32,4 @@ mvn package
 
 will create a standard spring boot fat jar `target/factcast.jar` that can be run instantly.
 
-xref:ports.adoc[Read more on Ports]
+xref:ROOT:Setup/ports.adoc[Read more on Ports]

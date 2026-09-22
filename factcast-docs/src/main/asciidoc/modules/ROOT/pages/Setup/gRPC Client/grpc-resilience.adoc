@@ -29,4 +29,4 @@ If you want to disable it completely for any reason, you always can use
 factcast.grpc.client.resilience.enabled=false
 ----
 
-See xref:../properties.adoc[properties] for the defaults.
+See xref:ROOT:Setup/properties.adoc[properties] for the defaults.

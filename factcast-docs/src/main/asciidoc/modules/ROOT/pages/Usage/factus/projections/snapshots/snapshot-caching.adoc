@@ -27,7 +27,7 @@ in-memory solution can be used:
 </dependency>
 ----
 
-Refer to the xref:../../../../Setup/properties.adoc#inmem-snapshots[In-Memory Properties] for configuration details.
+Refer to the xref:ROOT:Setup/properties.adoc#inmem-snapshots[In-Memory Properties] for configuration details.
 
 === In-Memory and Disk SnapshotCache
 
@@ -45,7 +45,7 @@ To persist snapshots on disk, consider using the following configuration:
 Note that this setup is designed for single-instance applications and handles file access synchronization within the
 active instance. It is not recommended for distributed application architectures.
 
-Refer to the xref:../../../../Setup/properties.adoc#inmemanddisk-snapshots[In-Memory and Disk Properties] for more
+Refer to the xref:ROOT:Setup/properties.adoc#inmemanddisk-snapshots[In-Memory and Disk Properties] for more
 information.
 
 === Redis SnapshotCache
@@ -65,7 +65,7 @@ snapshotcache that can be shared between / used by many instances:
 This option supports multiple instances of the same application, making it suitable for distributed environments. By
 default, this cache automatically deletes stale snapshots after 90 days.
 
-For further details, see the xref:../../../../Setup/properties.adoc#redissnapshots[Redis Properties].
+For further details, see the xref:ROOT:Setup/properties.adoc#redissnapshots[Redis Properties].
 
 === JDBC SnapshotCache
 
@@ -180,7 +180,7 @@ CREATE TABLE IF NOT EXISTS factcast_snapshot_last_accessed
 CREATE INDEX factcast_snapshot_last_accessed_index ON factcast_snapshot_last_accessed (last_accessed);
 ----
 
-For further details, see the xref:../../../../Setup/properties.adoc#jdbc-snapshots[JDBC Properties].
+For further details, see the xref:ROOT:Setup/properties.adoc#jdbc-snapshots[JDBC Properties].
 
 === MongoDB SnapshotCache
 
@@ -200,4 +200,4 @@ The MongoDB SnapshotCache uses GridFS to store snapshot data, this means, that s
 By default, this cache automatically deletes stale snapshots after 90 days. But chunks stored by GridFS are not
 automatically deleted, so you have to take care of that on your own.
 
-For further details, see the xref:../../../../Setup/properties.adoc#mongodb-snapshots[Mongo Properties].
+For further details, see the xref:ROOT:Setup/properties.adoc#mongodb-snapshots[Mongo Properties].

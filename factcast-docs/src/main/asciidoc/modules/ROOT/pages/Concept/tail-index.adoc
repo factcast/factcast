@@ -18,7 +18,7 @@ With the global index alone, query performance decreases over time.
 
 === Subscription Phases
 
-In general, xref:fact.adoc#read-subscribe[subscriptions] may consist of two possible phases:
+In general, xref:ROOT:Concept/index.adoc#read-subscribe[subscriptions] may consist of two possible phases:
 
 1. Catching up with past events, that have not yet been processed by the consumer
 2. Checking for new events by querying the tail of the fact log
@@ -42,7 +42,7 @@ More precisely, FactCast maintains a certain number of rolling partial (tail) in
 When asked to query facts from the end of the fact log,
 the Postgres database now has the option to use the smaller tail index, which (as many queries are concerned with the tail of the fact log) is likely to be cached in memory.
 
-Tail index rotation is configurable and described in xref:../Setup/properties.adoc#performance--reliability[the configuration properties].
+Tail index rotation is configurable and described in xref:ROOT:Setup/properties.adoc#performance-reliability[the configuration properties].
 
 [NOTE]
 ====
@@ -54,7 +54,7 @@ with enabled https://www.postgresql.org/docs/11/sql-createindex.html[fastupdate]
 
 Introducing a new index does not come for free. When new facts are INSERTed, the Postgres database needs to maintain
 the indexes of the fact log. Hence, the higher the number of indexes, the slower the INSERT performance.
-See the xref:../Setup/properties.adoc#performance--reliability[recommendations of the configuration section] for sensible values
+See the xref:ROOT:Setup/properties.adoc#performance-reliability[recommendations of the configuration section] for sensible values
 on the number of tail index generations.
 
 If you encounter performance issues, see the https://www.postgresql.org/docs/11/gin-implementation.html#GIN-FAST-UPDATE[Postgres documentation] for further advice.

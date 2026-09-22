@@ -75,6 +75,7 @@ all time throughout the process.
 
 [WARNING]
 ====
+.Do not subscribe regular projections in a bootstrap-instance
 When following this approach, it is important to ensure that no other subscribed projections are active while
 bootstrapping is in progress, because they could take over the respective write lock. The reason is that,
 once the bootstrapping instance acquires the write lock for a projection, any instance from a regular deployment

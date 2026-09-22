@@ -149,4 +149,4 @@ Predicates**.
 Filtering could be done either ahead of time (by emitting Facts into different Streams and creating new Streams whenever
 a consumer's need changes), or just-in-time, which might have some impact on performance.
 
-xref:factspec.adoc[Fact Specification]
+xref:ROOT:Concept/factspec.adoc[Fact Specification]

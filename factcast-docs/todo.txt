@@ -1,7 +1,5 @@
-# Non-Translatable Hugo Macros / Shortcodes
+# Resolved Hugo Macro Conversion
 
-The following Hugo macros / shortcodes could not be translated to native AsciiDoc because they rely on dynamic runtime execution or API fetches that have no direct static equivalent in Antora/Asciidoctor without custom extensions or scripts:
-
-1. File: `src/main/asciidoc/modules/ROOT/pages/About/thanks.adoc`
-   - Macro: `{{<ghcontributors "https://api.github.com/repos/factcast/factcast/contributors?per_page=101" >}}`
-   - Reason: Dynamically fetches GitHub contributors from the GitHub API at render time. Needs a custom Antora extension or static pre-generation script for full visual parity in Antora.
+The dynamic `ghcontributors` shortcode in `About/thanks.adoc` was replaced with a stable link to GitHub's contributor
+graph. This keeps Antora builds deterministic and avoids requiring network access or a custom extension during the
+documentation build.

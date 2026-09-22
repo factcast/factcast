@@ -3,10 +3,10 @@
 
 
 
-A _Redis transactional projection_ is a xref:atomicity[transactional projection]
+A _Redis transactional projection_ is a xref:ROOT:Usage/factus/projections/atomicity/index.adoc[transactional projection]
 based on https://www.javadoc.io/doc/org.redisson/redisson/latest/org/redisson/api/RTransaction.html[Redisson RTransaction].
 
-Compared to a xref:spring-transactional-projections.adoc[Spring transactional projection], a _Redis transactional projection_ is more lightweight since
+Compared to a xref:ROOT:Usage/factus/projections/atomicity/spring-transactional-projections.adoc[Spring transactional projection], a _Redis transactional projection_ is more lightweight since
 
 - transactionality is directly provided by `RTransaction`. There is no need to deal with Spring's `PlatformTransactionManager`
 - the fact stream position is automatically managed (see example below)
@@ -40,13 +40,23 @@ In order to make use of redisson RTransaction support, the necessary dependency 
 
 == Structure
 
-A _Redis transactional projection_ can be a xref:managed-projection.adoc[managed-] or
-a xref:subscribed-projection.adoc[subscribed] projection and is defined as follows:
+A _Redis transactional projection_ can be a xref:ROOT:Usage/factus/projections/types/managed-projection.adoc[managed-] or
+a xref:ROOT:Usage/factus/projections/types/subscribed-projection.adoc[subscribed] projection and is defined as follows:
 
 - it is annotated with `@RedisTransactional` (optional when using the default values and extending one of Factus' abstract classes mentioned below)
 - it implements `RedisProjection` revealing the `RedisClient` used
 - it provides the revision number of the projection via the `@ProjectionMetaData` annotation
 - the handler methods receive an additional `RTransaction` parameter
+
+[NOTE]
+====
+Factus provides convenient abstract classes for managed and subscribed projections:
+
+- `AbstractRedisTxManagedProjection`
+- `AbstractRedisTxSubscribedProjection`
+====
+
+== Example
 
 [source,java]
 ----
@@ -55,3 +65,5 @@ void apply(SomethingHappened fact, RTransaction tx) {
     myMap = tx.getMap( ... ).put( fact.getKey() , fact.getValue() );
 }
 ----
+
+A full example can be found in xref:ROOT:Usage/factus/projections/example/example-redis-tx.adoc[Redis transactional projections].

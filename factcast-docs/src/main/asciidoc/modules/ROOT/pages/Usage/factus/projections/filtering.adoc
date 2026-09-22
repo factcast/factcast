@@ -2,10 +2,10 @@
 :icons: font
 
 When implementing a Projection, you would add handler methods
-(xref:handler-parameters.adoc[methods annotated with either `@Handler` or `@HandlerFor`])
+(xref:ROOT:Usage/factus/handler-parameters.adoc[methods annotated with either `@Handler` or `@HandlerFor`])
 in order to express, what the projection is interested in.
 
-Factus will look at these methods in order to discover xref:Concept/factspec.adoc#specification[fact specifications].
+Factus will look at these methods in order to discover xref:ROOT:Concept/factspec.adoc#specification[fact specifications].
 These fact specifications form a query which is sent to the FactCast server to create a fact-stream suited for this
 projection.
 In detail, for each handler method, a Projector inspects the method's annotations and parameter types
@@ -33,7 +33,7 @@ If for a projection these filters are known in advance, you can use additional a
 [NOTE]
 ====
 If your filter is dynamic and hence can not be declared statically via these annotations,
-use the xref:callbacks.adoc#postprocess[`postprocess`] callback instead.
+use the xref:ROOT:Usage/factus/projections/callbacks.adoc#postprocess[`postprocess`] callback instead.
 ====
 
 == Some Examples

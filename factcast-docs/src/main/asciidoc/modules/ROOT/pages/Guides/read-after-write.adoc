@@ -6,7 +6,7 @@
 This guide is targeting an audience that is already informed about the projection types offered by Factus, and about
 their concepts.
 
-We suggest to check out the "Projections" section of the xref:../Usage/factus/projections/index.adoc[Factus API docs]
+We suggest to check out the "Projections" section of the xref:ROOT:Usage/factus/projections/index.adoc[Factus API docs]
 before delving into this guide.
 ====
 
@@ -134,4 +134,4 @@ This way, you could implement your queries to wait for the model to get consiste
 the id.
 
 For in-depth discussion of how to use this approach,
-see xref:../Usage/factus/projections/types/subscribed-projection.adoc[Subscribed Projections]
+see xref:ROOT:Usage/factus/projections/types/subscribed-projection.adoc[Subscribed Projections]

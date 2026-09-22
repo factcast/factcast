@@ -67,7 +67,7 @@ Obviously, transformation via javascript from a VM brings a considerable overhea
 
 In order not to do unnecessary work, factcast will cache the transformation results, either in memory or persistently.
 
-See the xref:../Setup/properties.adoc[Properties]-Section on how to configure this.
+See the xref:ROOT:Setup/properties.adoc[Properties]-Section on how to configure this.
 
 **Note:** Whenever a transformation is not possible, factcast will just throw an appropriate exception.
 

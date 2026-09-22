@@ -10,4 +10,4 @@ conveniently query for facts, without requiring knowledge of a query language or
 
 image::ui.png[FactCast-Server UI]
 
-Learn link:setup[here] how to set it up in your environment.
+Learn xref:ROOT:UI/Setup/index.adoc[here] how to set it up in your environment.

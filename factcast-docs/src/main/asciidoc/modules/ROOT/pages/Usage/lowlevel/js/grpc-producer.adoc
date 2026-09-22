@@ -1,6 +1,9 @@
 = nodeJS GRPC Producer
 :icons: font
 
+Producing Facts via Node.js is straightforward with the available gRPC NPM module. It generates a stub constructor
+called `RemoteFactStore` from the FactCast proto file.
+
 
 
 
@@ -38,4 +41,4 @@ store.publish(
 );
 ----
 
-See the xref:../../../Concept/fact.adoc[Facts] page for detailed information about all possible and required header fields.
+See the xref:ROOT:Concept/fact.adoc[Facts] page for detailed information about all possible and required header fields.

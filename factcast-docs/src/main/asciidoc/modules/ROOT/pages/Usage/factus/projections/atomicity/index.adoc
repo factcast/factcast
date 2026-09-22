@@ -4,8 +4,8 @@
 [NOTE]
 ====
 Atomic projections only make sense in terms of:
- xref:Usage/factus/projections/types/managed-projection.adoc[managed projections] and for
- xref:Usage/factus/projections/types/subscribed-projection.adoc[subscribed projections].
+ xref:ROOT:Usage/factus/projections/types/managed-projection.adoc[managed projections] and for
+ xref:ROOT:Usage/factus/projections/types/subscribed-projection.adoc[subscribed projections].
 as _snapshot projections_ (including Aggregates) work with local state & externalized snapshots and thus are atomic by design.
 ====
 
@@ -35,9 +35,9 @@ _In an atomic Projection, the projection update and the update of the fact-strea
 
 Factus currently supports atomicity for the following external data stores:
 
-* xref:Usage/factus/projections/atomicity/spring-transactional-projections.adoc[data stores supported by Spring Transaction Management] (e.g. JDBC / MongoDB / Cassandra)
+* xref:ROOT:Usage/factus/projections/atomicity/spring-transactional-projections.adoc[data stores supported by Spring Transaction Management] (e.g. JDBC / MongoDB / Cassandra)
 * Redis
-  * via xref:Usage/factus/projections/atomicity/redis-transactional-projections.adoc[transactions]
+  * via xref:ROOT:Usage/factus/projections/atomicity/redis-transactional-projections.adoc[transactions]
 
 [NOTE]
 ====
@@ -78,7 +78,7 @@ Once the bulkSize is reached, or a configured timeout is triggered, the recorded
 
 [NOTE]
 ====
-Bulk processing only takes place xref:../../../../Concept/index.adoc[in the `catchup` phase].
+Bulk processing only takes place xref:ROOT:Concept/index.adoc[in the `catchup` phase].
 ====
 
 === Skipping fact-stream-position Updates

@@ -29,7 +29,7 @@ It provides two APIs for the JVM:
 
 and also a Schema-Registry that enables FactCast to **validate & transform** events on the fly.
 
-If you are new here, you might want to read up on the xref:motivation.adoc[motivation] and xref:design.adoc[design] for the project.
+If you are new here, you might want to read up on the xref:ROOT:About/motivation.adoc[motivation] and xref:ROOT:About/design.adoc[design] for the project.
 
 '''
 

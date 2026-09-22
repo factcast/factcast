@@ -13,7 +13,7 @@ When it comes to metrics, you'll have to know what you're looking for. There are
 
 - **Server** metrics in FactCast Server as well as
 - **Client** metrics in the factcast client and additionally in the
-- xref:../Usage/factus/metrics.adoc[factus client library].
+- xref:ROOT:Usage/factus/metrics.adoc[factus client library].
 
 We're focussing on _Server_ metrics here.
 
@@ -68,26 +68,26 @@ At the **time of writing (0.9.11)**, the metrics exposed by the namespaces group
 [cols="1,1,1", options="header"]
 |===
 |operation |type |description
-|publish |`timer` |Time to publish (write) a fact or a list of facts sent by the client.<br />Ref: xref:../Concept/fact.adoc[concepts]
-|subscribe-follow |`timer` |Time to create and return a follow subscription (not the actual stream of facts).<br />Ref: xref:../Concept/fact.adoc[concepts]
-|subscribe-catchup |`timer` |Time to create and return a catchup subscription (not the actual stream of facts).<br />Ref: xref:../Concept/fact.adoc[concepts]
+|publish |`timer` |Time to publish (write) a fact or a list of facts sent by the client.; Ref: xref:ROOT:Concept/fact.adoc[concepts]
+|subscribe-follow |`timer` |Time to create and return a follow subscription (not the actual stream of facts).; Ref: xref:ROOT:Concept/fact.adoc[concepts]
+|subscribe-catchup |`timer` |Time to create and return a catchup subscription (not the actual stream of facts).; Ref: xref:ROOT:Concept/fact.adoc[concepts]
 |fetchById |`timer` |Time to get a fact from a given ID.
 |serialOf |`timer` |Time to get the serial of a fact.
 |enumerateNamespaces |`timer` |Time to process namespaces enumeration.
 |enumerateTypes |`timer` |Time to process types enumeration.
-|getStateFor |`timer` |Time to get the latest state token for a given fact specification. The state represents the serial of the last fact matching the specifications, and is used by the client to determine whether a fact stream has been updated at a given point in time. Relevant for optimistic locking.<br />Ref: xref:../Usage/factus/optimistic-locking.adoc[optimistic locking]
-|publishIfUnchanged |`timer` |Time to check against the given state token and possibly publish (write) a fact or a list of facts sent by the client.<br />Ref: xref:../Usage/factus/optimistic-locking.adoc[optimistic locking]
-|getSnapshot |`timer` |Time to read a snapshot from the cache.<br />Ref: xref:../Usage/factus/projections/index.adoc[snapshots]
-|setSnapshot |`timer` |Time to create/update a snapshot from the cache.<br />Ref: xref:../Usage/factus/projections/index.adoc[snapshots]
-|clearSnapshot |`timer` |Time to delete a snapshot from the cache.<br />Ref: xref:../Usage/factus/projections/index.adoc[snapshots]
-|compactSnapshotCache |`timer` |Time to delete old entries from the snapshot cache.<br />Ref: xref:../Usage/factus/projections/index.adoc[snapshots]
-|invalidateStateToken |`timer` |Time to invalidate the state token used for optimistic locking. The client can abort the transaction and let the server invalidate the token used for consistency.<br />Ref: xref:../Usage/factus/optimistic-locking.adoc[optimistic locking]
+|getStateFor |`timer` |Time to get the latest state token for a given fact specification. The state represents the serial of the last fact matching the specifications, and is used by the client to determine whether a fact stream has been updated at a given point in time. Relevant for optimistic locking.; Ref: xref:ROOT:Usage/factus/optimistic-locking.adoc[optimistic locking]
+|publishIfUnchanged |`timer` |Time to check against the given state token and possibly publish (write) a fact or a list of facts sent by the client.; Ref: xref:ROOT:Usage/factus/optimistic-locking.adoc[optimistic locking]
+|getSnapshot |`timer` |Time to read a snapshot from the cache.; Ref: xref:ROOT:Usage/factus/projections/index.adoc[snapshots]
+|setSnapshot |`timer` |Time to create/update a snapshot from the cache.; Ref: xref:ROOT:Usage/factus/projections/index.adoc[snapshots]
+|clearSnapshot |`timer` |Time to delete a snapshot from the cache.; Ref: xref:ROOT:Usage/factus/projections/index.adoc[snapshots]
+|compactSnapshotCache |`timer` |Time to delete old entries from the snapshot cache.; Ref: xref:ROOT:Usage/factus/projections/index.adoc[snapshots]
+|invalidateStateToken |`timer` |Time to invalidate the state token used for optimistic locking. The client can abort the transaction and let the server invalidate the token used for consistency.; Ref: xref:ROOT:Usage/factus/optimistic-locking.adoc[optimistic locking]
 |notifyRoundTripLatency |`timer` |Time it takes for a notify on the database to be echoed back to the listener (roundtrip).
 |resultStreamStart |`timer` |Time it takes to start the stream of result sets after querying for events for a specific subscription.
-|catchupFact |`meter` |Counts the number of facts returned by a catchup subscription or catchup part of a follow subscription request (e.g. Factus managed projections) managed by the EventStore.<br />Ref: xref:../Concept/fact.adoc[concepts]
-|catchupTransformationRatio |`meter` |[deprecated] Percentage of facts transformed (downcasted/upcasted) by the server in response to a subscribed client. Useful for debugging the amount of overhead due to transforming, for subscription returning a significant amount of facts.<br />Ref: xref:../Concept/transformation.adoc[transformation]
+|catchupFact |`meter` |Counts the number of facts returned by a catchup subscription or catchup part of a follow subscription request (e.g. Factus managed projections) managed by the EventStore.; Ref: xref:ROOT:Concept/fact.adoc[concepts]
+|catchupTransformationRatio |`meter` |[deprecated] Percentage of facts transformed (downcasted/upcasted) by the server in response to a subscribed client. Useful for debugging the amount of overhead due to transforming, for subscription returning a significant amount of facts.; Ref: xref:ROOT:Concept/transformation.adoc[transformation]
 |missedRoundtrip |`meter` |If inactive for more than a configured interval (`factcast.store.fact-notification-blocking-wait-time-in-millis`), the server validates the health of the database connection. For this purpose it sends an internal notification to the database and waits to receive back an answer in the interval defined by `factcast.store.fact-notification-max-round-trip-latency-in-millis`. This metric counts the number of notifications sent without an answer from the database.
-|snapshotsCompacted |`meter` |Counts the number of old snapshots deleted. This runs as a dedicated scheduled job, configured by `factcast.store.snapshot-cache-compact-cron`.<br />Ref: xref:../Usage/factus/projections/index.adoc[snapshots]
+|snapshotsCompacted |`meter` |Counts the number of old snapshots deleted. This runs as a dedicated scheduled job, configured by `factcast.store.snapshot-cache-compact-cron`.; Ref: xref:ROOT:Usage/factus/projections/index.adoc[snapshots]
 |tailIndices |`meter` |Counts the number of tail indices being present after tail index maintenance. They have a "state" tag which can be used to distinguish between valid/invalid ones and they carry a "maintenance" tag which can be either skipped or executed and reflects whether maintenance was actually executed due to ongoing index operations.
 |===
 
@@ -96,8 +96,8 @@ At the **time of writing (0.4.3)**, the metrics exposed by the namespaces group 
 [cols="1,1,1", options="header"]
 |===
 |operation |type |description
-|transformEvent |`timer` |Time to transform (upcast/downcast) a single fact.<br />Ref: xref:../Concept/transformation.adoc[transformation]
-|fetchRegistryFile |`timer` |Time to retrieve a file from the schema registry.<br />Ref: xref:../Concept/schema-registry.adoc[facts validation]
+|transformEvent |`timer` |Time to transform (upcast/downcast) a single fact.; Ref: xref:ROOT:Concept/transformation.adoc[transformation]
+|fetchRegistryFile |`timer` |Time to retrieve a file from the schema registry.; Ref: xref:ROOT:Concept/schema-registry.adoc[facts validation]
 |refreshRegistry |`timer` |Time to execute the schema registry refresh, in order to get the latest schema and transformation updates.
 |compactTransformationCache |`timer` |Time to delete old entries from the transformation cache.
 |transformationCache-hit |`meter` |Counts the number of hits from the transformation cache.
@@ -146,7 +146,7 @@ You can distinguish them by the `name` tag. Currently, these are:
   cache)
 - `pg-listener` - used by the Guava EventBus that receives signals from the PostgreSQL
 - `telemetry` - used by the Guava EventBus that receives signals from the FactCast Server (
-  see xref:telemetry.adoc[telemetry])
+  see xref:ROOT:Ops/telemetry.adoc[telemetry])
 
 See https://micrometer.io/docs/ref/jvm for more information.
 

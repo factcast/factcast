@@ -10,8 +10,9 @@ With `FactCast` you can _publish_ `Facts` which will be written into a log. You 
 list of `Facts` atomically (all-or-none).
 
 With optimistic locking you can use conditional publishing, which is based upon aggregates that do not change during the
-lifecycle of the lock (see xref:Usage/lowlevel/java/optimistic_locking.adoc[optimistic locking]).
+lifecycle of the lock (see xref:ROOT:Usage/lowlevel/java/optimistic_locking.adoc[optimistic locking]).
 
+[#read-subscribe]
 == Read (subscribe)
 
 In order to receive `Facts` you have to subscribe to `FactCast` with a subscription request. This is where `FactCast`

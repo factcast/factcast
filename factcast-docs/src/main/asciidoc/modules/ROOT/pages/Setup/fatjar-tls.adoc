@@ -5,7 +5,7 @@
 
 ==== Non-Encrypted
 
-In order to run a simple example FactCast server, you could enter the project **factcast-examples/factcast-example-server**, see link:../fatjar[fatjar]
+In order to run a simple example FactCast server, you could enter the project **factcast-examples/factcast-example-server**; see xref:ROOT:Setup/fatjar.adoc[fatjar].
 
 == TLS Server
 
@@ -24,4 +24,4 @@ In order to run the TLS Server, go to **factcast-examples/factcast-example-tls-s
 mvn spring-boot:run
 ----
 
-xref:ports.adoc[Read more on Ports]
+xref:ROOT:Setup/ports.adoc[Read more on Ports]

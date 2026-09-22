@@ -13,6 +13,7 @@ Obviously, a Fact is history and cannot be changed, after it happened. This is o
 
 Facts consist of two JSON documents: Header and Payload.
 
+[#the-header]
 === The Header
 
 consists of:

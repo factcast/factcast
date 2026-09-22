@@ -10,10 +10,8 @@ Have a look at the https://github.com/factcast/factcast/blob/main/CONTRIBUTING.m
 
 ==== Thank you
 
-https://github.com/factcast/factcast/graphs/contributors[Contributors]
-
-{{<ghcontributors
-"https://api.github.com/repos/factcast/factcast/contributors?per_page=101" >}}
+The current list of contributors is available in the
+https://github.com/factcast/factcast/graphs/contributors[FactCast contributors graph].
 
 and also
 
