@@ -15,7 +15,9 @@
  */
 package org.factcast.factus.projector;
 
+import jakarta.annotation.Nullable;
 import java.lang.reflect.*;
+import java.util.UUID;
 import lombok.NonNull;
 import lombok.Value;
 import org.factcast.core.Fact;
@@ -34,6 +36,22 @@ class Dispatcher {
   @NonNull ProjectorImpl.TargetObjectResolver objectResolver;
 
   @NonNull FactSpec spec;
+
+  /** payload path from @FilterByAggIdProperty, or null if the handler is not annotated */
+  @Nullable String aggIdPropertyPath;
+
+  /**
+   * @return a copy of the spec, restricted to the given aggregate id. If the handler carries a
+   *     {@link org.factcast.factus.FilterByAggIdProperty}, the id must also appear at the annotated
+   *     payload path, which is evaluated server-side.
+   */
+  FactSpec specFor(@NonNull UUID aggregateId) {
+    FactSpec copy = spec.copy();
+    if (aggIdPropertyPath != null) {
+      return copy.aggIdProperty(aggIdPropertyPath, aggregateId);
+    }
+    return copy.aggId(aggregateId);
+  }
 
   void invoke(
       @NonNull EventSerializer deserializer, @NonNull Projection projection, @NonNull Fact f) {

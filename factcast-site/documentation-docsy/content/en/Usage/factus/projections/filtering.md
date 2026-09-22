@@ -93,6 +93,11 @@ Note that you could also define a dot-separated path like 'references.recommende
 EventObject.
 The use of Array expressions is not allowed here.
 
+The path is matched against the Fact's JSON payload on the server. On the client, it is validated against the
+**fields** of the handler's EventObject parameter when the Aggregate is first fetched, so a typo fails early rather
+than silently matching nothing. Combined with `@HandlerFor` there is no EventObject to validate against, so the
+path is passed on unverified (a warning is logged).
+
 This filter is particularly useful, if you want to process events that reference your Aggregate, but only if your
 Aggregate has a particular role.
 

@@ -263,6 +263,45 @@ class ProjectorImplTest {
     }
 
     @Test
+    void createFromAggregateWithAggIdPropertyFilter() {
+      // INIT
+      UUID aggregateId = UUID.randomUUID();
+      FilterByAggIdPropertyAggregate aggregate = new FilterByAggIdPropertyAggregate(aggregateId);
+
+      ProjectorImpl<FilterByAggIdPropertyAggregate> underTest =
+          new ProjectorImpl<>(aggregate, eventSerializer);
+
+      // RUN
+      Collection<FactSpec> factSpecs = underTest.createFactSpecs();
+
+      // ASSERT
+      assertThat(factSpecs).hasSize(3);
+
+      FactSpec filtered = specFor(factSpecs, "FilterByAggIdPropertyEvent");
+      assertThat(filtered.aggIds()).containsExactly(aggregateId);
+      assertThat(filtered.aggIdProperties())
+          .containsExactly(entry("recommendedUserId", aggregateId));
+
+      // the handler without the annotation must not be affected
+      FactSpec unfiltered = specFor(factSpecs, "ComplexEvent");
+      assertThat(unfiltered.aggIds()).containsExactly(aggregateId);
+      assertThat(unfiltered.aggIdProperties()).isEmpty();
+
+      // @HandlerFor cannot be verified against an event class, but the path is still applied
+      FactSpec handlerFor = specFor(factSpecs, "SomethingElse");
+      assertThat(handlerFor.aggIds()).containsExactly(aggregateId);
+      assertThat(handlerFor.aggIdProperties())
+          .containsExactly(entry("references.userId", aggregateId));
+    }
+
+    private FactSpec specFor(Collection<FactSpec> specs, String type) {
+      return specs.stream()
+          .filter(s -> type.equals(s.type()))
+          .findFirst()
+          .orElseThrow(() -> new AssertionError("no FactSpec for type " + type));
+    }
+
+    @Test
     void createFromProjectionWithHandlerFor() {
       // INIT
       ProjectionWithHandlerFor projection = new ProjectionWithHandlerFor();
