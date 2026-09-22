@@ -507,24 +507,37 @@ class PgFactStoreTest {
 
     @SneakyThrows
     @Test
-    void name() {
+    void capturesStatementAndExtractsResult() {
       FactSpec spec1 = FactSpec.ns("ns1").type("type1");
       List<FactSpec> specs = Lists.newArrayList(spec1);
 
       PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs);
-      String stateSQL = pgQueryBuilder.createStateSQL();
-      PreparedStatementSetter statementSetter =
-          pgQueryBuilder.createStatementSetter(new AtomicLong(0));
+      String stateSQL =
+          pgQueryBuilder.createStateSQL(
+              storeConfigurationProperties.getStateQueryBackwardScanWindow());
 
-      ArgumentCaptor<PreparedStatementSetter> captor =
+      ArgumentCaptor<PreparedStatementSetter> setterCaptor =
           ArgumentCaptor.forClass(PreparedStatementSetter.class);
-      when(jdbcTemplate.query(eq(stateSQL), captor.capture(), any(ResultSetExtractor.class)))
+      @SuppressWarnings("unchecked")
+      ArgumentCaptor<ResultSetExtractor<Long>> extractorCaptor =
+          ArgumentCaptor.forClass(ResultSetExtractor.class);
+
+      when(jdbcTemplate.query(eq(stateSQL), setterCaptor.capture(), extractorCaptor.capture()))
           .thenReturn(32L);
       assertThat(underTest.getStateFor(specs, 16L).serialOfLastMatchingFact()).isEqualTo(32L);
 
       PreparedStatement ps = mock(PreparedStatement.class);
-      captor.getValue().setValues(ps);
+      setterCaptor.getValue().setValues(ps);
       verify(ps).setLong(3, 16L);
+      verify(ps).setLong(6, 16L);
+
+      ResultSet rs = mock(ResultSet.class);
+      when(rs.next()).thenReturn(false);
+      assertThat(extractorCaptor.getValue().extractData(rs)).isEqualTo(0L);
+
+      when(rs.next()).thenReturn(true);
+      when(rs.getLong(1)).thenReturn(42L);
+      assertThat(extractorCaptor.getValue().extractData(rs)).isEqualTo(42L);
     }
   }
 
@@ -540,23 +553,24 @@ class PgFactStoreTest {
 
     @SneakyThrows
     @Test
-    void name() {
+    void bindsLastMatchingSerial() {
       FactSpec spec1 = FactSpec.ns("ns1").type("type1");
       List<FactSpec> specs = Lists.newArrayList(spec1);
 
       PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs);
-      String stateSQL = pgQueryBuilder.createStateSQL();
-      PreparedStatementSetter statementSetter =
-          pgQueryBuilder.createStatementSetter(new AtomicLong(12));
+      String stateSQL =
+          pgQueryBuilder.createStateSQL(
+              storeConfigurationProperties.getStateQueryBackwardScanWindow());
       ArgumentCaptor<PreparedStatementSetter> captor =
           ArgumentCaptor.forClass(PreparedStatementSetter.class);
       when(jdbcTemplate.query(eq(stateSQL), captor.capture(), any(ResultSetExtractor.class)))
           .thenReturn(32L);
-      assertThat(underTest.getStateFor(specs, 16L).serialOfLastMatchingFact()).isEqualTo(32L);
+      assertThat(underTest.getStateFor(specs, LAST_MATCHING_SERIAL).serialOfLastMatchingFact())
+          .isEqualTo(32L);
 
       PreparedStatement ps = mock(PreparedStatement.class);
       captor.getValue().setValues(ps);
-      verify(ps).setLong(3, 16L);
+      verify(ps).setLong(3, LAST_MATCHING_SERIAL);
     }
   }
 
@@ -576,7 +590,9 @@ class PgFactStoreTest {
       List<FactSpec> specs = Lists.newArrayList(spec1);
 
       PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs);
-      String stateSQL = pgQueryBuilder.createStateSQL();
+      String stateSQL =
+          pgQueryBuilder.createStateSQL(
+              storeConfigurationProperties.getStateQueryBackwardScanWindow());
       when(jdbcTemplate.queryForObject(PgConstants.LAST_SERIAL_IN_LOG, Long.class)).thenReturn(32L);
       assertThat(underTest.getCurrentStateFor(specs).serialOfLastMatchingFact()).isEqualTo(32L);
     }
