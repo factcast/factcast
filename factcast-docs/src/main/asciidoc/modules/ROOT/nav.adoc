@@ -88,7 +88,7 @@
 *** xref:Usage/factus/optimistic-locking.adoc[Optimistic Locking]
 *** xref:Usage/factus/testing.adoc[Testing]
 *** xref:Usage/factus/metrics.adoc[Metrics]
-*** xref:Usage/factus/bootstapping.adoc[Bootstrapping]
+*** xref:Usage/factus/bootstrapping.adoc[Bootstrapping]
 *** xref:Usage/factus/tips.adoc[Tips]
 
 
