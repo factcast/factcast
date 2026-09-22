@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.12.3-SNAPSHOT</version>
+    <version>0.12.5-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-schema-registry-cli</artifactId>
@@ -130,7 +130,7 @@
       <groupId>com.fasterxml.jackson.module</groupId>
       <artifactId>jackson-module-kotlin</artifactId>
       <!-- even though all other modules are avail for 2.13.2, this one is missing -->
-      <version>2.22.2</version>
+      <version>2.22.3</version>
       <scope>runtime</scope>
     </dependency>
     <dependency>
@@ -323,9 +323,15 @@
             <phase>integration-test</phase>
             <configuration>
               <executable>java</executable>
+              <!-- Runs off the reactor classpath instead of within repackaged jar,
+                since that would make the thin launcher resolve this module's parent POM
+                from the local/remote repository at runtime, which fails in any build that
+                did not "install" first (e.g. a bare "mvn verify"). -->
+              <classpathScope>runtime</classpathScope>
               <arguments>
-                <argument>-jar</argument>
-                <argument>target/fc-schema-cli.jar</argument>
+                <argument>-classpath</argument>
+                <classpath></classpath>
+                <argument>${main.class}</argument>
                 <argument>build</argument>
                 <argument>--base-path</argument>
                 <argument>../factcast-examples/factcast-example-schema-registry/src/main/resources</argument>
