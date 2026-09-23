@@ -168,7 +168,7 @@ void whenHandlingUserAddedFactEmailIsAdded() {
 Note the use of the convenient builder the `Fact` class is providing.
 
 Since the focus of this unit test is on `handleUserAdded`, we execute the method directly.
-[The full unit test](https://github.com/factcast/factcast/tree/main/factcast-itests/factcast-itests-doc/src/test/java/org/factcast/itests/docexample/factcastlowlevel/UserEmailsProjectionTest.java)
+https://github.com/factcast/factcast/tree/main/factcast-itests/factcast-itests-doc/src/test/java/org/factcast/itests/docexample/factcastlowlevel/UserEmailsProjectionTest.java[The full unit test]
 also contains a test for the dispatching logic of the `apply` method, as well as a similar test for the
 `handleUserRemoved` method.
 
