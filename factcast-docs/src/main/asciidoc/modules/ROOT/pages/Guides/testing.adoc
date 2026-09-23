@@ -435,4 +435,4 @@ The test concludes by checking if the state of the `UserEmailsProjection` was up
 == Full Example Code
 
 The code for all examples introduced here can be
-found [here](https://github.com/factcast/factcast/tree/main/factcast-itests/factcast-itests-doc/).
+found https://github.com/factcast/factcast/tree/main/factcast-itests/factcast-itests-doc/[here].
