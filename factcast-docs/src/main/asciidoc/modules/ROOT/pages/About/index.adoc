@@ -1,5 +1,6 @@
 = About
 :icons: font
+:page-aliases: /index
 
 pass:[<div style="text-align: center; font-size: xx-large;"><i>FactCast is a 'good enough' Event-store based on PostgreSQL.</i></div>]
 pass:[<div style="text-align: center;">and also</div>]
@@ -8,24 +9,22 @@ pass:[<div style="text-align: center; font-size: x-large;"><i>Factus is an API t
 '''
 
 pass:[<div style="text-align: center;">]
-image:https://github.com/factcast/factcast/actions/workflows/maven.yaml/badge.svg?branch=main[Actions Status, link="https://github.com/factcast/factcast/actions"]
-image:https://codecov.io/gh/factcast/factcast/graph/badge.svg?token=0eHdAKj2ZY[codecov, link="https://codecov.io/gh/factcast/factcast"]
-image:https://www.codefactor.io/repository/github/factcast/factcast/badge[CodeFactor, link="https://www.codefactor.io/repository/github/factcast/factcast"]
-image:https://img.shields.io/maven-central/v/org.factcast/factcast/0.12.svg[Maven Central, link="http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22org.factcast"]
-image:https://img.shields.io/docker/v/factcast/factcast?label=dockerhub[DockerHub, link="https://hub.docker.com/repository/docker/factcast/factcast/tags"]
-image:https://img.shields.io/github/license/factcast/factcast[License, link="https://www.apache.org/licenses/LICENSE-2.0"]
+image:https://github.com/factcast/factcast/actions/workflows/maven.yaml/badge.svg?branch=main[Actions Status,link="https://github.com/factcast/factcast/actions"]
+image:https://codecov.io/gh/factcast/factcast/graph/badge.svg?token=0eHdAKj2ZY[codecov,link="https://codecov.io/gh/factcast/factcast"]
+image:https://www.codefactor.io/repository/github/factcast/factcast/badge[CodeFactor,link="https://www.codefactor.io/repository/github/factcast/factcast"]
+image:https://img.shields.io/maven-central/v/org.factcast/factcast/0.12.svg[Maven Central,link="http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22org.factcast"]
+image:https://img.shields.io/docker/v/factcast/factcast?label=dockerhub[DockerHub,link="https://hub.docker.com/repository/docker/factcast/factcast/tags"]
+image:https://img.shields.io/github/license/factcast/factcast[License,link="https://www.apache.org/licenses/LICENSE-2.0"]
 pass:[</div>]
 
 '''
 
-FactCast is written in Java & Kotlin and serves as a basis for working in a distributed environment with loosely coupled
-software systems that communicate over events.
+FactCast is written in Java & Kotlin and serves as a basis for working in a distributed environment with loosely coupled software systems that communicate over events.
 
 It provides two APIs for the JVM:
 
 1. **FactCast client**: low-level, un-opinionated GRPC library to publish / subscribe to facts
-2. **Factus**: high-level, opinionated library working with facts as Objects, as well as abstractions like Aggregates &
-   Projections
+2. **Factus**: high-level, opinionated library working with facts as Objects, as well as abstractions like Aggregates & Projections
 
 and also a Schema-Registry that enables FactCast to **validate & transform** events on the fly.
 

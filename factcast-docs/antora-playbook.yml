@@ -1,7 +1,7 @@
 site:
   title: FactCast Documentation
-  url: https://docs.factcast.org/
-  start_page: docs:ROOT:/index.adoc
+  url: https://docs2.factcast.org/
+  start_page: docs:ROOT:/About/index.adoc
 content:
   sources:
     - url: ..
