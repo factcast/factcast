@@ -46,10 +46,22 @@ CREATE TABLE managed_projection (
 );
 ```
 
-Both are shared by all of our JDBC projections, keyed by a unique projection name. Note that Factcast will not
-create or migrate these tables for you: its own Liquibase changesets run against the _store_ database, never
-against your projection database. See [Spring Transactional]({{< ref "spring-transactional-projections.md" >}})
-for the details, including the table a _subscribed_ projection uses instead of `managed_projection`.
+A _subscribed_ projection keeps its position in a table of its own:
+
+```sql
+CREATE TABLE subscribed_projection (
+    name   varchar(255),
+    state  UUID,
+    serial bigint DEFAULT -1,
+
+    PRIMARY KEY (name)
+);
+```
+
+Our example is a managed projection, so only `managed_projection` is needed here; create the position
+table that matches the kind of projection you write. All of them are shared by all of our JDBC
+projections, keyed by a unique projection name. Note that Factcast will not create or migrate these
+tables for you.
 
 ## Constructing
 
@@ -103,8 +115,8 @@ When processing the _UserCreated_ event, we add a new row to the `users` tables,
 void apply(UserCreated e) {
     jdbcTemplate.update(
             "INSERT INTO users (name, id) VALUES (?,?);",
-            e.userName(),
-            e.aggregateId());
+            e.getUserName(),
+            e.getAggregateId());
 }
 ```
 
@@ -113,7 +125,7 @@ When handling the _UserDeleted_ event we do the opposite and remove the appropri
 ```java
 @Handler
 void apply(UserDeleted e) {
-    jdbcTemplate.update("DELETE FROM users where id = ?", e.aggregateId());
+    jdbcTemplate.update("DELETE FROM users where id = ?", e.getAggregateId());
 }
 ```
 
@@ -157,11 +169,11 @@ the projection to provide us with user names by calling `getUserNames()`.
 If you have to keep an existing schema, extend `AbstractSpringTxManagedProjection` (or
 `AbstractSpringTxSubscribedProjection`) instead and implement the three methods yourself:
 
-| Method Signature                                                                 | Description                                                                                             |
-| -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| `public FactStreamPosition factStreamPosition()`                                 | read the last position in the Fact stream from the database                                             |
-| `public void factStreamPosition(@NonNull FactStreamPosition factStreamPosition)` | write the current position of the Fact stream to the database                                           |
-| `public WriterToken acquireWriteToken(@NonNull Duration maxWait)`                | coordinates write access to the projection, see [here]({{< ref "managed-projection.md" >}}) for details |
+| Method Signature                                                                 | Description                                                                                                                             |
+| -------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `public FactStreamPosition factStreamPosition()`                                 | read the last position in the Fact stream from the database                                                                             |
+| `public void factStreamPosition(@NonNull FactStreamPosition factStreamPosition)` | write the current position of the Fact stream to the database                                                                           |
+| `public WriterToken acquireWriteToken(@NonNull Duration maxWait)`                | coordinates write access to the projection, see [here]({{< ref "/Usage/factus/projections/types/managed-projection.md" >}}) for details |
 
 Provided a table `fact_stream_positions` exists, here is an example of how to write the Fact position:
 

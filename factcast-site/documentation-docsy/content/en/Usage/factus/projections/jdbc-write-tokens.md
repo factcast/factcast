@@ -4,7 +4,7 @@ weight = 55
 type = "docs"
 +++
 
-Every [managed]({{< ref "managed-projection.md" >}}) and [subscribed]({{< ref "subscribed-projection.md" >}}) projection
+Every [managed]({{< ref "/Usage/factus/projections/types/managed-projection.md" >}}) and [subscribed]({{< ref "/Usage/factus/projections/types/subscribed-projection.md" >}}) projection
 has to hand out a `WriterToken`, so that only one instance of your application writes to it at a
 time. The turnkey implementations for that used to be Redis- and MongoDB-based, which meant
 operating one of those just for the write token. On a relational datastore that is not necessary:
@@ -50,7 +50,7 @@ passed is available to them as `dataSource()`.
 These classes give you the write token and the fact stream position, but **no atomicity** between
 the position update and your projection's own updates: the position is written on its own
 connection. If a crash between the two would leave your projection inconsistent, use
-[Spring Transactional]({{< ref "spring-transactional-projections.md" >}}) instead, whose
+[Spring Transactional]({{< ref "/Usage/factus/projections/atomicity/spring-transactional-projections.md" >}}) instead, whose
 `AbstractSpringJdbc*` classes write the position on the transaction's connection.
 
 {{% / alert %}}
@@ -64,7 +64,7 @@ single-row `UPDATE`, on a connection of its own, for every fact applied — on t
 
 Projections that are transactional get one position write per bulk instead. So if you are about to
 replay a long stream, or your projection is behind by a lot, use the `AbstractSpringJdbc*` classes
-from [Spring Transactional]({{< ref "spring-transactional-projections.md" >}}): they are
+from [Spring Transactional]({{< ref "/Usage/factus/projections/atomicity/spring-transactional-projections.md" >}}): they are
 `TransactionAware`, so the position is written once per bulk and on the transaction's own
 connection. The steady state of an already caught-up projection is the same either way.
 

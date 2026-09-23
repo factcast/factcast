@@ -62,7 +62,7 @@ Factus provides convenient abstract classes for managed and subscribed projectio
 
 ## Coordinating writers over JDBC
 
-[Write Tokens over JDBC]({{< ref "jdbc-write-tokens.md" >}}) keeps both the write token and the
+[Write Tokens over JDBC]({{< ref "/Usage/factus/projections/jdbc-write-tokens.md" >}}) keeps both the write token and the
 fact-stream-position in the very same relational database your projection already writes to, so
 that no Redis or MongoDB is needed just for the write token. That page carries the required schema,
 the supported databases and the lease semantics; all of it applies here unchanged.
