@@ -21,3 +21,4 @@ antora:
   extensions:
     - require: '@sntke/antora-mermaid-extension'
     - require: '@antora/lunr-extension'
+    - require: './antora/extensions/stable-doc-ids.js'
