@@ -15,33 +15,41 @@ module.exports.register = function () {
       const current = page.src
       const currentDir = path.posix.dirname(current.relative)
 
-      const children = pages
-        .filter((candidate) => {
-          const src = candidate.src
+      const children = pages.filter((candidate) => {
+        const src = candidate.src
 
-          // Same Antora component/version/module
-          if (src.component !== current.component) return false
-          if (src.version !== current.version) return false
-          if (src.module !== current.module) return false
+        return (
+          src.component === current.component &&
+          src.version === current.version &&
+          src.module === current.module &&
+          path.posix.dirname(src.relative) === currentDir &&
+          src.relative !== current.relative &&
+          path.posix.basename(src.relative) !== 'index.adoc'
+        )
+      })
 
-          // Only pages in exactly the same directory
-          if (path.posix.dirname(src.relative) !== currentDir) return false
+      const navOrder = getNavOrder(contentCatalog, current)
 
-          // Don't include the current page
-          if (src.relative === current.relative) return false
+      children.sort((a, b) => {
+        const ai = navOrder.get(a.src.relative)
+        const bi = navOrder.get(b.src.relative)
 
-          // Don't include another index.adoc
-          if (path.posix.basename(src.relative) === 'index.adoc') return false
+        // Both pages occur in nav.adoc
+        if (ai !== undefined && bi !== undefined) {
+          return ai - bi
+        }
 
-          return true
-        })
-        .sort((a, b) => a.src.relative.localeCompare(b.src.relative))
+        // Pages occurring in nav.adoc come first
+        if (ai !== undefined) return -1
+        if (bi !== undefined) return 1
+
+        // Fallback for pages not mentioned in navigation
+        return a.src.relative.localeCompare(b.src.relative)
+      })
 
       const list = children
         .map((child) => {
           const filename = path.posix.basename(child.src.relative)
-
-          // "./" explicitly means "same pages subdirectory" in Antora
           return `* xref:./${filename}[]`
         })
         .join('\n')
@@ -51,4 +59,48 @@ module.exports.register = function () {
       )
     }
   })
+}
+
+function getNavOrder(contentCatalog, current) {
+  const order = new Map()
+  let position = 0
+
+  const navFiles = contentCatalog.findBy({
+    component: current.component,
+    version: current.version,
+    family: 'nav'
+  })
+
+  for (const navFile of navFiles) {
+    const source = navFile.contents.toString()
+
+    const xrefPattern = /xref:([^\[]+)\[/g
+    let match
+
+    while ((match = xrefPattern.exec(source)) !== null) {
+      let target = match[1]
+
+      // Ignore fragments
+      target = target.split('#')[0]
+
+      // Handle module:name.adoc
+      let module = current.module
+      let relative = target
+
+      const colon = target.indexOf(':')
+      if (colon >= 0) {
+        module = target.substring(0, colon)
+        relative = target.substring(colon + 1)
+      }
+
+      if (
+        module === current.module &&
+        !order.has(relative)
+      ) {
+        order.set(relative, position++)
+      }
+    }
+  }
+
+  return order
 }
