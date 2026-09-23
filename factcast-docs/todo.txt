@@ -1,0 +1,5 @@
+# Resolved Hugo Macro Conversion
+
+The dynamic `ghcontributors` shortcode in `About/thanks.adoc` was replaced with a stable link to GitHub's contributor
+graph. This keeps Antora builds deterministic and avoids requiring network access or a custom extension during the
+documentation build.
