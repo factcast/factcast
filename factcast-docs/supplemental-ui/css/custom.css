@@ -57,9 +57,6 @@ body.landing .doc h1.page {
     .content {
         max-width: none !important;
         width: 100% !important;
-        display: flex !important;
-        flex-direction: row !important;
-        justify-content: flex-start !important;
         padding-left: 2rem !important;
         padding-right: 2rem !important;
     }
@@ -95,4 +92,10 @@ body.landing .doc h1.page {
     body.landing .toolbar {
         display: none;
     }
+
+
+}
+
+.doc .admonitionblock td.content {
+    display: table-cell !important;
 }
