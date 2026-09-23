@@ -22,3 +22,5 @@ antora:
     - require: '@sntke/antora-mermaid-extension'
     - require: '@antora/lunr-extension'
     - require: './antora/extensions/stable-doc-ids.js'
+    - require: './antora/extensions/child-pages.js'
+    
