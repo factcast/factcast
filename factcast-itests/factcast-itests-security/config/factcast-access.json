@@ -5,6 +5,12 @@
       "roles": [
         "sample-client"
       ]
+    },
+    {
+      "id": "client-without-secret",
+      "roles": [
+        "sample-client"
+      ]
     }
   ],
   "roles": [

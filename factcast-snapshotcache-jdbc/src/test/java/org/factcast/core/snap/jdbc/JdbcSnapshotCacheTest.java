@@ -276,10 +276,10 @@ class JdbcSnapshotCacheTest {
     @Mock DatabaseMetaData metaData;
     private JdbcSnapshotCache jdbcSnapshotCache;
 
-    @ProjectionMetaData(revision = 1L)
+    @ProjectionMetaData(revisionId = "1")
     class TestSnapshotProjection implements SnapshotProjection {}
 
-    @ProjectionMetaData(revision = 1L)
+    @ProjectionMetaData(revisionId = "1")
     class TestAggregateProjection extends Aggregate {}
 
     @BeforeEach
@@ -759,6 +759,6 @@ class JdbcSnapshotCacheTest {
         .thenReturn("projection_class", "aggregate_id", "last_accessed");
   }
 
-  @ProjectionMetaData(name = "hugo", revision = 1)
+  @ProjectionMetaData(name = "hugo", revisionId = "1")
   static class MyAgg extends Aggregate {}
 }

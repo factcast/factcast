@@ -18,6 +18,7 @@ package org.factcast.itests.security;
 import static org.assertj.core.api.Assertions.*;
 
 import io.grpc.Metadata;
+import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import java.util.List;
 import java.util.UUID;
@@ -176,5 +177,17 @@ class ClientWithSeparateCredentialsTest extends AbstractFactCastIntegrationTest 
     assertThatThrownBy(() -> stubs.blocking().handshake(converter.empty()))
         .isInstanceOf(StatusRuntimeException.class)
         .hasMessageContaining("UNAUTHENTICATED");
+  }
+
+  @Test
+  void failsHandshakeForAccountWithoutSecret() {
+    var stub =
+        stubs
+            .blocking()
+            .withCallCredentials(BasicAuthCallCredentials.of("client-without-secret", "test123"));
+
+    assertThatExceptionOfType(StatusRuntimeException.class)
+        .isThrownBy(() -> stub.handshake(converter.empty()))
+        .satisfies(e -> assertThat(e.getStatus().getCode()).isEqualTo(Status.Code.UNAUTHENTICATED));
   }
 }

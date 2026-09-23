@@ -153,7 +153,7 @@ class AbstractMongoDbTxProjectionTest {
     }
   }
 
-  @ProjectionMetaData(revision = 1)
+  @ProjectionMetaData(revisionId = "1")
   static class TestProjection extends AbstractMongoDbTxManagedProjection {
 
     private final MongoDbWriterTokenManager tokenManager;
