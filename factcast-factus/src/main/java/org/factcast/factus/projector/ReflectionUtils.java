@@ -17,6 +17,8 @@ package org.factcast.factus.projector;
 
 import static java.util.Collections.emptySet;
 
+import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.introspect.*;
 import com.google.common.annotations.VisibleForTesting;
 import java.lang.reflect.*;
 import java.util.*;
@@ -27,6 +29,7 @@ import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.spec.*;
+import org.factcast.core.util.FactCastJson;
 import org.factcast.factus.*;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.projection.*;
@@ -389,39 +392,47 @@ public class ReflectionUtils {
    * resolves the path through the Object graph starting from the eventObjectType to make sure that
    * the path is valid and the resulting return type is UUID.
    *
-   * @param value the path in dot-notation, case-sensitive
+   * @param path the path in dot-notation, case-sensitive
    * @param eventObjectType the root pojo to resolve the path on
    * @throws IllegalAggregateIdPropertyPathException when path does not exist, or does not resolve
    *     to UUID type
    */
   @VisibleForTesting
   static void verifyUuidPropertyExpressionAgainstClass(
-      @NonNull String value, @NonNull Class<? extends EventObject> eventObjectType)
+      @NonNull String path, @NonNull Class<? extends EventObject> eventObjectType)
       throws IllegalAggregateIdPropertyPathException {
-    String[] path = value.split("\\.");
-    Class<?> type = eventObjectType;
-    for (String segment : path) {
-      // the server matches the path against the JSON payload, so we resolve by field name rather
-      // than by getter, which also keeps this independent of the accessor style (fluent or bean)
-      Field field = org.springframework.util.ReflectionUtils.findField(type, segment);
-      if (field == null) {
+
+    ObjectMapper mapper = FactCastJson.getObjectMapper();
+    JavaType type = mapper.constructType(eventObjectType);
+
+    for (String segment : path.split("\\.")) {
+      SerializationConfig config = mapper.getSerializationConfig();
+      BeanDescription bean = config.introspect(type);
+
+      BeanPropertyDefinition property =
+          bean.findProperties().stream()
+              .filter(p -> p.getName().equals(segment))
+              .filter(BeanPropertyDefinition::couldSerialize)
+              .findFirst()
+              .orElse(null);
+
+      if (property == null) {
         throw new IllegalAggregateIdPropertyPathException(
-            "Cannot resolve property "
-                + segment
-                + " on type "
-                + type
-                + " (full path='"
-                + value
-                + "' from "
-                + eventObjectType
-                + ")");
+            "Missing property " + segment + " on type " + type);
       }
-      type = field.getType();
+
+      AnnotatedMember member = property.getAccessor();
+      if (member == null) {
+        throw new IllegalAggregateIdPropertyPathException(
+            "Missing accessor for " + segment + " on type " + type);
+      }
+
+      type = member.getType();
     }
 
-    if (!UUID.class.isAssignableFrom(type)) {
+    if (!UUID.class.isAssignableFrom(type.getRawClass())) {
       throw new IllegalAggregateIdPropertyPathException(
-          "Encountered non-UUID type at " + value + " on type " + type);
+          "Encountered non-UUID type at " + path + " on type " + type);
     }
   }
 
