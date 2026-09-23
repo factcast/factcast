@@ -309,5 +309,5 @@ ask each time the server for new events (regardless of those being available or 
 
 == Best Practices and Tips
 
-Check the following [guide](https://docs.factcast.org/usage/factus/tips/) regularly, as it is updated with tips to
+Check the following xref:ROOT:Usage/factus/tips.adoc[guide] regularly, as it is updated with tips to
 improve performance, or fix common issues.
