@@ -1,5 +1,5 @@
 #!/bin/bash
 
-mvn clean install
+CI=true mvn clean install
 
-rsync --delete -rcv public/* con2:/www/docs2.factcast.org
+rsync --delete -rcv target/site/* con2:/www/docs2.factcast.org

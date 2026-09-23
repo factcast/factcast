@@ -7,6 +7,8 @@ content:
     - url: ..
       branches: HEAD
       start_path: factcast-docs/src/main/asciidoc
+      edit_url: 'https://github.com/factcast/factcast/edit/{refname}/{path}'
+
 ui:
   bundle:
     url: https://gitlab.com/antora/antora-ui-default/-/jobs/artifacts/HEAD/raw/build/ui-bundle.zip?job=bundle-stable
