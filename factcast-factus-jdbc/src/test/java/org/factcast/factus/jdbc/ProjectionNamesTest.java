@@ -58,14 +58,14 @@ class ProjectionNamesTest {
 
       String shortened = ProjectionNames.shorten(name);
 
-      assertThat(shortened).hasSize(209).startsWith(repeat(200) + "_");
-      assertThat(shortened.substring(201)).hasSize(8).matches("[0-9a-f]{8}");
+      assertThat(shortened).hasSize(255).startsWith(repeat(246) + "_");
+      assertThat(shortened.substring(247)).hasSize(8).matches("[0-9a-f]{8}");
     }
 
     @Test
     void shortensJustOverMaxLength() {
       assertThat(ProjectionNames.shorten(repeat(ProjectionNames.MAX_NAME_LENGTH + 1)))
-          .hasSize(209)
+          .hasSize(ProjectionNames.MAX_NAME_LENGTH)
           .isNotEqualTo(repeat(ProjectionNames.MAX_NAME_LENGTH + 1));
     }
 
@@ -77,8 +77,41 @@ class ProjectionNamesTest {
       String second = ProjectionNames.lockName(shared + "Snapshot");
 
       assertThat(first).isNotEqualTo(second);
-      assertThat(first).hasSize(209);
-      assertThat(second).hasSize(209);
+      assertThat(first).hasSize(ProjectionNames.MAX_NAME_LENGTH);
+      assertThat(second).hasSize(ProjectionNames.MAX_NAME_LENGTH);
+    }
+
+    @Test
+    void shortensAnOverlongPositionName() {
+      String shortened = ProjectionNames.positionName(repeat(300));
+
+      assertThat(shortened).hasSize(ProjectionNames.MAX_NAME_LENGTH).startsWith(repeat(246) + "_");
+      assertThat(shortened.substring(247)).matches("[0-9a-f]{8}");
+    }
+
+    @Test
+    void keepsTheLockSuffixOnAnOverlongLockName() {
+      String shortened = ProjectionNames.lockName(repeat(300));
+
+      assertThat(shortened)
+          .hasSize(ProjectionNames.MAX_NAME_LENGTH)
+          .startsWith(repeat(241) + "_")
+          .endsWith(ProjectionNames.LOCK_SUFFIX);
+      assertThat(shortened.substring(242, 250)).matches("[0-9a-f]{8}");
+    }
+
+    @Test
+    void keepsTheLockSuffixWhereOnlyTheSuffixExceedsTheColumn() {
+      String barelyFits =
+          repeat(ProjectionNames.MAX_NAME_LENGTH - ProjectionNames.LOCK_SUFFIX.length());
+      String overflows = barelyFits + "x";
+
+      assertThat(ProjectionNames.lockName(barelyFits))
+          .hasSize(ProjectionNames.MAX_NAME_LENGTH)
+          .endsWith(ProjectionNames.LOCK_SUFFIX);
+      assertThat(ProjectionNames.lockName(overflows))
+          .hasSize(ProjectionNames.MAX_NAME_LENGTH)
+          .endsWith(ProjectionNames.LOCK_SUFFIX);
     }
 
     @Test

@@ -33,26 +33,32 @@ public class ProjectionNames {
 
   public final String LOCK_SUFFIX = "_lock";
 
-  private final int RETAINED_PREFIX_LENGTH = 200;
+  private final String SEPARATOR = "_";
   private final int HASH_LENGTH = 8;
 
   public String lockName(@NonNull String scopedName) {
-    return shorten(scopedName + LOCK_SUFFIX);
+    return shorten(scopedName, LOCK_SUFFIX);
   }
 
   public String positionName(@NonNull String scopedName) {
     return shorten(scopedName);
   }
 
+  public String shorten(@NonNull String name) {
+    return shorten(name, "");
+  }
+
   /**
    * Must not change once released: renaming locks during a rolling deploy would let old and new
    * instances hold two different locks over the same projection.
    */
-  public String shorten(@NonNull String name) {
-    if (name.length() <= MAX_NAME_LENGTH) {
-      return name;
+  private String shorten(@NonNull String name, @NonNull String suffix) {
+    String full = name + suffix;
+    if (full.length() <= MAX_NAME_LENGTH) {
+      return full;
     }
-    return name.substring(0, RETAINED_PREFIX_LENGTH) + "_" + sha256Prefix(name);
+    int retained = MAX_NAME_LENGTH - suffix.length() - HASH_LENGTH - SEPARATOR.length();
+    return name.substring(0, retained) + SEPARATOR + sha256Prefix(full) + suffix;
   }
 
   private String sha256Prefix(String name) {
