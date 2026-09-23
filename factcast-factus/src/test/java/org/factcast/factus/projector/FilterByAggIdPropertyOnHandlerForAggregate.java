@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2025 factcast.org
+ * Copyright © 2017-2020 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,20 @@
  */
 package org.factcast.factus.projector;
 
-/**
- * this exception is supposed to fail the application start, thats why it is a runtime exception.
- */
-public class IllegalAnnotationForTargetClassException extends RuntimeException {
-  public IllegalAnnotationForTargetClassException(String s) {
-    super(s);
+import java.util.UUID;
+import org.factcast.core.Fact;
+import org.factcast.factus.FilterByAggIdProperty;
+import org.factcast.factus.HandlerFor;
+import org.factcast.factus.projection.Aggregate;
+
+/** illegal: there is no EventObject to verify the property path against */
+class FilterByAggIdPropertyOnHandlerForAggregate extends Aggregate {
+
+  FilterByAggIdPropertyOnHandlerForAggregate(UUID aggregateId) {
+    super(aggregateId);
   }
+
+  @HandlerFor(ns = "test", type = "SomethingElse", version = 2)
+  @FilterByAggIdProperty("references.userId")
+  void apply(Fact f) {}
 }

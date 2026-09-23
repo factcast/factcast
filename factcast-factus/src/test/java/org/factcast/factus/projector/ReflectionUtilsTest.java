@@ -25,8 +25,8 @@ import java.util.*;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.assertj.core.api.Assertions;
+import org.factcast.core.Fact;
 import org.factcast.core.FactStreamPosition;
-import org.factcast.core.spec.FactSpec;
 import org.factcast.factus.*;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.projection.*;
@@ -120,11 +120,37 @@ class ReflectionUtilsTest {
 
   @SneakyThrows
   @Test
-  void checkFilterByAggIdProperty() {
+  void rejectsAggIdPropertyOnNonAggregate() {
     Assertions.assertThatThrownBy(
             () ->
-                ReflectionUtils.checkFilterByAggIdProperty(
-                    SomeUnrelatedClass.class.getMethod("foo"), FactSpec.ns("foo")))
-        .isInstanceOf(IllegalAnnotationForTargetClassException.class);
+                ReflectionUtils.discoverAggIdPropertyPath(
+                    SomeUnrelatedClass.class.getMethod("foo")))
+        .isInstanceOf(IllegalAnnotationForTargetClassException.class)
+        .hasMessageContaining("foo");
+  }
+
+  @SneakyThrows
+  @Test
+  void discoversAggIdPropertyPath() {
+    Method annotated =
+        FilterByAggIdPropertyAggregate.class.getDeclaredMethod(
+            "apply", FilterByAggIdPropertyEvent.class);
+    Method plain =
+        FilterByAggIdPropertyAggregate.class.getDeclaredMethod("apply", ComplexEvent.class);
+
+    Assertions.assertThat(ReflectionUtils.discoverAggIdPropertyPath(annotated))
+        .isEqualTo("recommendedUserId");
+    Assertions.assertThat(ReflectionUtils.discoverAggIdPropertyPath(plain)).isNull();
+  }
+
+  @SneakyThrows
+  @Test
+  void rejectsAggIdPropertyOnHandlerFor() {
+    Method handlerFor =
+        FilterByAggIdPropertyOnHandlerForAggregate.class.getDeclaredMethod("apply", Fact.class);
+
+    Assertions.assertThatThrownBy(() -> ReflectionUtils.discoverAggIdPropertyPath(handlerFor))
+        .isInstanceOf(InvalidHandlerDefinition.class)
+        .hasMessageContaining("HandlerFor");
   }
 }
