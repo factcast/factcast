@@ -273,7 +273,7 @@ use the same scenario as before, an `UserEmailsProjection` which we will ask for
 
 These are the events we need to handle:
 
-- [`UserAdded`](https://github.com/factcast/factcast/tree/main/factcast-itests/factcast-itests-doc/src/main/java/org/factcast/itests/docexample/factus/event/UserAdded.java)
+- https://github.com/factcast/factcast/tree/main/factcast-itests/factcast-itests-doc/src/main/java/org/factcast/itests/docexample/factus/event/UserAdded.java[`UserAdded`]
   and
 - [`UserRemoved`](https://github.com/factcast/factcast/tree/main/factcast-itests/factcast-itests-doc/src/main/java/org/factcast/itests/docexample/factus/event/UserRemoved.java)
   .
