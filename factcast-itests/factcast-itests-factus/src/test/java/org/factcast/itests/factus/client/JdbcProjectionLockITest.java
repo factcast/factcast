@@ -146,13 +146,13 @@ public class JdbcProjectionLockITest extends AbstractFactCastIntegrationTest {
     try (var ignored = factus.subscribeAndBlock(uut).awaitCatchup()) {
       assertThat(uut.hasLock()).isTrue();
       assertThat(competitor.acquireWriteToken(MAX_WAIT)).isNull();
-      assertThat(uut.getUserNames()).containsExactlyInAnyOrder("Peter", "Paul");
 
       await().atMost(BEYOND_LEASE).until(() -> uut.factStreamPosition() != null);
       whileSubscribed = uut.factStreamPosition();
     }
 
     assertThat(whileSubscribed.serial()).isPositive();
+    assertThat(uut.getUserNames()).containsExactlyInAnyOrder("Peter", "Paul");
     assertThat(persistedPosition("subscribed_projection", uut.getScopedName().asString()))
         .isEqualTo(whileSubscribed);
 

@@ -313,15 +313,25 @@ class JdbcWriterTokenManagerTest {
     }
 
     @Test
-    void distinguishesInstancesOnTheSameHost() {
+    void identifiesThisJvmByHostAndRandomId() {
+      String lockedBy =
+          JdbcWriterTokenManager.lockProviderConfiguration(dataSource, "locks").getLockedByValue();
+
+      assertThat(lockedBy).contains("/");
+      assertThat(lockedBy.substring(lockedBy.indexOf('/') + 1))
+          .matches("[0-9a-f-]{36}")
+          .isNotEqualTo(lockedBy.substring(0, lockedBy.indexOf('/')));
+    }
+
+    @Test
+    void keepsOneOwnerForEveryProjectionOfThisJvm() {
       String first =
           JdbcWriterTokenManager.lockProviderConfiguration(dataSource, "locks").getLockedByValue();
       String second =
-          JdbcWriterTokenManager.lockProviderConfiguration(dataSource, "locks").getLockedByValue();
+          JdbcWriterTokenManager.lockProviderConfiguration(dataSource, "other_locks")
+              .getLockedByValue();
 
-      assertThat(first).isNotEqualTo(second).contains("/");
-      assertThat(first.substring(0, first.indexOf('/')))
-          .isEqualTo(second.substring(0, second.indexOf('/')));
+      assertThat(first).isEqualTo(second);
     }
   }
 

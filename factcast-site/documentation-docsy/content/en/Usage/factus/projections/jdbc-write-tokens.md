@@ -55,6 +55,21 @@ connection. If a crash between the two would leave your projection inconsistent,
 
 {{% / alert %}}
 
+## Throughput
+
+Factus writes the fact stream position **once per fact** for a projection that is not
+transactional, and these classes are not. Catching up a large fact stream therefore costs one
+single-row `UPDATE`, on a connection of its own, for every fact applied — on top of whatever your
+`@Handler` methods do. Replaying millions of facts that way is slow.
+
+Projections that are transactional get one position write per bulk instead. So if you are about to
+replay a long stream, or your projection is behind by a lot, use the `AbstractSpringJdbc*` classes
+from [Spring Transactional]({{< ref "spring-transactional-projections.md" >}}): they are
+`TransactionAware`, so the position is written once per bulk and on the transaction's own
+connection. The steady state of an already caught-up projection is the same either way.
+
+## Bringing your own lock provider
+
 If your projections already sit in a class hierarchy of their own, `JdbcWriterTokenManager` is
 public API and implements `acquireWriteToken` on its own:
 

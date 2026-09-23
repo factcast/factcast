@@ -15,6 +15,7 @@
  */
 package org.factcast.factus.jdbc;
 
+import com.google.common.annotations.VisibleForTesting;
 import jakarta.annotation.Nullable;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -71,6 +72,12 @@ public class JdbcWriterTokenManager {
   private static final ScheduledExecutorService KEEPALIVE_SCHEDULER =
       Executors.newScheduledThreadPool(KEEPALIVE_THREADS, keepaliveThreadFactory());
 
+  /**
+   * shedlock matches extend and unlock on locked_by, so two application instances sharing a
+   * hostname would renew and release each other's lease.
+   */
+  private static final String LOCKED_BY = hostname() + "/" + UUID.randomUUID();
+
   private final LockProvider lockProvider;
   private final String projectionKey;
   private final String lockName;
@@ -80,10 +87,15 @@ public class JdbcWriterTokenManager {
   private final Timing timing;
   private final AtomicReference<WriterToken> lastIssued = new AtomicReference<>();
 
-  public JdbcWriterTokenManager(@NonNull LockProvider lockProvider, @NonNull String projectionKey) {
+  @VisibleForTesting
+  JdbcWriterTokenManager(@NonNull LockProvider lockProvider, @NonNull String projectionKey) {
     this(lockProvider, projectionKey, DEFAULT_LOCK_AT_MOST_FOR, DEFAULT_LOCK_AT_LEAST_FOR);
   }
 
+  /**
+   * For callers that already run a shedlock {@link LockProvider} of their own. Everyone else builds
+   * one from a DataSource through {@link #create}.
+   */
   public JdbcWriterTokenManager(
       @NonNull LockProvider lockProvider,
       @NonNull String projectionKey,
@@ -98,6 +110,7 @@ public class JdbcWriterTokenManager {
         Timing.SYSTEM);
   }
 
+  @VisibleForTesting
   JdbcWriterTokenManager(
       @NonNull LockProvider lockProvider,
       @NonNull String projectionKey,
@@ -143,11 +156,12 @@ public class JdbcWriterTokenManager {
         lockAtLeastFor);
   }
 
+  @VisibleForTesting
   static JdbcLockProvider.Configuration lockProviderConfiguration(
       @NonNull DataSource dataSource, @NonNull String lockTableName) {
     return JdbcLockProvider.Configuration.builder(dataSource)
         .withTableName(lockTableName)
-        .withLockedByValue(lockedByValue())
+        .withLockedByValue(LOCKED_BY)
         .usingDbTime()
         .build();
   }
@@ -226,7 +240,7 @@ public class JdbcWriterTokenManager {
     try {
       return lockProvider.lock(lockConfiguration);
     } catch (LockException e) {
-      if (isTemporary(e.getCause())) {
+      if (isRetryable(e.getCause())) {
         // not reaching the database is indistinguishable from somebody else holding the lock
         log.warn("Attempt to acquire lock {} failed, will retry", lockName, e);
         return Optional.empty();
@@ -250,18 +264,10 @@ public class JdbcWriterTokenManager {
    * shedlock wraps everything that went wrong into a LockException, so only the cause tells a
    * database we could not reach apart from one that rejected our statement.
    */
-  private static boolean isTemporary(@Nullable Throwable cause) {
+  private static boolean isRetryable(@Nullable Throwable cause) {
     return cause instanceof SQLTransientException
         || cause instanceof SQLRecoverableException
         || cause instanceof SQLNonTransientConnectionException;
-  }
-
-  /**
-   * shedlock matches extend and unlock on locked_by, so two instances sharing a hostname would
-   * renew and release each other's lease.
-   */
-  private static String lockedByValue() {
-    return hostname() + "/" + UUID.randomUUID();
   }
 
   private static String hostname() {

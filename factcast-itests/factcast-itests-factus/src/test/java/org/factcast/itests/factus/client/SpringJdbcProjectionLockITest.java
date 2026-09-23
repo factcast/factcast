@@ -65,6 +65,13 @@ import org.springframework.transaction.support.TransactionTemplate;
 public class SpringJdbcProjectionLockITest extends AbstractFactCastIntegrationTest {
 
   private static final String LOCK_TABLE = JdbcWriterTokenManager.DEFAULT_LOCK_TABLE_NAME;
+
+  /**
+   * A lease owner is one per JVM in production, so simulating several instances in this one means
+   * handing each of them an owner of its own.
+   */
+  private static final String ITEST_HOST = "itest-host";
+
   private static final String HIDDEN_LOCK_TABLE = LOCK_TABLE + "_hidden";
 
   /** short enough for a takeover test to observe an expiring lease within seconds */
@@ -193,17 +200,16 @@ public class SpringJdbcProjectionLockITest extends AbstractFactCastIntegrationTe
   class SameHost {
 
     @Test
-    void eachInstanceGetsItsOwnLeaseOwner() {
+    void takeoverPutsTheNewOwnerIntoTheTable() {
       WriterToken first = acquire(NO_WAIT);
       assertThat(first).isNotNull();
       String firstOwner = lockedBy();
       closeQuietly(first);
 
       assertThat(acquire(BEYOND_LEASE)).isNotNull();
-      String secondOwner = lockedBy();
 
-      assertThat(firstOwner).isNotEqualTo(secondOwner);
-      assertThat(hostPartOf(firstOwner)).isEqualTo(hostPartOf(secondOwner));
+      assertThat(lockedBy()).isNotEqualTo(firstOwner);
+      assertThat(hostPartOf(lockedBy())).isEqualTo(hostPartOf(firstOwner));
     }
 
     @Test
@@ -252,6 +258,49 @@ public class SpringJdbcProjectionLockITest extends AbstractFactCastIntegrationTe
 
     private String hostPartOf(String lockedBy) {
       return lockedBy.substring(0, lockedBy.indexOf('/'));
+    }
+  }
+
+  @Nested
+  class Atomicity {
+
+    private final TransactionTemplate transaction =
+        new TransactionTemplate(platformTransactionManager);
+
+    @Test
+    void positionAndProjectionStateCommitTogether() {
+      JdbcLockedUserNames uut = new JdbcLockedUserNames(platformTransactionManager, jdbcTemplate);
+      FactStreamPosition position = FactStreamPosition.of(randomUUID(), 42L);
+
+      transaction.execute(
+          status -> {
+            uut.apply(new UserCreated(randomUUID(), "Peter"));
+            uut.factStreamPosition(position);
+            return null;
+          });
+
+      assertThat(uut.getUserNames()).contains("Peter");
+      assertThat(persistedPosition("managed_projection", uut.getScopedName().asString()))
+          .isEqualTo(position);
+    }
+
+    @Test
+    void positionAndProjectionStateRollBackTogether() {
+      JdbcLockedUserNames uut = new JdbcLockedUserNames(platformTransactionManager, jdbcTemplate);
+      FactStreamPosition committed = FactStreamPosition.of(randomUUID(), 1L);
+      uut.factStreamPosition(committed);
+
+      transaction.execute(
+          status -> {
+            uut.apply(new UserCreated(randomUUID(), "Paul"));
+            uut.factStreamPosition(FactStreamPosition.of(randomUUID(), 2L));
+            status.setRollbackOnly();
+            return null;
+          });
+
+      assertThat(uut.getUserNames()).doesNotContain("Paul");
+      assertThat(persistedPosition("managed_projection", uut.getScopedName().asString()))
+          .isEqualTo(committed);
     }
   }
 
@@ -323,12 +372,12 @@ public class SpringJdbcProjectionLockITest extends AbstractFactCastIntegrationTe
       try (var ignored = factus.subscribeAndBlock(uut).awaitCatchup()) {
         assertThat(uut.hasLock()).isTrue();
         assertThat(competitor.acquireWriteToken(MAX_WAIT)).isNull();
-        assertThat(uut.getUserNames()).containsExactlyInAnyOrder("Peter", "Paul");
 
         await().atMost(BEYOND_LEASE).until(() -> uut.factStreamPosition() != null);
         whileSubscribed = uut.factStreamPosition();
       }
 
+      assertThat(uut.getUserNames()).containsExactlyInAnyOrder("Peter", "Paul");
       assertThat(whileSubscribed.serial()).isPositive();
       assertThat(persistedPosition("subscribed_projection", uut.getScopedName().asString()))
           .isEqualTo(whileSubscribed);
@@ -351,8 +400,17 @@ public class SpringJdbcProjectionLockITest extends AbstractFactCastIntegrationTe
 
   /** One manager stands for one application instance: all its tokens share a lease owner. */
   private JdbcWriterTokenManager instanceWithLease(Duration lease) {
-    return JdbcWriterTokenManager.create(
-        dataSource(), projectionKey, LOCK_TABLE, lease, Duration.ZERO);
+    return new JdbcWriterTokenManager(
+        lockProvider(ITEST_HOST + "/" + randomUUID()), projectionKey, lease, Duration.ZERO);
+  }
+
+  private JdbcLockProvider lockProvider(String lockedBy) {
+    return new JdbcLockProvider(
+        JdbcLockProvider.Configuration.builder(dataSource())
+            .withTableName(LOCK_TABLE)
+            .withLockedByValue(lockedBy)
+            .usingDbTime()
+            .build());
   }
 
   private DataSource dataSource() {
@@ -371,13 +429,7 @@ public class SpringJdbcProjectionLockITest extends AbstractFactCastIntegrationTe
    * Stands in for an instance that was killed before it could unlock, so its lease has to lapse.
    */
   private void simulateHolderThatDiedWithoutUnlocking() {
-    JdbcLockProvider provider =
-        new JdbcLockProvider(
-            JdbcLockProvider.Configuration.builder(dataSource())
-                .withTableName(LOCK_TABLE)
-                .withLockedByValue("dead-holder/" + randomUUID())
-                .usingDbTime()
-                .build());
+    JdbcLockProvider provider = lockProvider("dead-holder/" + randomUUID());
     assertThat(provider.lock(new LockConfiguration(Instant.now(), lockName, LEASE, Duration.ZERO)))
         .isPresent();
   }

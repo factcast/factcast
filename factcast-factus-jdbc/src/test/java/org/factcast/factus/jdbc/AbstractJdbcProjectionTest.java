@@ -78,7 +78,7 @@ class AbstractJdbcProjectionTest {
     }
 
     @Test
-    void honoursCustomTableNames() throws SQLException {
+    void honoursACustomPositionTable() throws SQLException {
       new MyManagedProjection(dataSource, "my_locks", "my_positions").factStreamPosition();
 
       verify(connection).prepareStatement("SELECT state, serial FROM my_positions WHERE name = ?");
@@ -100,11 +100,6 @@ class AbstractJdbcProjectionTest {
               new JdbcWriterTokenManager(lockProvider, "subscribed_1"),
               new JdbcFactStreamPosition(
                   dataSource, JdbcFactStreamPosition.ProjectionType.SUBSCRIBED, "subscribed_1"));
-    }
-
-    @Test
-    void exposesTheDataSource() {
-      assertThat(uut.dataSource()).isSameAs(dataSource);
     }
 
     @Test

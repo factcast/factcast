@@ -109,7 +109,7 @@ class AbstractSpringJdbcProjectionTest {
     }
 
     @Test
-    void honoursCustomTableNames() throws SQLException {
+    void honoursACustomPositionTable() throws SQLException {
       when(statement.executeQuery()).thenReturn(resultSet);
 
       new MyManagedProjection(platformTransactionManager, jdbcTemplate, "my_locks", "my_positions")
@@ -131,7 +131,11 @@ class AbstractSpringJdbcProjectionTest {
       uut =
           new MySubscribedProjection(
               platformTransactionManager,
-              new JdbcWriterTokenManager(lockProvider, "subscribed_1"),
+              new JdbcWriterTokenManager(
+                  lockProvider,
+                  "subscribed_1",
+                  JdbcWriterTokenManager.DEFAULT_LOCK_AT_MOST_FOR,
+                  JdbcWriterTokenManager.DEFAULT_LOCK_AT_LEAST_FOR),
               new JdbcFactStreamPosition(
                   dataSource, JdbcFactStreamPosition.ProjectionType.SUBSCRIBED, "subscribed_1"));
     }
