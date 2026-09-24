@@ -216,10 +216,11 @@ public class JdbcWriterTokenManager {
         backoffMillis = Math.min(MAX_RETRY_INTERVAL_MILLIS, backoffMillis * 2);
       }
     } catch (InterruptedException e) {
-      // deliberately not restoring the flag: callers retry without sleeping themselves, so a set
-      // interrupt flag would turn their retry loop into a spin against the lock table
-      log.info("Interrupted while trying to acquire lock {}", lockName);
-      return null;
+      Thread.currentThread().interrupt();
+      throw new LockException(
+          "Interrupted while trying to acquire the write lock for projection '%s'"
+              .formatted(lockName),
+          e);
     }
   }
 

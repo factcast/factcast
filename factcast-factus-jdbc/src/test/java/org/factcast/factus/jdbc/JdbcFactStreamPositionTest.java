@@ -33,6 +33,8 @@ import org.factcast.factus.jdbc.JdbcFactStreamPosition.ProjectionType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -180,6 +182,14 @@ class JdbcFactStreamPositionTest {
       new JdbcFactStreamPosition(dataSource, ProjectionType.MANAGED, longKey).factStreamPosition();
 
       verify(statement).setString(1, ProjectionNames.positionName(longKey));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"positions; DROP TABLE users", "my positions", "1positions", ""})
+    void rejectsATableNameThatIsNotAnIdentifier(String tableName) {
+      assertThatThrownBy(() -> new JdbcFactStreamPosition(dataSource, tableName, KEY))
+          .isInstanceOf(IllegalArgumentException.class)
+          .hasMessageContaining(tableName);
     }
   }
 }

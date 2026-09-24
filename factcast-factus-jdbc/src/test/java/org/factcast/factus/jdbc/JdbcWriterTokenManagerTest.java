@@ -153,14 +153,15 @@ class JdbcWriterTokenManagerTest {
     }
 
     @Test
-    void returnsNullWithoutRestoringTheInterruptFlagWhenInterrupted() {
+    void failsAndRestoresTheInterruptFlagWhenInterrupted() {
       when(lockProvider.lock(any(LockConfiguration.class))).thenReturn(Optional.empty());
       timing.interruptOnSleep = true;
 
       try {
-        assertThat(uut.acquireWriteToken(Duration.ofSeconds(60))).isNull();
-        // a restored flag would make every retry of our callers fail its sleep instantly
-        assertThat(Thread.currentThread().isInterrupted()).isFalse();
+        assertThatThrownBy(() -> uut.acquireWriteToken(Duration.ofSeconds(60)))
+            .isInstanceOf(LockException.class)
+            .hasMessageContaining("Interrupted");
+        assertThat(Thread.currentThread().isInterrupted()).isTrue();
       } finally {
         Thread.interrupted();
       }

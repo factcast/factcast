@@ -21,6 +21,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.UUID;
+import java.util.regex.Pattern;
 import javax.sql.DataSource;
 import lombok.Getter;
 import lombok.NonNull;
@@ -48,6 +49,9 @@ import org.factcast.factus.projection.FactStreamPositionAware;
  */
 public class JdbcFactStreamPosition implements FactStreamPositionAware {
 
+  private static final Pattern UNQUOTED_IDENTIFIER =
+      Pattern.compile("[A-Za-z_][A-Za-z0-9_$]{0,62}");
+
   private final DataSource dataSource;
   private final String tableName;
   private final String projectionName;
@@ -60,12 +64,20 @@ public class JdbcFactStreamPosition implements FactStreamPositionAware {
   public JdbcFactStreamPosition(
       @NonNull DataSource dataSource, @NonNull String tableName, @NonNull String projectionKey) {
     this.dataSource = dataSource;
-    this.tableName = tableName;
+    this.tableName = validTableName(tableName);
     this.projectionName = ProjectionNames.positionName(projectionKey);
+  }
+
+  private static String validTableName(String tableName) {
+    if (!UNQUOTED_IDENTIFIER.matcher(tableName).matches()) {
+      throw new IllegalArgumentException("'%s' is not a valid table name".formatted(tableName));
+    }
+    return tableName;
   }
 
   @Nullable
   @Override
+  @SuppressWarnings("java:S2077") // tableName is validated in the constructor
   public FactStreamPosition factStreamPosition() {
     String sql = "SELECT state, serial FROM %s WHERE name = ?".formatted(tableName);
     try (Connection connection = dataSource.getConnection();
@@ -100,6 +112,7 @@ public class JdbcFactStreamPosition implements FactStreamPositionAware {
     }
   }
 
+  @SuppressWarnings("java:S2077") // tableName is validated in the constructor
   private int update(Connection connection, FactStreamPosition position) throws SQLException {
     String sql = "UPDATE %s SET state = ?, serial = ? WHERE name = ?".formatted(tableName);
     try (PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -110,6 +123,7 @@ public class JdbcFactStreamPosition implements FactStreamPositionAware {
     }
   }
 
+  @SuppressWarnings("java:S2077") // tableName is validated in the constructor
   private void insert(Connection connection, FactStreamPosition position) throws SQLException {
     String sql = "INSERT INTO %s (name, state, serial) VALUES (?, ?, ?)".formatted(tableName);
     try (PreparedStatement statement = connection.prepareStatement(sql)) {
