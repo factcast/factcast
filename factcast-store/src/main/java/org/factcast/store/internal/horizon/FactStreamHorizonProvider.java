@@ -17,6 +17,7 @@ package org.factcast.store.internal.horizon;
 
 import javax.sql.DataSource;
 import lombok.NonNull;
+import org.factcast.core.subscription.FactStreamHorizon;
 
 /**
  * Provides commit-safe stream boundaries.
@@ -26,13 +27,13 @@ import lombok.NonNull;
  */
 public interface FactStreamHorizonProvider {
 
-  /** Advances or refreshes the horizon through the provider's default data source. */
+  /** Advances or refreshes the horizon through the provider's configured primary data source. */
   @NonNull
   FactStreamHorizon advance();
 
-  /** Returns the last horizon observed by {@link #advance()} without database access. */
+  /** Returns the last primary horizon observed by {@link #advance()} without database access. */
   @NonNull
-  FactStreamHorizon current();
+  FactStreamHorizon currentPrimary();
 
   /** Reads the persisted horizon through a specific data source without advancing it. */
   @NonNull

@@ -25,10 +25,9 @@ import java.util.concurrent.atomic.*;
 import java.util.function.*;
 import lombok.SneakyThrows;
 import org.assertj.core.api.Assertions;
+import org.factcast.core.subscription.FactStreamHorizon;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.core.subscription.observer.HighWaterMark;
-import org.factcast.store.internal.horizon.FactStreamHorizon;
 import org.factcast.store.internal.horizon.FactStreamHorizonProvider;
 import org.factcast.store.internal.listen.*;
 import org.factcast.store.internal.pipeline.*;
@@ -63,10 +62,8 @@ class PgSynchronizedQueryTest {
   @Mock FactStreamHorizonProvider horizonProvider;
 
   private PgSynchronizedQuery queryWithHorizon(long horizonSerial) {
-    when(horizonProvider.current())
-        .thenReturn(
-            new FactStreamHorizon(
-                HighWaterMark.of(UUID.randomUUID(), horizonSerial), horizonSerial));
+    when(horizonProvider.currentPrimary())
+        .thenReturn(new FactStreamHorizon(UUID.randomUUID(), horizonSerial, horizonSerial));
     return new PgSynchronizedQuery(
         "test",
         pipeline,
@@ -147,8 +144,8 @@ class PgSynchronizedQueryTest {
     Connection con = mock(Connection.class);
     PreparedStatement statement = mock(PreparedStatement.class);
     ResultSet rs = mock(ResultSet.class);
-    when(horizonProvider.current())
-        .thenReturn(new FactStreamHorizon(HighWaterMark.of(UUID.randomUUID(), 42), 42));
+    when(horizonProvider.currentPrimary())
+        .thenReturn(new FactStreamHorizon(UUID.randomUUID(), 42, 42));
     when(connectionSupplier.getPooledAsSingleDataSource(anyList())).thenReturn(ds);
     when(ds.getConnection()).thenReturn(con);
     when(con.prepareStatement(sql)).thenReturn(statement);
@@ -172,7 +169,7 @@ class PgSynchronizedQueryTest {
 
     assertThat(suppliedHorizonSerial).hasValue(42);
     assertThat(cursor).hasValue(42);
-    verify(horizonProvider).current();
+    verify(horizonProvider).currentPrimary();
   }
 
   @Test
@@ -182,8 +179,8 @@ class PgSynchronizedQueryTest {
     SingleConnectionDataSource ds = mock(SingleConnectionDataSource.class);
     Connection con = mock(Connection.class);
     PreparedStatement statement = mock(PreparedStatement.class);
-    when(horizonProvider.current())
-        .thenReturn(new FactStreamHorizon(HighWaterMark.of(UUID.randomUUID(), 42), 42));
+    when(horizonProvider.currentPrimary())
+        .thenReturn(new FactStreamHorizon(UUID.randomUUID(), 42, 42));
     when(connectionSupplier.getPooledAsSingleDataSource(anyList())).thenReturn(ds);
     when(ds.getConnection()).thenReturn(con);
     when(con.prepareStatement(sql)).thenReturn(statement);
@@ -208,8 +205,8 @@ class PgSynchronizedQueryTest {
   @SneakyThrows
   void skipsDatabaseWhenCursorAlreadyReachedHorizon() {
     AtomicLong cursor = new AtomicLong(42);
-    when(horizonProvider.current())
-        .thenReturn(new FactStreamHorizon(HighWaterMark.of(UUID.randomUUID(), 42), 42));
+    when(horizonProvider.currentPrimary())
+        .thenReturn(new FactStreamHorizon(UUID.randomUUID(), 42, 42));
     uut =
         new PgSynchronizedQuery(
             "test",

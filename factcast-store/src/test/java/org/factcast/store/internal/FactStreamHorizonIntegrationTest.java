@@ -32,7 +32,7 @@ import org.factcast.core.store.State;
 import org.factcast.core.store.StateToken;
 import org.factcast.core.store.TokenStore;
 import org.factcast.core.subscription.*;
-import org.factcast.store.internal.horizon.FactStreamHorizon;
+import org.factcast.core.subscription.FactStreamHorizon;
 import org.factcast.store.internal.horizon.FactStreamHorizonProvider;
 import org.factcast.store.internal.lock.AdvisoryLocks;
 import org.factcast.test.IntegrationTest;
@@ -41,12 +41,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 @SpringJUnitConfig(classes = PgTestConfiguration.class)
 @Sql(scripts = "/wipe.sql", config = @SqlConfig(separator = "#"))
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @IntegrationTest
 final class FactStreamHorizonIntegrationTest {
 
@@ -74,7 +76,7 @@ final class FactStreamHorizonIntegrationTest {
         jdbcTemplate.queryForObject("SELECT MAX(ser) FROM notification", Long.class);
     ClassPathResource migrationScriptResource =
         new ClassPathResource(
-            "db/changelog/factcast/safe_hwm/create_factstream_horizon.sql",
+            "db/changelog/factcast/safe_horizon/create_factstream_horizon.sql",
             getClass().getClassLoader());
     String migrationScript = migrationScriptResource.getContentAsString(StandardCharsets.UTF_8);
 
@@ -87,8 +89,8 @@ final class FactStreamHorizonIntegrationTest {
     }
 
     FactStreamHorizon horizon = horizonProvider.read(dataSource);
-    assertThat(horizon.highWaterMark().targetId()).isEqualTo(latest.id());
-    assertThat(horizon.highWaterMark().targetSer()).isEqualTo(expectedFactSerial);
+    assertThat(horizon.factId()).isEqualTo(latest.id());
+    assertThat(horizon.factSerial()).isEqualTo(expectedFactSerial);
     assertThat(horizon.notificationSerial()).isEqualTo(expectedNotificationSerial);
   }
 
@@ -186,7 +188,7 @@ final class FactStreamHorizonIntegrationTest {
         long higherSerial = store.serialOf(higherCoarseMatch.id()).orElseThrow();
         assertThat(lowerSerial).isEqualTo(reservedLowerSerial);
         assertThat(lowerSerial).isLessThan(higherSerial);
-        assertThat(horizon.highWaterMark().targetSer()).isGreaterThanOrEqualTo(higherSerial);
+        assertThat(horizon.factSerial()).isGreaterThanOrEqualTo(higherSerial);
       }
 
       await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertThat(received).hasSize(1));

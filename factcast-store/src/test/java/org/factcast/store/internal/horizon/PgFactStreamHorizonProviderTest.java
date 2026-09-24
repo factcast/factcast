@@ -23,7 +23,7 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.List;
 import java.util.UUID;
 import javax.sql.DataSource;
-import org.factcast.core.subscription.observer.HighWaterMark;
+import org.factcast.core.subscription.FactStreamHorizon;
 import org.factcast.store.internal.PgConstants;
 import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.lock.FactTableWriteLock;
@@ -64,12 +64,12 @@ final class PgFactStreamHorizonProviderTest {
   @SuppressWarnings("unchecked")
   void locksBeforeReadingAndPublishesHorizonOnlyAfterCommit() {
     UUID id = UUID.randomUUID();
-    HighWaterMark liveHighWaterMark = HighWaterMark.of(id, 42);
-    FactStreamHorizon persisted = new FactStreamHorizon(liveHighWaterMark, 11);
-    when(jdbcTemplate.query(eq(PgConstants.HIGHWATER_MARK), any(RowMapper.class)))
-        .thenReturn(List.of(liveHighWaterMark));
+    FactStreamHorizon liveHorizon = new FactStreamHorizon(id, 42, 0);
+    FactStreamHorizon persisted = new FactStreamHorizon(id, 42, 11);
+    when(jdbcTemplate.query(eq(PgConstants.LATEST_FACT), any(RowMapper.class)))
+        .thenReturn(List.of(liveHorizon));
     when(jdbcTemplate.queryForObject(
-            PgFactStreamHorizonProvider.HIGHWATER_NOTIFICATION, Long.class))
+            PgFactStreamHorizonProvider.MAX_NOTIFICATION_SERIAL, Long.class))
         .thenReturn(10L);
     when(jdbcTemplate.query(
             eq(PgFactStreamHorizonProvider.UPDATE_HORIZON),
@@ -78,22 +78,22 @@ final class PgFactStreamHorizonProviderTest {
         .thenReturn(List.of(persisted));
     doAnswer(
             ignored -> {
-              assertThat(underTest.current()).isEqualTo(FactStreamHorizon.empty());
+              assertThat(underTest.currentPrimary()).isEqualTo(FactStreamHorizon.empty());
               return null;
             })
         .when(transactionManager)
         .commit(any());
 
     assertThat(underTest.advance()).isEqualTo(persisted);
-    assertThat(underTest.current()).isEqualTo(persisted);
+    assertThat(underTest.currentPrimary()).isEqualTo(persisted);
 
     InOrder order = inOrder(transactionManager, factTableWriteLock, jdbcTemplate);
     order.verify(transactionManager).getTransaction(any(TransactionDefinition.class));
     order.verify(factTableWriteLock).acquireExclusiveTXLock();
-    order.verify(jdbcTemplate).query(eq(PgConstants.HIGHWATER_MARK), any(RowMapper.class));
+    order.verify(jdbcTemplate).query(eq(PgConstants.LATEST_FACT), any(RowMapper.class));
     order
         .verify(jdbcTemplate)
-        .queryForObject(PgFactStreamHorizonProvider.HIGHWATER_NOTIFICATION, Long.class);
+        .queryForObject(PgFactStreamHorizonProvider.MAX_NOTIFICATION_SERIAL, Long.class);
     order
         .verify(jdbcTemplate)
         .query(
@@ -112,10 +112,11 @@ final class PgFactStreamHorizonProviderTest {
   @Test
   @SuppressWarnings("unchecked")
   void commitFailureLeavesCurrentHorizonUntouched() {
-    HighWaterMark highWaterMark = HighWaterMark.of(UUID.randomUUID(), 42);
-    FactStreamHorizon persisted = new FactStreamHorizon(highWaterMark, 10);
-    when(jdbcTemplate.query(eq(PgConstants.HIGHWATER_MARK), any(RowMapper.class)))
-        .thenReturn(List.of(highWaterMark));
+    FactStreamHorizon liveHorizon = new FactStreamHorizon(UUID.randomUUID(), 42, 0);
+    FactStreamHorizon persisted =
+        new FactStreamHorizon(liveHorizon.factId(), liveHorizon.factSerial(), 10);
+    when(jdbcTemplate.query(eq(PgConstants.LATEST_FACT), any(RowMapper.class)))
+        .thenReturn(List.of(liveHorizon));
     when(jdbcTemplate.queryForObject(anyString(), eq(Long.class))).thenReturn(10L);
     when(jdbcTemplate.query(anyString(), any(RowMapper.class), any(Object[].class)))
         .thenReturn(List.of(persisted));
@@ -123,15 +124,15 @@ final class PgFactStreamHorizonProviderTest {
 
     assertThatThrownBy(underTest::advance).isInstanceOf(TransactionSystemException.class);
 
-    assertThat(underTest.current()).isEqualTo(FactStreamHorizon.empty());
+    assertThat(underTest.currentPrimary()).isEqualTo(FactStreamHorizon.empty());
   }
 
   @Test
   @SuppressWarnings("unchecked")
   void failedHorizonWriteRollsBackAndPreservesCurrentHorizon() {
-    HighWaterMark highWaterMark = HighWaterMark.of(UUID.randomUUID(), 42);
-    when(jdbcTemplate.query(eq(PgConstants.HIGHWATER_MARK), any(RowMapper.class)))
-        .thenReturn(List.of(highWaterMark));
+    FactStreamHorizon liveHorizon = new FactStreamHorizon(UUID.randomUUID(), 42, 0);
+    when(jdbcTemplate.query(eq(PgConstants.LATEST_FACT), any(RowMapper.class)))
+        .thenReturn(List.of(liveHorizon));
     when(jdbcTemplate.queryForObject(anyString(), eq(Long.class))).thenReturn(10L);
     when(jdbcTemplate.query(anyString(), any(RowMapper.class), any(Object[].class)))
         .thenThrow(new IllegalStateException("write failed"));
@@ -141,6 +142,6 @@ final class PgFactStreamHorizonProviderTest {
         .hasMessage("write failed");
 
     verify(transactionManager).rollback(any());
-    assertThat(underTest.current()).isEqualTo(FactStreamHorizon.empty());
+    assertThat(underTest.currentPrimary()).isEqualTo(FactStreamHorizon.empty());
   }
 }

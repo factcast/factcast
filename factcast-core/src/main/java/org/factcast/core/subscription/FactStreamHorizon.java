@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.factcast.store.internal.horizon;
+package org.factcast.core.subscription;
 
-import lombok.NonNull;
-import org.factcast.core.subscription.observer.HighWaterMark;
+import jakarta.annotation.Nullable;
+import java.util.UUID;
 
 /** The inclusive, persisted upper bounds for fact and notification queries. */
-public record FactStreamHorizon(@NonNull HighWaterMark highWaterMark, long notificationSerial) {
+public record FactStreamHorizon(@Nullable UUID factId, long factSerial, long notificationSerial) {
 
   public static FactStreamHorizon empty() {
-    return new FactStreamHorizon(HighWaterMark.empty(), 0);
+    return new FactStreamHorizon(null, 0, 0);
   }
 }

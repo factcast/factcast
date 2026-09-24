@@ -273,7 +273,7 @@ public class PgQueryBuilder {
     return tempTableName != null;
   }
 
-  private String createStateSQL(boolean bounded) {
+  public String createStateSQL(boolean bounded) {
 
     String sql =
         "SELECT "

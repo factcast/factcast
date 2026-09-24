@@ -20,7 +20,7 @@ import java.util.Objects;
 import java.util.UUID;
 import javax.sql.DataSource;
 import lombok.NonNull;
-import org.factcast.core.subscription.observer.HighWaterMark;
+import org.factcast.core.subscription.FactStreamHorizon;
 import org.factcast.store.internal.PgConstants;
 import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.StoreMetrics;
@@ -39,7 +39,7 @@ import org.springframework.transaction.support.TransactionTemplate;
  */
 public class PgFactStreamHorizonProvider extends ReadOnlyPgFactStreamHorizonProvider {
 
-  static final String HIGHWATER_NOTIFICATION = "SELECT COALESCE(MAX(ser),0) FROM notification";
+  static final String MAX_NOTIFICATION_SERIAL = "SELECT COALESCE(MAX(ser),0) FROM notification";
   static final String UPDATE_HORIZON =
       "UPDATE factstream_horizon "
           + "SET fact_ser=?, fact_id=?, notification_ser=GREATEST(notification_ser, ?) "
@@ -75,18 +75,16 @@ public class PgFactStreamHorizonProvider extends ReadOnlyPgFactStreamHorizonProv
                         ignored -> {
                           factTableWriteLock.acquireExclusiveTXLock();
                           FactStreamHorizon next = liveHorizon();
-                          HighWaterMark highWaterMark = next.highWaterMark();
                           List<FactStreamHorizon> persisted =
                               jdbcTemplate.query(
                                   UPDATE_HORIZON,
                                   (rs, rowNum) ->
                                       new FactStreamHorizon(
-                                          HighWaterMark.of(
-                                              rs.getObject("fact_id", UUID.class),
-                                              rs.getLong("fact_ser")),
+                                          rs.getObject("fact_id", UUID.class),
+                                          rs.getLong("fact_ser"),
                                           rs.getLong("notification_ser")),
-                                  highWaterMark.targetSer(),
-                                  highWaterMark.targetId(),
+                                  next.factSerial(),
+                                  next.factId(),
                                   next.notificationSerial());
                           if (persisted.isEmpty()) {
                             throw new IllegalStateException(MISSING_HORIZON);
@@ -95,20 +93,23 @@ public class PgFactStreamHorizonProvider extends ReadOnlyPgFactStreamHorizonProv
                         })));
 
     // TransactionTemplate returns only after the transaction committed successfully.
-    updateCurrent(horizon);
+    updateCurrentPrimary(horizon);
     return horizon;
   }
 
   private @NonNull FactStreamHorizon liveHorizon() {
-    List<HighWaterMark> highWaterMarks =
+    List<FactStreamHorizon> factHorizons =
         jdbcTemplate.query(
-            PgConstants.HIGHWATER_MARK,
+            PgConstants.LATEST_FACT,
             (rs, rowNum) ->
-                HighWaterMark.of(rs.getObject("targetId", UUID.class), rs.getLong("targetSer")));
-    HighWaterMark highWaterMark =
-        highWaterMarks.isEmpty() ? HighWaterMark.empty() : highWaterMarks.get(0);
-    Long notificationSerial = jdbcTemplate.queryForObject(HIGHWATER_NOTIFICATION, Long.class);
+                new FactStreamHorizon(
+                    rs.getObject("fact_id", UUID.class), rs.getLong("fact_serial"), 0));
+    FactStreamHorizon factHorizon =
+        factHorizons.isEmpty() ? FactStreamHorizon.empty() : factHorizons.get(0);
+    Long notificationSerial = jdbcTemplate.queryForObject(MAX_NOTIFICATION_SERIAL, Long.class);
     return new FactStreamHorizon(
-        highWaterMark, notificationSerial == null ? 0 : notificationSerial);
+        factHorizon.factId(),
+        factHorizon.factSerial(),
+        notificationSerial == null ? 0 : notificationSerial);
   }
 }

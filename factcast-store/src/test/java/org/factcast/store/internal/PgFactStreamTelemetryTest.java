@@ -20,6 +20,7 @@ import static org.mockito.Mockito.*;
 import com.google.common.eventbus.EventBus;
 import java.util.Collections;
 import lombok.SneakyThrows;
+import org.factcast.core.subscription.FactStreamHorizon;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.*;
@@ -27,7 +28,6 @@ import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.filter.blacklist.Blacklist;
-import org.factcast.store.internal.horizon.FactStreamHorizon;
 import org.factcast.store.internal.horizon.FactStreamHorizonProvider;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.logsuppression.LogSuppression;
@@ -68,9 +68,7 @@ class PgFactStreamTelemetryTest {
   @BeforeEach
   void setup() {
     lenient().doReturn(Collections.emptyList()).when(uut).catchupConnectionModifiers(any());
-    lenient()
-        .when(horizonProvider.advance())
-        .thenReturn(new FactStreamHorizon(HighWaterMark.empty(), 0));
+    lenient().when(horizonProvider.advance()).thenReturn(FactStreamHorizon.empty());
   }
 
   @Test

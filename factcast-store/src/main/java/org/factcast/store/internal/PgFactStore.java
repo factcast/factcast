@@ -298,7 +298,7 @@ public class PgFactStore extends AbstractFactStore {
   @Override
   @NonNull
   protected State getStateFor(@NonNull Collection<FactSpec> specs) {
-    long horizonSerial = horizonProvider.advance().highWaterMark().targetSer();
+    long horizonSerial = horizonProvider.advance().factSerial();
     return doGetState(specs, 0, OptionalLong.of(horizonSerial));
   }
 
@@ -351,7 +351,7 @@ public class PgFactStore extends AbstractFactStore {
   protected State getCurrentStateFor(Collection<FactSpec> specs) {
     return metrics.time(
         StoreMetrics.OP.GET_STATE_FOR,
-        () -> State.of(specs, horizonProvider.advance().highWaterMark().targetSer()));
+        () -> State.of(specs, horizonProvider.advance().factSerial()));
   }
 
   @SuppressWarnings("DataFlowIssue")

@@ -27,6 +27,7 @@ import javax.sql.DataSource;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.FactStreamPosition;
+import org.factcast.core.subscription.FactStreamHorizon;
 import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
@@ -134,7 +135,7 @@ public class PgFactStream {
     try {
       if (request.ephemeral()) {
         // just fast forward to the latest event published by now
-        serial.set(horizonProvider.advance().highWaterMark().targetSer());
+        serial.set(horizonProvider.advance().factSerial());
       } else {
         doCatchup();
       }
@@ -220,11 +221,11 @@ public class PgFactStream {
   }
 
   @VisibleForTesting
-  void fastForward(@NonNull HighWaterMark atTheStartOfQuery) {
+  void fastForward(@NonNull FactStreamHorizon atTheStartOfQuery) {
     if (isConnected()) {
 
-      UUID targetId = atTheStartOfQuery.targetId();
-      long targetSer = atTheStartOfQuery.targetSer();
+      UUID targetId = atTheStartOfQuery.factId();
+      long targetSer = atTheStartOfQuery.factSerial();
 
       // there is no need to check for the start id, as it'll be
       // contained in serial or smaller, see initializeSerialToStartAfter
@@ -245,8 +246,8 @@ public class PgFactStream {
     try (var suppression = logSuppression.forCatchup(request)) {
       if (!isConnected()) return;
 
-      HighWaterMark highWaterMark = horizonProvider.advance().highWaterMark();
-      sendFactStreamInfo(highWaterMark);
+      FactStreamHorizon horizon = horizonProvider.advance();
+      sendFactStreamInfo(horizon);
 
       if (!isConnected()) return;
 
@@ -258,25 +259,25 @@ public class PgFactStream {
               () -> createCatchupDataSource(connectionSupplier.dataSource(), pipeline))) {
 
         // Phase 1
-        long phase1HighwaterMark = executePhaseOne(primary, highWaterMark.targetSer());
+        long phase1HighwaterMark = executePhaseOne(primary, horizon.factSerial());
 
         if (!isConnected()) return;
 
-        catchupPhaseTwo(primary, phase1HighwaterMark, highWaterMark.targetSer());
+        catchupPhaseTwo(primary, phase1HighwaterMark, horizon.factSerial());
 
         // now that phase 1&2 are done, we can ffwd to the initial HWM on the primary
-        fastForward(highWaterMark);
+        fastForward(horizon);
       }
     } catch (PipelineAlreadyClosedException e) {
       throw new CatchupException(e);
     }
   }
 
-  private void sendFactStreamInfo(@NonNull HighWaterMark highWaterMark)
+  private void sendFactStreamInfo(@NonNull FactStreamHorizon horizon)
       throws PipelineAlreadyClosedException {
     // send FactStreamInfo if requested
     if (request.streamInfo()) {
-      FactStreamInfo factStreamInfo = new FactStreamInfo(serial.get(), highWaterMark.targetSer());
+      FactStreamInfo factStreamInfo = new FactStreamInfo(serial.get(), horizon.factSerial());
       pipeline.process(Signal.of(factStreamInfo));
     }
   }
@@ -288,8 +289,7 @@ public class PgFactStream {
       try (SingleConnectionDataSource secondary =
           createCatchupDataSource(offloadDataSource, pipeline)) {
         long offloadHorizonSerial =
-            Math.min(
-                primaryHorizonSerial, horizonProvider.read(secondary).highWaterMark().targetSer());
+            Math.min(primaryHorizonSerial, horizonProvider.read(secondary).factSerial());
         return catchupPhaseOne(secondary, offloadHorizonSerial);
       } catch (SQLException | DataAccessException | PipelineAlreadyClosedException e) {
         // SQLException is interesting, as we cannot distinguish between a cancellation and a

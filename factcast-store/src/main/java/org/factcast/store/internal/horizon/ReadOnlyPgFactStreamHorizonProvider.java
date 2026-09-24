@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import javax.sql.DataSource;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import org.factcast.core.subscription.observer.HighWaterMark;
+import org.factcast.core.subscription.FactStreamHorizon;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 @RequiredArgsConstructor
@@ -32,19 +32,19 @@ public class ReadOnlyPgFactStreamHorizonProvider implements FactStreamHorizonPro
       "SELECT fact_ser, fact_id, notification_ser FROM factstream_horizon WHERE id = 1";
 
   @NonNull private final DataSource primaryDataSource;
-  private final AtomicReference<FactStreamHorizon> current =
+  private final AtomicReference<FactStreamHorizon> currentPrimary =
       new AtomicReference<>(FactStreamHorizon.empty());
 
   @Override
   public synchronized @NonNull FactStreamHorizon advance() {
     FactStreamHorizon horizon = read(primaryDataSource);
-    current.set(horizon);
+    currentPrimary.set(horizon);
     return horizon;
   }
 
   @Override
-  public @NonNull FactStreamHorizon current() {
-    return current.get();
+  public @NonNull FactStreamHorizon currentPrimary() {
+    return currentPrimary.get();
   }
 
   @Override
@@ -55,8 +55,8 @@ public class ReadOnlyPgFactStreamHorizonProvider implements FactStreamHorizonPro
                 READ_HORIZON,
                 (rs, rowNum) ->
                     new FactStreamHorizon(
-                        HighWaterMark.of(
-                            rs.getObject("fact_id", UUID.class), rs.getLong("fact_ser")),
+                        rs.getObject("fact_id", UUID.class),
+                        rs.getLong("fact_ser"),
                         rs.getLong("notification_ser")));
     if (horizons.isEmpty()) {
       throw new IllegalStateException(MISSING_HORIZON);
@@ -68,7 +68,7 @@ public class ReadOnlyPgFactStreamHorizonProvider implements FactStreamHorizonPro
     return new JdbcTemplate(dataSource);
   }
 
-  protected final void updateCurrent(@NonNull FactStreamHorizon horizon) {
-    current.set(horizon);
+  protected final void updateCurrentPrimary(@NonNull FactStreamHorizon horizon) {
+    currentPrimary.set(horizon);
   }
 }

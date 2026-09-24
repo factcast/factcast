@@ -37,12 +37,11 @@ import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.State;
 import org.factcast.core.store.StateToken;
 import org.factcast.core.store.TokenStore;
+import org.factcast.core.subscription.FactStreamHorizon;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
-import org.factcast.core.subscription.observer.HighWaterMark;
 import org.factcast.store.StoreConfigurationProperties;
-import org.factcast.store.internal.horizon.FactStreamHorizon;
 import org.factcast.store.internal.horizon.FactStreamHorizonProvider;
 import org.factcast.store.internal.lock.FactTableWriteLock;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
@@ -537,8 +536,7 @@ class PgFactStoreTest {
     void tokenCreationUsesBoundedQueryAtHorizon() {
       FactSpec spec = FactSpec.ns("ns1").type("type1");
       List<FactSpec> specs = Lists.newArrayList(spec);
-      when(horizonProvider.advance())
-          .thenReturn(new FactStreamHorizon(HighWaterMark.of(UUID.randomUUID(), 42), 42));
+      when(horizonProvider.advance()).thenReturn(new FactStreamHorizon(UUID.randomUUID(), 42, 42));
 
       PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs);
       String stateSQL = pgQueryBuilder.createStateSQL(true);
@@ -603,8 +601,7 @@ class PgFactStoreTest {
       FactSpec spec1 = FactSpec.ns("ns1").type("type1");
       List<FactSpec> specs = Lists.newArrayList(spec1);
 
-      when(horizonProvider.advance())
-          .thenReturn(new FactStreamHorizon(HighWaterMark.of(UUID.randomUUID(), 32), 32));
+      when(horizonProvider.advance()).thenReturn(new FactStreamHorizon(UUID.randomUUID(), 32, 32));
 
       assertThat(underTest.getCurrentStateFor(specs).serialOfLastMatchingFact()).isEqualTo(32L);
       verifyNoInteractions(jdbcTemplate);

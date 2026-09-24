@@ -25,10 +25,9 @@ import io.micrometer.core.instrument.Timer;
 import java.sql.ResultSet;
 import java.util.*;
 import java.util.concurrent.*;
-import org.factcast.core.subscription.observer.HighWaterMark;
+import org.factcast.core.subscription.FactStreamHorizon;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.*;
-import org.factcast.store.internal.horizon.FactStreamHorizon;
 import org.factcast.store.internal.horizon.FactStreamHorizonProvider;
 import org.factcast.store.internal.notification.*;
 import org.junit.jupiter.api.*;
@@ -66,7 +65,7 @@ class NudgeNotificationHandlerTest {
     lenient().doNothing().when(jdbc).execute(anyString());
     lenient()
         .when(horizonProvider.advance())
-        .thenReturn(new FactStreamHorizon(HighWaterMark.of(UUID.randomUUID(), 200), 200));
+        .thenReturn(new FactStreamHorizon(UUID.randomUUID(), 200, 200));
     handler = spy(new NudgeNotificationHandler(bus, jdbc, props, metrics, horizonProvider, false));
   }
 
@@ -234,8 +233,8 @@ class NudgeNotificationHandlerTest {
     handler.notificationSer.set(100L);
     when(horizonProvider.advance())
         .thenReturn(
-            new FactStreamHorizon(HighWaterMark.of(UUID.randomUUID(), 200), 200),
-            new FactStreamHorizon(HighWaterMark.of(UUID.randomUUID(), 201), 201));
+            new FactStreamHorizon(UUID.randomUUID(), 200, 200),
+            new FactStreamHorizon(UUID.randomUUID(), 201, 201));
 
     // Stub BASE_EXISTS_SQL to return true
     lenient()
@@ -333,8 +332,8 @@ class NudgeNotificationHandlerTest {
     handler.notificationSer.set(100);
     when(horizonProvider.advance())
         .thenReturn(
-            new FactStreamHorizon(HighWaterMark.of(UUID.randomUUID(), 200), 200),
-            new FactStreamHorizon(HighWaterMark.of(UUID.randomUUID(), 201), 201));
+            new FactStreamHorizon(UUID.randomUUID(), 200, 200),
+            new FactStreamHorizon(UUID.randomUUID(), 201, 201));
     when(jdbc.queryForObject(
             eq(NudgeNotificationHandler.BASE_EXISTS_SQL), eq(Boolean.class), anyLong()))
         .thenReturn(true);

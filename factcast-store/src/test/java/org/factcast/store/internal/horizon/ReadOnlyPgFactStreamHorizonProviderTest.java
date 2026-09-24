@@ -23,7 +23,7 @@ import static org.mockito.Mockito.*;
 import java.util.List;
 import java.util.UUID;
 import javax.sql.DataSource;
-import org.factcast.core.subscription.observer.HighWaterMark;
+import org.factcast.core.subscription.FactStreamHorizon;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -42,8 +42,8 @@ final class ReadOnlyPgFactStreamHorizonProviderTest {
   @Test
   @SuppressWarnings("unchecked")
   void advanceReadsPrimaryAndUpdatesCurrentWhileReadCanUseAnotherDataSource() {
-    FactStreamHorizon primary = new FactStreamHorizon(HighWaterMark.of(UUID.randomUUID(), 42), 7);
-    FactStreamHorizon other = new FactStreamHorizon(HighWaterMark.of(UUID.randomUUID(), 21), 4);
+    FactStreamHorizon primary = new FactStreamHorizon(UUID.randomUUID(), 42, 7);
+    FactStreamHorizon other = new FactStreamHorizon(UUID.randomUUID(), 21, 4);
     when(primaryJdbcTemplate.query(anyString(), any(RowMapper.class))).thenReturn(List.of(primary));
     when(otherJdbcTemplate.query(anyString(), any(RowMapper.class))).thenReturn(List.of(other));
     ReadOnlyPgFactStreamHorizonProvider underTest =
@@ -55,9 +55,9 @@ final class ReadOnlyPgFactStreamHorizonProviderTest {
         };
 
     assertThat(underTest.advance()).isEqualTo(primary);
-    assertThat(underTest.current()).isEqualTo(primary);
+    assertThat(underTest.currentPrimary()).isEqualTo(primary);
     assertThat(underTest.read(otherDataSource)).isEqualTo(other);
-    assertThat(underTest.current()).isEqualTo(primary);
+    assertThat(underTest.currentPrimary()).isEqualTo(primary);
   }
 
   @Test
@@ -75,6 +75,6 @@ final class ReadOnlyPgFactStreamHorizonProviderTest {
     assertThatThrownBy(underTest::advance)
         .isInstanceOf(IllegalStateException.class)
         .hasMessage(ReadOnlyPgFactStreamHorizonProvider.MISSING_HORIZON);
-    assertThat(underTest.current()).isEqualTo(FactStreamHorizon.empty());
+    assertThat(underTest.currentPrimary()).isEqualTo(FactStreamHorizon.empty());
   }
 }
