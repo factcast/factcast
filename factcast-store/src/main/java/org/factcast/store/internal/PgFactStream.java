@@ -259,11 +259,11 @@ public class PgFactStream {
               () -> createCatchupDataSource(connectionSupplier.dataSource(), pipeline))) {
 
         // Phase 1
-        long phase1HighwaterMark = executePhaseOne(primary, horizon.factSerial());
+        long phase1HighwaterMark = executePhaseOne(primary, horizon);
 
         if (!isConnected()) return;
 
-        catchupPhaseTwo(primary, phase1HighwaterMark, horizon.factSerial());
+        catchupPhaseTwo(primary, phase1HighwaterMark, horizon);
 
         // now that phase 1&2 are done, we can ffwd to the initial HWM on the primary
         fastForward(horizon);
@@ -282,7 +282,7 @@ public class PgFactStream {
     }
   }
 
-  private long executePhaseOne(PrimaryDataSourceSupplier primary, long primaryHorizonSerial)
+  private long executePhaseOne(PrimaryDataSourceSupplier primary, FactStreamHorizon primaryHorizon)
       throws CatchupException {
     if (offloadDataSource != null) {
       // we're creating a SCDS for offload, that we destroy right after
@@ -291,10 +291,10 @@ public class PgFactStream {
 
         // While it is very unlikely, that by reading from the secondary, we get a higher serial,
         // it is not entirely impossible.
-        long offloadHorizonSerial =
-            Math.min(primaryHorizonSerial, horizonProvider.read(secondary).factSerial());
+        FactStreamHorizon phaseOneHorizon =
+            FactStreamHorizon.min(primaryHorizon, horizonProvider.read(secondary));
 
-        return catchupPhaseOne(secondary, offloadHorizonSerial);
+        return catchupPhaseOne(secondary, phaseOneHorizon);
       } catch (SQLException | DataAccessException | PipelineAlreadyClosedException e) {
         // SQLException is interesting, as we cannot distinguish between a cancellation and a
         // temporary error with the offload datasource, that would make it reasonable to fall back
@@ -313,7 +313,7 @@ public class PgFactStream {
 
     // either we have a tmp failure on secondary, or secondary is not defined.
     try {
-      return catchupPhaseOne(primary.get(), primaryHorizonSerial);
+      return catchupPhaseOne(primary.get(), primaryHorizon);
     } catch (Exception any) {
       throw new CatchupException(any);
     }
@@ -321,7 +321,7 @@ public class PgFactStream {
 
   @VisibleForTesting
   void catchupPhaseTwo(
-      PrimaryDataSourceSupplier primary, long phase1HighwaterMark, long primaryHorizonSerial)
+      PrimaryDataSourceSupplier primary, long phase1HighwaterMark, FactStreamHorizon primaryHorizon)
       throws CatchupException {
     // proceed to phase 2 on the primary
     PgCatchup pgCatchup =
@@ -329,7 +329,7 @@ public class PgFactStream {
             request,
             pipeline,
             serial,
-            primaryHorizonSerial,
+            primaryHorizon,
             primary.get(),
             PgCatchupFactory.Phase.PHASE_2);
     // before starting to run phase2, we'll ffwd to what phase1 returned as HWM.
@@ -352,10 +352,11 @@ public class PgFactStream {
   }
 
   @VisibleForTesting
-  long catchupPhaseOne(@NonNull SingleConnectionDataSource dataSourceToUseForP1, long horizonSerial)
+  long catchupPhaseOne(
+      @NonNull SingleConnectionDataSource dataSourceToUseForP1, @NonNull FactStreamHorizon horizon)
       throws SQLException, PipelineAlreadyClosedException {
     long from = serial.get();
-    if (horizonSerial <= from) {
+    if (horizon.factSerial() <= from) {
       // it does not make any sense to try to query for data we know is not there.
       // this may happen a lot, if the offload datasource has a considerable lag.
       return from;
@@ -366,7 +367,7 @@ public class PgFactStream {
               request,
               pipeline,
               serial,
-              horizonSerial,
+              horizon,
               dataSourceToUseForP1,
               PgCatchupFactory.Phase.PHASE_1)
           .run();
@@ -377,7 +378,7 @@ public class PgFactStream {
       // Note that any kind of exceptional behavior like cancellation, random SQLExceptions or the
       // like are expect to THROW, so that a "between phases ffwd" only happens, if we know that
       // there a cannot be any matches between ser and hwm, if hwm is greater.
-      return Math.max(serial.get(), horizonSerial);
+      return Math.max(serial.get(), horizon.factSerial());
     }
   }
 

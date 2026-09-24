@@ -136,11 +136,11 @@ class QueryCancellationIntegrationTest {
             @NonNull SubscriptionRequestTO request,
             @NonNull PushbackServerPipeline pipeline,
             @NonNull AtomicLong serial,
-            long horizonSerial,
+            @NonNull FactStreamHorizon horizon,
             @NonNull SingleConnectionDataSource ds,
             @NonNull Phase phase) {
           return new PgCursorCatchup(
-              props, metrics, request, pipeline, serial, horizonSerial, ds, phase) {
+              props, metrics, request, pipeline, serial, horizon, ds, phase) {
 
             @Override
             protected PgQueryBuilder createPgQueryBuilder(List<FactSpec> specs) {

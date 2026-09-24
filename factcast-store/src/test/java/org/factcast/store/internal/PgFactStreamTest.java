@@ -120,7 +120,7 @@ class PgFactStreamTest {
     @Test
     void sendsStreamInfoSignal() {
 
-      when(pgCatchupFactory.create(any(), any(), any(), anyLong(), any(), any()))
+      when(pgCatchupFactory.create(any(), any(), any(), any(FactStreamHorizon.class), any(), any()))
           .thenReturn(
               new PgCatchup() {
                 @Override
@@ -128,7 +128,7 @@ class PgFactStreamTest {
 
                 public void run() {}
               });
-      lenient().when(uut.catchupPhaseOne(ds, 0)).thenReturn(12L);
+      lenient().when(uut.catchupPhaseOne(ds, initialHorizon)).thenReturn(12L);
 
       when(reqTo.streamInfo()).thenReturn(true);
       uut.doCatchup();
@@ -442,11 +442,12 @@ class PgFactStreamTest {
     @Mock SingleConnectionDataSource ds;
     @Mock DataSource p1Ds;
     @Mock Connection p1Connection;
+    final FactStreamHorizon initialHorizon = horizon(24);
 
     @BeforeEach
     void setup() {
       lenient().when(reqTo.debugInfo()).thenReturn("test-debug-info");
-      lenient().when(horizonProvider.advance()).thenReturn(horizon(24));
+      lenient().when(horizonProvider.advance()).thenReturn(initialHorizon);
       lenient().doReturn(ds).when(connectionSupplier).dataSource();
       lenient().doReturn(mds).when(uut).createCatchupDataSource(ds, pipeline);
       lenient().when(uut.isConnected()).thenReturn(true);
@@ -466,13 +467,13 @@ class PgFactStreamTest {
     @Test
     void ifConnected_catchupTwice() {
       when(uut.isConnected()).thenReturn(true);
-      doReturn(12L).when(uut).catchupPhaseOne(any(), eq(24L));
-      doNothing().when(uut).catchupPhaseTwo(any(), same(12L), eq(24L));
+      doReturn(12L).when(uut).catchupPhaseOne(any(), same(initialHorizon));
+      doNothing().when(uut).catchupPhaseTwo(any(), eq(12L), same(initialHorizon));
       doReturn(mds).when(uut).createCatchupDataSource(any(), any());
       uut.doCatchup();
 
-      verify(uut).catchupPhaseOne(any(), eq(24L));
-      verify(uut).catchupPhaseTwo(any(), same(12L), eq(24L));
+      verify(uut).catchupPhaseOne(any(), same(initialHorizon));
+      verify(uut).catchupPhaseTwo(any(), eq(12L), same(initialHorizon));
     }
 
     @SneakyThrows
@@ -481,7 +482,7 @@ class PgFactStreamTest {
       PgCatchup catchup1 = mock(PgCatchup.class);
       PgCatchup catchup2 = mock(PgCatchup.class);
       when(uut.isConnected()).thenReturn(true);
-      when(pgCatchupFactory.create(any(), any(), any(), anyLong(), any(), any()))
+      when(pgCatchupFactory.create(any(), any(), any(), any(FactStreamHorizon.class), any(), any()))
           .thenReturn(catchup1, catchup2);
       uut.doCatchup();
 
@@ -491,7 +492,7 @@ class PgFactStreamTest {
               same(reqTo),
               same(pipeline),
               same(serial),
-              eq(24L),
+              same(initialHorizon),
               same(mds),
               eq(PgCatchupFactory.Phase.PHASE_1));
       verify(pgCatchupFactory)
@@ -499,13 +500,15 @@ class PgFactStreamTest {
               same(reqTo),
               same(pipeline),
               same(serial),
-              eq(24L),
+              same(initialHorizon),
               same(mds),
               eq(PgCatchupFactory.Phase.PHASE_2));
 
       // or equivalent:
-      verify(uut).catchupPhaseOne(mds, 24L);
-      verify(uut).catchupPhaseTwo(ArgumentMatchers.argThat(p -> p.get() == mds), eq(24L), eq(24L));
+      verify(uut).catchupPhaseOne(mds, initialHorizon);
+      verify(uut)
+          .catchupPhaseTwo(
+              ArgumentMatchers.argThat(p -> p.get() == mds), eq(24L), same(initialHorizon));
 
       verify(catchup2).fastForward(24L);
     }
@@ -517,16 +520,23 @@ class PgFactStreamTest {
 
       PgCatchup catchup2 = mock(PgCatchup.class);
       when(pgCatchupFactory.create(
-              any(), any(), any(), anyLong(), any(), eq(PgCatchupFactory.Phase.PHASE_2)))
+              any(),
+              any(),
+              any(),
+              any(FactStreamHorizon.class),
+              any(),
+              eq(PgCatchupFactory.Phase.PHASE_2)))
           .thenReturn(catchup2);
 
-      doReturn(phase1Hwm).when(uut).catchupPhaseOne(any(), anyLong());
+      doReturn(phase1Hwm).when(uut).catchupPhaseOne(any(), any(FactStreamHorizon.class));
 
       uut.doCatchup();
 
       verify(uut)
           .catchupPhaseTwo(
-              ArgumentMatchers.argThat(supplier -> supplier.get() == mds), eq(phase1Hwm), eq(24L));
+              ArgumentMatchers.argThat(supplier -> supplier.get() == mds),
+              eq(phase1Hwm),
+              same(initialHorizon));
     }
 
     @SneakyThrows
@@ -547,9 +557,14 @@ class PgFactStreamTest {
       doReturn(Collections.emptyList()).when(uut).catchupConnectionModifiers(any());
       when(horizonProvider.advance()).thenReturn(initialHorizon);
       when(pgCatchupFactory.create(
-              any(), any(), any(), anyLong(), any(), eq(PgCatchupFactory.Phase.PHASE_2)))
+              any(),
+              any(),
+              any(),
+              any(FactStreamHorizon.class),
+              any(),
+              eq(PgCatchupFactory.Phase.PHASE_2)))
           .thenReturn(pgCatchup2);
-      doReturn(phase1Hwm).when(uut).catchupPhaseOne(any(), eq(initialHorizon.factSerial()));
+      doReturn(phase1Hwm).when(uut).catchupPhaseOne(any(), same(initialHorizon));
 
       uut.doCatchup();
 
@@ -582,6 +597,7 @@ class PgFactStreamTest {
       @SneakyThrows
       @Test
       void phase1UsesPrimaryIfOffloadIsNull() {
+        FactStreamHorizon primaryHorizon = horizon(123);
         PgFactStream uut =
             spy(
                 new PgFactStream(
@@ -597,18 +613,23 @@ class PgFactStreamTest {
                     logSuppression));
         lenient().doReturn(true).when(uut).isConnected();
         lenient().doReturn(mds).when(uut).createCatchupDataSource(any(DataSource.class), any());
-        lenient().when(horizonProvider.advance()).thenReturn(horizon(123));
-        lenient().doReturn(123L).when(uut).catchupPhaseOne(any(), eq(123L));
-        lenient().doNothing().when(uut).catchupPhaseTwo(any(), anyLong(), anyLong());
+        lenient().when(horizonProvider.advance()).thenReturn(primaryHorizon);
+        lenient().doReturn(123L).when(uut).catchupPhaseOne(any(), same(primaryHorizon));
+        lenient()
+            .doNothing()
+            .when(uut)
+            .catchupPhaseTwo(any(), anyLong(), any(FactStreamHorizon.class));
 
         uut.doCatchup();
 
-        verify(uut).catchupPhaseOne(mds, 123L);
+        verify(uut).catchupPhaseOne(mds, primaryHorizon);
       }
 
       @SneakyThrows
       @Test
       void phase1UsesOffloadIfProvided() {
+        FactStreamHorizon primaryHorizon = horizon(123);
+        FactStreamHorizon offloadHorizon = horizon(100);
         PgFactStream uut =
             spy(
                 new PgFactStream(
@@ -624,14 +645,18 @@ class PgFactStreamTest {
                     logSuppression));
         lenient().doReturn(true).when(uut).isConnected();
         lenient().doReturn(mds).when(uut).createCatchupDataSource(any(DataSource.class), any());
-        lenient().when(horizonProvider.advance()).thenReturn(horizon(123));
-        lenient().when(horizonProvider.read(mds)).thenReturn(horizon(100));
-        lenient().doReturn(100L).when(uut).catchupPhaseOne(any(), eq(100L));
-        lenient().doNothing().when(uut).catchupPhaseTwo(any(), anyLong(), anyLong());
+        lenient().when(horizonProvider.advance()).thenReturn(primaryHorizon);
+        lenient().when(horizonProvider.read(mds)).thenReturn(offloadHorizon);
+        lenient().doReturn(100L).when(uut).catchupPhaseOne(any(), same(offloadHorizon));
+        lenient()
+            .doNothing()
+            .when(uut)
+            .catchupPhaseTwo(any(), anyLong(), any(FactStreamHorizon.class));
 
         uut.doCatchup();
 
-        verify(uut).catchupPhaseOne(mds, 100L);
+        verify(uut).catchupPhaseOne(mds, offloadHorizon);
+        verify(uut).catchupPhaseTwo(any(), eq(100L), same(primaryHorizon));
         // Verify that createCatchupDataSource was called with offloadDataSource
         verify(uut).createCatchupDataSource(offloadDataSource, pipeline);
       }
@@ -639,6 +664,7 @@ class PgFactStreamTest {
       @SneakyThrows
       @Test
       void capsOffloadHorizonAtPrimaryHorizon() {
+        FactStreamHorizon primaryHorizon = horizon(123);
         PgFactStream uut =
             spy(
                 new PgFactStream(
@@ -654,19 +680,20 @@ class PgFactStreamTest {
                     logSuppression));
         lenient().doReturn(true).when(uut).isConnected();
         lenient().doReturn(mds).when(uut).createCatchupDataSource(any(DataSource.class), any());
-        when(horizonProvider.advance()).thenReturn(horizon(123));
+        when(horizonProvider.advance()).thenReturn(primaryHorizon);
         when(horizonProvider.read(mds)).thenReturn(horizon(200));
-        doReturn(123L).when(uut).catchupPhaseOne(mds, 123L);
-        doNothing().when(uut).catchupPhaseTwo(any(), anyLong(), anyLong());
+        doReturn(123L).when(uut).catchupPhaseOne(same(mds), same(primaryHorizon));
+        doNothing().when(uut).catchupPhaseTwo(any(), anyLong(), any(FactStreamHorizon.class));
 
         uut.doCatchup();
 
-        verify(uut).catchupPhaseOne(mds, 123L);
+        verify(uut).catchupPhaseOne(mds, primaryHorizon);
       }
 
       @SneakyThrows
       @Test
       void offloadHorizonReadFailureLeavesWholeRangeForPrimaryPhaseTwo() {
+        FactStreamHorizon primaryHorizon = horizon(123);
         PgFactStream uut =
             spy(
                 new PgFactStream(
@@ -683,14 +710,14 @@ class PgFactStreamTest {
         uut.serial().set(5);
         lenient().doReturn(true).when(uut).isConnected();
         lenient().doReturn(mds).when(uut).createCatchupDataSource(any(DataSource.class), any());
-        when(horizonProvider.advance()).thenReturn(horizon(123));
+        when(horizonProvider.advance()).thenReturn(primaryHorizon);
         when(horizonProvider.read(mds))
             .thenThrow(new DataAccessResourceFailureException("offload unavailable"));
-        doNothing().when(uut).catchupPhaseTwo(any(), anyLong(), anyLong());
+        doNothing().when(uut).catchupPhaseTwo(any(), anyLong(), any(FactStreamHorizon.class));
 
         uut.doCatchup();
 
-        verify(uut).catchupPhaseTwo(any(), eq(5L), eq(123L));
+        verify(uut).catchupPhaseTwo(any(), eq(5L), same(primaryHorizon));
       }
     }
 
@@ -703,10 +730,10 @@ class PgFactStreamTest {
       // serial is 0 by default → from scratch
 
       PgCatchup catchup = mock(PgCatchup.class);
-      when(pgCatchupFactory.create(any(), any(), any(), anyLong(), any(), any()))
+      when(pgCatchupFactory.create(any(), any(), any(), any(FactStreamHorizon.class), any(), any()))
           .thenReturn(catchup);
       when(uut.isConnected()).thenReturn(true);
-      doNothing().when(uut).catchupPhaseTwo(any(), anyLong(), anyLong());
+      doNothing().when(uut).catchupPhaseTwo(any(), anyLong(), any(FactStreamHorizon.class));
 
       doAnswer(
               invocation -> {
@@ -731,7 +758,7 @@ class PgFactStreamTest {
       uut.serial().set(42L);
       PgCatchup catchup = mock(PgCatchup.class);
       when(uut.isConnected()).thenReturn(true);
-      when(pgCatchupFactory.create(any(), any(), any(), anyLong(), any(), any()))
+      when(pgCatchupFactory.create(any(), any(), any(), any(FactStreamHorizon.class), any(), any()))
           .thenReturn(catchup, catchup);
 
       doAnswer(
@@ -768,7 +795,7 @@ class PgFactStreamTest {
 
       PgCatchup catchup = mock(PgCatchup.class);
       when(uut.isConnected()).thenReturn(true);
-      when(pgCatchupFactory.create(any(), any(), any(), anyLong(), any(), any()))
+      when(pgCatchupFactory.create(any(), any(), any(), any(FactStreamHorizon.class), any(), any()))
           .thenReturn(catchup, catchup);
 
       doAnswer(
@@ -787,7 +814,7 @@ class PgFactStreamTest {
     void clearsMdcEvenOnException() {
       PgCatchup catchup = mock(PgCatchup.class);
       when(uut.isConnected()).thenReturn(true);
-      when(pgCatchupFactory.create(any(), any(), any(), anyLong(), any(), any()))
+      when(pgCatchupFactory.create(any(), any(), any(), any(FactStreamHorizon.class), any(), any()))
           .thenReturn(catchup);
 
       doAnswer(

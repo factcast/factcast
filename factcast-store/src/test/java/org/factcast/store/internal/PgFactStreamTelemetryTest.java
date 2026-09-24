@@ -74,7 +74,8 @@ class PgFactStreamTelemetryTest {
   @Test
   void postsTelemetryOnCatchup() {
     when(req.debugInfo()).thenReturn("test");
-    when(pgCatchupFactory.create(eq(req), eq(pipeline), any(), anyLong(), any(), any()))
+    when(pgCatchupFactory.create(
+            eq(req), eq(pipeline), any(), any(FactStreamHorizon.class), any(), any()))
         .thenReturn(mock(PgCatchup.class));
     uut.connect();
 
@@ -89,7 +90,8 @@ class PgFactStreamTelemetryTest {
   void postsTelemetryOnFollow() {
     when(req.continuous()).thenReturn(true);
     when(req.debugInfo()).thenReturn("test");
-    when(pgCatchupFactory.create(eq(req), eq(pipeline), any(), anyLong(), any(), any()))
+    when(pgCatchupFactory.create(
+            eq(req), eq(pipeline), any(), any(FactStreamHorizon.class), any(), any()))
         .thenReturn(mock(PgCatchup.class));
 
     uut.connect();
@@ -105,7 +107,8 @@ class PgFactStreamTelemetryTest {
   void postsTelemetryOnClose() {
     when(req.continuous()).thenReturn(true);
     when(req.debugInfo()).thenReturn("test");
-    when(pgCatchupFactory.create(eq(req), eq(pipeline), any(), anyLong(), any(), any()))
+    when(pgCatchupFactory.create(
+            eq(req), eq(pipeline), any(), any(FactStreamHorizon.class), any(), any()))
         .thenReturn(mock(PgCatchup.class));
 
     uut.connect();

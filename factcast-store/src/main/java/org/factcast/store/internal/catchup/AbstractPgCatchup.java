@@ -20,6 +20,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import javax.sql.DataSource;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.core.subscription.FactStreamHorizon;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgMetrics;
@@ -39,7 +40,7 @@ public abstract class AbstractPgCatchup implements PgCatchup {
   @NonNull protected final SubscriptionRequestTO req;
   @NonNull protected final PushbackServerPipeline pipeline;
   @NonNull protected final AtomicLong serial;
-  protected final long horizonSerial;
+  @NonNull protected final FactStreamHorizon horizon;
   @NonNull protected final DataSource ds;
   @NonNull protected final PgCatchupFactory.Phase phase;
 

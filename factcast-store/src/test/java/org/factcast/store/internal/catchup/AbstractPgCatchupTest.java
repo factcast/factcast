@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.concurrent.atomic.AtomicLong;
 import javax.sql.DataSource;
+import org.factcast.core.subscription.FactStreamHorizon;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgMetrics;
@@ -47,10 +48,10 @@ class AbstractPgCatchupTest {
         SubscriptionRequestTO req,
         PushbackServerPipeline pipeline,
         AtomicLong serial,
-        long horizonSerial,
+        FactStreamHorizon horizon,
         DataSource ds,
         PgCatchupFactory.Phase phase) {
-      super(props, metrics, req, pipeline, serial, horizonSerial, ds, phase);
+      super(props, metrics, req, pipeline, serial, horizon, ds, phase);
     }
 
     @Override
@@ -59,33 +60,39 @@ class AbstractPgCatchupTest {
 
   @Test
   void setsFastForward() {
-    DummyCatchup catchup = new DummyCatchup(props, metrics, req, pipeline, serial, 100, ds, phase);
+    DummyCatchup catchup =
+        new DummyCatchup(
+            props, metrics, req, pipeline, serial, FactStreamHorizon.empty(), ds, phase);
     catchup.fastForward(42L);
     assertThat(catchup.fastForward).isEqualTo(42L);
   }
 
   @Test
   void nullValidations() {
+    FactStreamHorizon horizon = FactStreamHorizon.empty();
     assertThrows(
         NullPointerException.class,
-        () -> new DummyCatchup(null, metrics, req, pipeline, serial, 100, ds, phase));
+        () -> new DummyCatchup(null, metrics, req, pipeline, serial, horizon, ds, phase));
     assertThrows(
         NullPointerException.class,
-        () -> new DummyCatchup(props, null, req, pipeline, serial, 100, ds, phase));
+        () -> new DummyCatchup(props, null, req, pipeline, serial, horizon, ds, phase));
     assertThrows(
         NullPointerException.class,
-        () -> new DummyCatchup(props, metrics, null, pipeline, serial, 100, ds, phase));
+        () -> new DummyCatchup(props, metrics, null, pipeline, serial, horizon, ds, phase));
     assertThrows(
         NullPointerException.class,
-        () -> new DummyCatchup(props, metrics, req, null, serial, 100, ds, phase));
+        () -> new DummyCatchup(props, metrics, req, null, serial, horizon, ds, phase));
     assertThrows(
         NullPointerException.class,
-        () -> new DummyCatchup(props, metrics, req, pipeline, null, 100, ds, phase));
+        () -> new DummyCatchup(props, metrics, req, pipeline, null, horizon, ds, phase));
     assertThrows(
         NullPointerException.class,
-        () -> new DummyCatchup(props, metrics, req, pipeline, serial, 100, null, phase));
+        () -> new DummyCatchup(props, metrics, req, pipeline, serial, null, ds, phase));
     assertThrows(
         NullPointerException.class,
-        () -> new DummyCatchup(props, metrics, req, pipeline, serial, 100, ds, null));
+        () -> new DummyCatchup(props, metrics, req, pipeline, serial, horizon, null, phase));
+    assertThrows(
+        NullPointerException.class,
+        () -> new DummyCatchup(props, metrics, req, pipeline, serial, horizon, ds, null));
   }
 }

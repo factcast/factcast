@@ -17,11 +17,20 @@ package org.factcast.core.subscription;
 
 import jakarta.annotation.Nullable;
 import java.util.UUID;
+import lombok.NonNull;
 
 /** The inclusive, persisted upper bounds for fact and notification queries. */
 public record FactStreamHorizon(@Nullable UUID factId, long factSerial, long notificationSerial) {
 
   public static FactStreamHorizon empty() {
     return new FactStreamHorizon(null, 0, 0);
+  }
+
+  public static FactStreamHorizon min(
+      @NonNull FactStreamHorizon left, @NonNull FactStreamHorizon right) {
+    long l = left.factSerial();
+    long r = right.factSerial();
+
+    return (l < r) ? left : right;
   }
 }

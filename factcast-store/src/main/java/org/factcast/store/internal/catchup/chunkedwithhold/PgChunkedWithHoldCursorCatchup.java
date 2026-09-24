@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.*;
 import javax.annotation.*;
 import lombok.*;
 import lombok.experimental.Accessors;
+import org.factcast.core.subscription.FactStreamHorizon;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.*;
@@ -49,10 +50,10 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
       @NonNull SubscriptionRequestTO req,
       @NonNull PushbackServerPipeline pipeline,
       @NonNull AtomicLong serial,
-      long horizonSerial,
+      @NonNull FactStreamHorizon horizon,
       @NonNull SingleConnectionDataSource ds,
       @NonNull PgCatchupFactory.Phase phase) {
-    super(props, metrics, req, pipeline, serial, horizonSerial, ds, phase);
+    super(props, metrics, req, pipeline, serial, horizon, ds, phase);
   }
 
   @SneakyThrows
@@ -90,7 +91,7 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
 
     final var extractor = new PgFactExtractor(serial);
     final var fromSerial = new AtomicLong(Math.max(serial.get(), fastForward));
-    if (fromSerial.get() >= horizonSerial) {
+    if (fromSerial.get() >= horizon.factSerial()) {
       return false;
     }
 
@@ -147,7 +148,7 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
     final var timer = metrics.timer(StoreMetrics.OP.RESULT_STREAM_START, fromSerial.get() <= 0);
     final var timerSample = metrics.startSample();
 
-    cursor.declare(queryBuilder, fromSerial, horizonSerial);
+    cursor.declare(queryBuilder, fromSerial, horizon);
 
     log.debug("{} catchup {}, fetching first chunk", req, phase);
 
@@ -198,7 +199,9 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
     @VisibleForTesting
     @SuppressWarnings("java:S2077")
     void declare(
-        @NonNull PgQueryBuilder queryBuilder, @NonNull AtomicLong fromSerial, long horizonSerial)
+        @NonNull PgQueryBuilder queryBuilder,
+        @NonNull AtomicLong fromSerial,
+        @NonNull FactStreamHorizon horizon)
         throws SQLException {
 
       Preconditions.checkArgument(chunkSize >= 1000, "chunkSize must be >= 1000");
@@ -231,7 +234,9 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
           sql);
 
       try (PreparedStatement declare = ds.getConnection().prepareStatement(sql)) {
-        queryBuilder.createBoundedStatementSetter(fromSerial, horizonSerial).setValues(declare);
+        queryBuilder
+            .createBoundedStatementSetter(fromSerial, horizon.factSerial())
+            .setValues(declare);
         declare.execute();
         log.trace("{} catchup {}, cursor-with-hold declared", req, phase);
       }

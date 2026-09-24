@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.*;
 import javax.sql.DataSource;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.core.subscription.FactStreamHorizon;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.*;
@@ -47,10 +48,10 @@ public class PgChunkedCatchup extends AbstractPgCatchup {
       @NonNull SubscriptionRequestTO req,
       @NonNull PushbackServerPipeline pipeline,
       @NonNull AtomicLong serial,
-      long horizonSerial,
+      @NonNull FactStreamHorizon horizon,
       @NonNull SingleConnectionDataSource ds,
       PgCatchupFactory.@NonNull Phase phase) {
-    super(props, metrics, req, pipeline, serial, horizonSerial, ds, phase);
+    super(props, metrics, req, pipeline, serial, horizon, ds, phase);
   }
 
   @SneakyThrows
@@ -153,9 +154,10 @@ public class PgChunkedCatchup extends AbstractPgCatchup {
     Timer.Sample sample = metrics.startSample();
 
     int matches =
-        fromSerial.get() >= horizonSerial
+        fromSerial.get() >= horizon.factSerial()
             ? 0
-            : jdbc.update(catchupSQL, b.createBoundedStatementSetter(fromSerial, horizonSerial));
+            : jdbc.update(
+                catchupSQL, b.createBoundedStatementSetter(fromSerial, horizon.factSerial()));
     log.trace("{} catchup {} - Temp table has {} matching serials", req, phase, matches);
     logIfAboveThreshold(Duration.ofNanos(sample.stop(timer)));
     return matches;

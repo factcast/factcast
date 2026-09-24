@@ -64,11 +64,12 @@ class PgChunkedCatchupTest {
   @Mock PgCatchupFactory.Phase phase;
 
   PgChunkedCatchup underTest;
+  private final FactStreamHorizon horizon = new FactStreamHorizon(null, Long.MAX_VALUE, 0);
 
   @BeforeEach
   void setup() {
     underTest =
-        spy(new PgChunkedCatchup(props, metrics, req, pipeline, serial, Long.MAX_VALUE, ds, phase));
+        spy(new PgChunkedCatchup(props, metrics, req, pipeline, serial, horizon, ds, phase));
   }
 
   @Nested
@@ -86,7 +87,7 @@ class PgChunkedCatchupTest {
                   req,
                   pipeline,
                   serial,
-                  Long.MAX_VALUE,
+                  horizon,
                   ds,
                   PgCatchupFactory.Phase.PHASE_1));
 
@@ -106,7 +107,7 @@ class PgChunkedCatchupTest {
                   req,
                   pipeline,
                   serial,
-                  Long.MAX_VALUE,
+                  horizon,
                   ds,
                   PgCatchupFactory.Phase.PHASE_1));
 

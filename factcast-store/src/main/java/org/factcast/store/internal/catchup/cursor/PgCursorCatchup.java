@@ -23,6 +23,7 @@ import java.util.concurrent.atomic.*;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.spec.FactSpec;
+import org.factcast.core.subscription.FactStreamHorizon;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgFact;
@@ -46,10 +47,10 @@ public class PgCursorCatchup extends AbstractPgCatchup {
       @NonNull SubscriptionRequestTO req,
       @NonNull PushbackServerPipeline pipeline,
       @NonNull AtomicLong serial,
-      long horizonSerial,
+      @NonNull FactStreamHorizon horizon,
       @NonNull SingleConnectionDataSource ds,
       PgCatchupFactory.@NonNull Phase phase) {
-    super(props, metrics, req, pipeline, serial, horizonSerial, ds, phase);
+    super(props, metrics, req, pipeline, serial, horizon, ds, phase);
   }
 
   @Override
@@ -59,13 +60,13 @@ public class PgCursorCatchup extends AbstractPgCatchup {
       final var b = createPgQueryBuilder(req.specs());
       final var extractor = new PgFactExtractor(serial);
       final var fromSerial = new AtomicLong(Math.max(serial.get(), fastForward));
-      if (fromSerial.get() >= horizonSerial) {
+      if (fromSerial.get() >= horizon.factSerial()) {
         log.trace(
             "{} catchup {} - no facts between SER={} and horizon {}",
             req,
             phase,
             fromSerial.get(),
-            horizonSerial);
+            horizon.factSerial());
         return;
       }
       final var catchupSQL = b.createBoundedSQL();
@@ -78,7 +79,7 @@ public class PgCursorCatchup extends AbstractPgCatchup {
         conn.setAutoCommit(false);
         prep.setFetchSize(props.getPageSize());
         prep.setQueryTimeout(0);
-        b.createBoundedStatementSetter(fromSerial, horizonSerial).setValues(prep);
+        b.createBoundedStatementSetter(fromSerial, horizon.factSerial()).setValues(prep);
 
         final var timer = metrics.timer(StoreMetrics.OP.RESULT_STREAM_START, isFromScratch);
         final var timerSample = metrics.startSample();

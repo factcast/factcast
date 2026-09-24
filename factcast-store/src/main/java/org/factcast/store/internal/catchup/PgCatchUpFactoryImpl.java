@@ -18,6 +18,7 @@ package org.factcast.store.internal.catchup;
 import java.util.concurrent.atomic.*;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.core.subscription.FactStreamHorizon;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgMetrics;
@@ -45,25 +46,24 @@ public class PgCatchUpFactoryImpl implements PgCatchupFactory {
       @NonNull SubscriptionRequestTO request,
       @NonNull PushbackServerPipeline pipeline,
       @NonNull AtomicLong serial,
-      long horizonSerial,
+      @NonNull FactStreamHorizon horizon,
       @NonNull SingleConnectionDataSource ds,
       @NonNull Phase phase) {
 
     // does not make sense to use in phase 2 altogether, as we're not expecting many facts there.
     if (phase == Phase.PHASE_2) {
-      return new PgCursorCatchup(
-          props, metrics, request, pipeline, serial, horizonSerial, ds, phase);
+      return new PgCursorCatchup(props, metrics, request, pipeline, serial, horizon, ds, phase);
     }
 
     log.debug("Using catchup strategy {}", props.getCatchupStrategy());
     return switch (props.getCatchupStrategy()) {
       case CHUNKED ->
-          new PgChunkedCatchup(props, metrics, request, pipeline, serial, horizonSerial, ds, phase);
+          new PgChunkedCatchup(props, metrics, request, pipeline, serial, horizon, ds, phase);
       case CHUNKED_WITH_HOLD ->
           new PgChunkedWithHoldCursorCatchup(
-              props, metrics, request, pipeline, serial, horizonSerial, ds, phase);
+              props, metrics, request, pipeline, serial, horizon, ds, phase);
       case CURSOR ->
-          new PgCursorCatchup(props, metrics, request, pipeline, serial, horizonSerial, ds, phase);
+          new PgCursorCatchup(props, metrics, request, pipeline, serial, horizon, ds, phase);
     };
   }
 }

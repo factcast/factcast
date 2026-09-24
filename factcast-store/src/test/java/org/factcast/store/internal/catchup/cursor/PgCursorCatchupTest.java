@@ -98,7 +98,7 @@ class PgCursorCatchupTest {
             req,
             pipeline,
             serial,
-            Long.MAX_VALUE,
+            new FactStreamHorizon(null, Long.MAX_VALUE, 0),
             ds,
             PgCatchupFactory.Phase.PHASE_1);
   }
@@ -197,7 +197,14 @@ class PgCursorCatchupTest {
     underTest =
         spy(
             new PgCursorCatchup(
-                props, metrics, req, pipeline, serial, 42, ds, PgCatchupFactory.Phase.PHASE_1));
+                props,
+                metrics,
+                req,
+                pipeline,
+                serial,
+                new FactStreamHorizon(null, 42, 0),
+                ds,
+                PgCatchupFactory.Phase.PHASE_1));
     doReturn(queryBuilder).when(underTest).createPgQueryBuilder(anyList());
 
     underTest.run();
@@ -213,7 +220,14 @@ class PgCursorCatchupTest {
     when(serial.get()).thenReturn(42L);
     underTest =
         new PgCursorCatchup(
-            props, metrics, req, pipeline, serial, 42, ds, PgCatchupFactory.Phase.PHASE_1);
+            props,
+            metrics,
+            req,
+            pipeline,
+            serial,
+            new FactStreamHorizon(null, 42, 0),
+            ds,
+            PgCatchupFactory.Phase.PHASE_1);
 
     underTest.run();
 
