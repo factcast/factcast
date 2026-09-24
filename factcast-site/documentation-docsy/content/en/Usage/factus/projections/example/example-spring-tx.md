@@ -1,7 +1,7 @@
-+++ title = "UserNames (Spring/JDBC)"
++++
+title = "UserNames (Spring/JDBC)"
 type = "docs"
 weight = 52
-
 +++
 
 Here is an example for a managed projection externalizing its state to a relational database (PostgreSQL here) using Spring transactional management.
@@ -10,12 +10,13 @@ The example projects a list of used UserNames in the System.
 
 ## Preparation
 
-We need to store two things in our JDBC Datastore:
+We need to store three things in our JDBC Datastore:
 
-- the actual list of UserNames, and
-- the fact-stream-position of your projection.
+- the actual list of UserNames,
+- the fact-stream-position of your projection, and
+- the write token that keeps two instances of our application from writing to the projection at the same time.
 
-Therefore we create the necessary tables (probably using liquibase/flyway or similar tooling of your choice):
+Only the first one is specific to this projection, so we create it ourselves:
 
 ```sql
 CREATE TABLE users (
@@ -24,36 +25,61 @@ CREATE TABLE users (
     PRIMARY KEY (id));
 ```
 
+The other two are handled by Factus, provided the tables it expects exist (probably created using liquibase/flyway or similar tooling of your choice):
+
 ```sql
-CREATE TABLE fact_stream_positions (
-    projection_name TEXT,
-    fact_stream_position UUID,
-    PRIMARY KEY (projection_name));
+CREATE TABLE factcast_projection_locks (
+    name       varchar(255) NOT NULL PRIMARY KEY,
+    lock_until timestamp    NOT NULL,
+    locked_at  timestamp    NOT NULL,
+    locked_by  varchar(255) NOT NULL
+);
 ```
 
-Given a unique projection name, we can use _fact_stream_positions_ as a common table for all our JDBC managed projections.
+```sql
+CREATE TABLE managed_projection (
+    name   varchar(255),
+    state  UUID,
+    serial bigint DEFAULT -1,
 
-{{% alert  title="TODO" color="warning" %}}
+    PRIMARY KEY (name)
+);
+```
 
-provide example for acquireWriteToken based on JDBC
+A _subscribed_ projection keeps its position in a table of its own:
 
-{{% / alert %}}
+```sql
+CREATE TABLE subscribed_projection (
+    name   varchar(255),
+    state  UUID,
+    serial bigint DEFAULT -1,
+
+    PRIMARY KEY (name)
+);
+```
+
+Our example is a managed projection, so only `managed_projection` is needed here; create the position
+table that matches the kind of projection you write. All of them are shared by all of our JDBC
+projections, keyed by a unique projection name. Note that Factcast will not create or migrate these
+tables for you.
 
 ## Constructing
 
-Since we decided to use a managed projection, we extended the `AbstractSpringTxManagedProjection` class.
+Since we decided to use a managed projection, we extended the `AbstractSpringJdbcManagedProjection` class.
 To configure transaction management, our managed projection exposes the injected transaction manager to the rest of Factus by calling the parent constructor.
+The `JdbcTemplate` we pass along is what Factus uses to maintain the fact-stream-position and the write token.
 
 ```java
-@ProjectionMetaData(serial = 1)
+@ProjectionMetaData(revision = 1)
 @SpringTransactional
-public class UserNames extends AbstractSpringTxManagedProjection {
+public class UserNames extends AbstractSpringJdbcManagedProjection {
 
     private final JdbcTemplate jdbcTemplate;
 
     public UserNames(
-            @NonNull PlatformTransactionManager platformTransactionManager, JdbcTemplate jdbcTemplate) {
-        super(platformTransactionManager);
+            @NonNull PlatformTransactionManager platformTransactionManager,
+            @NonNull JdbcTemplate jdbcTemplate) {
+        super(platformTransactionManager, jdbcTemplate);
         this.jdbcTemplate = jdbcTemplate;
     }
     ...
@@ -80,61 +106,6 @@ The `@SpringTransactional` annotation provides various configuration options:
 
 ## Updating the projection
 
-The two possible abstract base classes, `AbstractSpringTxManagedProjection` or `AbstractSpringTxSubscribedProjection`,
-both require the following methods to be implemented:
-
-| Method Signature                                                   | Description                                                                                             |
-| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
-| `public UUID factStreamPosition()   `                              | read the last position in the Fact stream from the database                                             |
-| `public void factStreamPosition(@NonNull UUID factStreamPosition)` | write the current position of the Fact stream to the database                                           |
-| `public WriterToken acquireWriteToken(@NonNull Duration maxWait)`  | coordinates write access to the projection, see [here]({{< ref "managed-projection.md" >}}) for details |
-
-The first two methods tell Factus how to read and write the Fact stream's position from the database.
-
-### Writing the fact position
-
-Provided the table `fact_stream_positions` exists, here is an example of how to write the Fact position:
-
-```java
-@Override
-public void factStreamPosition(@NonNull UUID factStreamPosition) {
-    jdbcTemplate.update(
-            "INSERT INTO fact_stream_positions (projection_name, fact_stream_position) " +
-            "VALUES (?, ?) " +
-            "ON CONFLICT (projection_name) DO UPDATE SET fact_stream_position = ?",
-            getScopedName().asString(),
-            factStreamPosition,
-            factStreamPosition);
-}
-```
-
-For convenience, an UPSERT statement (Postgres syntax) is used, which INSERTs the UUID the first time
-and subsequently only UPDATEs the value.
-
-To avoid hard-coding a unique name for the projection, the provided method `getScopedName()` is employed.
-The default implementation makes sure the name is unique and includes the serial of the projection.
-
-### Reading the fact position
-
-To read the last Fact stream position, we simply select the previously written value:
-
-```java
-@Override
-public UUID factStreamPosition() {
-    try {
-        return jdbcTemplate.queryForObject(
-                "SELECT fact_stream_position FROM fact_stream_positions WHERE projection_name = ?",
-                UUID.class,
-                getScopedName().asString());
-    } catch (IncorrectResultSizeDataAccessException e) {
-        // no position yet, just return null
-        return null;
-    }
-}
-```
-
-In case no previous Fact position exists, `null` is returned.
-
 ### Applying Facts
 
 When processing the _UserCreated_ event, we add a new row to the `users` tables, filled with event data:
@@ -158,8 +129,9 @@ void apply(UserDeleted e) {
 }
 ```
 
-We have finished the implementation of the event-processing part of our projection. What is missing is a way to
-make the projection's data accessible for users.
+That is all the event-processing code there is: writing the fact-stream-position inside the very same
+transaction, and holding the write token while doing so, is what the abstract class takes care of.
+What is missing is a way to make the projection's data accessible for users.
 
 ## Querying the projection
 
@@ -192,10 +164,89 @@ and let the dependency injection mechanism provide you an instance.
 Next, we call `update(...)` on the projection to fetch the latest events from the Fact stream. Note that when you use a pre-existing (maybe Spring managed singleton) instance of the projection, this step is optional and depends on your use-case. As last step, we ask
 the projection to provide us with user names by calling `getUserNames()`.
 
+## Bringing your own tables
+
+If you have to keep an existing schema, extend `AbstractSpringTxManagedProjection` (or
+`AbstractSpringTxSubscribedProjection`) instead and implement the three methods yourself:
+
+| Method Signature                                                                 | Description                                                                                                                             |
+| -------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `public FactStreamPosition factStreamPosition()`                                 | read the last position in the Fact stream from the database                                                                             |
+| `public void factStreamPosition(@NonNull FactStreamPosition factStreamPosition)` | write the current position of the Fact stream to the database                                                                           |
+| `public WriterToken acquireWriteToken(@NonNull Duration maxWait)`                | coordinates write access to the projection, see [here]({{< ref "/Usage/factus/projections/types/managed-projection.md" >}}) for details |
+
+Provided a table `fact_stream_positions` exists, here is an example of how to write the Fact position:
+
+```java
+@Override
+public void factStreamPosition(@NonNull FactStreamPosition factStreamPosition) {
+    jdbcTemplate.update(
+            "INSERT INTO fact_stream_positions (projection_name, fact_stream_position) " +
+            "VALUES (?, ?) " +
+            "ON CONFLICT (projection_name) DO UPDATE SET fact_stream_position = ?",
+            getScopedName().asString(),
+            factStreamPosition.factId(),
+            factStreamPosition.factId());
+}
+```
+
+For convenience, an UPSERT statement (Postgres syntax) is used, which INSERTs the UUID the first time
+and subsequently only UPDATEs the value.
+
+To avoid hard-coding a unique name for the projection, the provided method `getScopedName()` is employed.
+The default implementation makes sure the name is unique and includes the revision of the projection.
+
+To read the last Fact stream position, we simply select the previously written value, returning `null`
+in case no previous Fact position exists:
+
+```java
+@Override
+public FactStreamPosition factStreamPosition() {
+    try {
+        return FactStreamPosition.withoutSerial(
+                jdbcTemplate.queryForObject(
+                        "SELECT fact_stream_position FROM fact_stream_positions WHERE projection_name = ?",
+                        UUID.class,
+                        getScopedName().asString()));
+    } catch (IncorrectResultSizeDataAccessException e) {
+        // no position yet, just return null
+        return null;
+    }
+}
+```
+
+The write token, on the other hand, is worth reusing rather than reimplementing: `JdbcWriterTokenManager`
+is public API and only needs the lock table from the [Preparation](#preparation) section.
+`SpringJdbcDataSources.forLock` hands it a DataSource that stays out of your transaction, so the
+lease is committed as it is taken.
+
+```java
+private final JdbcWriterTokenManager writerTokenManager;
+
+public UserNames(
+        @NonNull PlatformTransactionManager platformTransactionManager,
+        @NonNull JdbcTemplate jdbcTemplate) {
+    super(platformTransactionManager);
+    this.jdbcTemplate = jdbcTemplate;
+    this.writerTokenManager =
+            JdbcWriterTokenManager.create(
+                    SpringJdbcDataSources.forLock(jdbcTemplate), getScopedName().asString());
+}
+
+@Override
+public WriterToken acquireWriteToken(@NonNull Duration maxWait) {
+    return writerTokenManager.acquireWriteToken(maxWait);
+}
+```
+
 ## Full Example
 
 To study the full example see
 
 - [the UserNames projection using `@SpringTransactional`](https://github.com/factcast/factcast/blob/main/factcast-itests/factcast-itests-factus/src/test/java/org/factcast/itests/factus/proj/SpringJdbcTransactionalProjectionExample.java),
-- [example code using this projection](https://github.com/factcast/factcast/blob/main/factcast-itests/factcast-itests-factus/src/test/java/org/factcast/itests/factus/SpringJdbcTransactionalProjectionExampleITest.java) and
-- [the Factus integration tests](https://github.com/factcast/factcast/blob/main/factcast-itests/factcast-itests-factus/src/test/java/org/factcast/itests/factus/SpringTransactionalITest.java) including managed- and subscribed projections.
+- [example code using this projection](https://github.com/factcast/factcast/blob/main/factcast-itests/factcast-itests-factus/src/test/java/org/factcast/itests/factus/client/SpringJdbcTransactionalProjectionExampleITest.java),
+- [the write token and fact-stream-position integration tests](https://github.com/factcast/factcast/blob/main/factcast-itests/factcast-itests-factus/src/test/java/org/factcast/itests/factus/client/SpringJdbcProjectionLockITest.java) and
+- [the Factus integration tests](https://github.com/factcast/factcast/blob/main/factcast-itests/factcast-itests-factus/src/test/java/org/factcast/itests/factus/client/SpringTransactionalITest.java) including managed- and subscribed projections.
+
+For the same projections without Spring, see
+[the plain JDBC integration tests](https://github.com/factcast/factcast/blob/main/factcast-itests/factcast-itests-factus/src/test/java/org/factcast/itests/factus/client/JdbcProjectionLockITest.java).
