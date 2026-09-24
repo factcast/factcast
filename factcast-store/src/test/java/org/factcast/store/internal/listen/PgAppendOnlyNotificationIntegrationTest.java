@@ -1,0 +1,126 @@
+/*
+ * Copyright © 2017-2026 factcast.org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.factcast.store.internal.listen;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
+
+import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.factcast.core.Fact;
+import org.factcast.core.store.FactStore;
+import org.factcast.store.internal.PgTestConfiguration;
+import org.factcast.store.internal.horizon.FactStreamHorizonProvider;
+import org.factcast.store.internal.notification.FactInsertionNotification;
+import org.factcast.test.IntegrationTest;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.jdbc.Sql;
+import org.springframework.test.context.jdbc.SqlConfig;
+import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
+
+@SpringJUnitConfig(classes = PgTestConfiguration.class)
+@Sql(scripts = "/wipe.sql", config = @SqlConfig(separator = "#"))
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
+@IntegrationTest
+class PgAppendOnlyNotificationIntegrationTest {
+
+  private static final String NS = "append-only-notification";
+  private static final String TYPE = "same-type";
+
+  @Autowired FactStore store;
+  @Autowired JdbcTemplate jdbc;
+  @Autowired EventBus eventBus;
+  @Autowired NudgeNotificationHandler handler;
+  @Autowired FactStreamHorizonProvider horizonProvider;
+
+  @Test
+  void preservesEverySerialAndDispatchesSelectivelyAfterBootstrap() {
+    horizonProvider.advance();
+    store.publish(facts(100));
+
+    List<Long> originalSerials = notificationSerials();
+    assertThat(originalSerials).hasSize(100).doesNotHaveDuplicates();
+    assertThat(
+            jdbc.queryForObject(
+                "SELECT count(DISTINCT tw) FROM notification WHERE ns = ? AND type = ?",
+                Long.class,
+                NS,
+                TYPE))
+        .isEqualTo(1);
+    await()
+        .atMost(Duration.ofSeconds(10))
+        .until(() -> handler.notificationSer.get() == originalSerials.get(99));
+
+    NotificationCollector collector = new NotificationCollector();
+    eventBus.register(collector);
+    try {
+      for (int batch = 0; batch < 20; batch++) {
+        store.publish(facts(20));
+      }
+
+      List<Long> allSerials = notificationSerials();
+      assertThat(allSerials).hasSize(500).doesNotHaveDuplicates();
+      assertThat(allSerials).containsAll(originalSerials);
+      await()
+          .atMost(Duration.ofSeconds(10))
+          .until(
+              () ->
+                  handler.notificationSer.get() == allSerials.get(499)
+                      && collector.selective.get() > 0);
+      await()
+          .during(Duration.ofMillis(500))
+          .atMost(Duration.ofSeconds(2))
+          .untilAsserted(() -> assertThat(collector.global.get()).isZero());
+    } finally {
+      eventBus.unregister(collector);
+    }
+  }
+
+  private List<Long> notificationSerials() {
+    return jdbc.queryForList(
+        "SELECT ser FROM notification WHERE ns = ? AND type = ? ORDER BY ser",
+        Long.class,
+        NS,
+        TYPE);
+  }
+
+  private static List<Fact> facts(int count) {
+    List<Fact> facts = new ArrayList<>(count);
+    for (int i = 0; i < count; i++) {
+      facts.add(Fact.builder().ns(NS).type(TYPE).buildWithoutPayload());
+    }
+    return facts;
+  }
+
+  public static class NotificationCollector {
+    final AtomicInteger global = new AtomicInteger();
+    final AtomicInteger selective = new AtomicInteger();
+
+    @Subscribe
+    public void on(FactInsertionNotification notification) {
+      if (notification.ns() == null) global.incrementAndGet();
+      else if (NS.equals(notification.ns()) && TYPE.equals(notification.type()))
+        selective.incrementAndGet();
+    }
+  }
+}
