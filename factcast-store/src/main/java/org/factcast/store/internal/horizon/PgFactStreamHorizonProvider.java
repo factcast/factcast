@@ -73,28 +73,32 @@ public class PgFactStreamHorizonProvider extends ReadOnlyPgFactStreamHorizonProv
                 Objects.requireNonNull(
                     transactionTemplate.execute(
                         ignored -> {
-                          factTableWriteLock.acquireExclusiveTXLock();
-                          FactStreamHorizon next = liveHorizon();
-                          List<FactStreamHorizon> persisted =
-                              jdbcTemplate.query(
-                                  UPDATE_HORIZON,
-                                  (rs, rowNum) ->
-                                      new FactStreamHorizon(
-                                          rs.getObject("fact_id", UUID.class),
-                                          rs.getLong("fact_ser"),
-                                          rs.getLong("notification_ser")),
-                                  next.factSerial(),
-                                  next.factId(),
-                                  next.notificationSerial());
-                          if (persisted.isEmpty()) {
-                            throw new IllegalStateException(MISSING_HORIZON);
-                          }
-                          return persisted.get(0);
+                          return doAdvance();
                         })));
 
     // TransactionTemplate returns only after the transaction committed successfully.
     updateCurrentPrimary(horizon);
     return horizon;
+  }
+
+  private FactStreamHorizon doAdvance() {
+    factTableWriteLock.acquireExclusiveTXLock();
+    FactStreamHorizon next = liveHorizon();
+    List<FactStreamHorizon> persisted =
+        jdbcTemplate.query(
+            UPDATE_HORIZON,
+            (rs, rowNum) ->
+                new FactStreamHorizon(
+                    rs.getObject("fact_id", UUID.class),
+                    rs.getLong("fact_ser"),
+                    rs.getLong("notification_ser")),
+            next.factSerial(),
+            next.factId(),
+            next.notificationSerial());
+    if (persisted.isEmpty()) {
+      throw new IllegalStateException(MISSING_HORIZON);
+    }
+    return persisted.get(0);
   }
 
   private @NonNull FactStreamHorizon liveHorizon() {

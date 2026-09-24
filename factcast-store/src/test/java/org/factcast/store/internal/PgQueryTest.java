@@ -23,6 +23,7 @@ import java.util.*;
 import lombok.Data;
 import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpec;
+import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
@@ -83,6 +84,7 @@ class PgQueryTest {
 
   @Autowired PgSubscriptionFactory pq;
 
+  @Autowired FactStore fs;
   @Autowired JdbcTemplate tpl;
   @Autowired StoreConfigurationProperties props;
 
@@ -183,21 +185,32 @@ class PgQueryTest {
     tpl.execute("INSERT INTO fact(header,payload) VALUES ('" + header + "','{}')");
   }
 
+  private Fact testFact(TestHeader header) {
+    return Fact.builder()
+        .id(UUID.fromString(header.id()))
+        .ns(header.ns())
+        .type(header.type())
+        .buildWithoutPayload();
+  }
+
   @Test
   void testRoundtripInsertAfter() throws Exception {
     SubscriptionRequestTO req =
         SubscriptionRequestTO.from(SubscriptionRequest.follow(defaultSpec).fromScratch());
     FactObserver c = mock(FactObserver.class);
-    pq.subscribe(req, c).awaitCatchup();
-    verify(c).onCatchup();
-    verify(c, never()).onNext(any(Fact.class));
-    insertTestFact(TestHeader.create());
-    insertTestFact(TestHeader.create());
-    insertTestFact(TestHeader.create().ns("other-ns"));
-    insertTestFact(TestHeader.create().type("type2"));
-    insertTestFact(TestHeader.create().ns("other-ns").type("type2"));
-    sleep(200);
-    verify(c, times(2)).onNext(any(Fact.class));
+    try (Subscription subscription = pq.subscribe(req, c)) {
+      subscription.awaitCatchup(5_000);
+      verify(c).onCatchup();
+      verify(c, never()).onNext(any(Fact.class));
+      fs.publish(
+          List.of(
+              testFact(TestHeader.create()),
+              testFact(TestHeader.create()),
+              testFact(TestHeader.create().ns("other-ns")),
+              testFact(TestHeader.create().type("type2")),
+              testFact(TestHeader.create().ns("other-ns").type("type2"))));
+      verify(c, timeout(5_000).times(2)).onNext(any(Fact.class));
+    }
   }
 
   @Test

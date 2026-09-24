@@ -750,7 +750,7 @@ databaseChangeLog:
       changes:
         - sqlFile:
             encoding: utf8
-            path: factcast/safe_horizon/create_factstream_horizon.sql
+            path: factcast/issue4976/create_factstream_horizon.sql
             relativeToChangelogFile: true
             splitStatements: false
             stripComments: true

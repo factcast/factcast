@@ -288,8 +288,12 @@ public class PgFactStream {
       // we're creating a SCDS for offload, that we destroy right after
       try (SingleConnectionDataSource secondary =
           createCatchupDataSource(offloadDataSource, pipeline)) {
+
+        // While it is very unlikely, that by reading from the secondary, we get a higher serial,
+        // it is not entirely impossible.
         long offloadHorizonSerial =
             Math.min(primaryHorizonSerial, horizonProvider.read(secondary).factSerial());
+
         return catchupPhaseOne(secondary, offloadHorizonSerial);
       } catch (SQLException | DataAccessException | PipelineAlreadyClosedException e) {
         // SQLException is interesting, as we cannot distinguish between a cancellation and a

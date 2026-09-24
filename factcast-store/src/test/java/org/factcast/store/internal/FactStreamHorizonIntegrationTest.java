@@ -76,7 +76,7 @@ final class FactStreamHorizonIntegrationTest {
         jdbcTemplate.queryForObject("SELECT MAX(ser) FROM notification", Long.class);
     ClassPathResource migrationScriptResource =
         new ClassPathResource(
-            "db/changelog/factcast/safe_horizon/create_factstream_horizon.sql",
+            "db/changelog/factcast/issue4976/create_factstream_horizon.sql",
             getClass().getClassLoader());
     String migrationScript = migrationScriptResource.getContentAsString(StandardCharsets.UTF_8);
 
