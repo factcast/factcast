@@ -26,6 +26,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.UUID;
 import javax.sql.DataSource;
 import org.factcast.core.FactStreamPosition;
@@ -34,10 +35,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 @ExtendWith(MockitoExtension.class)
 class JdbcFactStreamPositionTest {
@@ -184,12 +185,15 @@ class JdbcFactStreamPositionTest {
       verify(statement).setString(1, ProjectionNames.positionName(longKey));
     }
 
-    @ParameterizedTest
-    @ValueSource(strings = {"positions; DROP TABLE users", "my positions", "1positions", ""})
-    void rejectsATableNameThatIsNotAnIdentifier(String tableName) {
-      assertThatThrownBy(() -> new JdbcFactStreamPosition(dataSource, tableName, KEY))
-          .isInstanceOf(IllegalArgumentException.class)
-          .hasMessageContaining(tableName);
+    @Test
+    @MockitoSettings(strictness = Strictness.LENIENT) // validation throws before any JDBC call
+    void rejectsATableNameThatIsNotAnIdentifier() {
+      for (String tableName :
+          List.of("positions; DROP TABLE users", "my positions", "1positions", "")) {
+        assertThatThrownBy(() -> new JdbcFactStreamPosition(dataSource, tableName, KEY))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining(tableName);
+      }
     }
   }
 }
