@@ -23,9 +23,15 @@ import com.google.common.eventbus.Subscribe;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import org.factcast.core.Fact;
+import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
+import org.factcast.core.subscription.*;
+import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.store.internal.PgTestConfiguration;
 import org.factcast.store.internal.horizon.FactStreamHorizonProvider;
 import org.factcast.store.internal.notification.FactInsertionNotification;
@@ -40,7 +46,7 @@ import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 @SpringJUnitConfig(classes = PgTestConfiguration.class)
 @Sql(scripts = "/wipe.sql", config = @SqlConfig(separator = "#"))
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @IntegrationTest
 class PgAppendOnlyNotificationIntegrationTest {
 
@@ -95,6 +101,67 @@ class PgAppendOnlyNotificationIntegrationTest {
           .untilAsserted(() -> assertThat(collector.global.get()).isZero());
     } finally {
       eventBus.unregister(collector);
+    }
+  }
+
+  @Test
+  void cleanupOfNotificationCursorFallsBackToGlobalWakeAndFollowDeliversNextFact()
+      throws Exception {
+    horizonProvider.advance();
+    Fact first = Fact.builder().id(UUID.randomUUID()).ns(NS).type(TYPE).buildWithoutPayload();
+    store.publish(List.of(first));
+    long cursor = notificationSerials().get(0);
+    await().atMost(Duration.ofSeconds(10)).until(() -> handler.notificationSer.get() == cursor);
+
+    List<UUID> received = new CopyOnWriteArrayList<>();
+    AtomicReference<Throwable> subscriptionError = new AtomicReference<>();
+    FactObserver observer =
+        new FactObserver() {
+          @Override
+          public void onNext(Fact fact) {
+            received.add(fact.id());
+          }
+
+          @Override
+          public void onError(Throwable exception) {
+            subscriptionError.compareAndSet(null, exception);
+          }
+        };
+
+    try (Subscription subscription =
+        store.subscribe(
+            SubscriptionRequestTO.from(SubscriptionRequest.follow(FactSpec.ns(NS)).fromScratch()),
+            observer)) {
+      subscription.awaitCatchup(10_000);
+      assertThat(received).containsExactly(first.id());
+
+      NotificationCollector collector = new NotificationCollector();
+      eventBus.register(collector);
+      try {
+        assertThat(jdbc.update("UPDATE notification SET tw=0 WHERE ser=?", cursor)).isEqualTo(1);
+        jdbc.execute("CALL notificationCleanup()");
+        assertThat(
+                jdbc.queryForObject(
+                    "SELECT EXISTS(SELECT 1 FROM notification WHERE ser=?)", Boolean.class, cursor))
+            .isFalse();
+
+        Fact second = Fact.builder().id(UUID.randomUUID()).ns(NS).type(TYPE).buildWithoutPayload();
+        store.publish(List.of(second));
+        await()
+            .atMost(Duration.ofSeconds(10))
+            .until(
+                () ->
+                    (received.size() == 2 && collector.global.get() > 0)
+                        || subscriptionError.get() != null);
+        assertThat(subscriptionError.get()).isNull();
+        assertThat(received).containsExactly(first.id(), second.id());
+        await()
+            .during(Duration.ofMillis(300))
+            .atMost(Duration.ofSeconds(2))
+            .untilAsserted(() -> assertThat(collector.selective.get()).isZero());
+      } finally {
+        eventBus.unregister(collector);
+      }
     }
   }
 
