@@ -36,6 +36,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.transaction.*;
 import org.springframework.transaction.support.SimpleTransactionStatus;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @ExtendWith(MockitoExtension.class)
 final class PgFactStreamHorizonProviderTest {
@@ -49,7 +50,8 @@ final class PgFactStreamHorizonProviderTest {
 
   @BeforeEach
   void setUp() {
-    when(transactionManager.getTransaction(any(TransactionDefinition.class)))
+    lenient()
+        .when(transactionManager.getTransaction(any(TransactionDefinition.class)))
         .thenReturn(new SimpleTransactionStatus());
     underTest =
         new PgFactStreamHorizonProvider(
@@ -143,5 +145,32 @@ final class PgFactStreamHorizonProviderTest {
 
     verify(transactionManager).rollback(any());
     assertThat(underTest.currentPrimary()).isEqualTo(FactStreamHorizon.empty());
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  void joinedTransactionPublishesCurrentHorizonOnlyAfterCommit() {
+    FactStreamHorizon liveHorizon = new FactStreamHorizon(UUID.randomUUID(), 42, 0);
+    FactStreamHorizon persisted =
+        new FactStreamHorizon(liveHorizon.factId(), liveHorizon.factSerial(), 10);
+    when(factTableWriteLock.isExclusiveTXLockHeld()).thenReturn(true);
+    when(jdbcTemplate.query(eq(PgConstants.LATEST_FACT), any(RowMapper.class)))
+        .thenReturn(List.of(liveHorizon));
+    when(jdbcTemplate.queryForObject(anyString(), eq(Long.class))).thenReturn(10L);
+    when(jdbcTemplate.query(anyString(), any(RowMapper.class), any(Object[].class)))
+        .thenReturn(List.of(persisted));
+
+    TransactionSynchronizationManager.initSynchronization();
+    try {
+      assertThat(underTest.advance()).isEqualTo(persisted);
+      assertThat(underTest.currentPrimary()).isEqualTo(FactStreamHorizon.empty());
+      verify(transactionManager, never()).getTransaction(any());
+
+      TransactionSynchronizationManager.getSynchronizations()
+          .forEach(synchronization -> synchronization.afterCommit());
+      assertThat(underTest.currentPrimary()).isEqualTo(persisted);
+    } finally {
+      TransactionSynchronizationManager.clearSynchronization();
+    }
   }
 }

@@ -118,7 +118,7 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
                           "factcast_security_enabled", String.valueOf(config.securityEnabled()))
                       .withEnv("factcast_grpc_bandwidth_disabled", "true")
                       .withEnv("factcast_store_integrationTestMode", "true")
-                      .withEnv("spring_datasource_url", jdbcUrl)
+                      .withEnv("spring_datasource_url", jdbcUrl + "?reWriteBatchedInserts=true")
                       .withEnv("spring_datasource_username", db.getUsername())
                       .withEnv("spring_datasource_password", db.getPassword())
                       .withEnv("logging.level.org.factcast", config.serverLogLevel().name())

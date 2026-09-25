@@ -16,6 +16,7 @@
 package org.factcast.store.internal;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 
 import java.nio.charset.StandardCharsets;
@@ -45,6 +46,8 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @SpringJUnitConfig(classes = PgTestConfiguration.class)
 @Sql(scripts = "/wipe.sql", config = @SqlConfig(separator = "#"))
@@ -59,10 +62,134 @@ final class FactStreamHorizonIntegrationTest {
   @Autowired DataSource dataSource;
   @Autowired JdbcTemplate jdbcTemplate;
   @Autowired FactStreamHorizonProvider horizonProvider;
+  @Autowired PlatformTransactionManager transactionManager;
 
   @BeforeEach
   void refreshHorizonAfterDatabaseWipe() {
     horizonProvider.advance();
+  }
+
+  @Test
+  void publishingAndReadingStateInCallerTransactionDoesNotWaitForItsOwnLock() {
+    Fact fact =
+        Fact.builder().id(UUID.randomUUID()).ns(NS).type("transactional").buildWithoutPayload();
+    FactStreamHorizon before = horizonProvider.currentPrimary();
+    TransactionTemplate transaction = new TransactionTemplate(transactionManager);
+    transaction.setTimeout(5);
+
+    transaction.executeWithoutResult(
+        ignored -> {
+          store.publish(List.of(fact));
+          long serial = store.serialOf(fact.id()).orElseThrow();
+
+          StateToken stateToken = store.stateFor(List.of(FactSpec.ns(NS).type("transactional")));
+          StateToken currentStateToken = store.currentStateFor(List.of(FactSpec.ns(NS)));
+          assertThat(tokenStore.get(stateToken).orElseThrow().serialOfLastMatchingFact())
+              .isEqualTo(serial);
+          assertThat(tokenStore.get(currentStateToken).orElseThrow().serialOfLastMatchingFact())
+              .isEqualTo(serial);
+          assertThat(horizonProvider.currentPrimary()).isEqualTo(before);
+        });
+
+    assertThat(horizonProvider.currentPrimary().factId()).isEqualTo(fact.id());
+    assertThat(horizonProvider.currentPrimary().factSerial())
+        .isEqualTo(store.serialOf(fact.id()).orElseThrow());
+  }
+
+  @Test
+  void rolledBackCallerTransactionDoesNotPublishItsHorizon() {
+    Fact fact =
+        Fact.builder().id(UUID.randomUUID()).ns(NS).type("rolled-back").buildWithoutPayload();
+    FactStreamHorizon before = horizonProvider.currentPrimary();
+    TransactionTemplate transaction = new TransactionTemplate(transactionManager);
+    transaction.setTimeout(5);
+
+    assertThatThrownBy(
+            () ->
+                transaction.executeWithoutResult(
+                    ignored -> {
+                      store.publish(List.of(fact));
+                      store.stateFor(List.of(FactSpec.ns(NS)));
+                      assertThat(horizonProvider.currentPrimary()).isEqualTo(before);
+                      throw new IllegalStateException("rollback");
+                    }))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessage("rollback");
+
+    assertThat(store.serialOf(fact.id())).isEmpty();
+    assertThat(horizonProvider.currentPrimary()).isEqualTo(before);
+    assertThat(horizonProvider.read(dataSource)).isEqualTo(before);
+  }
+
+  @Test
+  void primaryCacheFollowsAnExplicitDatabaseReset() {
+    Fact fact =
+        Fact.builder().id(UUID.randomUUID()).ns(NS).type("before-reset").buildWithoutPayload();
+    store.publish(List.of(fact));
+    assertThat(horizonProvider.advance().factSerial()).isPositive();
+
+    jdbcTemplate.execute("TRUNCATE TABLE fact RESTART IDENTITY");
+    jdbcTemplate.execute("TRUNCATE TABLE notification");
+    jdbcTemplate.update(
+        "UPDATE factstream_horizon SET fact_ser=0, fact_id=NULL, notification_ser=0 WHERE id=1");
+
+    assertThat(horizonProvider.advance()).isEqualTo(FactStreamHorizon.empty());
+    assertThat(horizonProvider.currentPrimary()).isEqualTo(FactStreamHorizon.empty());
+  }
+
+  @Test
+  void competingCallerTransactionsAdvanceAfterTheirOwnPublishes() throws Exception {
+    Fact first = Fact.builder().id(UUID.randomUUID()).ns(NS).type("first").buildWithoutPayload();
+    Fact second = Fact.builder().id(UUID.randomUUID()).ns(NS).type("second").buildWithoutPayload();
+    CountDownLatch firstPublished = new CountDownLatch(1);
+    ExecutorService executor = Executors.newFixedThreadPool(2);
+
+    try {
+      Future<Long> firstState =
+          executor.submit(
+              () -> {
+                TransactionTemplate transaction = new TransactionTemplate(transactionManager);
+                transaction.setTimeout(10);
+                return transaction.execute(
+                    ignored -> {
+                      store.publish(List.of(first));
+                      firstPublished.countDown();
+                      await()
+                          .atMost(Duration.ofSeconds(5))
+                          .until(
+                              () ->
+                                  Boolean.TRUE.equals(
+                                      jdbcTemplate.queryForObject(
+                                          "SELECT EXISTS (SELECT 1 FROM pg_locks "
+                                              + "WHERE locktype='advisory' AND mode='ExclusiveLock' "
+                                              + "AND granted=false)",
+                                          Boolean.class)));
+                      StateToken token = store.stateFor(List.of(FactSpec.ns(NS)));
+                      return tokenStore.get(token).orElseThrow().serialOfLastMatchingFact();
+                    });
+              });
+      Future<Long> secondState =
+          executor.submit(
+              () -> {
+                assertThat(firstPublished.await(5, TimeUnit.SECONDS)).isTrue();
+                TransactionTemplate transaction = new TransactionTemplate(transactionManager);
+                transaction.setTimeout(10);
+                return transaction.execute(
+                    ignored -> {
+                      store.publish(List.of(second));
+                      StateToken token = store.stateFor(List.of(FactSpec.ns(NS)));
+                      return tokenStore.get(token).orElseThrow().serialOfLastMatchingFact();
+                    });
+              });
+
+      long firstSerial = firstState.get(10, TimeUnit.SECONDS);
+      long secondSerial = secondState.get(10, TimeUnit.SECONDS);
+      assertThat(firstSerial).isEqualTo(store.serialOf(first.id()).orElseThrow());
+      assertThat(secondSerial).isEqualTo(store.serialOf(second.id()).orElseThrow());
+      assertThat(secondSerial).isGreaterThan(firstSerial);
+    } finally {
+      executor.shutdownNow();
+    }
   }
 
   @Test

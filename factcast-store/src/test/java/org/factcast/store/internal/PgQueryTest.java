@@ -314,14 +314,11 @@ class PgQueryTest {
       sub.awaitCatchup();
       verify(c).onCatchup();
       verify(c, times(1)).onNext(any());
-      insertTestFact(TestHeader.create());
-      insertTestFact(TestHeader.create());
+      fs.publish(List.of(testFact(TestHeader.create()), testFact(TestHeader.create())));
       verify(c, timeout(5_000).times(3)).onNext(any());
     }
     // must not show up
-    insertTestFact(TestHeader.create());
-    // must not show up
-    insertTestFact(TestHeader.create());
+    fs.publish(List.of(testFact(TestHeader.create()), testFact(TestHeader.create())));
     verify(c, after(500).times(3)).onNext(any());
   }
 }

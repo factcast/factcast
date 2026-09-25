@@ -28,6 +28,8 @@ import org.factcast.store.internal.lock.FactTableWriteLock;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
@@ -65,20 +67,52 @@ public class PgFactStreamHorizonProvider extends ReadOnlyPgFactStreamHorizonProv
   }
 
   @Override
-  public synchronized @NonNull FactStreamHorizon advance() {
+  public @NonNull FactStreamHorizon advance() {
     FactStreamHorizon horizon =
         metrics.time(
             StoreMetrics.OP.ADVANCE_FACT_STREAM_HORIZON,
-            () ->
-                Objects.requireNonNull(
-                    transactionTemplate.execute(
-                        ignored -> {
-                          return doAdvance();
-                        })));
+            () -> {
+              if (factTableWriteLock.isExclusiveTXLockHeld()) {
+                // This transaction already owns the publication barrier. A new transaction
+                // would wait for that same lock until this one commits.
+                FactStreamHorizon inTransaction = doAdvance();
+                TransactionSynchronizationManager.registerSynchronization(
+                    new TransactionSynchronization() {
+                      @Override
+                      public void afterCommit() {
+                        updateCommittedHorizon(inTransaction);
+                      }
+                    });
+                return inTransaction;
+              }
+              FactStreamHorizon committed =
+                  Objects.requireNonNull(transactionTemplate.execute(ignored -> doAdvance()));
+              updateCommittedHorizon(committed);
+              return committed;
+            });
 
-    // TransactionTemplate returns only after the transaction committed successfully.
-    updateCurrentPrimary(horizon);
     return horizon;
+  }
+
+  private void updateCommittedHorizon(FactStreamHorizon horizon) {
+    while (true) {
+      FactStreamHorizon observed = currentPrimary();
+      // A delayed commit callback must not move the cache backwards. A genuine reset (for
+      // example, after truncation) does have a lower persisted horizon, so verify it in the DB.
+      FactStreamHorizon next = atLeast(horizon, observed) ? horizon : readPrimary();
+      synchronized (this) {
+        if (currentPrimary().equals(observed)) {
+          updateCurrentPrimary(next);
+          return;
+        }
+      }
+    }
+  }
+
+  private static boolean atLeast(FactStreamHorizon left, FactStreamHorizon right) {
+    return left.factSerial() > right.factSerial()
+        || (left.factSerial() == right.factSerial()
+            && left.notificationSerial() >= right.notificationSerial());
   }
 
   private FactStreamHorizon doAdvance() {

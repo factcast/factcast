@@ -59,7 +59,7 @@ class PgAppendOnlyNotificationIntegrationTest {
     store.publish(facts(100));
 
     List<Long> originalSerials = notificationSerials();
-    assertThat(originalSerials).hasSize(100).doesNotHaveDuplicates();
+    assertThat(originalSerials).isNotEmpty().hasSizeLessThan(100).doesNotHaveDuplicates();
     assertThat(
             jdbc.queryForObject(
                 "SELECT count(DISTINCT tw) FROM notification WHERE ns = ? AND type = ?",
@@ -69,7 +69,8 @@ class PgAppendOnlyNotificationIntegrationTest {
         .isEqualTo(1);
     await()
         .atMost(Duration.ofSeconds(10))
-        .until(() -> handler.notificationSer.get() == originalSerials.get(99));
+        .until(
+            () -> handler.notificationSer.get() == originalSerials.get(originalSerials.size() - 1));
 
     NotificationCollector collector = new NotificationCollector();
     eventBus.register(collector);
@@ -79,13 +80,14 @@ class PgAppendOnlyNotificationIntegrationTest {
       }
 
       List<Long> allSerials = notificationSerials();
-      assertThat(allSerials).hasSize(500).doesNotHaveDuplicates();
+      assertThat(allSerials).hasSizeGreaterThan(originalSerials.size()).doesNotHaveDuplicates();
       assertThat(allSerials).containsAll(originalSerials);
+      assertThat(allSerials.subList(0, originalSerials.size())).isEqualTo(originalSerials);
       await()
           .atMost(Duration.ofSeconds(10))
           .until(
               () ->
-                  handler.notificationSer.get() == allSerials.get(499)
+                  handler.notificationSer.get() == allSerials.get(allSerials.size() - 1)
                       && collector.selective.get() > 0);
       await()
           .during(Duration.ofMillis(500))

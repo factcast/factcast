@@ -39,6 +39,7 @@ import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.check.IndexCheck;
 import org.factcast.store.internal.filter.blacklist.*;
 import org.factcast.store.internal.horizon.*;
+import org.factcast.store.internal.jdbc.PgBatchInsertRewriteVerifier;
 import org.factcast.store.internal.listen.*;
 import org.factcast.store.internal.lock.*;
 import org.factcast.store.internal.logsuppression.*;
@@ -115,6 +116,12 @@ public class PgFactStoreInternalConfiguration {
   @Bean
   public PgMetrics pgMetrics(@NonNull MeterRegistry registry) {
     return new PgMetrics(registry);
+  }
+
+  @Bean
+  @IsReadAndWriteEnv
+  public PgBatchInsertRewriteVerifier pgBatchInsertRewriteVerifier(DataSource dataSource) {
+    return new PgBatchInsertRewriteVerifier(dataSource);
   }
 
   @Bean

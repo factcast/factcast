@@ -37,9 +37,13 @@ public class ReadOnlyPgFactStreamHorizonProvider implements FactStreamHorizonPro
 
   @Override
   public synchronized @NonNull FactStreamHorizon advance() {
-    FactStreamHorizon horizon = read(primaryDataSource);
+    FactStreamHorizon horizon = readPrimary();
     currentPrimary.set(horizon);
     return horizon;
+  }
+
+  protected final FactStreamHorizon readPrimary() {
+    return read(primaryDataSource);
   }
 
   @Override

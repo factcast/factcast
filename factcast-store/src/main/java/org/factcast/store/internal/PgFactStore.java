@@ -41,6 +41,7 @@ import org.springframework.dao.*;
 import org.springframework.jdbc.core.*;
 import org.springframework.transaction.*;
 import org.springframework.transaction.annotation.*;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
@@ -127,6 +128,10 @@ public class PgFactStore extends AbstractFactStore {
   void publishBatchable(@NonNull List<? extends Fact> factsToPublish) {
     if (props.isReadOnlyModeEnabled()) {
       throw new UnsupportedOperationException("Publishing is not allowed in read-only mode");
+    }
+    if (TransactionSynchronizationManager.isActualTransactionActive()) {
+      publishDirectly(factsToPublish);
+      return;
     }
     metrics.time(
         StoreMetrics.OP.PUBLISH,
@@ -422,10 +427,11 @@ public class PgFactStore extends AbstractFactStore {
   void batchPublish(List<? extends Fact> facts) {
     int numberOfFactsToPublish = facts.size();
     log.trace("Inserting {} fact(s)", numberOfFactsToPublish);
+    boolean callerTransaction = TransactionSynchronizationManager.isActualTransactionActive();
     try {
       tx.execute(
           ts -> {
-            batchPublishInTransaction(facts);
+            batchPublishInTransaction(facts, callerTransaction);
 
             return null;
           });
@@ -435,8 +441,13 @@ public class PgFactStore extends AbstractFactStore {
   }
 
   void batchPublishInTransaction(List<? extends Fact> facts) {
+    batchPublishInTransaction(facts, false);
+  }
+
+  private void batchPublishInTransaction(List<? extends Fact> facts, boolean callerTransaction) {
     try {
-      lock.acquireSharedTXLock();
+      if (callerTransaction) lock.acquireExclusiveTXLock();
+      else lock.acquireSharedTXLock();
       jdbcTemplate.batchUpdate(
           PgConstants.INSERT_FACT,
           facts,

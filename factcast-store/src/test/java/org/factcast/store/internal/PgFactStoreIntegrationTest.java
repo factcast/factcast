@@ -63,6 +63,34 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
     return new FactStoreWrapper(fs);
   }
 
+  @Test
+  void batchPublishCreatesOneNotificationPerNamespaceAndType() {
+    var facts =
+        List.of(
+            Fact.builder().ns("batch-notification").type("same").buildWithoutPayload(),
+            Fact.builder().ns("batch-notification").type("same").buildWithoutPayload(),
+            Fact.builder().ns("batch-notification").type("different").buildWithoutPayload(),
+            Fact.builder().ns("batch-notification").type("same").buildWithoutPayload());
+
+    fs.publish(facts);
+
+    assertThat(jdbcTemplate.queryForObject("SELECT count(*) FROM fact", Long.class)).isEqualTo(4);
+    assertThat(
+            jdbcTemplate.queryForObject(
+                "SELECT count(*) FROM notification WHERE ns = ? AND type = ?",
+                Long.class,
+                "batch-notification",
+                "same"))
+        .isEqualTo(1);
+    assertThat(
+            jdbcTemplate.queryForObject(
+                "SELECT count(*) FROM notification WHERE ns = ? AND type = ?",
+                Long.class,
+                "batch-notification",
+                "different"))
+        .isEqualTo(1);
+  }
+
   /**
    * This weird trick is necessary, because Spring-Boot does something to autowired beans, so that
    * mockito cannot spy them anymore. This wrapper serves as a simple shell around the injected
