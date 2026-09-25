@@ -60,7 +60,6 @@ public class PgTestConfiguration {
           "spring.datasource.url", url + "?socketTimeout=0&preparedStatementCacheSize=0");
       System.setProperty("spring.datasource.username", postgres.getUsername());
       System.setProperty("spring.datasource.password", postgres.getPassword());
-      System.setProperty("spring.datasource.maxActive", "20");
       System.setProperty("spring.datasource.tomcat.connectionProperties", "foo=bar;");
     } else {
       log.info("Using predefined external postgres URL: {}", url);
@@ -68,6 +67,11 @@ public class PgTestConfiguration {
       System.setProperty("spring.datasource.driver-class-name", Driver.class.getName());
       System.setProperty("spring.datasource.url", url);
     }
+    // Many Spring test contexts share the same PostgreSQL instance. Keep idle pools small.
+    System.setProperty("spring.datasource.tomcat.initial-size", "1");
+    System.setProperty("spring.datasource.tomcat.min-idle", "1");
+    System.setProperty("spring.datasource.tomcat.max-idle", "1");
+    System.setProperty("spring.datasource.tomcat.max-active", "20");
   }
 
   @Bean

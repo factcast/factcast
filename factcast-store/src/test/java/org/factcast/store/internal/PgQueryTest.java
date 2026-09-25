@@ -15,11 +15,13 @@
  */
 package org.factcast.store.internal;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import com.google.common.eventbus.EventBus;
 import java.util.*;
+import javax.sql.DataSource;
 import lombok.Data;
 import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpec;
@@ -34,7 +36,9 @@ import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
@@ -86,6 +90,7 @@ class PgQueryTest {
 
   @Autowired FactStore fs;
   @Autowired JdbcTemplate tpl;
+  @Autowired DataSource dataSource;
   @Autowired StoreConfigurationProperties props;
 
   StoreConfigurationProperties.CatchupStrategy originalCatchupStrategy;
@@ -214,6 +219,38 @@ class PgQueryTest {
   }
 
   @Test
+  void testRoundtripInsertAfterNotificationWipe() throws Exception {
+    SubscriptionRequestTO req =
+        SubscriptionRequestTO.from(SubscriptionRequest.follow(defaultSpec).fromScratch());
+    FactObserver beforeWipe = mock(FactObserver.class);
+    try (Subscription subscription = pq.subscribe(req, beforeWipe)) {
+      subscription.awaitCatchup(5_000);
+      fs.publish(List.of(testFact(TestHeader.create())));
+      verify(beforeWipe, timeout(5_000)).onNext(any(Fact.class));
+    }
+    long previousSerial = tpl.queryForObject("SELECT MAX(ser) FROM notification", Long.class);
+
+    ResourceDatabasePopulator wipe =
+        new ResourceDatabasePopulator(new ClassPathResource("wipe.sql"));
+    wipe.setSeparator("#");
+    wipe.execute(dataSource);
+
+    FactObserver afterWipe = mock(FactObserver.class);
+    try (Subscription subscription = pq.subscribe(req, afterWipe)) {
+      subscription.awaitCatchup(5_000);
+      verify(afterWipe, never()).onNext(any(Fact.class));
+      fs.publish(
+          List.of(
+              testFact(TestHeader.create()),
+              testFact(TestHeader.create()),
+              testFact(TestHeader.create().ns("other-ns"))));
+      verify(afterWipe, timeout(5_000).times(2)).onNext(any(Fact.class));
+    }
+    assertThat(tpl.queryForObject("SELECT MIN(ser) FROM notification", Long.class))
+        .isGreaterThan(previousSerial);
+  }
+
+  @Test
   void testRoundtripCatchupEventsInsertedAfterStart() throws Exception {
     SubscriptionRequestTO req =
         SubscriptionRequestTO.from(SubscriptionRequest.follow(defaultSpec).fromScratch());
@@ -273,19 +310,18 @@ class PgQueryTest {
         SubscriptionRequestTO.from(SubscriptionRequest.follow(defaultSpec).fromScratch());
     FactObserver c = mock(FactObserver.class);
     insertTestFact(TestHeader.create());
-    Subscription sub = pq.subscribe(req, c).awaitCatchup();
-    verify(c).onCatchup();
-    verify(c, times(1)).onNext(any());
-    insertTestFact(TestHeader.create());
-    insertTestFact(TestHeader.create());
-    sleep(200);
-    verify(c, times(3)).onNext(any());
-    sub.close();
+    try (Subscription sub = pq.subscribe(req, c)) {
+      sub.awaitCatchup();
+      verify(c).onCatchup();
+      verify(c, times(1)).onNext(any());
+      insertTestFact(TestHeader.create());
+      insertTestFact(TestHeader.create());
+      verify(c, timeout(5_000).times(3)).onNext(any());
+    }
     // must not show up
     insertTestFact(TestHeader.create());
     // must not show up
     insertTestFact(TestHeader.create());
-    sleep(200);
-    verify(c, times(3)).onNext(any());
+    verify(c, after(500).times(3)).onNext(any());
   }
 }
