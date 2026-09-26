@@ -1,0 +1,1396 @@
+[
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "org.factcast.benchmark.SnapshotSerializationBenchmark.findAndDeserialize",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 2,
+        "jvm" : "/home/doc/.sdkman/candidates/java/21.0.5-amzn/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.5",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.5+11-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "1 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 3,
+        "measurementTime" : "1 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "entryCount" : "16",
+            "serializerName" : "jackson"
+        },
+        "primaryMetric" : {
+            "score" : 2.804208035118229,
+            "scoreError" : 0.11377393783958184,
+            "scoreConfidence" : [
+                2.690434097278647,
+                2.9179819729578105
+            ],
+            "scorePercentiles" : {
+                "0.0" : 2.759348290209192,
+                "50.0" : 2.8023748967358397,
+                "90.0" : 2.8656130371499464,
+                "95.0" : 2.8656130371499464,
+                "99.0" : 2.8656130371499464,
+                "99.9" : 2.8656130371499464,
+                "99.99" : 2.8656130371499464,
+                "99.999" : 2.8656130371499464,
+                "99.9999" : 2.8656130371499464,
+                "100.0" : 2.8656130371499464
+            },
+            "scoreUnit" : "us/op",
+            "rawData" : [
+                [
+                    2.781474955155392,
+                    2.759348290209192,
+                    2.770523794094678
+                ],
+                [
+                    2.8656130371499464,
+                    2.8232748383162876,
+                    2.825013295783878
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "org.factcast.benchmark.SnapshotSerializationBenchmark.findAndDeserialize",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 2,
+        "jvm" : "/home/doc/.sdkman/candidates/java/21.0.5-amzn/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.5",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.5+11-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "1 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 3,
+        "measurementTime" : "1 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "entryCount" : "16",
+            "serializerName" : "binary"
+        },
+        "primaryMetric" : {
+            "score" : 4.345633921794702,
+            "scoreError" : 0.4065924882792681,
+            "scoreConfidence" : [
+                3.9390414335154342,
+                4.752226410073971
+            ],
+            "scorePercentiles" : {
+                "0.0" : 4.231957862933938,
+                "50.0" : 4.303220017569471,
+                "90.0" : 4.6050566618934266,
+                "95.0" : 4.6050566618934266,
+                "99.0" : 4.6050566618934266,
+                "99.9" : 4.6050566618934266,
+                "99.99" : 4.6050566618934266,
+                "99.999" : 4.6050566618934266,
+                "99.9999" : 4.6050566618934266,
+                "100.0" : 4.6050566618934266
+            },
+            "scoreUnit" : "us/op",
+            "rawData" : [
+                [
+                    4.364518559733278,
+                    4.392396882630923,
+                    4.6050566618934266
+                ],
+                [
+                    4.231957862933938,
+                    4.241921475405665,
+                    4.237952088170986
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "org.factcast.benchmark.SnapshotSerializationBenchmark.findAndDeserialize",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 2,
+        "jvm" : "/home/doc/.sdkman/candidates/java/21.0.5-amzn/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.5",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.5+11-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "1 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 3,
+        "measurementTime" : "1 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "entryCount" : "16",
+            "serializerName" : "binary-lz4"
+        },
+        "primaryMetric" : {
+            "score" : 5.7308530880197415,
+            "scoreError" : 1.345944025543445,
+            "scoreConfidence" : [
+                4.3849090624762965,
+                7.076797113563186
+            ],
+            "scorePercentiles" : {
+                "0.0" : 5.1086456106119655,
+                "50.0" : 5.833919046643908,
+                "90.0" : 6.380923070052316,
+                "95.0" : 6.380923070052316,
+                "99.0" : 6.380923070052316,
+                "99.9" : 6.380923070052316,
+                "99.99" : 6.380923070052316,
+                "99.999" : 6.380923070052316,
+                "99.9999" : 6.380923070052316,
+                "100.0" : 6.380923070052316
+            },
+            "scoreUnit" : "us/op",
+            "rawData" : [
+                [
+                    5.992448155204851,
+                    5.775316673596193,
+                    5.1086456106119655
+                ],
+                [
+                    6.380923070052316,
+                    5.892521419691622,
+                    5.235263598961496
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "org.factcast.benchmark.SnapshotSerializationBenchmark.findAndDeserialize",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 2,
+        "jvm" : "/home/doc/.sdkman/candidates/java/21.0.5-amzn/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.5",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.5+11-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "1 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 3,
+        "measurementTime" : "1 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "entryCount" : "16",
+            "serializerName" : "fury"
+        },
+        "primaryMetric" : {
+            "score" : 0.8321631371335538,
+            "scoreError" : 0.029746435252151402,
+            "scoreConfidence" : [
+                0.8024167018814025,
+                0.8619095723857052
+            ],
+            "scorePercentiles" : {
+                "0.0" : 0.8142671070768224,
+                "50.0" : 0.8332359092365819,
+                "90.0" : 0.8434624330690532,
+                "95.0" : 0.8434624330690532,
+                "99.0" : 0.8434624330690532,
+                "99.9" : 0.8434624330690532,
+                "99.99" : 0.8434624330690532,
+                "99.999" : 0.8434624330690532,
+                "99.9999" : 0.8434624330690532,
+                "100.0" : 0.8434624330690532
+            },
+            "scoreUnit" : "us/op",
+            "rawData" : [
+                [
+                    0.8313645722246281,
+                    0.8274793172491395,
+                    0.8142671070768224
+                ],
+                [
+                    0.8434624330690532,
+                    0.8351072462485356,
+                    0.8412981469331449
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "org.factcast.benchmark.SnapshotSerializationBenchmark.findAndDeserialize",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 2,
+        "jvm" : "/home/doc/.sdkman/candidates/java/21.0.5-amzn/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.5",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.5+11-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "1 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 3,
+        "measurementTime" : "1 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "entryCount" : "16",
+            "serializerName" : "fury-lz4"
+        },
+        "primaryMetric" : {
+            "score" : 2.1799900642284893,
+            "scoreError" : 1.5039484720345562,
+            "scoreConfidence" : [
+                0.6760415921939331,
+                3.6839385362630455
+            ],
+            "scorePercentiles" : {
+                "0.0" : 1.5474249402015663,
+                "50.0" : 2.2594482751862355,
+                "90.0" : 2.7578799555493054,
+                "95.0" : 2.7578799555493054,
+                "99.0" : 2.7578799555493054,
+                "99.9" : 2.7578799555493054,
+                "99.99" : 2.7578799555493054,
+                "99.999" : 2.7578799555493054,
+                "99.9999" : 2.7578799555493054,
+                "100.0" : 2.7578799555493054
+            },
+            "scoreUnit" : "us/op",
+            "rawData" : [
+                [
+                    2.7578799555493054,
+                    1.5474249402015663,
+                    2.1397306880955744
+                ],
+                [
+                    2.701188271579931,
+                    1.554550667667663,
+                    2.379165862276896
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "org.factcast.benchmark.SnapshotSerializationBenchmark.findAndDeserialize",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 2,
+        "jvm" : "/home/doc/.sdkman/candidates/java/21.0.5-amzn/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.5",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.5+11-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "1 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 3,
+        "measurementTime" : "1 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "entryCount" : "16",
+            "serializerName" : "fury-snappy"
+        },
+        "primaryMetric" : {
+            "score" : 14.975518685821873,
+            "scoreError" : 0.6619603446492612,
+            "scoreConfidence" : [
+                14.313558341172612,
+                15.637479030471134
+            ],
+            "scorePercentiles" : {
+                "0.0" : 14.574748539204686,
+                "50.0" : 15.036194861179274,
+                "90.0" : 15.251412686794755,
+                "95.0" : 15.251412686794755,
+                "99.0" : 15.251412686794755,
+                "99.9" : 15.251412686794755,
+                "99.99" : 15.251412686794755,
+                "99.999" : 15.251412686794755,
+                "99.9999" : 15.251412686794755,
+                "100.0" : 15.251412686794755
+            },
+            "scoreUnit" : "us/op",
+            "rawData" : [
+                [
+                    15.107299882185904,
+                    14.847261284387335,
+                    14.574748539204686
+                ],
+                [
+                    15.251412686794755,
+                    15.055054281886468,
+                    15.01733544047208
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "org.factcast.benchmark.SnapshotSerializationBenchmark.findAndDeserialize",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 2,
+        "jvm" : "/home/doc/.sdkman/candidates/java/21.0.5-amzn/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.5",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.5+11-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "1 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 3,
+        "measurementTime" : "1 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "entryCount" : "1024",
+            "serializerName" : "jackson"
+        },
+        "primaryMetric" : {
+            "score" : 173.4723580230279,
+            "scoreError" : 16.590285523221286,
+            "scoreConfidence" : [
+                156.8820724998066,
+                190.0626435462492
+            ],
+            "scorePercentiles" : {
+                "0.0" : 165.59325194246983,
+                "50.0" : 175.103906111529,
+                "90.0" : 179.05904278553527,
+                "95.0" : 179.05904278553527,
+                "99.0" : 179.05904278553527,
+                "99.9" : 179.05904278553527,
+                "99.99" : 179.05904278553527,
+                "99.999" : 179.05904278553527,
+                "99.9999" : 179.05904278553527,
+                "100.0" : 179.05904278553527
+            },
+            "scoreUnit" : "us/op",
+            "rawData" : [
+                [
+                    176.80500813151846,
+                    178.90886764442854,
+                    179.05904278553527
+                ],
+                [
+                    167.0651735426758,
+                    165.59325194246983,
+                    173.40280409153954
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "org.factcast.benchmark.SnapshotSerializationBenchmark.findAndDeserialize",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 2,
+        "jvm" : "/home/doc/.sdkman/candidates/java/21.0.5-amzn/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.5",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.5+11-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "1 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 3,
+        "measurementTime" : "1 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "entryCount" : "1024",
+            "serializerName" : "binary"
+        },
+        "primaryMetric" : {
+            "score" : 234.46441319570746,
+            "scoreError" : 19.625663490403014,
+            "scoreConfidence" : [
+                214.83874970530445,
+                254.09007668611048
+            ],
+            "scorePercentiles" : {
+                "0.0" : 227.08590079455163,
+                "50.0" : 234.35544305181782,
+                "90.0" : 242.40850860189,
+                "95.0" : 242.40850860189,
+                "99.0" : 242.40850860189,
+                "99.9" : 242.40850860189,
+                "99.99" : 242.40850860189,
+                "99.999" : 242.40850860189,
+                "99.9999" : 242.40850860189,
+                "100.0" : 242.40850860189
+            },
+            "scoreUnit" : "us/op",
+            "rawData" : [
+                [
+                    240.0007296065259,
+                    239.92601007435837,
+                    242.40850860189
+                ],
+                [
+                    228.58045406764168,
+                    227.08590079455163,
+                    228.78487602927723
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "org.factcast.benchmark.SnapshotSerializationBenchmark.findAndDeserialize",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 2,
+        "jvm" : "/home/doc/.sdkman/candidates/java/21.0.5-amzn/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.5",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.5+11-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "1 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 3,
+        "measurementTime" : "1 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "entryCount" : "1024",
+            "serializerName" : "binary-lz4"
+        },
+        "primaryMetric" : {
+            "score" : 253.20624544031227,
+            "scoreError" : 3.262221523909613,
+            "scoreConfidence" : [
+                249.94402391640267,
+                256.4684669642219
+            ],
+            "scorePercentiles" : {
+                "0.0" : 251.56612625754528,
+                "50.0" : 253.33255159485242,
+                "90.0" : 254.6115240519216,
+                "95.0" : 254.6115240519216,
+                "99.0" : 254.6115240519216,
+                "99.9" : 254.6115240519216,
+                "99.99" : 254.6115240519216,
+                "99.999" : 254.6115240519216,
+                "99.9999" : 254.6115240519216,
+                "100.0" : 254.6115240519216
+            },
+            "scoreUnit" : "us/op",
+            "rawData" : [
+                [
+                    254.0932286004572,
+                    252.8504886248736,
+                    251.56612625754528
+                ],
+                [
+                    254.6115240519216,
+                    253.81461456483126,
+                    252.30149054224464
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "org.factcast.benchmark.SnapshotSerializationBenchmark.findAndDeserialize",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 2,
+        "jvm" : "/home/doc/.sdkman/candidates/java/21.0.5-amzn/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.5",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.5+11-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "1 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 3,
+        "measurementTime" : "1 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "entryCount" : "1024",
+            "serializerName" : "fury"
+        },
+        "primaryMetric" : {
+            "score" : 30.707460781208372,
+            "scoreError" : 0.7870510717417106,
+            "scoreConfidence" : [
+                29.92040970946666,
+                31.494511852950083
+            ],
+            "scorePercentiles" : {
+                "0.0" : 30.343220138952095,
+                "50.0" : 30.81100263944014,
+                "90.0" : 30.98855008520527,
+                "95.0" : 30.98855008520527,
+                "99.0" : 30.98855008520527,
+                "99.9" : 30.98855008520527,
+                "99.99" : 30.98855008520527,
+                "99.999" : 30.98855008520527,
+                "99.9999" : 30.98855008520527,
+                "100.0" : 30.98855008520527
+            },
+            "scoreUnit" : "us/op",
+            "rawData" : [
+                [
+                    30.343220138952095,
+                    30.381046140761217,
+                    30.90994304345139
+                ],
+                [
+                    30.89226877104117,
+                    30.98855008520527,
+                    30.729736507839107
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "org.factcast.benchmark.SnapshotSerializationBenchmark.findAndDeserialize",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 2,
+        "jvm" : "/home/doc/.sdkman/candidates/java/21.0.5-amzn/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.5",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.5+11-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "1 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 3,
+        "measurementTime" : "1 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "entryCount" : "1024",
+            "serializerName" : "fury-lz4"
+        },
+        "primaryMetric" : {
+            "score" : 44.21427380574704,
+            "scoreError" : 3.1339676523107736,
+            "scoreConfidence" : [
+                41.08030615343627,
+                47.348241458057814
+            ],
+            "scorePercentiles" : {
+                "0.0" : 43.31309770040276,
+                "50.0" : 43.78814156071722,
+                "90.0" : 46.196619901368855,
+                "95.0" : 46.196619901368855,
+                "99.0" : 46.196619901368855,
+                "99.9" : 46.196619901368855,
+                "99.99" : 46.196619901368855,
+                "99.999" : 46.196619901368855,
+                "99.9999" : 46.196619901368855,
+                "100.0" : 46.196619901368855
+            },
+            "scoreUnit" : "us/op",
+            "rawData" : [
+                [
+                    43.31309770040276,
+                    43.356077683370906,
+                    46.196619901368855
+                ],
+                [
+                    44.84356442790531,
+                    43.850124906867684,
+                    43.72615821456676
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "org.factcast.benchmark.SnapshotSerializationBenchmark.findAndDeserialize",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 2,
+        "jvm" : "/home/doc/.sdkman/candidates/java/21.0.5-amzn/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.5",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.5+11-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "1 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 3,
+        "measurementTime" : "1 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "entryCount" : "1024",
+            "serializerName" : "fury-snappy"
+        },
+        "primaryMetric" : {
+            "score" : 344.2789029754651,
+            "scoreError" : 38.83883994865603,
+            "scoreConfidence" : [
+                305.44006302680907,
+                383.1177429241211
+            ],
+            "scorePercentiles" : {
+                "0.0" : 328.99007826372906,
+                "50.0" : 345.4712078610215,
+                "90.0" : 358.4704551971326,
+                "95.0" : 358.4704551971326,
+                "99.0" : 358.4704551971326,
+                "99.9" : 358.4704551971326,
+                "99.99" : 358.4704551971326,
+                "99.999" : 358.4704551971326,
+                "99.9999" : 358.4704551971326,
+                "100.0" : 358.4704551971326
+            },
+            "scoreUnit" : "us/op",
+            "rawData" : [
+                [
+                    335.18857219430487,
+                    331.20805927152315,
+                    328.99007826372906
+                ],
+                [
+                    356.06240939836243,
+                    358.4704551971326,
+                    355.75384352773824
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "org.factcast.benchmark.SnapshotSerializationBenchmark.serializeAndStore",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 2,
+        "jvm" : "/home/doc/.sdkman/candidates/java/21.0.5-amzn/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.5",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.5+11-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "1 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 3,
+        "measurementTime" : "1 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "entryCount" : "16",
+            "serializerName" : "jackson"
+        },
+        "primaryMetric" : {
+            "score" : 1.968164538284469,
+            "scoreError" : 0.10362968087593337,
+            "scoreConfidence" : [
+                1.8645348574085356,
+                2.0717942191604024
+            ],
+            "scorePercentiles" : {
+                "0.0" : 1.9336884470008218,
+                "50.0" : 1.964589044816877,
+                "90.0" : 2.034187475719664,
+                "95.0" : 2.034187475719664,
+                "99.0" : 2.034187475719664,
+                "99.9" : 2.034187475719664,
+                "99.99" : 2.034187475719664,
+                "99.999" : 2.034187475719664,
+                "99.9999" : 2.034187475719664,
+                "100.0" : 2.034187475719664
+            },
+            "scoreUnit" : "us/op",
+            "rawData" : [
+                [
+                    2.034187475719664,
+                    1.9681966885032343,
+                    1.9609814011305196
+                ],
+                [
+                    1.9343832808211627,
+                    1.9336884470008218,
+                    1.977549936531412
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "org.factcast.benchmark.SnapshotSerializationBenchmark.serializeAndStore",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 2,
+        "jvm" : "/home/doc/.sdkman/candidates/java/21.0.5-amzn/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.5",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.5+11-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "1 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 3,
+        "measurementTime" : "1 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "entryCount" : "16",
+            "serializerName" : "binary"
+        },
+        "primaryMetric" : {
+            "score" : 8.568725790853582,
+            "scoreError" : 0.3269264591479417,
+            "scoreConfidence" : [
+                8.241799331705641,
+                8.895652250001524
+            ],
+            "scorePercentiles" : {
+                "0.0" : 8.37887706834005,
+                "50.0" : 8.59744778562948,
+                "90.0" : 8.72184906515976,
+                "95.0" : 8.72184906515976,
+                "99.0" : 8.72184906515976,
+                "99.9" : 8.72184906515976,
+                "99.99" : 8.72184906515976,
+                "99.999" : 8.72184906515976,
+                "99.9999" : 8.72184906515976,
+                "100.0" : 8.72184906515976
+            },
+            "scoreUnit" : "us/op",
+            "rawData" : [
+                [
+                    8.37887706834005,
+                    8.597617798256623,
+                    8.500892225442616
+                ],
+                [
+                    8.597277773002338,
+                    8.615840814920102,
+                    8.72184906515976
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "org.factcast.benchmark.SnapshotSerializationBenchmark.serializeAndStore",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 2,
+        "jvm" : "/home/doc/.sdkman/candidates/java/21.0.5-amzn/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.5",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.5+11-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "1 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 3,
+        "measurementTime" : "1 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "entryCount" : "16",
+            "serializerName" : "binary-lz4"
+        },
+        "primaryMetric" : {
+            "score" : 21.123663608433755,
+            "scoreError" : 0.9786536554676469,
+            "scoreConfidence" : [
+                20.14500995296611,
+                22.1023172639014
+            ],
+            "scorePercentiles" : {
+                "0.0" : 20.6939049865508,
+                "50.0" : 21.168933342068144,
+                "90.0" : 21.47061250643998,
+                "95.0" : 21.47061250643998,
+                "99.0" : 21.47061250643998,
+                "99.9" : 21.47061250643998,
+                "99.99" : 21.47061250643998,
+                "99.999" : 21.47061250643998,
+                "99.9999" : 21.47061250643998,
+                "100.0" : 21.47061250643998
+            },
+            "scoreUnit" : "us/op",
+            "rawData" : [
+                [
+                    20.984565793890567,
+                    20.779344421358818,
+                    20.6939049865508
+                ],
+                [
+                    21.353300890245723,
+                    21.47061250643998,
+                    21.460253052116634
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "org.factcast.benchmark.SnapshotSerializationBenchmark.serializeAndStore",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 2,
+        "jvm" : "/home/doc/.sdkman/candidates/java/21.0.5-amzn/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.5",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.5+11-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "1 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 3,
+        "measurementTime" : "1 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "entryCount" : "16",
+            "serializerName" : "fury"
+        },
+        "primaryMetric" : {
+            "score" : 6.222308337827486,
+            "scoreError" : 0.2209901394622029,
+            "scoreConfidence" : [
+                6.001318198365283,
+                6.443298477289689
+            ],
+            "scorePercentiles" : {
+                "0.0" : 6.138691254818197,
+                "50.0" : 6.206919845303097,
+                "90.0" : 6.358792758368566,
+                "95.0" : 6.358792758368566,
+                "99.0" : 6.358792758368566,
+                "99.9" : 6.358792758368566,
+                "99.99" : 6.358792758368566,
+                "99.999" : 6.358792758368566,
+                "99.9999" : 6.358792758368566,
+                "100.0" : 6.358792758368566
+            },
+            "scoreUnit" : "us/op",
+            "rawData" : [
+                [
+                    6.169342798100056,
+                    6.253183525071902,
+                    6.182416446180856
+                ],
+                [
+                    6.231423244425338,
+                    6.358792758368566,
+                    6.138691254818197
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "org.factcast.benchmark.SnapshotSerializationBenchmark.serializeAndStore",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 2,
+        "jvm" : "/home/doc/.sdkman/candidates/java/21.0.5-amzn/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.5",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.5+11-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "1 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 3,
+        "measurementTime" : "1 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "entryCount" : "16",
+            "serializerName" : "fury-lz4"
+        },
+        "primaryMetric" : {
+            "score" : 18.99391351682024,
+            "scoreError" : 0.47350132016268137,
+            "scoreConfidence" : [
+                18.520412196657556,
+                19.467414836982922
+            ],
+            "scorePercentiles" : {
+                "0.0" : 18.801279123977817,
+                "50.0" : 18.967566447899095,
+                "90.0" : 19.268650862152008,
+                "95.0" : 19.268650862152008,
+                "99.0" : 19.268650862152008,
+                "99.9" : 19.268650862152008,
+                "99.99" : 19.268650862152008,
+                "99.999" : 19.268650862152008,
+                "99.9999" : 19.268650862152008,
+                "100.0" : 19.268650862152008
+            },
+            "scoreUnit" : "us/op",
+            "rawData" : [
+                [
+                    18.922637163453352,
+                    19.012495732344835,
+                    19.089012578016145
+                ],
+                [
+                    19.268650862152008,
+                    18.801279123977817,
+                    18.869405640977266
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "org.factcast.benchmark.SnapshotSerializationBenchmark.serializeAndStore",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 2,
+        "jvm" : "/home/doc/.sdkman/candidates/java/21.0.5-amzn/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.5",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.5+11-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "1 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 3,
+        "measurementTime" : "1 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "entryCount" : "16",
+            "serializerName" : "fury-snappy"
+        },
+        "primaryMetric" : {
+            "score" : 46.01773954292298,
+            "scoreError" : 1.1182067317790585,
+            "scoreConfidence" : [
+                44.89953281114392,
+                47.13594627470204
+            ],
+            "scorePercentiles" : {
+                "0.0" : 45.36605393023994,
+                "50.0" : 46.00609278161714,
+                "90.0" : 46.48013890050653,
+                "95.0" : 46.48013890050653,
+                "99.0" : 46.48013890050653,
+                "99.9" : 46.48013890050653,
+                "99.99" : 46.48013890050653,
+                "99.999" : 46.48013890050653,
+                "99.9999" : 46.48013890050653,
+                "100.0" : 46.48013890050653
+            },
+            "scoreUnit" : "us/op",
+            "rawData" : [
+                [
+                    46.362538518587186,
+                    45.885520344969954,
+                    45.36605393023994
+                ],
+                [
+                    45.9063080912387,
+                    46.105877471995576,
+                    46.48013890050653
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "org.factcast.benchmark.SnapshotSerializationBenchmark.serializeAndStore",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 2,
+        "jvm" : "/home/doc/.sdkman/candidates/java/21.0.5-amzn/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.5",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.5+11-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "1 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 3,
+        "measurementTime" : "1 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "entryCount" : "1024",
+            "serializerName" : "jackson"
+        },
+        "primaryMetric" : {
+            "score" : 123.86166716035287,
+            "scoreError" : 9.180229302165994,
+            "scoreConfidence" : [
+                114.68143785818687,
+                133.04189646251885
+            ],
+            "scorePercentiles" : {
+                "0.0" : 119.78954586826347,
+                "50.0" : 124.88306395761947,
+                "90.0" : 127.03823002667345,
+                "95.0" : 127.03823002667345,
+                "99.0" : 127.03823002667345,
+                "99.9" : 127.03823002667345,
+                "99.99" : 127.03823002667345,
+                "99.999" : 127.03823002667345,
+                "99.9999" : 127.03823002667345,
+                "100.0" : 127.03823002667345
+            },
+            "scoreUnit" : "us/op",
+            "rawData" : [
+                [
+                    126.05495463137996,
+                    126.56093116538024,
+                    127.03823002667345
+                ],
+                [
+                    123.711173283859,
+                    119.78954586826347,
+                    120.01516798656108
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "org.factcast.benchmark.SnapshotSerializationBenchmark.serializeAndStore",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 2,
+        "jvm" : "/home/doc/.sdkman/candidates/java/21.0.5-amzn/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.5",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.5+11-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "1 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 3,
+        "measurementTime" : "1 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "entryCount" : "1024",
+            "serializerName" : "binary"
+        },
+        "primaryMetric" : {
+            "score" : 184.63117453690083,
+            "scoreError" : 4.930962657053519,
+            "scoreConfidence" : [
+                179.7002118798473,
+                189.56213719395436
+            ],
+            "scorePercentiles" : {
+                "0.0" : 182.4861395730706,
+                "50.0" : 184.22563860955597,
+                "90.0" : 187.05606078174677,
+                "95.0" : 187.05606078174677,
+                "99.0" : 187.05606078174677,
+                "99.9" : 187.05606078174677,
+                "99.99" : 187.05606078174677,
+                "99.999" : 187.05606078174677,
+                "99.9999" : 187.05606078174677,
+                "100.0" : 187.05606078174677
+            },
+            "scoreUnit" : "us/op",
+            "rawData" : [
+                [
+                    187.05606078174677,
+                    186.35674753120924,
+                    183.43682211626628
+                ],
+                [
+                    184.5764319985237,
+                    183.87484522058824,
+                    182.4861395730706
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "org.factcast.benchmark.SnapshotSerializationBenchmark.serializeAndStore",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 2,
+        "jvm" : "/home/doc/.sdkman/candidates/java/21.0.5-amzn/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.5",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.5+11-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "1 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 3,
+        "measurementTime" : "1 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "entryCount" : "1024",
+            "serializerName" : "binary-lz4"
+        },
+        "primaryMetric" : {
+            "score" : 221.75018879595657,
+            "scoreError" : 2.870300160117916,
+            "scoreConfidence" : [
+                218.87988863583865,
+                224.6204889560745
+            ],
+            "scorePercentiles" : {
+                "0.0" : 219.9038846153846,
+                "50.0" : 221.88230173419961,
+                "90.0" : 222.87379612299466,
+                "95.0" : 222.87379612299466,
+                "99.0" : 222.87379612299466,
+                "99.9" : 222.87379612299466,
+                "99.99" : 222.87379612299466,
+                "99.999" : 222.87379612299466,
+                "99.9999" : 222.87379612299466,
+                "100.0" : 222.87379612299466
+            },
+            "scoreUnit" : "us/op",
+            "rawData" : [
+                [
+                    222.87379612299466,
+                    222.4200716032911,
+                    222.0217076581576
+                ],
+                [
+                    221.53877696567,
+                    221.74289581024163,
+                    219.9038846153846
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "org.factcast.benchmark.SnapshotSerializationBenchmark.serializeAndStore",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 2,
+        "jvm" : "/home/doc/.sdkman/candidates/java/21.0.5-amzn/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.5",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.5+11-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "1 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 3,
+        "measurementTime" : "1 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "entryCount" : "1024",
+            "serializerName" : "fury"
+        },
+        "primaryMetric" : {
+            "score" : 29.39869960119927,
+            "scoreError" : 0.856265204241032,
+            "scoreConfidence" : [
+                28.542434396958235,
+                30.254964805440302
+            ],
+            "scorePercentiles" : {
+                "0.0" : 29.146142902925067,
+                "50.0" : 29.295252146640678,
+                "90.0" : 29.91059242202219,
+                "95.0" : 29.91059242202219,
+                "99.0" : 29.91059242202219,
+                "99.9" : 29.91059242202219,
+                "99.99" : 29.91059242202219,
+                "99.999" : 29.91059242202219,
+                "99.9999" : 29.91059242202219,
+                "100.0" : 29.91059242202219
+            },
+            "scoreUnit" : "us/op",
+            "rawData" : [
+                [
+                    29.58601224236331,
+                    29.146142902925067,
+                    29.158945746603695
+                ],
+                [
+                    29.180337680525163,
+                    29.410166612756196,
+                    29.91059242202219
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "org.factcast.benchmark.SnapshotSerializationBenchmark.serializeAndStore",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 2,
+        "jvm" : "/home/doc/.sdkman/candidates/java/21.0.5-amzn/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.5",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.5+11-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "1 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 3,
+        "measurementTime" : "1 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "entryCount" : "1024",
+            "serializerName" : "fury-lz4"
+        },
+        "primaryMetric" : {
+            "score" : 58.0516029170523,
+            "scoreError" : 2.0129485337953823,
+            "scoreConfidence" : [
+                56.03865438325692,
+                60.06455145084768
+            ],
+            "scorePercentiles" : {
+                "0.0" : 57.16911677622178,
+                "50.0" : 58.203461367594315,
+                "90.0" : 58.74806995594714,
+                "95.0" : 58.74806995594714,
+                "99.0" : 58.74806995594714,
+                "99.9" : 58.74806995594714,
+                "99.99" : 58.74806995594714,
+                "99.999" : 58.74806995594714,
+                "99.9999" : 58.74806995594714,
+                "100.0" : 58.74806995594714
+            },
+            "scoreUnit" : "us/op",
+            "rawData" : [
+                [
+                    57.32648873990029,
+                    57.16911677622178,
+                    57.77233882053948
+                ],
+                [
+                    58.634583914649156,
+                    58.74806995594714,
+                    58.659019295056005
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "org.factcast.benchmark.SnapshotSerializationBenchmark.serializeAndStore",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 2,
+        "jvm" : "/home/doc/.sdkman/candidates/java/21.0.5-amzn/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "21.0.5",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "21.0.5+11-LTS",
+        "warmupIterations" : 2,
+        "warmupTime" : "1 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 3,
+        "measurementTime" : "1 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "entryCount" : "1024",
+            "serializerName" : "fury-snappy"
+        },
+        "primaryMetric" : {
+            "score" : 2930.56916601567,
+            "scoreError" : 107.0258575811572,
+            "scoreConfidence" : [
+                2823.5433084345127,
+                3037.595023596827
+            ],
+            "scorePercentiles" : {
+                "0.0" : 2897.325401734104,
+                "50.0" : 2913.7697020348837,
+                "90.0" : 3000.3820389221555,
+                "95.0" : 3000.3820389221555,
+                "99.0" : 3000.3820389221555,
+                "99.9" : 3000.3820389221555,
+                "99.99" : 3000.3820389221555,
+                "99.999" : 3000.3820389221555,
+                "99.9999" : 3000.3820389221555,
+                "100.0" : 3000.3820389221555
+            },
+            "scoreUnit" : "us/op",
+            "rawData" : [
+                [
+                    3000.3820389221555,
+                    2914.672691860465,
+                    2912.8667122093025
+                ],
+                [
+                    2948.2402676470588,
+                    2909.9278837209304,
+                    2897.325401734104
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    }
+]
+
+

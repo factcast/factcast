@@ -1,0 +1,13 @@
+entries,serializer,bytes
+16,jackson,873
+16,binary,674
+16,binary-lz4,279
+16,fury,438
+16,fury-lz4,270
+16,fury-snappy,237
+1024,jackson,58209
+1024,binary,45622
+1024,binary-lz4,11620
+1024,fury,26539
+1024,fury-lz4,8414
+1024,fury-snappy,7139
