@@ -26,9 +26,11 @@ import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import lombok.SneakyThrows;
 import org.assertj.core.util.Lists;
 import org.factcast.core.Fact;
@@ -47,6 +49,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -80,23 +83,24 @@ class ClientStreamObserverTest {
   }
 
   @Test
-  void shutsdownOnSubscriptionClose() {
+  void ignoresNotificationsAfterSubscriptionClose() {
     subscription.close();
-    assertThat(uut.clientBoundExecutor().isShutdown()).isTrue();
+    uut.onNext(converter.createCatchupNotification());
+    verify(factObserver, never()).onCatchup();
   }
 
   @Test
-  void shutsdownOnErrorRecieved() {
-    assertThat(uut.clientBoundExecutor().isShutdown()).isFalse();
+  void ignoresNotificationsAfterError() {
     uut.onError(new IOException());
-    assertThat(uut.clientBoundExecutor().isShutdown()).isTrue();
+    uut.onNext(converter.createCatchupNotification());
+    verify(factObserver, never()).onCatchup();
   }
 
   @Test
-  void shutsdownOnCompleteRecieved() {
-    assertThat(uut.clientBoundExecutor().isShutdown()).isFalse();
+  void ignoresNotificationsAfterCompletion() {
     uut.onCompleted();
-    assertThat(uut.clientBoundExecutor().isShutdown()).isTrue();
+    uut.onNext(converter.createCatchupNotification());
+    verify(factObserver, never()).onCatchup();
   }
 
   @Test
@@ -106,6 +110,7 @@ class ClientStreamObserverTest {
     Fact f = Fact.of("{\"ns\":\"ns\",\"id\":\"" + UUID.randomUUID() + "\"}", "{}");
     MSG_Notification n = converter.createNotificationFor(f);
     assertThatThrownBy(() -> uut.onNext(n)).isInstanceOf(UnsupportedOperationException.class);
+    verify(factObserver).onError(any(UnsupportedOperationException.class));
   }
 
   @Test
@@ -114,6 +119,46 @@ class ClientStreamObserverTest {
     MSG_Notification n = converter.createNotificationFor(f);
     uut.onNext(n);
     verify(factObserver).onNext(f);
+  }
+
+  @Test
+  void deliversOnTheReceivingThread() {
+    AtomicReference<Thread> callbackThread = new AtomicReference<>();
+    doAnswer(
+            invocation -> {
+              callbackThread.set(Thread.currentThread());
+              return null;
+            })
+        .when(factObserver)
+        .onNext(any());
+    Fact fact = Fact.of("{\"ns\":\"ns\",\"id\":\"" + UUID.randomUUID() + "\"}", "{}");
+
+    uut.onNext(converter.createNotificationFor(fact));
+
+    assertThat(callbackThread.get()).isSameAs(Thread.currentThread());
+  }
+
+  @Test
+  void waitsForSlowObserverBeforeReturning() throws InterruptedException {
+    CountDownLatch entered = new CountDownLatch(1);
+    CountDownLatch release = new CountDownLatch(1);
+    doAnswer(
+            invocation -> {
+              entered.countDown();
+              release.await();
+              return null;
+            })
+        .when(factObserver)
+        .onNext(any());
+    Fact fact = Fact.of("{\"ns\":\"ns\",\"id\":\"" + UUID.randomUUID() + "\"}", "{}");
+    Thread receivingThread = new Thread(() -> uut.onNext(converter.createNotificationFor(fact)));
+
+    receivingThread.start();
+    assertThat(entered.await(1, TimeUnit.SECONDS)).isTrue();
+    assertThat(receivingThread.isAlive()).isTrue();
+    release.countDown();
+    receivingThread.join(1000);
+    assertThat(receivingThread.isAlive()).isFalse();
   }
 
   @Test
@@ -144,6 +189,92 @@ class ClientStreamObserverTest {
     uut.onNext(n);
     verify(factObserver, times(2)).onNext(any(Fact.class));
     verify(factObserver).flush();
+  }
+
+  @Test
+  void stopsBatchDeliveryWhenSubscriptionCloses() {
+    Fact first = Fact.of("{\"ns\":\"ns\",\"id\":\"" + UUID.randomUUID() + "\"}", "{}");
+    Fact second = Fact.of("{\"ns\":\"ns\",\"id\":\"" + UUID.randomUUID() + "\"}", "{}");
+    doAnswer(
+            invocation -> {
+              subscription.close();
+              return null;
+            })
+        .when(factObserver)
+        .onNext(any());
+
+    uut.onNext(converter.createNotificationFor(List.of(first, second)));
+
+    verify(factObserver, times(1)).onNext(any());
+    verify(factObserver, never()).flush();
+  }
+
+  @Test
+  void terminalErrorWaitsForCurrentBatch() throws InterruptedException {
+    CountDownLatch entered = new CountDownLatch(1);
+    CountDownLatch release = new CountDownLatch(1);
+    CountDownLatch errorStarted = new CountDownLatch(1);
+    doAnswer(
+            invocation -> {
+              entered.countDown();
+              release.await();
+              return null;
+            })
+        .when(factObserver)
+        .onNext(any());
+    Fact fact = Fact.of("{\"ns\":\"ns\",\"id\":\"" + UUID.randomUUID() + "\"}", "{}");
+    Thread delivery = new Thread(() -> uut.onNext(converter.createNotificationFor(fact)));
+    Thread error =
+        new Thread(
+            () -> {
+              errorStarted.countDown();
+              uut.onError(new IOException());
+            });
+
+    delivery.start();
+    assertThat(entered.await(1, TimeUnit.SECONDS)).isTrue();
+    error.start();
+    assertThat(errorStarted.await(1, TimeUnit.SECONDS)).isTrue();
+    verify(factObserver, never()).onError(any());
+    release.countDown();
+    delivery.join(1000);
+    error.join(1000);
+    assertThat(delivery.isAlive()).isFalse();
+    assertThat(error.isAlive()).isFalse();
+    InOrder order = inOrder(factObserver);
+    order.verify(factObserver).onNext(any());
+    order.verify(factObserver).flush();
+    order.verify(factObserver).onError(any());
+  }
+
+  @Test
+  void slowObserverDoesNotCauseKeepaliveExpiry() throws InterruptedException {
+    CountDownLatch entered = new CountDownLatch(1);
+    CountDownLatch release = new CountDownLatch(1);
+    doAnswer(
+            invocation -> {
+              entered.countDown();
+              release.await();
+              return null;
+            })
+        .when(factObserver)
+        .onNext(any());
+    Fact fact = Fact.of("{\"ns\":\"ns\",\"id\":\"" + UUID.randomUUID() + "\"}", "{}");
+    MSG_Notification notification = converter.createNotificationFor(fact);
+    uut = new ClientStreamObserver(subscription, 100L);
+    Thread delivery = new Thread(() -> uut.onNext(notification));
+
+    delivery.start();
+    try {
+      assertThat(entered.await(3, TimeUnit.SECONDS)).isTrue();
+      verify(subscription, after(550).never()).notifyError(any());
+    } finally {
+      release.countDown();
+      delivery.join(3000);
+      subscription.close();
+    }
+    assertThat(delivery.isAlive()).isFalse();
+    verify(subscription, never()).notifyError(any());
   }
 
   @Test
@@ -184,6 +315,16 @@ class ClientStreamObserverTest {
   void testOnError() {
     uut.onError(new IOException());
     verify(factObserver).onError(any());
+  }
+
+  @Test
+  void onlyDeliversTheFirstTerminalSignal() {
+    uut.onError(new IOException());
+    uut.onCompleted();
+    uut.onError(new IOException());
+
+    verify(factObserver, times(1)).onError(any());
+    verify(factObserver, never()).onComplete();
   }
 
   @Test

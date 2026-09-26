@@ -20,12 +20,8 @@ import io.grpc.stub.StreamObserver;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-import lombok.AccessLevel;
-import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
@@ -34,7 +30,6 @@ import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.InternalSubscription;
 import org.factcast.core.subscription.StaleSubscriptionDetectedException;
 import org.factcast.core.subscription.Subscription;
-import org.factcast.core.util.ExceptionHelper;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.gen.FactStoreProto;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
@@ -52,15 +47,12 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
 
   private final ProtoConverter converter = new ProtoConverter();
   private final AtomicLong lastNotification = new AtomicLong(0);
-
-  @Getter(AccessLevel.PROTECTED)
-  private final ExecutorService clientBoundExecutor = Executors.newSingleThreadExecutor();
+  private final AtomicBoolean terminal = new AtomicBoolean();
+  private final Object deliveryLock = new Object();
 
   @NonNull private final InternalSubscription subscription;
 
-  @VisibleForTesting
-  @Getter(AccessLevel.PACKAGE)
-  private final ClientKeepalive keepAlive;
+  @VisibleForTesting private final ClientKeepalive keepAlive;
 
   public ClientStreamObserver(@NonNull InternalSubscription subscription, long keepAliveInterval) {
     this.subscription = subscription;
@@ -71,36 +63,29 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
       keepAlive = null;
     }
 
-    subscription.onClose(this::tryShutdown);
+    subscription.onClose(() -> terminal.set(true));
     subscription.onClose(this::disableKeepalive);
-  }
-
-  @VisibleForTesting
-  void tryShutdown() {
-    try {
-      clientBoundExecutor.shutdown();
-    } catch (Exception e) {
-      log.error("While shutting down executor:", e);
-    }
   }
 
   @Override
   public void onNext(MSG_Notification f) {
     lastNotification.set(System.currentTimeMillis());
-
-    try {
-      if (clientBoundExecutor.isShutdown()) {
-        throw new IllegalStateException(
-            "Executor for this observer already shut down. THIS IS A BUG!");
+    synchronized (deliveryLock) {
+      if (terminal.get()) {
+        return;
       }
-
-      clientBoundExecutor.submit(() -> process(f)).get();
-    } catch (ExecutionException e) {
-      tryShutdown();
-      throw ExceptionHelper.toRuntime(e.getCause());
-    } catch (InterruptedException e) {
-      tryShutdown();
-      Thread.currentThread().interrupt();
+      try {
+        process(f);
+      } catch (RuntimeException e) {
+        try {
+          onError(e);
+        } catch (RuntimeException errorCallbackFailure) {
+          e.addSuppressed(errorCallbackFailure);
+        }
+        throw e;
+      } finally {
+        lastNotification.set(System.currentTimeMillis());
+      }
     }
   }
 
@@ -127,7 +112,9 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
       case Fact:
         log.trace("received single fact");
         subscription.notifyElement(converter.fromProto(f.getFact()));
-        subscription.flush();
+        if (!terminal.get()) {
+          subscription.flush();
+        }
         break;
       case Facts:
         List<Fact> facts = converter.fromProto(f.getFacts());
@@ -135,8 +122,15 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
             "received {} facts translating to {} decompressed bytes",
             facts.size(),
             f.getSerializedSize());
-        facts.forEach(subscription::notifyElement);
-        subscription.flush();
+        for (Fact fact : facts) {
+          if (terminal.get()) {
+            break;
+          }
+          subscription.notifyElement(fact);
+        }
+        if (!terminal.get()) {
+          subscription.flush();
+        }
         break;
       case Ffwd:
         log.debug("received fastforward signal");
@@ -166,22 +160,21 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
 
   @Override
   public void onError(Throwable t) {
-    disableKeepalive();
-    RuntimeException translated = ClientExceptionHelper.from(t);
-    try {
-      subscription.notifyError(translated);
-    } finally {
-      tryShutdown();
+    synchronized (deliveryLock) {
+      if (terminal.compareAndSet(false, true)) {
+        disableKeepalive();
+        subscription.notifyError(ClientExceptionHelper.from(t));
+      }
     }
   }
 
   @Override
   public void onCompleted() {
-    disableKeepalive();
-    try {
-      subscription.notifyComplete();
-    } finally {
-      tryShutdown();
+    synchronized (deliveryLock) {
+      if (terminal.compareAndSet(false, true)) {
+        disableKeepalive();
+        subscription.notifyComplete();
+      }
     }
   }
 
@@ -189,6 +182,7 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
     private final Timer t = new Timer("client-keepalive-" + System.currentTimeMillis(), true);
     private final long interval;
     private final long gracePeriod;
+    private boolean active = true;
 
     ClientKeepalive(long interval) {
       this.interval = interval;
@@ -198,24 +192,29 @@ class ClientStreamObserver implements StreamObserver<FactStoreProto.MSG_Notifica
       reschedule();
     }
 
-    void reschedule() {
+    synchronized void reschedule() {
+      if (!active) {
+        return;
+      }
       t.schedule(
           new TimerTask() {
             @Override
             public void run() {
-              long last = lastNotification.get();
-
-              if (System.currentTimeMillis() - last > gracePeriod) {
-                onError(new StaleSubscriptionDetectedException(last, gracePeriod));
-              } else {
-                reschedule();
+              synchronized (deliveryLock) {
+                long last = lastNotification.get();
+                if (System.currentTimeMillis() - last > gracePeriod) {
+                  onError(new StaleSubscriptionDetectedException(last, gracePeriod));
+                } else {
+                  reschedule();
+                }
               }
             }
           },
           interval);
     }
 
-    void shutdown() {
+    synchronized void shutdown() {
+      active = false;
       t.cancel(); // the timer and related threads altogether
     }
   }
