@@ -13,6 +13,10 @@ schema-registry-url' is provided, validation is skipped and FactCast behaves jus
 Given, there is a SchemaRegistry configured, FactCast will (on startup, and regularly) fetch an index and crawl updated
 information.
 
+The CLI and Maven plugin also build `registry.zip` beside `index.json` in `static/registry`. With
+`factcast.store.schema-registry-zip-enabled=true`, an HTTP(S) registry downloads this ZIP on startup
+and reads its schemas and transformations locally. Scheduled refreshes still use the individual files.
+
 For that to work, the schema-registry must follow a certain structure and naming convention. To make validating and
 building this static website easier and convenient, there is a
 tool [factcast-schema-cli](/usage/lowlevel/cli/fc-schema-cli) you can use. It turns raw data files (Json-Schema,
