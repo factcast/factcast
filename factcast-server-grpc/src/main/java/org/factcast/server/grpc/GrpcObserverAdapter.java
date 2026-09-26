@@ -32,6 +32,7 @@ import org.factcast.core.FactStreamPosition;
 import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.grpc.api.conv.ProtoConverter;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Fact;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
 import org.factcast.server.grpc.metrics.NOPServerMetrics;
 import org.factcast.server.grpc.metrics.ServerMetrics;
@@ -192,7 +193,7 @@ class GrpcObserverAdapter implements FactObserver {
       int bytes = stagedFacts.currentBytes();
       int facts = stagedFacts.size();
 
-      notificationStreamObserver.onNext(converter.createNotificationFor(stagedFacts.popAll()));
+      notificationStreamObserver.onNext(stagedFacts.popAll());
 
       // should be emitted AFTER sending
       serverMetrics.count(BYTES_SENT, metricTags, bytes);
@@ -201,10 +202,11 @@ class GrpcObserverAdapter implements FactObserver {
   }
 
   public void onNext(@NonNull Fact f) {
-    if (!stagedFacts.add(f)) {
+    MSG_Fact encoded = converter.toProto(f);
+    if (!stagedFacts.add(encoded)) {
       flush();
       // add it to the next batch
-      stagedFacts.add(f);
+      stagedFacts.add(encoded);
     }
   }
 

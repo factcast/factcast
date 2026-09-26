@@ -17,11 +17,11 @@ package org.factcast.store.internal.pipeline;
 
 import static org.mockito.Mockito.*;
 
+import java.util.UUID;
 import lombok.NonNull;
 import org.assertj.core.api.Assertions;
 import org.factcast.store.internal.PgFact;
 import org.factcast.store.internal.filter.blacklist.Blacklist;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -43,23 +43,24 @@ class BlacklistFilterServerPipelineTest {
     @Mock(answer = Answers.RETURNS_DEEP_STUBS)
     private PgFact fact;
 
-    @BeforeEach
-    void setup() {}
-
     @Test
     void filters() {
+      when(fact.id()).thenReturn(UUID.randomUUID());
       when(blacklist.isBlocked(any())).thenReturn(true);
       underTest.process(Signal.of(fact));
       verifyNoInteractions(parent);
+      verify(fact, never()).header();
     }
 
     @Test
     void delegates() {
+      when(fact.id()).thenReturn(UUID.randomUUID());
       when(blacklist.isBlocked(any())).thenReturn(false);
       underTest.process(Signal.of(fact));
       ArgumentCaptor<Signal.FactSignal> cap = ArgumentCaptor.forClass(Signal.FactSignal.class);
       verify(parent).process(cap.capture());
       Assertions.assertThat(cap.getValue().fact()).isNotNull().isSameAs(fact);
+      verify(fact, never()).header();
     }
 
     @Test

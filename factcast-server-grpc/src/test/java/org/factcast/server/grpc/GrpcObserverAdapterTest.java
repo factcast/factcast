@@ -27,8 +27,8 @@ import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 import io.micrometer.core.instrument.Tags;
-import java.nio.charset.StandardCharsets;
 import java.sql.SQLFeatureNotSupportedException;
+import java.util.List;
 import lombok.NonNull;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
@@ -286,7 +286,7 @@ class GrpcObserverAdapterTest {
     when(meta.clientMaxInboundMessageSize()).thenReturn(1024);
     when(meta.clientIdAsString()).thenReturn("testClient");
     GrpcObserverAdapter uut =
-        new GrpcObserverAdapter("foo", observer, meta, serverExceptionLogger, metrics, 1L);
+        new GrpcObserverAdapter("foo", observer, meta, serverExceptionLogger, metrics, 0L);
     Fact f1 = new TestFact();
     Fact f2 = new TestFact();
     uut.onNext(f1);
@@ -294,18 +294,97 @@ class GrpcObserverAdapterTest {
 
     uut.flush();
 
-    var expectedBytes =
-        f1.jsonHeader().getBytes(StandardCharsets.UTF_8).length
-            + f1.jsonPayload().getBytes(StandardCharsets.UTF_8).length
-            + f2.jsonHeader().getBytes(StandardCharsets.UTF_8).length
-            + f2.jsonPayload().getBytes(StandardCharsets.UTF_8).length
-            + 16; // protobuf overhead
+    ArgumentCaptor<MSG_Notification> notification = ArgumentCaptor.forClass(MSG_Notification.class);
+    verify(observer).onNext(notification.capture());
     verify(metrics)
         .count(
             BYTES_SENT,
             Tags.of(ServerMetrics.MetricsTag.CLIENT_ID_KEY, "testClient"),
-            expectedBytes);
+            notification.getValue().getSerializedSize());
     verify(metrics)
         .count(FACTS_SENT, Tags.of(ServerMetrics.MetricsTag.CLIENT_ID_KEY, "testClient"), 2);
+  }
+
+  @Test
+  void splitsAtTheBatchTargetWithoutLosingOrDuplicatingFacts() {
+    ProtoConverter converter = new ProtoConverter();
+    Fact first = Fact.builder().ns("test").build("{\"value\":\"ä\"}");
+    Fact second = Fact.builder().ns("test").build("{\"value\":\"ö\"}");
+    Fact third = Fact.builder().ns("test").build("{\"value\":\"ü\"}");
+    int twoFacts = converter.createNotificationFor(List.of(first, second)).getSerializedSize();
+    int inbound = twoFacts;
+    while (inbound - inbound / 10 < twoFacts) {
+      inbound++;
+    }
+    int limit = inbound;
+    GrpcRequestMetadata meta = mock(GrpcRequestMetadata.class);
+    when(meta.clientMaxInboundMessageSize()).thenReturn(limit);
+    when(meta.clientIdAsString()).thenReturn("testClient");
+    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, meta);
+
+    uut.onNext(first);
+    uut.onNext(second);
+    uut.onNext(third);
+    uut.flush();
+
+    ArgumentCaptor<MSG_Notification> notifications =
+        ArgumentCaptor.forClass(MSG_Notification.class);
+    verify(observer, times(2)).onNext(notifications.capture());
+    assertThat(notifications.getAllValues())
+        .extracting(notification -> notification.getFacts().getFactCount())
+        .containsExactly(2, 1);
+    assertThat(
+            notifications.getAllValues().stream()
+                .flatMap(notification -> converter.fromProto(notification.getFacts()).stream())
+                .map(Fact::id)
+                .toList())
+        .containsExactly(first.id(), second.id(), third.id());
+    assertThat(notifications.getAllValues())
+        .allSatisfy(
+            notification ->
+                assertThat(notification.getSerializedSize()).isLessThanOrEqualTo(limit));
+  }
+
+  @Test
+  void sendsAnOversizedBatchFactAloneWithinTheInboundLimit() {
+    Fact small = Fact.builder().ns("test").build("{}");
+    Fact large = Fact.builder().ns("test").build("{\"value\":\"" + "x".repeat(500) + "\"}");
+    ProtoConverter converter = new ProtoConverter();
+    int inbound = converter.createNotificationFor(List.of(large)).getSerializedSize();
+    GrpcRequestMetadata meta = mock(GrpcRequestMetadata.class);
+    when(meta.clientMaxInboundMessageSize()).thenReturn(inbound);
+    when(meta.clientIdAsString()).thenReturn("testClient");
+    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, meta);
+
+    uut.onNext(small);
+    uut.onNext(large);
+    uut.flush();
+
+    ArgumentCaptor<MSG_Notification> notifications =
+        ArgumentCaptor.forClass(MSG_Notification.class);
+    verify(observer, times(2)).onNext(notifications.capture());
+    assertThat(notifications.getAllValues())
+        .extracting(notification -> notification.getFacts().getFactCount())
+        .containsExactly(1, 1);
+    assertThat(notifications.getAllValues().get(1).getSerializedSize()).isEqualTo(inbound);
+  }
+
+  @Test
+  void rejectsAFactThatCannotFitTheClientInboundLimit() {
+    Fact large = Fact.builder().ns("test").build("{\"value\":\"" + "x".repeat(500) + "\"}");
+    int inbound =
+        new ProtoConverter().createNotificationFor(List.of(large)).getSerializedSize() - 1;
+    GrpcRequestMetadata meta = mock(GrpcRequestMetadata.class);
+    when(meta.clientMaxInboundMessageSize()).thenReturn(inbound);
+    when(meta.clientIdAsString()).thenReturn("testClient");
+    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, meta);
+
+    assertThatThrownBy(() -> uut.onNext(large))
+        .isInstanceOf(StatusRuntimeException.class)
+        .satisfies(
+            error ->
+                assertThat(((StatusRuntimeException) error).getStatus().getCode())
+                    .isEqualTo(Status.Code.RESOURCE_EXHAUSTED));
+    verifyNoInteractions(observer);
   }
 }

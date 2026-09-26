@@ -15,46 +15,66 @@
  */
 package org.factcast.server.grpc;
 
-import com.google.common.annotations.VisibleForTesting;
-import java.nio.charset.StandardCharsets;
+import com.google.protobuf.CodedOutputStream;
+import io.grpc.Status;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
 import lombok.NonNull;
-import org.factcast.core.Fact;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Fact;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
 
 public class StagedFacts {
 
-  private final int maxBytes;
-  @Getter private int currentBytes;
-  private final List<Fact> staged = new ArrayList<>(128);
+  private static final int NOTIFICATION_TYPE_BYTES =
+      CodedOutputStream.computeEnumSize(
+          MSG_Notification.TYPE_FIELD_NUMBER, MSG_Notification.Type.Facts.getNumber());
+  private static final int FACTS_TAG_BYTES =
+      CodedOutputStream.computeTagSize(MSG_Notification.FACTS_FIELD_NUMBER);
 
-  /**
-   * Note that the buffer will only utilize 90% of the maxBytes size. The reason is that byteSizeOf
-   * might become inadequate at some point, if protobuf encoding changes.
-   *
-   * @param maxBytes maximum number of bytes the buffer should hold
-   */
-  StagedFacts(int maxBytes) {
-    this.maxBytes = maxBytes - (int) (maxBytes * .1);
+  private final int maxInboundBytes;
+  private final int targetBatchBytes;
+  @Getter private int currentBytes;
+  private int factsBytes;
+  private final List<MSG_Fact> staged = new ArrayList<>(128);
+
+  /** The normal batch target is 90% of the client-advertised inbound limit. */
+  StagedFacts(int maxInboundBytes) {
+    this.maxInboundBytes = maxInboundBytes;
+    targetBatchBytes = maxInboundBytes - maxInboundBytes / 10;
   }
 
-  public boolean add(@NonNull Fact fact) {
-    int bytes = byteSizeOf(fact);
-    if (currentBytes + bytes >= maxBytes) {
+  public boolean add(@NonNull MSG_Fact fact) {
+    int factBytes = CodedOutputStream.computeMessageSize(MSG_Facts.FACT_FIELD_NUMBER, fact);
+    long singleNotificationBytes = notificationBytes(factBytes);
+    if (singleNotificationBytes > maxInboundBytes) {
+      throw Status.RESOURCE_EXHAUSTED
+          .withDescription(
+              "Fact notification requires "
+                  + singleNotificationBytes
+                  + " bytes, exceeding client inbound limit of "
+                  + maxInboundBytes
+                  + " bytes")
+          .asRuntimeException();
+    }
+
+    long nextNotificationBytes = notificationBytes((long) factsBytes + factBytes);
+    if (!staged.isEmpty() && nextNotificationBytes > targetBatchBytes) {
       return false;
     } else {
       staged.add(fact);
-      currentBytes += bytes;
+      factsBytes += factBytes;
+      currentBytes = (int) nextNotificationBytes;
       return true;
     }
   }
 
-  @VisibleForTesting
-  int byteSizeOf(@NonNull Fact fact) {
-    return fact.jsonPayload().getBytes(StandardCharsets.UTF_8).length
-        + fact.jsonHeader().getBytes(StandardCharsets.UTF_8).length
-        + 8; // to compensate for overhead of protobuf
+  private static long notificationBytes(long factsBytes) {
+    return NOTIFICATION_TYPE_BYTES
+        + FACTS_TAG_BYTES
+        + CodedOutputStream.computeUInt64SizeNoTag(factsBytes)
+        + factsBytes;
   }
 
   public boolean isEmpty() {
@@ -66,12 +86,15 @@ public class StagedFacts {
     return staged.size();
   }
 
-  public List<Fact> popAll() {
-    try {
-      return List.copyOf(staged);
-    } finally {
-      staged.clear();
-      currentBytes = 0;
-    }
+  public MSG_Notification popAll() {
+    MSG_Notification notification =
+        MSG_Notification.newBuilder()
+            .setType(MSG_Notification.Type.Facts)
+            .setFacts(MSG_Facts.newBuilder().addAllFact(staged))
+            .build();
+    staged.clear();
+    factsBytes = 0;
+    currentBytes = 0;
+    return notification;
   }
 }

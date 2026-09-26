@@ -15,111 +15,90 @@
  */
 package org.factcast.server.grpc;
 
-import java.util.UUID;
-import org.assertj.core.api.Assertions;
-import org.factcast.core.Fact;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
+import static org.assertj.core.api.Assertions.*;
+
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Fact;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Facts;
+import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
-@ExtendWith(MockitoExtension.class)
 class StagedFactsTest {
-  private StagedFacts underTest = new StagedFacts(150);
 
-  @Nested
-  class WhenAdding {
-    @Mock private Fact fact;
-
-    @BeforeEach
-    void setup() {}
-
-    @Test
-    void adheresToMaxByteLimit() {
-      Fact f =
-          Fact.of(
-              "{\"ns\":\"foo\",\"id\":\"" + UUID.randomUUID() + "\",\"c\":100}",
-              "{\"value\":\"1234567890\"}");
-      Assertions.assertThat(underTest.add(f)).isTrue();
-      Assertions.assertThat(underTest.size()).isOne();
-
-      // should not be added, as the limit would be exceeded:
-      Assertions.assertThat(underTest.add(f)).isFalse();
-      Assertions.assertThat(underTest.size()).isOne();
-    }
+  private static MSG_Fact fact(String payload) {
+    return MSG_Fact.newBuilder()
+        .setHeader("{\"ns\":\"äöü\",\"id\":\"00000000-0000-0000-0000-000000000001\"}")
+        .setPayload(payload)
+        .build();
   }
 
-  @Nested
-  class WhenCheckingIfIsEmpty {
-    @BeforeEach
-    void setup() {}
-
-    @Test
-    void delegates() {
-
-      Assertions.assertThat(underTest.isEmpty()).isTrue();
-
-      Fact f =
-          Fact.of(
-              "{\"ns\":\"foo\",\"id\":\"" + UUID.randomUUID() + "\",\"c\":100}",
-              "{\"value\":\"1234567890\"}");
-      underTest.add(f);
-      Assertions.assertThat(underTest.isEmpty()).isFalse();
-
-      underTest.popAll();
-
-      Assertions.assertThat(underTest.isEmpty()).isTrue();
-    }
+  private static int notificationSize(MSG_Fact... facts) {
+    return MSG_Notification.newBuilder()
+        .setType(MSG_Notification.Type.Facts)
+        .setFacts(MSG_Facts.newBuilder().addAllFact(java.util.List.of(facts)))
+        .build()
+        .getSerializedSize();
   }
 
-  @Nested
-  class WhenSizing {
-    @BeforeEach
-    void setup() {}
+  @Test
+  void countsTheExactSerializedNotificationIncludingMultibyteJson() {
+    StagedFacts staged = new StagedFacts(1024);
+    MSG_Fact first = fact("{\"value\":\"€😀\"}");
+    MSG_Fact second = fact("{\"value\":\"" + "ü".repeat(80) + "\"}");
 
-    @SuppressWarnings("JoinAssertThatStatements")
-    @Test
-    void delegates() {
-      underTest = new StagedFacts(225);
-      Fact f =
-          Fact.of(
-              "{\"ns\":\"foo\",\"id\":\"" + UUID.randomUUID() + "\",\"c\":100}",
-              "{\"value\":\"1234567890\"}");
-      Assertions.assertThat(underTest.add(f)).isTrue();
-      Assertions.assertThat(underTest.add(f)).isTrue();
-      Assertions.assertThat(underTest.add(f)).isFalse();
-
-      Assertions.assertThat(underTest.popAll()).hasSize(2);
-
-      Assertions.assertThat(underTest.size()).isZero();
-      // check that the capacity for two more facts is avail
-      Assertions.assertThat(underTest.add(f)).isTrue();
-      Assertions.assertThat(underTest.add(f)).isTrue();
-    }
+    assertThat(staged.add(first)).isTrue();
+    assertThat(staged.currentBytes()).isEqualTo(notificationSize(first));
+    assertThat(staged.add(second)).isTrue();
+    assertThat(staged.currentBytes()).isEqualTo(notificationSize(first, second));
+    assertThat(staged.popAll().getSerializedSize()).isEqualTo(notificationSize(first, second));
+    assertThat(staged.currentBytes()).isZero();
+    assertThat(staged.size()).isZero();
   }
 
-  @Nested
-  class WhenPopingAll {
-    @BeforeEach
-    void setup() {}
-
-    @Test
-    void clearsAndResetsByteCount() {
-
-      Assertions.assertThat(underTest.size()).isZero();
-
-      Fact f =
-          Fact.of(
-              "{\"ns\":\"foo\",\"id\":\"" + UUID.randomUUID() + "\",\"c\":100}",
-              "{\"value\":\"1234567890\"}");
-      underTest.add(f);
-      Assertions.assertThat(underTest.size()).isOne();
-
-      underTest.popAll();
-
-      Assertions.assertThat(underTest.size()).isZero();
+  @Test
+  void acceptsAnExactBatchBoundaryAndRejectsTheNextFactWithoutChangingIt() {
+    MSG_Fact fact = fact("{\"value\":\"boundary\"}");
+    int twoFacts = notificationSize(fact, fact);
+    int inbound = twoFacts;
+    while (inbound - inbound / 10 < twoFacts) {
+      inbound++;
     }
+    StagedFacts staged = new StagedFacts(inbound);
+
+    assertThat(staged.add(fact)).isTrue();
+    assertThat(staged.add(fact)).isTrue();
+    assertThat(staged.currentBytes()).isEqualTo(twoFacts);
+    assertThat(staged.add(fact)).isFalse();
+    assertThat(staged.currentBytes()).isEqualTo(twoFacts);
+    assertThat(staged.popAll().getFacts().getFactCount()).isEqualTo(2);
+    assertThat(staged.isEmpty()).isTrue();
+    assertThat(staged.add(fact)).isTrue();
+  }
+
+  @Test
+  void sendsOneFactAtTheExactInboundLimitEvenAboveTheBatchTarget() {
+    MSG_Fact large = fact("{\"value\":\"" + "x".repeat(500) + "\"}");
+    int inbound = notificationSize(large);
+    StagedFacts staged = new StagedFacts(inbound);
+
+    assertThat(staged.add(large)).isTrue();
+    assertThat(staged.currentBytes()).isEqualTo(inbound);
+    assertThat(staged.popAll().getSerializedSize()).isEqualTo(inbound);
+  }
+
+  @Test
+  void failsExplicitlyWhenOneFactExceedsTheInboundLimit() {
+    MSG_Fact large = fact("{\"value\":\"" + "x".repeat(500) + "\"}");
+    int inbound = notificationSize(large) - 1;
+    StagedFacts staged = new StagedFacts(inbound);
+
+    assertThatThrownBy(() -> staged.add(large))
+        .isInstanceOf(StatusRuntimeException.class)
+        .satisfies(
+            error ->
+                assertThat(((StatusRuntimeException) error).getStatus().getCode())
+                    .isEqualTo(Status.Code.RESOURCE_EXHAUSTED));
+    assertThat(staged.isEmpty()).isTrue();
   }
 }

@@ -17,7 +17,7 @@ package org.factcast.store.internal.pipeline;
 
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.core.Fact;
+import org.factcast.store.internal.PgFact;
 import org.factcast.store.internal.filter.blacklist.Blacklist;
 
 @Slf4j
@@ -33,8 +33,8 @@ public class BlacklistFilterServerPipeline extends AbstractServerPipeline {
   @Override
   public void process(@NonNull Signal s) {
     if (s instanceof Signal.FactSignal fs) {
-      Fact fact = fs.fact();
-      if (!blacklist.isBlocked(fact.header().id())) {
+      PgFact fact = fs.fact();
+      if (!blacklist.isBlocked(fact.id())) {
         parent.process(s);
       } else {
         log.trace("removing blacklisted fact from pipeline {}", fact);
