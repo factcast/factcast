@@ -4,8 +4,8 @@ weight = 70
 type = "docs"
 +++
 
-When implementing a Projection, you would add handler methods
-([methods annotated with either `@Handler` or `@HandlerFor`]({{< ref "handler-parameters.md" >}}))
+When implementing a Projection, you would add handler methods ([methods annotated with either `@Handler` or
+`@HandlerFor`]({{< ref "handler-parameters.md" >}}))
 in order to express, what the projection is interested in.
 
 Factus will look at these methods in order to discover [fact specifications]({{< ref "factspec.md#specification" >}}).
@@ -92,6 +92,11 @@ matches the current Aggregate's ID. This is the reason, this kind of filter is o
 Note that you could also define a dot-separated path like 'references.recommendedByUserId' if that matches your
 EventObject.
 The use of Array expressions is not allowed here.
+
+The path is matched against the Fact's JSON payload on the server. On the client, it is validated against the
+jackson-serialized properties of the handler's EventObject parameter when the Aggregate is first fetched, so that a
+typo fails early rather than silently matching nothing. Combined with `@HandlerFor` there is no EventObject to validate
+against, so an exception is thrown as an illegal combination.
 
 This filter is particularly useful, if you want to process events that reference your Aggregate, but only if your
 Aggregate has a particular role.

@@ -745,6 +745,36 @@ databaseChangeLog:
             stripComments: true
 
   - changeSet:
+      id: issue4872_create_ns_type_index
+      author: uweschaefer
+      runInTransaction: false
+      comment: Limit transformation cache invalidation scans to the affected namespace and type.
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue4872/create_ns_type_index.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+  - changeSet:
+      id: issue4872_invalidate_transformation_cache
+      author: uweschaefer
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue4872/invalidate_transformation_cache.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue4872/notify_transformationstore_change.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+  - changeSet:
       id: safe-horizon
       author: uweschaefer
       changes:

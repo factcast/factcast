@@ -21,14 +21,13 @@ import java.sql.Date;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicLong;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.*;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.*;
 import org.factcast.core.subscription.*;
-import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.subscription.observer.*;
 import org.factcast.core.util.ExceptionHelper;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.horizon.FactStreamHorizonProvider;
@@ -326,17 +325,12 @@ public class PgFactStore extends AbstractFactStore {
         StoreMetrics.OP.GET_STATE_FOR,
         () -> {
           PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs);
-          String stateSQL;
-          stateSQL =
-              horizonSerial.isPresent()
-                  ? pgQueryBuilder.createStateSQL(true)
-                  : pgQueryBuilder.createStateSQL(false);
+          int backwardScanWindow = props.getStateQueryBackwardScanWindow();
+
+          String stateSQL =
+              pgQueryBuilder.createStateSQL(backwardScanWindow, horizonSerial.isPresent());
           PreparedStatementSetter statementSetter =
-              horizonSerial.isPresent()
-                  ? pgQueryBuilder.createBoundedStatementSetter(
-                      new AtomicLong(lastMatchingSerial), horizonSerial.getAsLong())
-                  : pgQueryBuilder.createUnboundedStatementSetter(
-                      new AtomicLong(lastMatchingSerial));
+              pgQueryBuilder.createStateStatementSetter(lastMatchingSerial, horizonSerial);
 
           ResultSetExtractor<Long> rch =
               resultSet -> {

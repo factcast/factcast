@@ -31,17 +31,41 @@ public class TransformationStoreChangeNotification extends StoreNotification {
   @NonNull String ns;
   @NonNull String type;
   long txId;
+  Integer fromVersion;
+  Integer toVersion;
+
+  public TransformationStoreChangeNotification(
+      @NonNull String ns, @NonNull String type, long txId) {
+    this(ns, type, txId, null, null);
+  }
+
+  public TransformationStoreChangeNotification(
+      @NonNull String ns, @NonNull String type, long txId, Integer fromVersion, Integer toVersion) {
+    this.ns = ns;
+    this.type = type;
+    this.txId = txId;
+    this.fromVersion = fromVersion;
+    this.toVersion = toVersion;
+  }
 
   public static TransformationStoreChangeNotification from(PGNotification n) {
     return convert(
-        n, json -> new TransformationStoreChangeNotification(ns(json), type(json), txId(json)));
+        n,
+        json ->
+            new TransformationStoreChangeNotification(
+                ns(json),
+                type(json),
+                txId(json),
+                json.hasNonNull("fromVersion") ? json.get("fromVersion").asInt() : null,
+                json.hasNonNull("toVersion") ? json.get("toVersion").asInt() : null));
   }
 
   @Nullable
   @Override
   public String uniqueId() {
     // there might be multiple changes in on txId
-    return PgConstants.CHANNEL_TRANSFORMATIONSTORE_CHANGE + "-" + ns + "-" + type + "-" + txId;
+    String id = PgConstants.CHANNEL_TRANSFORMATIONSTORE_CHANGE + "-" + ns + "-" + type + "-" + txId;
+    return fromVersion == null || toVersion == null ? id : id + "-" + fromVersion + "-" + toVersion;
   }
 
   /**

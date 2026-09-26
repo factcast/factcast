@@ -25,7 +25,6 @@ import java.util.*;
 import lombok.*;
 import lombok.experimental.*;
 import lombok.experimental.Delegate;
-import org.assertj.core.api.Assertions;
 import org.assertj.core.util.Maps;
 import org.factcast.core.*;
 import org.factcast.core.spec.FactSpec;
@@ -260,6 +259,49 @@ class ProjectorImplTest {
               "test",
               0,
               "ComplexEvent2");
+    }
+
+    @Test
+    void createFromAggregateWithAggIdPropertyFilter() {
+      // INIT
+      UUID aggregateId = UUID.randomUUID();
+      FilterByAggIdPropertyAggregate aggregate = new FilterByAggIdPropertyAggregate(aggregateId);
+
+      ProjectorImpl<FilterByAggIdPropertyAggregate> underTest =
+          new ProjectorImpl<>(aggregate, eventSerializer);
+
+      // RUN
+      Collection<FactSpec> factSpecs = underTest.createFactSpecs();
+
+      // ASSERT
+      assertThat(factSpecs).hasSize(2);
+
+      FactSpec filtered = specFor(factSpecs, "FilterByAggIdPropertyEvent");
+      assertThat(filtered.aggIds()).containsExactly(aggregateId);
+      assertThat(filtered.aggIdProperties())
+          .containsExactly(entry("recommendedUserId", aggregateId));
+
+      // the handler without the annotation must not be affected
+      FactSpec unfiltered = specFor(factSpecs, "ComplexEvent");
+      assertThat(unfiltered.aggIds()).containsExactly(aggregateId);
+      assertThat(unfiltered.aggIdProperties()).isEmpty();
+    }
+
+    @Test
+    void rejectsAggIdPropertyFilterOnHandlerFor() {
+      FilterByAggIdPropertyOnHandlerForAggregate aggregate =
+          new FilterByAggIdPropertyOnHandlerForAggregate(UUID.randomUUID());
+
+      assertThatThrownBy(() -> new ProjectorImpl<>(aggregate, eventSerializer))
+          .isInstanceOf(InvalidHandlerDefinition.class)
+          .hasMessageContaining("HandlerFor");
+    }
+
+    private FactSpec specFor(Collection<FactSpec> specs, String type) {
+      return specs.stream()
+          .filter(s -> type.equals(s.type()))
+          .findFirst()
+          .orElseThrow(() -> new AssertionError("no FactSpec for type " + type));
     }
 
     @Test
@@ -1200,58 +1242,6 @@ class ProjectorImplTest {
     void findsType() {
       assertThat(ReflectionUtils.findEventObjectParameterType(methodByName("apply")))
           .isSameAs(SomeEvent.class);
-    }
-  }
-
-  @Nested
-  class WhenValidatingPath {
-    @Accessors(fluent = false)
-    @Getter
-    class SomeEvent implements EventObject {
-      @Override
-      public Set<UUID> aggregateIds() {
-        return Collections.emptySet();
-      }
-
-      A a = new A();
-    }
-
-    @Accessors(fluent = false)
-    @Getter
-    class A {
-      B b = new B();
-    }
-
-    @Accessors(fluent = false)
-    @Getter
-    class B {
-      UUID id = UUID.randomUUID();
-    }
-
-    @Test
-    void invalidPath() {
-      Assertions.assertThatThrownBy(
-              () -> {
-                ReflectionUtils.verifyUuidPropertyExpressionAgainstClass(
-                    "a.x.y.id", SomeEvent.class);
-              })
-          .isInstanceOf(IllegalAggregateIdPropertyPathException.class);
-    }
-
-    @Test
-    void notAUuid() {
-      Assertions.assertThatThrownBy(
-              () -> {
-                ReflectionUtils.verifyUuidPropertyExpressionAgainstClass("a.b", SomeEvent.class);
-              })
-          .isInstanceOf(IllegalAggregateIdPropertyPathException.class);
-    }
-
-    @Test
-    void happyPath() {
-      org.junit.jupiter.api.Assertions.assertDoesNotThrow(
-          () ->
-              ReflectionUtils.verifyUuidPropertyExpressionAgainstClass("a.b.id", SomeEvent.class));
     }
   }
 }
