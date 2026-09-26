@@ -69,11 +69,22 @@ class GrpcObserverAdapter implements FactObserver {
       @NonNull ServerExceptionLogger serverExceptionLogger,
       @NonNull ServerMetrics serverMetrics,
       long keepaliveInMilliseconds) {
+    this(id, observer, meta, serverExceptionLogger, serverMetrics, keepaliveInMilliseconds, 90);
+  }
+
+  public GrpcObserverAdapter(
+      @NonNull String id,
+      @NonNull StreamObserver<MSG_Notification> observer,
+      @NonNull GrpcRequestMetadata meta,
+      @NonNull ServerExceptionLogger serverExceptionLogger,
+      @NonNull ServerMetrics serverMetrics,
+      long keepaliveInMilliseconds,
+      int batchTargetPercent) {
     this.id = id;
     this.notificationStreamObserver = observer;
     supportsFastForward = meta.supportsFastForward();
     this.keepaliveInMilliseconds = keepaliveInMilliseconds;
-    stagedFacts = new StagedFacts(meta.clientMaxInboundMessageSize());
+    stagedFacts = new StagedFacts(meta.clientMaxInboundMessageSize(), batchTargetPercent);
     this.serverExceptionLogger = serverExceptionLogger;
     if (keepaliveInMilliseconds > 0) {
       keepalive = new ServerKeepalive();

@@ -45,6 +45,7 @@ import org.factcast.core.store.StateToken;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
+import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.grpc.api.CompressionCodecs;
 import org.factcast.grpc.api.ConditionalPublishRequest;
 import org.factcast.grpc.api.EnumerateVersionsRequest;
@@ -68,6 +69,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @SuppressWarnings({"unchecked", "rawtypes", "deprecation"})
 @ExtendWith(MockitoExtension.class)
@@ -326,6 +328,41 @@ public class FactStoreGrpcServiceTest {
         new ProtoConverter().toProto(SubscriptionRequestTO.from(req)),
         mock(ServerCallStreamObserver.class));
     verify(backend).subscribe(any(), any());
+  }
+
+  @Test
+  void configuredBatchTargetIsUsedBySubscriptions() {
+    ReflectionTestUtils.setField(uut, "batchTargetPercent", 50);
+    when(grpcRequestMetadata.clientMaxInboundMessageSize()).thenReturn(250);
+    when(grpcRequestMetadata.clientIdAsString()).thenReturn("testClient");
+    ServerCallStreamObserver<MSG_Notification> responseObserver =
+        mock(ServerCallStreamObserver.class);
+    when(responseObserver.isReady()).thenReturn(true);
+    ArgumentCaptor<FactObserver> sentObserver = ArgumentCaptor.forClass(FactObserver.class);
+    when(backend.subscribe(any(), sentObserver.capture())).thenReturn(null);
+    SubscriptionRequest req = SubscriptionRequest.catchup(FactSpec.ns("foo")).fromNowOn();
+    uut.subscribe(conv.toProto(SubscriptionRequestTO.from(req)), responseObserver);
+
+    Fact first = Fact.builder().ns("foo").build("{}");
+    Fact second = Fact.builder().ns("foo").build("{}");
+    sentObserver.getValue().onNext(first);
+    sentObserver.getValue().onNext(second);
+    sentObserver.getValue().onCatchup();
+    sentObserver.getValue().onComplete();
+
+    ArgumentCaptor<MSG_Notification> notifications =
+        ArgumentCaptor.forClass(MSG_Notification.class);
+    verify(responseObserver, times(4)).onNext(notifications.capture());
+    List<MSG_Notification> messages = notifications.getAllValues();
+    assertThat(messages.stream().map(MSG_Notification::getType).toList())
+        .containsExactly(
+            MSG_Notification.Type.Facts,
+            MSG_Notification.Type.Facts,
+            MSG_Notification.Type.Catchup,
+            MSG_Notification.Type.Complete);
+    assertThat(conv.fromProto(messages.get(0).getFacts()).getFirst().id()).isEqualTo(first.id());
+    assertThat(conv.fromProto(messages.get(1).getFacts()).getFirst().id()).isEqualTo(second.id());
+    verify(responseObserver).onCompleted();
   }
 
   @Test

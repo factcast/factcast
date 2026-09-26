@@ -29,6 +29,7 @@ import io.grpc.stub.StreamObserver;
 import io.micrometer.core.instrument.Tags;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLFeatureNotSupportedException;
+import java.util.List;
 import lombok.NonNull;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
@@ -307,5 +308,33 @@ class GrpcObserverAdapterTest {
             expectedBytes);
     verify(metrics)
         .count(FACTS_SENT, Tags.of(ServerMetrics.MetricsTag.CLIENT_ID_KEY, "testClient"), 2);
+  }
+
+  @Test
+  void smallerBatchTargetPreservesFactOrderCatchupAndCompletion() {
+    GrpcRequestMetadata meta = mock(GrpcRequestMetadata.class);
+    when(meta.clientMaxInboundMessageSize()).thenReturn(250);
+    when(meta.clientIdAsString()).thenReturn("testClient");
+    GrpcObserverAdapter uut =
+        new GrpcObserverAdapter(
+            "foo", observer, meta, serverExceptionLogger, mock(ServerMetrics.class), 0, 50);
+    Fact first = Fact.builder().ns("test").build("{}");
+    Fact second = Fact.builder().ns("test").build("{}");
+
+    uut.onNext(first);
+    uut.onNext(second);
+    uut.onCatchup();
+    uut.onComplete();
+
+    ArgumentCaptor<MSG_Notification> messages = ArgumentCaptor.forClass(MSG_Notification.class);
+    verify(observer, times(4)).onNext(messages.capture());
+    List<MSG_Notification> sent = messages.getAllValues();
+    assertThat(sent)
+        .extracting(MSG_Notification::getType)
+        .containsExactly(Type.Facts, Type.Facts, Type.Catchup, Type.Complete);
+    ProtoConverter converter = new ProtoConverter();
+    assertThat(converter.fromProto(sent.get(0).getFacts()).getFirst().id()).isEqualTo(first.id());
+    assertThat(converter.fromProto(sent.get(1).getFacts()).getFirst().id()).isEqualTo(second.id());
+    verify(observer).onCompleted();
   }
 }

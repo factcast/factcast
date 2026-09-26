@@ -45,6 +45,7 @@ import org.factcast.server.grpc.metrics.*;
 import org.factcast.server.grpc.metrics.ServerMetrics.OP;
 import org.factcast.server.security.auth.*;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.grpc.server.service.GrpcService;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.context.*;
@@ -71,6 +72,9 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
   @NonNull final GrpcLimitProperties grpcLimitProperties;
   @NonNull final ServerMetrics metrics;
   @NonNull final CompressionCodecs codecs;
+
+  @Value("${factcast.grpc.batch-target-percent:90}")
+  int batchTargetPercent = 90;
 
   final ProtoConverter converter = new ProtoConverter();
 
@@ -164,7 +168,8 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
               grpcRequestMetadataProvider.get(),
               serverExceptionLogger,
               metrics,
-              req.keepaliveIntervalInMs());
+              req.keepaliveIntervalInMs(),
+              batchTargetPercent);
 
       final var cancelHandler = new OnCancelHandler(clientIdPrefix(), req, subRef, observer);
 
@@ -594,6 +599,10 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
 
   @Override
   public void afterPropertiesSet() throws Exception {
+    if (batchTargetPercent < 1 || batchTargetPercent > 90) {
+      throw new IllegalArgumentException(
+          "factcast.grpc.batch-target-percent must be between 1 and 90");
+    }
     log.info("Service version: {}", getServerArtifactVersion());
   }
 

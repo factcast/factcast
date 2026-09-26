@@ -15,6 +15,10 @@
  */
 package org.factcast.server.grpc;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
 import java.util.UUID;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
@@ -28,6 +32,42 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class StagedFactsTest {
   private StagedFacts underTest = new StagedFacts(150);
+
+  @Test
+  void smallerTargetStillAllowsOneFactWithinTheInboundLimit() {
+    Fact fact =
+        Fact.of(
+            "{\"ns\":\"foo\",\"id\":\"" + UUID.randomUUID() + "\"}", "{\"value\":\"1234567890\"}");
+    StagedFacts staged = new StagedFacts(150, 50);
+
+    Assertions.assertThat(staged.add(fact)).isTrue();
+    Assertions.assertThat(staged.add(fact)).isFalse();
+    Assertions.assertThat(staged.popAll()).containsExactly(fact);
+    Assertions.assertThat(staged.add(fact)).isTrue();
+  }
+
+  @Test
+  void factAboveTheClientLimitFailsExplicitly() {
+    Fact fact =
+        Fact.of(
+            "{\"ns\":\"foo\",\"id\":\"" + UUID.randomUUID() + "\"}",
+            "{\"value\":\"" + "x".repeat(200) + "\"}");
+    StagedFacts staged = new StagedFacts(150, 50);
+
+    assertThatThrownBy(() -> staged.add(fact))
+        .isInstanceOf(StatusRuntimeException.class)
+        .satisfies(
+            error ->
+                Assertions.assertThat(((StatusRuntimeException) error).getStatus().getCode())
+                    .isEqualTo(Status.Code.RESOURCE_EXHAUSTED));
+    Assertions.assertThat(staged.isEmpty()).isTrue();
+  }
+
+  @Test
+  void rejectsInvalidBatchTarget() {
+    assertThatThrownBy(() -> new StagedFacts(150, 0)).isInstanceOf(IllegalArgumentException.class);
+    assertThatThrownBy(() -> new StagedFacts(150, 91)).isInstanceOf(IllegalArgumentException.class);
+  }
 
   @Nested
   class WhenAdding {

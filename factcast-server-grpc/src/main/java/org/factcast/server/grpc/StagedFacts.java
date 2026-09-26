@@ -16,38 +16,56 @@
 package org.factcast.server.grpc;
 
 import com.google.common.annotations.VisibleForTesting;
+import io.grpc.Status;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
 import lombok.NonNull;
 import org.factcast.core.Fact;
+import org.factcast.grpc.api.conv.ProtoConverter;
 
 public class StagedFacts {
 
-  private final int maxBytes;
+  private final int maxInboundBytes;
+  private final int targetBytes;
   @Getter private int currentBytes;
   private final List<Fact> staged = new ArrayList<>(128);
 
-  /**
-   * Note that the buffer will only utilize 90% of the maxBytes size. The reason is that byteSizeOf
-   * might become inadequate at some point, if protobuf encoding changes.
-   *
-   * @param maxBytes maximum number of bytes the buffer should hold
-   */
-  StagedFacts(int maxBytes) {
-    this.maxBytes = maxBytes - (int) (maxBytes * .1);
+  /** The default target remains 90% of the client-advertised inbound limit. */
+  StagedFacts(int maxInboundBytes) {
+    this(maxInboundBytes, 90);
+  }
+
+  StagedFacts(int maxInboundBytes, int targetPercent) {
+    if (targetPercent < 1 || targetPercent > 90) {
+      throw new IllegalArgumentException("batch target percent must be between 1 and 90");
+    }
+    this.maxInboundBytes = maxInboundBytes;
+    targetBytes = maxInboundBytes - (int) ((long) maxInboundBytes * (100 - targetPercent) / 100);
   }
 
   public boolean add(@NonNull Fact fact) {
     int bytes = byteSizeOf(fact);
-    if (currentBytes + bytes >= maxBytes) {
+    if (staged.isEmpty() && bytes >= targetBytes) {
+      int exactBytes =
+          new ProtoConverter().createNotificationFor(List.of(fact)).getSerializedSize();
+      if (exactBytes > maxInboundBytes) {
+        throw Status.RESOURCE_EXHAUSTED
+            .withDescription(
+                "Fact notification requires "
+                    + exactBytes
+                    + " bytes, exceeding client inbound limit of "
+                    + maxInboundBytes
+                    + " bytes")
+            .asRuntimeException();
+      }
+    } else if (!staged.isEmpty() && currentBytes + bytes >= targetBytes) {
       return false;
-    } else {
-      staged.add(fact);
-      currentBytes += bytes;
-      return true;
     }
+    staged.add(fact);
+    currentBytes += bytes;
+    return true;
   }
 
   @VisibleForTesting
