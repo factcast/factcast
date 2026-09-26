@@ -20,7 +20,6 @@ import io.micrometer.core.instrument.MeterRegistry;
 import java.util.function.Supplier;
 import lombok.NonNull;
 import org.factcast.core.store.FactStore;
-import org.factcast.core.subscription.observer.HighWaterMarkFetcher;
 import org.factcast.grpc.api.CompressionCodecs;
 import org.factcast.server.grpc.metrics.ServerMetrics;
 import org.factcast.server.grpc.metrics.ServerMetricsImpl;
@@ -39,11 +38,9 @@ public class FactCastGrpcServerConfiguration {
       FactStore store,
       Supplier<GrpcRequestMetadata> grpcMetaDataProvider,
       GrpcLimitProperties props,
-      HighWaterMarkFetcher target,
       ServerMetrics metrics,
       CompressionCodecs compressionCodecs) {
-    return new FactStoreGrpcService(
-        store, grpcMetaDataProvider, props, target, metrics, compressionCodecs);
+    return new FactStoreGrpcService(store, grpcMetaDataProvider, props, metrics, compressionCodecs);
   }
 
   @Bean

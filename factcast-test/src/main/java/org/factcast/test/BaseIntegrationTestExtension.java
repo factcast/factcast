@@ -118,7 +118,7 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
                           "factcast_security_enabled", String.valueOf(config.securityEnabled()))
                       .withEnv("factcast_grpc_bandwidth_disabled", "true")
                       .withEnv("factcast_store_integrationTestMode", "true")
-                      .withEnv("spring_datasource_url", jdbcUrl)
+                      .withEnv("spring_datasource_url", jdbcUrl + "?reWriteBatchedInserts=true")
                       .withEnv("spring_datasource_username", db.getUsername())
                       .withEnv("spring_datasource_password", db.getPassword())
                       .withEnv("logging.level.org.factcast", config.serverLogLevel().name())
@@ -156,19 +156,33 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
 
     log.trace("erasing postgres state in between tests");
 
-    try (Connection con = ds.getConnection();
-        Statement st = con.createStatement()) {
-      st.execute(
-          "DO $$ DECLARE\n"
-              + "    r RECORD;\n"
-              + "BEGIN\n"
-              + "    FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = current_schema()"
-              + " AND (NOT ((tablename like 'databasechangelog%') OR (tablename like 'qrtz%') OR"
-              + " (tablename = 'schedlock')))) LOOP\n"
-              + "        EXECUTE 'TRUNCATE TABLE ' || quote_ident(r.tablename) || ' cascade';\n"
-              + "    END LOOP;\n"
-              + "END $$;");
-      st.execute("NOTIFY factcast_cache_clear");
+    for (int attempt = 1; attempt <= 3; attempt++) {
+      try (Connection con = ds.getConnection();
+          Statement st = con.createStatement()) {
+        // Match the horizon provider's fact -> notification lock order. The horizon itself is a
+        // required singleton, so keep its row and reset it after truncating facts.
+        st.execute(
+            "DO $$ DECLARE\n"
+                + "    r RECORD;\n"
+                + "BEGIN\n"
+                + "    FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = current_schema()"
+                + " AND (NOT ((tablename like 'databasechangelog%') OR (tablename like 'qrtz%') OR"
+                + " (tablename = 'schedlock') OR (tablename = 'factstream_horizon')))"
+                + " ORDER BY CASE tablename WHEN 'fact' THEN 0 WHEN 'notification' THEN 1 ELSE 2"
+                + " END, tablename) LOOP\n"
+                + "        EXECUTE 'TRUNCATE TABLE ' || quote_ident(r.tablename) || ' cascade';\n"
+                + "    END LOOP;\n"
+                + "    IF to_regclass('factstream_horizon') IS NOT NULL THEN\n"
+                + "        EXECUTE 'UPDATE factstream_horizon SET fact_ser = 0, fact_id = NULL,"
+                + " notification_ser = 0 WHERE id = 1';\n"
+                + "    END IF;\n"
+                + "END $$;");
+        st.execute("NOTIFY factcast_cache_clear");
+        return;
+      } catch (SQLException e) {
+        if (!"40P01".equals(e.getSQLState()) || attempt == 3) throw e;
+        log.warn("Deadlock while clearing test data; retrying (attempt {})", attempt + 1);
+      }
     }
   }
 

@@ -33,6 +33,7 @@ import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.listen.*;
 import org.factcast.store.internal.pipeline.*;
+import org.factcast.store.internal.query.PgQueryBuilder;
 import org.factcast.store.internal.rowmapper.PgFactExtractor;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -40,6 +41,7 @@ import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.quality.Strictness;
 import org.postgresql.jdbc.PgConnection;
+import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 import org.springframework.transaction.PlatformTransactionManager;
 
@@ -91,7 +93,14 @@ class PgCursorCatchupTest {
 
     underTest =
         new PgCursorCatchup(
-            props, metrics, req, pipeline, serial, ds, PgCatchupFactory.Phase.PHASE_1);
+            props,
+            metrics,
+            req,
+            pipeline,
+            serial,
+            new FactStreamHorizon(null, Long.MAX_VALUE, 0),
+            ds,
+            PgCatchupFactory.Phase.PHASE_1);
   }
 
   @SneakyThrows
@@ -174,5 +183,55 @@ class PgCursorCatchupTest {
     when(extractor.mapRow(any(), anyInt())).thenThrow(RuntimeException.class);
 
     assertThatThrownBy(() -> cbh.processRow(rs)).isInstanceOf(RuntimeException.class);
+  }
+
+  @Test
+  @SneakyThrows
+  void runUsesBoundedSqlAndHorizonSerial() {
+    PgQueryBuilder queryBuilder = mock(PgQueryBuilder.class);
+    PreparedStatementSetter setter = mock(PreparedStatementSetter.class);
+    when(serial.get()).thenReturn(5L);
+    when(queryBuilder.createBoundedSQL()).thenReturn("SELECT 1");
+    when(queryBuilder.createBoundedStatementSetter(any(AtomicLong.class), eq(42L)))
+        .thenReturn(setter);
+    underTest =
+        spy(
+            new PgCursorCatchup(
+                props,
+                metrics,
+                req,
+                pipeline,
+                serial,
+                new FactStreamHorizon(null, 42, 0),
+                ds,
+                PgCatchupFactory.Phase.PHASE_1));
+    doReturn(queryBuilder).when(underTest).createPgQueryBuilder(anyList());
+
+    underTest.run();
+
+    verify(c).prepareStatement("SELECT 1");
+    verify(setter).setValues(p);
+    verify(pipeline).process(argThat(Signal::indicatesFlush));
+  }
+
+  @Test
+  @SneakyThrows
+  void runSkipsQueryWhenLowerBoundReachedHorizon() {
+    when(serial.get()).thenReturn(42L);
+    underTest =
+        new PgCursorCatchup(
+            props,
+            metrics,
+            req,
+            pipeline,
+            serial,
+            new FactStreamHorizon(null, 42, 0),
+            ds,
+            PgCatchupFactory.Phase.PHASE_1);
+
+    underTest.run();
+
+    verify(c, never()).prepareStatement(anyString());
+    verify(pipeline).process(argThat(Signal::indicatesFlush));
   }
 }

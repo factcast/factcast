@@ -26,11 +26,12 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.store.internal.PgTestConfiguration;
 import org.factcast.test.IntegrationTest;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
@@ -38,6 +39,8 @@ import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 @SpringJUnitConfig(classes = {PgTestConfiguration.class})
 @Sql(scripts = "/wipe.sql", config = @SqlConfig(separator = "#"))
 @IntegrationTest
+@TestPropertySource(properties = "factcast.blacklist.type=POSTGRES")
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 class PgBlacklistIntegrationTest {
 
   @Autowired FactStore fs;
@@ -49,11 +52,6 @@ class PgBlacklistIntegrationTest {
   private final Collection<FactSpec> spec = Collections.singletonList(FactSpec.ns("ns1"));
   final Set<UUID> receivedFactIds = new HashSet<>();
   final FactObserver obs = element -> receivedFactIds.add(element.id());
-
-  @BeforeAll
-  static void configureBlacklistType() {
-    System.setProperty("factcast.blacklist.type", "RESOURCE");
-  }
 
   @BeforeEach
   void setup() {
@@ -67,14 +65,16 @@ class PgBlacklistIntegrationTest {
   }
 
   @Test
-  void blacklistIsApplied() throws InterruptedException {
+  void blacklistIsApplied() throws Exception {
 
     // after setup, some time will pass until the notification reached the server and the
     // internal blacklist is updated...
     Thread.sleep(1000);
 
     SubscriptionRequest req = SubscriptionRequest.catchup(spec).fromScratch();
-    fs.subscribe(SubscriptionRequestTO.from(req), obs).awaitCatchup();
+    try (var subscription = fs.subscribe(SubscriptionRequestTO.from(req), obs)) {
+      subscription.awaitCatchup(5_000);
+    }
     assertThat(receivedFactIds).hasSize(1).containsExactly(factId);
   }
 }

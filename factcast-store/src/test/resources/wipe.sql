@@ -7,6 +7,9 @@ truncate table transformation_cache restart identity cascade;
 truncate table tokenstore restart identity;
 truncate table date2serial restart identity;
 truncate table published_schema_versions restart identity;
+-- The listener keeps its notification cursor across tests, so serials must not be reused.
+truncate table notification;
+update factstream_horizon set fact_ser = 0, fact_id = null, notification_ser = 0 where id = 1;
 
 select dropAllTailIndexes();
 

@@ -20,4 +20,6 @@ public interface FactTableWriteLock {
   void acquireSharedTXLock();
 
   void acquireExclusiveTXLock();
+
+  boolean isExclusiveTXLockHeld();
 }
