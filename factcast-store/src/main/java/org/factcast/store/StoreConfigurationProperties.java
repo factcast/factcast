@@ -73,6 +73,12 @@ public class StoreConfigurationProperties implements InitializingBean {
   String schemaRegistryUrl;
 
   /**
+   * Load an HTTP schema registry from registry.zip during startup, falling back to individual
+   * files.
+   */
+  boolean schemaRegistryZipEnabled;
+
+  /**
    * If a schemaRegistryUrl is set, you can still decide to enable or disable validation based on
    * the definitions there. This is mostly useful for batch insertions during a bigger migration for
    * example where your facts are already validated, and you want to reduce load on the FactCast
