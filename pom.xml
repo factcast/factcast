@@ -691,6 +691,7 @@
       </activation>
       <modules>
         <module>factcast-site</module>
+        <module>factcast-docs</module>
         <module>factcast-docker</module>
         <module>factcast-docker-dep</module>
         <module>factcast-examples</module>
