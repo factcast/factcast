@@ -297,12 +297,12 @@ public class PgConstants {
 
   public static final String LAST_SERIAL_IN_LOG =
       "SELECT COALESCE(MAX(" + COLUMN_SER + "),0) FROM " + TABLE_FACT;
-  public static final String HIGHWATER_MARK =
+  public static final String LATEST_FACT =
       "SELECT ("
           + COLUMN_HEADER
           + "->>'"
           + ALIAS_ID
-          + "')::uuid AS targetId, ser AS targetSer FROM "
+          + "')::uuid AS fact_id, ser AS fact_serial FROM "
           + TABLE_FACT
           + " WHERE "
           + COLUMN_SER

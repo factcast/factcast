@@ -121,7 +121,8 @@ class PgFactStoreOffloadIntegrationTest {
 
     subscription.get(10, TimeUnit.SECONDS);
 
-    assertThat(observer.facts()).hasValue(3);
+    // The third fact was published after this finite subscription captured its horizon.
+    assertThat(observer.facts()).hasValue(2);
     assertThat(observer.catchups()).hasValue(1);
     assertThat(observer.completes()).hasValue(1);
     assertThat(observer.error()).hasNullValue();
@@ -178,10 +179,11 @@ class PgFactStoreOffloadIntegrationTest {
         @NonNull SubscriptionRequestTO request,
         @NonNull PushbackServerPipeline pipeline,
         @NonNull AtomicLong serial,
+        @NonNull FactStreamHorizon horizon,
         @NonNull SingleConnectionDataSource ds,
         @NonNull Phase phase) {
       catchupDataSources.add(new CatchupPhaseDataSource(phase, ds));
-      return delegate.create(request, pipeline, serial, ds, phase);
+      return delegate.create(request, pipeline, serial, horizon, ds, phase);
     }
 
     void reset() {
