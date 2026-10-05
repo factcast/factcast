@@ -82,12 +82,12 @@ workflow(
 
         run(
             name = "Build with Maven, no testing",
-            command = "./mvnw -b turbo -T1C -B clean install -DskipTests",
+            command = "./mvnw -B clean install -DskipTests",
         )
 
         run(
             name = "Test - Unit",
-            command = "./mvnw -b turbo -T1C -B test",
+            command = "./mvnw -B test",
         )
 
         run(
@@ -98,7 +98,7 @@ workflow(
 
         run(
             name = "Test - Integration",
-            command = "./mvnw -b turbo -T1C -B verify -DskipUnitTests",
+            command = "./mvnw -B verify -DskipUnitTests",
         )
         uses(
             name = "Codecov upload",
