@@ -267,33 +267,30 @@ final class FactStreamHorizonIntegrationTest {
     SubscriptionRequest request =
         SubscriptionRequest.follow(FactSpec.ns(NS).meta("projection", "match")).fromScratch();
 
-    try (Subscription subscription =
-        store.subscribe(SubscriptionRequestTO.from(request), fact -> received.add(fact.id()))) {
-      subscription.awaitCatchup(5_000);
+    Fact lowerMatching =
+        Fact.builder()
+            .id(UUID.randomUUID())
+            .ns(NS)
+            .type("matching-type")
+            .meta("projection", "match")
+            .buildWithoutPayload();
+    Fact higherCoarseMatch =
+        Fact.builder().id(UUID.randomUUID()).ns(NS).type("different-type").buildWithoutPayload();
 
-      Fact lowerMatching =
-          Fact.builder()
-              .id(UUID.randomUUID())
-              .ns(NS)
-              .type("matching-type")
-              .meta("projection", "match")
-              .buildWithoutPayload();
-      Fact higherCoarseMatch =
-          Fact.builder().id(UUID.randomUUID()).ns(NS).type("different-type").buildWithoutPayload();
+    try (Connection lowerTransaction = dataSource.getConnection()) {
+      lowerTransaction.setAutoCommit(false);
+      acquireSharedPublishLock(lowerTransaction);
+      long reservedLowerSerial = reserveFactSerial(lowerTransaction);
 
-      try (Connection lowerTransaction = dataSource.getConnection()) {
-        lowerTransaction.setAutoCommit(false);
-        acquireSharedPublishLock(lowerTransaction);
-        long reservedLowerSerial = reserveFactSerial(lowerTransaction);
+      // Publish before subscribing so a subscription-driven horizon update cannot queue an
+      // exclusive lock ahead of this publisher's shared lock.
+      CompletableFuture.runAsync(() -> store.publish(List.of(higherCoarseMatch)))
+          .get(5, TimeUnit.SECONDS);
 
-        // A shared publisher lock must not serialize another publisher.
-        CompletableFuture<Void> higherPublish =
-            CompletableFuture.runAsync(() -> store.publish(List.of(higherCoarseMatch)));
-        higherPublish.get(5, TimeUnit.SECONDS);
-
-        CompletableFuture<FactStreamHorizon> advancingHorizon =
-            CompletableFuture.supplyAsync(horizonProvider::advance);
-
+      CompletableFuture<FactStreamHorizon> advancingHorizon =
+          CompletableFuture.supplyAsync(horizonProvider::advance);
+      try (Subscription subscription =
+          store.subscribe(SubscriptionRequestTO.from(request), fact -> received.add(fact.id()))) {
         await()
             .atMost(Duration.ofSeconds(5))
             .until(
@@ -316,21 +313,22 @@ final class FactStreamHorizonIntegrationTest {
         assertThat(lowerSerial).isEqualTo(reservedLowerSerial);
         assertThat(lowerSerial).isLessThan(higherSerial);
         assertThat(horizon.factSerial()).isGreaterThanOrEqualTo(higherSerial);
+
+        subscription.awaitCatchup(5_000);
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertThat(received).hasSize(1));
+
+        Fact laterMatching =
+            Fact.builder()
+                .id(UUID.randomUUID())
+                .ns(NS)
+                .type("matching-type")
+                .meta("projection", "match")
+                .buildWithoutPayload();
+        store.publish(List.of(laterMatching));
+
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertThat(received).hasSize(2));
+        assertThat(received).containsExactly(lowerMatching.id(), laterMatching.id());
       }
-
-      await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertThat(received).hasSize(1));
-
-      Fact laterMatching =
-          Fact.builder()
-              .id(UUID.randomUUID())
-              .ns(NS)
-              .type("matching-type")
-              .meta("projection", "match")
-              .buildWithoutPayload();
-      store.publish(List.of(laterMatching));
-
-      await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertThat(received).hasSize(2));
-      assertThat(received).containsExactly(lowerMatching.id(), laterMatching.id());
     }
   }
 
