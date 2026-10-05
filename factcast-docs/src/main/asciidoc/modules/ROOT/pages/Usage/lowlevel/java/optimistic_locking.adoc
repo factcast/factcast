@@ -17,11 +17,11 @@ In general, the idea of optimistic locking is to make a change and before publis
 
 Transferred to FactCast, this means to express a body of code that:
 
-1. creates an understanding of the published state of the aggregates in question
-2. invokes its business logic according to that state
-3. creates the effects: either fails (if business logic decides to do so), or publishes new Fact(s)
-4. rechecks, if the state recorded in 1. is still unchanged and then
-5. either publishes the prepared Facts or retries by going back to 1.
+. creates an understanding of the published state of the aggregates in question
+. invokes its business logic according to that state
+. creates the effects: either fails (if business logic decides to do so), or publishes new Fact(s)
+. rechecks, if the state recorded in 1. is still unchanged and then
+. either publishes the prepared Facts or retries by going back to 1.
 
 === Usage
 

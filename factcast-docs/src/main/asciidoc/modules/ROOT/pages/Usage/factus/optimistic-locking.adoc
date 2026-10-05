@@ -27,10 +27,10 @@ For our example that would mean:
 
 If a new user registers,
 
-1. check if the username is already taken
+. check if the username is already taken
    - if so, reject the registration
    - if not, prepare a change that creates the user
-1. check if a new user was created in between, and
+. check if a new user was created in between, and
    - repeat from the beginning if this is the case
    - execute the change while making sure no other change can interfere.
 
@@ -114,8 +114,8 @@ factus
 
 As you can see here, the attempt call receives a BiConsumer that consumes
 
-1. your defined scope, updated to the latest changes in the Fact-stream
-1. a `RetryableTransaction` that you use to either publish to or abort.
+. your defined scope, updated to the latest changes in the Fact-stream
+. a `RetryableTransaction` that you use to either publish to or abort.
 
 Note that you can use either a `SnapshotProjection` (including aggregates) as well as a `ManagedProjection` to lock on.
 **A `SubscribedProjection` however is not usable here**, due to the fact that they are in nature eventual consistent,

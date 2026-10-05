@@ -25,16 +25,18 @@ In the above scenario, the publisher wants to start publishing facts with the up
 
 For this to work, there are three prerequisites:
 
-1. The publisher needs to communicate what version he wants to publish
+. The publisher needs to communicate what version he wants to publish
 
 This would not work otherwise, because we assume version 1 and version 2 to be incompatible, so the correct schema must be chosen for validation anyway.
 In this case, it would be "version 2".
 
-2. The consumer must express his expectation
+[start=2]
+. The consumer must express his expectation
 
 When it subscribes on a particular fact type, it also needs to provide the version it expects ("version 1" here)
 
-3. A transformation code is available in the registry that can do the transformation if needed.
+[start=3]
+. A transformation code is available in the registry that can do the transformation if needed.
 
 The Registry takes little javascript snippets, that can convert for instance a version 2 fact payload, into a version 1.
 

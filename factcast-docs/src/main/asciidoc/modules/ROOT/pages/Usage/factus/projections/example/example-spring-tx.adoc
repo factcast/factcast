@@ -1,4 +1,4 @@
-= UserNames (Spring/JDBC)
+= Spring/JDBC Transactional Projection Example
 :icons: font
 
 Here is an example for a managed projection externalizing its state to a relational database (PostgreSQL here) using Spring transactional management.
