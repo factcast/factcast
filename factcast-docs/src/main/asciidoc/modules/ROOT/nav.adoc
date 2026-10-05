@@ -34,7 +34,7 @@
 ** xref:Setup/deployment-options.adoc[Deployment Options]
 * xref:Usage/index.adoc[Usage]
 ** xref:Usage/index.adoc[Overview]
-** FactCast API (low level)
+** FactCast API (low-level)
 *** xref:Usage/lowlevel/index.adoc[Overview]
 *** Java
 **** xref:Usage/lowlevel/java/index.adoc[Overview]
@@ -74,7 +74,7 @@
 ***** xref:Usage/factus/projections/atomicity/spring-transactional-projections.adoc[Spring Transactional]
 ***** xref:Usage/factus/projections/atomicity/redis-transactional-projections.adoc[Redis Transactional]
 
-**** Example
+**** Examples
 ***** xref:Usage/factus/projections/example/index.adoc[Overview]
 ***** xref:Usage/factus/projections/example/example-spring-tx.adoc[Spring TX]
 ***** xref:Usage/factus/projections/example/example-redis-tx.adoc[Redis TX]
@@ -94,14 +94,11 @@
 
 * xref:UI/index.adoc[UI]
 ** xref:UI/index.adoc[Overview]
-
-** Setup
-*** xref:UI/Setup/index.adoc[Overview]
-*** xref:UI/Setup/deployment-options.adoc[Deployment Options]
-*** xref:UI/Setup/properties.adoc[Properties]
-*** xref:UI/Setup/report_storage.adoc[Report Storage]
-*** xref:UI/Setup/security.adoc[Security]
-*** xref:UI/Setup/plugins.adoc[Plugins]
+** xref:UI/deployment-options.adoc[Deployment Options]
+** xref:UI/properties.adoc[Properties]
+** xref:UI/report_storage.adoc[Report Storage]
+** xref:UI/security.adoc[Security]
+** xref:UI/plugins.adoc[Plugins]
 
 
 * xref:Ops/index.adoc[Ops]

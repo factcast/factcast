@@ -15,14 +15,15 @@ under the hood and all this is possible.
 
 The following example shows an OIDC integration:
 
-1. You have to exclude the standard configuration, that configures Spring Security & Vaadin to support the default
+. You have to exclude the standard configuration, that configures Spring Security & Vaadin to support the default
    authentication/authorization approach.
 
 ----
 @SpringBootApplication(exclude = {FactCastServerUISecurityAutoConfiguration.class})
 ----
 
-2. Add necessary Spring Security dependencies and configurations:
+[start=2]
+. Add necessary Spring Security dependencies and configurations:
 
 ----
 <dependency>
@@ -35,7 +36,8 @@ The following example shows an OIDC integration:
 </dependency>
 ----
 
-3. Implement custom security configuration
+[start=3]
+. Implement custom security configuration
 
 ----
 @Configuration
@@ -49,7 +51,8 @@ public class SecurityConfig extends VaadinWebSecurity {
 }
 ----
 
-4. Implement a `OAuth2UserService` that maps from a `OidcUser` to a `FactCastOidcUser` which is usable by the
+[start=4]
+. Implement a `OAuth2UserService` that maps from a `OidcUser` to a `FactCastOidcUser` which is usable by the
    FactCast-Server UI.
 
 ----

@@ -32,5 +32,5 @@ accordingly.
 === Security
 
 The UI uses spring-security. Some helpful settings are documented
-xref:ROOT:UI/Setup/security.adoc[here].
+xref:ROOT:UI/security.adoc[here].
 If security is disabled you can log in with any username and `security_disabled` as password.
