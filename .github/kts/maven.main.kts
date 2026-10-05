@@ -82,12 +82,12 @@ workflow(
 
         run(
             name = "Build with Maven, no testing",
-            command = "./mvnw -B clean install -DskipTests",
+            command = "./mvnw -b turbo -T1C -B clean install -DskipTests",
         )
 
         run(
             name = "Test - Unit",
-            command = "./mvnw -B test",
+            command = "./mvnw -b turbo -T1C -B test",
         )
 
         run(
@@ -98,7 +98,7 @@ workflow(
 
         run(
             name = "Test - Integration",
-            command = "./mvnw -B verify -DskipUnitTests",
+            command = "./mvnw -b turbo -T1C -B verify -DskipUnitTests",
         )
         uses(
             name = "Codecov upload",
@@ -145,7 +145,7 @@ workflow(
 
         run(
             name = "Test - Integration",
-            command = "./mvnw -B -Dpostgres.version=${expr("matrix.postgresVersion")} verify -DskipUnitTests",
+            command = "./mvnw -b turbo -T1C -B -Dpostgres.version=${expr("matrix.postgresVersion")} verify -DskipUnitTests",
         )
     }
 }

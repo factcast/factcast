@@ -61,12 +61,12 @@ workflow(
 
         run(
             name = "Build with Maven, no testing",
-            command = "./mvnw -B clean install -DskipTests",
+            command = "./mvnw -b turbo -T1C -B clean install -DskipTests",
         )
 
         run(
             name = "Test - UI",
-            command = "cd factcast-server-ui ; ../mvnw -B -Dui verify",
+            command = "cd factcast-server-ui ; ../mvnw -b turbo -T1C -B -Dui verify",
         )
 
         uses(
