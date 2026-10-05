@@ -2,10 +2,7 @@
 :icons: font
 
 
-
-== Fact Stream design
-
-If you are familiar with other products that store Facts, you might be familiar with the concept of a Fact-Stream. In
+If you are familiar with other products that store Facts, you might be familiar with the concept of a FactStream. In
 most solutions, the consumer subscribes to particular stream of Facts and then picks those of interest for him.
 
 === FactStream per Aggregate
@@ -148,5 +145,4 @@ Predicates**.
 
 Filtering could be done either ahead of time (by emitting Facts into different Streams and creating new Streams whenever
 a consumer's need changes), or just-in-time, which might have some impact on performance.
-
-xref:ROOT:Concept/factspec.adoc[Fact Specification]
+Further information on these concepts can be found in the article covering xref:ROOT:Concept/factspec.adoc[Fact Specification].

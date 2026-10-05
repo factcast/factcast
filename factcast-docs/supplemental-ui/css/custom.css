@@ -11,6 +11,36 @@
     vertical-align: middle;
 }
 
+/* Slim footer at the bottom of the content column (see partials/main.hbs). */
+:root {
+    --footer-height: 2.5rem;
+}
+
+footer.footer {
+    box-sizing: border-box;
+    height: var(--footer-height);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: auto;
+    padding: 0 1rem;
+    background: none;
+    /* same line as the sidebar's version selector (.nav-panel-explore .context), so both align */
+    box-shadow: 0 -1px 0 #e1e1e1;
+    color: #8e8e8e;
+    font-size: .75rem;
+}
+
+footer.footer a {
+    color: inherit;
+    text-decoration: none;
+}
+
+footer.footer a:hover {
+    color: #191919;
+    text-decoration: underline;
+}
+
 /* Recreate the full-screen cover used by the former Docsy landing page. */
 body.landing {
     background-image: linear-gradient(rgb(0 0 0 / 30%), rgb(0 0 0 / 30%)),
@@ -39,6 +69,16 @@ body.landing .doc {
     color: #fff;
     text-align: center;
     text-shadow: 0 1px 2px rgb(0 0 0 / 60%);
+}
+
+body.landing footer.footer {
+    box-shadow: none;
+    color: rgb(255 255 255 / 75%);
+    text-shadow: 0 1px 2px rgb(0 0 0 / 60%);
+}
+
+body.landing footer.footer a:hover {
+    color: #fff;
 }
 
 body.landing .doc h1.page {
@@ -76,8 +116,15 @@ body.landing .doc h1.page {
         margin-left: 0 !important;
         position: sticky !important;
         top: 5rem !important;
-        height: calc(100vh - 6rem) !important;
+        height: calc(100vh - 6rem - var(--footer-height)) !important;
         overflow-y: auto !important;
+    }
+
+    /* Stretch the content column to the viewport, so the footer sits at its bottom */
+    main.article {
+        display: flex;
+        flex-direction: column;
+        min-height: calc(100vh - 3.5rem);
     }
 
     body.landing .doc {

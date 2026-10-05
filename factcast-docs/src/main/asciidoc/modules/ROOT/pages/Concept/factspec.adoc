@@ -7,7 +7,7 @@ When consumers subscribe to a Stream of Events, it has to express, which Events 
 
 As discussed xref:ROOT:Concept/factstreams.adoc[here], there is more than one way to do it. We decided to go for just-in-time filtering in FactCast. Here is why:
 
-==== The problem with FactStream-IDs
+=== The problem with FactStream-IDs
 
 https://geteventstore.com[EventStore] – which is a wonderful product by the way - is a good example of _Filtering/Transforming/Meshing_ of Events ahead of time. You inject JavaScript Code as a so-called 'Projection' into the Server, that builds a new Stream of Events by picking, and maybe even transforming Events into a new Stream with a particular ID. A consumer then subscribes to that particular EventsStream, thus gets exactly what he expects.
 
@@ -19,18 +19,22 @@ While that is a wonderful concept, that guarantees very good performance when ac
 
 While these Problems are certainly solvable, we went for an easier, but certainly not as fast solution:
 
-=== Just In Time Filtering
+== Just In Time Filtering
 
-According to a list of Fact-Specifications, the matching Facts are queried from the database just in time. When querying lots of Facts (like for instance following from scratch), we use a GIN Index to find the matching facts in the Database easily. When reaching the end of the Stream, the index is no longer used, as scanning the 'few' new rows that were inserted in a limited time-frame is easier than iterating the index.
+According to a list of Fact-Specifications, the matching Facts are queried from the database just in time.
+When querying lots of Facts (like for instance following from scratch), we use a GIN Index to find the matching facts in the Database easily.
+When reaching the end of the Stream, the index is no longer used, as scanning the 'few' new rows that were inserted in a limited time-frame is easier than iterating the index.
 
-In order to match with a high selectivity, this query uses some (in parts optional, but defined) Attributes from the JSON-Header of a Fact. In many cases, this filtering is already sufficient to reduce the number of misses (Facts that are sent to the consumer, but discarded there) to either zero or something very near.
+In order to match with a high selectivity, this query uses some (in parts optional, but defined) attributes from the JSON-Header of a Fact.
+In many cases, this filtering is already sufficient to reduce the number of misses (Facts that are sent to the consumer, but discarded there) to either zero or something very near.
 
 [#specification]
 === Specification
 
 In order to efficiently select matching Facts from the Database, a consumer should provide precise information about which Facts match, and which do not.
 
-In order to do that, a list of FactSpec-Objects is transferred on subscription. Any Fact that matches **ANY ONE** of the specifications, will be sent to the consumer.
+In order to do that, a list of FactSpec-Objects is transferred on subscription.
+Any Fact that matches **ANY ONE** of the specifications, will be sent to the consumer.
 
 FactSpec-Objects must define a **ns** attribute. The rest is actually optional:
 
@@ -47,7 +51,7 @@ FactSpec-Objects must define a **ns** attribute. The rest is actually optional:
 
 Of course, **all** the requirements defined in a FactSpec have to be met for a Fact to be matched.
 
-=== Post-Query Filtering / Scripted Predicates
+== Post-Query Filtering / Scripted Predicates
 
 As discussed xref:ROOT:Concept/factstreams.adoc[here], there are situations, where these tagging/categorizing means are not enough, because you just do not have this information in the header, or you need some more fine-grained control like Range-expressions etc.
 
