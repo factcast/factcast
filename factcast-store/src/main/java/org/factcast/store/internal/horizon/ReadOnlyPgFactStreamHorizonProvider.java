@@ -38,7 +38,7 @@ public class ReadOnlyPgFactStreamHorizonProvider implements FactStreamHorizonPro
           + " FROM "
           + PgConstants.TABLE_HORIZON
           + " WHERE id = 1";
-  private final Object instance_mutex = new Object();
+  private final Object instanceMutex = new Object();
 
   @NonNull private final DataSource primaryDataSource;
   private final AtomicReference<FactStreamHorizon> currentPrimary =
@@ -46,7 +46,7 @@ public class ReadOnlyPgFactStreamHorizonProvider implements FactStreamHorizonPro
 
   @Override
   public @NonNull FactStreamHorizon advance() {
-    synchronized (instance_mutex) {
+    synchronized (instanceMutex) {
       FactStreamHorizon horizon = readPrimary();
       currentPrimary.set(horizon);
       return horizon;
