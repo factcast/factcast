@@ -18,14 +18,23 @@ module.exports.register = function () {
       const children = pages.filter((candidate) => {
         const src = candidate.src
 
-        return (
-          src.component === current.component &&
-          src.version === current.version &&
-          src.module === current.module &&
-          path.posix.dirname(src.relative) === currentDir &&
-          src.relative !== current.relative &&
-          path.posix.basename(src.relative) !== 'index.adoc'
-        )
+        if (
+          src.component !== current.component ||
+          src.version !== current.version ||
+          src.module !== current.module ||
+          src.relative === current.relative
+        ) {
+          return false
+        }
+
+        const dir = path.posix.dirname(src.relative)
+        const isIndex = path.posix.basename(src.relative) === 'index.adoc'
+
+        // Sibling page in the same directory
+        if (dir === currentDir) return !isIndex
+
+        // Overview page of an immediate subdirectory
+        return isIndex && path.posix.dirname(dir) === currentDir
       })
 
       const navOrder = getNavOrder(contentCatalog, current)
@@ -49,8 +58,8 @@ module.exports.register = function () {
 
       const list = children
         .map((child) => {
-          const filename = path.posix.basename(child.src.relative)
-          return `* xref:./${filename}[]`
+          const target = path.posix.relative(currentDir, child.src.relative)
+          return `* xref:./${target}[]`
         })
         .join('\n')
 
