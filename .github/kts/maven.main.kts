@@ -145,7 +145,7 @@ workflow(
 
         run(
             name = "Test - Integration",
-            command = "./mvnw -b turbo -T1C -B -Dpostgres.version=${expr("matrix.postgresVersion")} verify -DskipUnitTests",
+            command = "./mvnw -B -Dpostgres.version=${expr("matrix.postgresVersion")} verify -DskipUnitTests",
         )
     }
 }
