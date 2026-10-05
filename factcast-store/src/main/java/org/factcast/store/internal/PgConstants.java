@@ -70,6 +70,10 @@ public class PgConstants {
           + " = '"
           + IS_INVALID
           + "'";
+  public static final String HORIZON_COLUMN_FACT_SER = "fact_ser";
+  public static final String HORIZON_COLUMN_FACT_ID = "fact_id";
+  public static final String HORIZON_COLUMN_NOTIFICATION_SER = "notification_ser";
+  public static final String TABLE_HORIZON = "factstream_horizon";
 
   private static final String TABLE_TOKENSTORE = "tokenstore";
 
@@ -302,7 +306,7 @@ public class PgConstants {
           + COLUMN_HEADER
           + "->>'"
           + ALIAS_ID
-          + "')::uuid AS fact_id, ser AS fact_serial FROM "
+          + "')::uuid AS fact_id, ser AS fact_ser FROM "
           + TABLE_FACT
           + " WHERE "
           + COLUMN_SER

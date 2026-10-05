@@ -120,6 +120,7 @@ public class PgFactStoreInternalConfiguration {
 
   @Bean
   @IsReadAndWriteEnv
+  @SuppressWarnings("java:S2440") // it's a configuration class, damnit
   public PgBatchInsertRewriteVerifier pgBatchInsertRewriteVerifier(DataSource dataSource) {
     return new PgBatchInsertRewriteVerifier(dataSource);
   }

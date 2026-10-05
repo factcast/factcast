@@ -79,7 +79,7 @@ public class PgCursorCatchup extends AbstractPgCatchup {
         conn.setAutoCommit(false);
         prep.setFetchSize(props.getPageSize());
         prep.setQueryTimeout(0);
-        b.createBoundedStatementSetter(fromSerial, horizon.factSerial()).setValues(prep);
+        b.createBoundedStatementSetter(fromSerial, horizon).setValues(prep);
 
         final var timer = metrics.timer(StoreMetrics.OP.RESULT_STREAM_START, isFromScratch);
         final var timerSample = metrics.startSample();

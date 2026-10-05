@@ -15,35 +15,47 @@
  */
 package org.factcast.store.internal.horizon;
 
-import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.sql.DataSource;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.factcast.core.subscription.FactStreamHorizon;
+import org.factcast.store.internal.PgConstants;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 @RequiredArgsConstructor
 public class ReadOnlyPgFactStreamHorizonProvider implements FactStreamHorizonProvider {
 
-  static final String MISSING_HORIZON = "The singleton fact-stream horizon row is missing";
+  // note that there is only one horizon with id=1, as it is meant to be a singleton
   static final String READ_HORIZON =
-      "SELECT fact_ser, fact_id, notification_ser FROM factstream_horizon WHERE id = 1";
+      "SELECT "
+          + PgConstants.HORIZON_COLUMN_FACT_SER
+          + ","
+          + PgConstants.HORIZON_COLUMN_FACT_ID
+          + ","
+          + PgConstants.HORIZON_COLUMN_NOTIFICATION_SER
+          + " FROM "
+          + PgConstants.TABLE_HORIZON
+          + " WHERE id = 1";
+  private final Object instance_mutex = new Object();
 
   @NonNull private final DataSource primaryDataSource;
   private final AtomicReference<FactStreamHorizon> currentPrimary =
       new AtomicReference<>(FactStreamHorizon.empty());
 
   @Override
-  public synchronized @NonNull FactStreamHorizon advance() {
-    FactStreamHorizon horizon = readPrimary();
-    currentPrimary.set(horizon);
-    return horizon;
+  public @NonNull FactStreamHorizon advance() {
+    synchronized (instance_mutex) {
+      FactStreamHorizon horizon = readPrimary();
+      currentPrimary.set(horizon);
+      return horizon;
+    }
   }
 
+  @NonNull
   protected final FactStreamHorizon readPrimary() {
-    return read(primaryDataSource);
+    return readFrom(primaryDataSource);
   }
 
   @Override
@@ -52,20 +64,15 @@ public class ReadOnlyPgFactStreamHorizonProvider implements FactStreamHorizonPro
   }
 
   @Override
-  public @NonNull FactStreamHorizon read(@NonNull DataSource dataSource) {
-    List<FactStreamHorizon> horizons =
-        jdbcTemplate(dataSource)
-            .query(
-                READ_HORIZON,
-                (rs, rowNum) ->
-                    new FactStreamHorizon(
-                        rs.getObject("fact_id", UUID.class),
-                        rs.getLong("fact_ser"),
-                        rs.getLong("notification_ser")));
-    if (horizons.isEmpty()) {
-      throw new IllegalStateException(MISSING_HORIZON);
-    }
-    return horizons.get(0);
+  public @NonNull FactStreamHorizon readFrom(@NonNull DataSource dataSource) {
+    return jdbcTemplate(dataSource)
+        .queryForObject(
+            READ_HORIZON,
+            (rs, rowNum) ->
+                new FactStreamHorizon(
+                    rs.getObject(PgConstants.HORIZON_COLUMN_FACT_ID, UUID.class),
+                    rs.getLong(PgConstants.HORIZON_COLUMN_FACT_SER),
+                    rs.getLong(PgConstants.HORIZON_COLUMN_NOTIFICATION_SER)));
   }
 
   protected JdbcTemplate jdbcTemplate(@NonNull DataSource dataSource) {

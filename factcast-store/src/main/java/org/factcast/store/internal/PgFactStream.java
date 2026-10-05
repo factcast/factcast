@@ -31,7 +31,6 @@ import org.factcast.core.subscription.FactStreamHorizon;
 import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.core.subscription.observer.*;
 import org.factcast.core.util.ExceptionHelper;
 import org.factcast.store.*;
 import org.factcast.store.internal.catchup.*;
@@ -168,7 +167,7 @@ public class PgFactStream {
         pipeline,
         connectionSupplier,
         sql,
-        horizonSerial -> q.createBoundedStatementSetter(serial, horizonSerial),
+        horizon -> q.createBoundedStatementSetter(serial, horizon),
         this::isConnected,
         serial,
         horizonProvider);
@@ -194,6 +193,9 @@ public class PgFactStream {
         eventBus.register(queryExecutor);
         // catchup phase 3 – make sure, we did not miss any fact due to
         // slow registration
+        //
+        // we should make sure, we advance the horizon before if possible
+        horizonProvider.advance();
         queryExecutor.trigger();
       } else {
         pipeline.process(Signal.complete());
@@ -292,7 +294,7 @@ public class PgFactStream {
         // While it is very unlikely, that by reading from the secondary, we get a higher serial,
         // it is not entirely impossible.
         FactStreamHorizon phaseOneHorizon =
-            FactStreamHorizon.min(primaryHorizon, horizonProvider.read(secondary));
+            FactStreamHorizon.min(primaryHorizon, horizonProvider.readFrom(secondary));
 
         return catchupPhaseOne(secondary, phaseOneHorizon);
       } catch (SQLException | DataAccessException | PipelineAlreadyClosedException e) {

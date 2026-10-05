@@ -47,7 +47,7 @@ public class NudgeNotificationHandler implements DisposableBean {
   @VisibleForTesting protected final AtomicLong requestedRefresh = new AtomicLong(0);
   @VisibleForTesting protected final AtomicLong completedRefresh = new AtomicLong(0);
   private final AtomicBoolean refreshInProgress = new AtomicBoolean(false);
-  private io.micrometer.core.instrument.@NonNull Timer metricsTimer;
+  private final io.micrometer.core.instrument.@NonNull Timer metricsTimer;
 
   public NudgeNotificationHandler(
       @NonNull EventBus bus,
@@ -166,46 +166,42 @@ public class NudgeNotificationHandler implements DisposableBean {
   }
 
   private void fetchPairsAndDispatchOnce() {
-    FactStreamHorizon horizon = horizonProvider.advance();
     long lowerSerial = notificationSer.get();
+    FactStreamHorizon horizon = horizonProvider.advance();
     long horizonSerial = horizon.notificationSerial();
+    // should not happen, but just in case
+    if (horizonSerial <= lowerSerial) return;
 
-    boolean cursorMissing =
+    boolean baseLineMissing =
         lowerSerial > 0
             && Boolean.FALSE.equals(
                 jdbc.queryForObject(BASE_EXISTS_SQL, Boolean.class, lowerSerial));
 
-    if (cursorMissing) {
-      log.trace("No reliable notification cursor, waking all subscribers");
-      bus.post(FactInsertionNotification.internal());
-      notificationSer.set(horizonSerial);
-      return;
-    }
-
-    if (horizonSerial <= lowerSerial) return;
-
-    if (lowerSerial == 0) {
-      log.trace("No reliable notification cursor, waking all subscribers");
+    if (baseLineMissing || lowerSerial == 0) {
+      log.trace("No reliable notification baseline, waking all subscribers");
       bus.post(FactInsertionNotification.internal());
       notificationSer.set(horizonSerial);
       return;
     }
 
     final var timerSample = metrics.startSample();
-    List<FetchNotificationTuple> tuples =
-        jdbc.query(
-            "SELECT max(ser) as max,ns,type FROM notification "
-                + "WHERE notification.ser > ? AND notification.ser <= ? "
-                + "GROUP BY DISTINCT(ns,type) ORDER BY max",
-            DataClassRowMapper.newInstance(FetchNotificationTuple.class),
-            lowerSerial,
-            horizonSerial);
+    try {
+      List<FetchNotificationTuple> tuples =
+          jdbc.query(
+              "SELECT max(ser) as max,ns,type FROM notification "
+                  + "WHERE notification.ser > ? AND notification.ser <= ? "
+                  + "GROUP BY DISTINCT(ns,type) ORDER BY max",
+              DataClassRowMapper.newInstance(FetchNotificationTuple.class),
+              lowerSerial,
+              horizonSerial);
 
-    timerSample.stop(metricsTimer);
-    if (!tuples.isEmpty()) {
-      log.trace("Fetched {} notification{}", tuples.size(), tuples.size() > 1 ? "s" : "");
-      tuples.forEach(t -> bus.post(t.toFactInsertionNotification()));
+      if (!tuples.isEmpty()) {
+        log.trace("Fetched {} notification{}", tuples.size(), tuples.size() > 1 ? "s" : "");
+        tuples.forEach(t -> bus.post(t.toFactInsertionNotification()));
+      }
+      notificationSer.set(horizonSerial);
+    } finally {
+      timerSample.stop(metricsTimer);
     }
-    notificationSer.set(horizonSerial);
   }
 }

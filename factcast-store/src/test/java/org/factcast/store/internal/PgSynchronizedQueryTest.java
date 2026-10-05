@@ -139,13 +139,13 @@ class PgSynchronizedQueryTest {
   @SneakyThrows
   void usesOneHorizonBoundAndFastForwardsAfterSuccessfulFlush() {
     AtomicLong cursor = new AtomicLong(5);
-    AtomicLong suppliedHorizonSerial = new AtomicLong();
+    AtomicReference<FactStreamHorizon> suppliedHorizon = new AtomicReference<>();
     SingleConnectionDataSource ds = mock(SingleConnectionDataSource.class);
     Connection con = mock(Connection.class);
     PreparedStatement statement = mock(PreparedStatement.class);
     ResultSet rs = mock(ResultSet.class);
-    when(horizonProvider.currentPrimary())
-        .thenReturn(new FactStreamHorizon(UUID.randomUUID(), 42, 42));
+    FactStreamHorizon horizon = new FactStreamHorizon(UUID.randomUUID(), 42, 42);
+    when(horizonProvider.currentPrimary()).thenReturn(horizon);
     when(connectionSupplier.getPooledAsSingleDataSource(anyList())).thenReturn(ds);
     when(ds.getConnection()).thenReturn(con);
     when(con.prepareStatement(sql)).thenReturn(statement);
@@ -157,8 +157,8 @@ class PgSynchronizedQueryTest {
             pipeline,
             connectionSupplier,
             sql,
-            horizonSerial -> {
-              suppliedHorizonSerial.set(horizonSerial);
+            currentHorizon -> {
+              suppliedHorizon.set(currentHorizon);
               return setter;
             },
             () -> true,
@@ -167,7 +167,7 @@ class PgSynchronizedQueryTest {
 
     uut.run(false);
 
-    assertThat(suppliedHorizonSerial).hasValue(42);
+    assertThat(suppliedHorizon).hasValue(horizon);
     assertThat(cursor).hasValue(42);
     verify(horizonProvider).currentPrimary();
   }

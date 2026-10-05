@@ -43,9 +43,24 @@ public class PgFactStreamHorizonProvider extends ReadOnlyPgFactStreamHorizonProv
 
   static final String MAX_NOTIFICATION_SERIAL = "SELECT COALESCE(MAX(ser),0) FROM notification";
   static final String UPDATE_HORIZON =
-      "UPDATE factstream_horizon "
-          + "SET fact_ser=?, fact_id=?, notification_ser=GREATEST(notification_ser, ?) "
-          + "WHERE id = 1 RETURNING fact_ser, fact_id, notification_ser";
+      "UPDATE "
+          + PgConstants.TABLE_HORIZON
+          + " "
+          + "SET "
+          + PgConstants.HORIZON_COLUMN_FACT_SER
+          + "=?, "
+          + PgConstants.HORIZON_COLUMN_FACT_ID
+          + "=?, "
+          + PgConstants.HORIZON_COLUMN_NOTIFICATION_SER
+          + "=GREATEST("
+          + PgConstants.HORIZON_COLUMN_NOTIFICATION_SER
+          + ", ?) "
+          + "WHERE id = 1 RETURNING "
+          + PgConstants.HORIZON_COLUMN_FACT_SER
+          + ", "
+          + PgConstants.HORIZON_COLUMN_FACT_ID
+          + ", "
+          + PgConstants.HORIZON_COLUMN_NOTIFICATION_SER;
 
   private final @NonNull JdbcTemplate jdbcTemplate;
   private final @NonNull FactTableWriteLock factTableWriteLock;
@@ -68,30 +83,27 @@ public class PgFactStreamHorizonProvider extends ReadOnlyPgFactStreamHorizonProv
 
   @Override
   public @NonNull FactStreamHorizon advance() {
-    FactStreamHorizon horizon =
-        metrics.time(
-            StoreMetrics.OP.ADVANCE_FACT_STREAM_HORIZON,
-            () -> {
-              if (factTableWriteLock.isExclusiveTXLockHeld()) {
-                // This transaction already owns the publication barrier. A new transaction
-                // would wait for that same lock until this one commits.
-                FactStreamHorizon inTransaction = doAdvance();
-                TransactionSynchronizationManager.registerSynchronization(
-                    new TransactionSynchronization() {
-                      @Override
-                      public void afterCommit() {
-                        updateCommittedHorizon(inTransaction);
-                      }
-                    });
-                return inTransaction;
-              }
-              FactStreamHorizon committed =
-                  Objects.requireNonNull(transactionTemplate.execute(ignored -> doAdvance()));
-              updateCommittedHorizon(committed);
-              return committed;
-            });
-
-    return horizon;
+    return metrics.time(
+        StoreMetrics.OP.ADVANCE_FACT_STREAM_HORIZON,
+        () -> {
+          if (factTableWriteLock.isExclusiveTXLockHeld()) {
+            // This transaction already owns the publication barrier. A new transaction
+            // would wait for that same lock until this one commits.
+            FactStreamHorizon inTransaction = doAdvance();
+            TransactionSynchronizationManager.registerSynchronization(
+                new TransactionSynchronization() {
+                  @Override
+                  public void afterCommit() {
+                    updateCommittedHorizon(inTransaction);
+                  }
+                });
+            return inTransaction;
+          }
+          FactStreamHorizon committed =
+              Objects.requireNonNull(transactionTemplate.execute(ignored -> doAdvance()));
+          updateCommittedHorizon(committed);
+          return committed;
+        });
   }
 
   private void updateCommittedHorizon(FactStreamHorizon horizon) {
@@ -118,21 +130,16 @@ public class PgFactStreamHorizonProvider extends ReadOnlyPgFactStreamHorizonProv
   private FactStreamHorizon doAdvance() {
     factTableWriteLock.acquireExclusiveTXLock();
     FactStreamHorizon next = liveHorizon();
-    List<FactStreamHorizon> persisted =
-        jdbcTemplate.query(
-            UPDATE_HORIZON,
-            (rs, rowNum) ->
-                new FactStreamHorizon(
-                    rs.getObject("fact_id", UUID.class),
-                    rs.getLong("fact_ser"),
-                    rs.getLong("notification_ser")),
-            next.factSerial(),
-            next.factId(),
-            next.notificationSerial());
-    if (persisted.isEmpty()) {
-      throw new IllegalStateException(MISSING_HORIZON);
-    }
-    return persisted.get(0);
+    return jdbcTemplate.queryForObject(
+        UPDATE_HORIZON,
+        (rs, rowNum) ->
+            new FactStreamHorizon(
+                rs.getObject(PgConstants.HORIZON_COLUMN_FACT_ID, UUID.class),
+                rs.getLong(PgConstants.HORIZON_COLUMN_FACT_SER),
+                rs.getLong(PgConstants.HORIZON_COLUMN_NOTIFICATION_SER)),
+        next.factSerial(),
+        next.factId(),
+        next.notificationSerial());
   }
 
   private @NonNull FactStreamHorizon liveHorizon() {
@@ -141,7 +148,9 @@ public class PgFactStreamHorizonProvider extends ReadOnlyPgFactStreamHorizonProv
             PgConstants.LATEST_FACT,
             (rs, rowNum) ->
                 new FactStreamHorizon(
-                    rs.getObject("fact_id", UUID.class), rs.getLong("fact_serial"), 0));
+                    rs.getObject(PgConstants.HORIZON_COLUMN_FACT_ID, UUID.class),
+                    rs.getLong(PgConstants.HORIZON_COLUMN_FACT_SER),
+                    0));
     FactStreamHorizon factHorizon =
         factHorizons.isEmpty() ? FactStreamHorizon.empty() : factHorizons.get(0);
     Long notificationSerial = jdbcTemplate.queryForObject(MAX_NOTIFICATION_SERIAL, Long.class);

@@ -303,8 +303,8 @@ public class PgFactStore extends AbstractFactStore {
   @Override
   @NonNull
   protected State getStateFor(@NonNull Collection<FactSpec> specs) {
-    long horizonSerial = horizonProvider.advance().factSerial();
-    return doGetState(specs, 0, OptionalLong.of(horizonSerial));
+    FactStreamHorizon horizon = horizonProvider.advance();
+    return doGetState(specs, 0, Optional.of(horizon));
   }
 
   @Override
@@ -315,26 +315,26 @@ public class PgFactStore extends AbstractFactStore {
 
   @VisibleForTesting
   State doGetState(@NotNull Collection<FactSpec> specs, long lastMatchingSerial) {
-    return doGetState(specs, lastMatchingSerial, OptionalLong.empty());
+    return doGetState(specs, lastMatchingSerial, Optional.empty());
   }
 
   private State doGetState(
       @NotNull Collection<FactSpec> specs,
       long lastMatchingSerial,
-      @NonNull OptionalLong horizonSerial) {
+      @NonNull Optional<FactStreamHorizon> horizon) {
     return metrics.time(
         StoreMetrics.OP.GET_STATE_FOR,
         () -> {
           PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs);
           String stateSQL;
           stateSQL =
-              horizonSerial.isPresent()
+              horizon.isPresent()
                   ? pgQueryBuilder.createStateSQL(true)
                   : pgQueryBuilder.createStateSQL(false);
           PreparedStatementSetter statementSetter =
-              horizonSerial.isPresent()
+              horizon.isPresent()
                   ? pgQueryBuilder.createBoundedStatementSetter(
-                      new AtomicLong(lastMatchingSerial), horizonSerial.getAsLong())
+                      new AtomicLong(lastMatchingSerial), horizon.orElseThrow())
                   : pgQueryBuilder.createUnboundedStatementSetter(
                       new AtomicLong(lastMatchingSerial));
 

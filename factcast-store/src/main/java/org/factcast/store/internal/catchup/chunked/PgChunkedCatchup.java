@@ -150,16 +150,19 @@ public class PgChunkedCatchup extends AbstractPgCatchup {
     log.trace("{} catchup {} - preparing temp table {}", req, phase, tempTableName);
 
     final var isFromScratch = (fromSerial.get() <= 0);
-    final var timer = metrics.timer(StoreMetrics.OP.RESULT_STREAM_START, isFromScratch);
-    Timer.Sample sample = metrics.startSample();
 
-    int matches =
-        fromSerial.get() >= horizon.factSerial()
-            ? 0
-            : jdbc.update(
-                catchupSQL, b.createBoundedStatementSetter(fromSerial, horizon.factSerial()));
-    log.trace("{} catchup {} - Temp table has {} matching serials", req, phase, matches);
-    logIfAboveThreshold(Duration.ofNanos(sample.stop(timer)));
+    int matches;
+    if (fromSerial.get() >= horizon.factSerial()) {
+      // no need to even run a query, if we know there is no matching fact within the bounds of the
+      // horizon
+      matches = 0;
+    } else {
+      final var timer = metrics.timer(StoreMetrics.OP.RESULT_STREAM_START, isFromScratch);
+      Timer.Sample sample = metrics.startSample();
+      matches = jdbc.update(catchupSQL, b.createBoundedStatementSetter(fromSerial, horizon));
+      log.trace("{} catchup {} - Temp table has {} matching serials", req, phase, matches);
+      logIfAboveThreshold(Duration.ofNanos(sample.stop(timer)));
+    }
     return matches;
   }
 

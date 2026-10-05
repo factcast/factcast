@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import io.micrometer.core.instrument.Timer;
 import java.sql.*;
 import java.time.Duration;
 import java.util.concurrent.atomic.*;
@@ -209,13 +210,14 @@ class PgChunkedWithHoldCursorCatchupTest {
     @SneakyThrows
     void testDeclare() {
       when(connection.prepareStatement(anyString())).thenReturn(ps);
-      when(queryBuilder.createBoundedStatementSetter(any(), anyLong())).thenReturn(pss);
+      FactStreamHorizon horizon = new FactStreamHorizon(null, 42, 0);
+      when(queryBuilder.createBoundedStatementSetter(any(), same(horizon))).thenReturn(pss);
 
       PgChunkedWithHoldCursorCatchup.Cursor cursor = underTest.new Cursor(1000);
-      cursor.declare(queryBuilder, new AtomicLong(0), new FactStreamHorizon(null, 42, 0));
+      cursor.declare(queryBuilder, new AtomicLong(0), horizon);
 
       verify(queryBuilder).createBoundedSQL();
-      verify(queryBuilder).createBoundedStatementSetter(any(AtomicLong.class), eq(42L));
+      verify(queryBuilder).createBoundedStatementSetter(any(AtomicLong.class), same(horizon));
       verify(ps).execute();
       verify(pss).setValues(ps);
     }
@@ -366,6 +368,27 @@ class PgChunkedWithHoldCursorCatchupTest {
 
   @Nested
   class DeclareAndFetchFirstTest {
+    @Test
+    @SneakyThrows
+    void stopsTimerWhenCursorDeclarationFails() {
+      PgQueryBuilder queryBuilder = mock(PgQueryBuilder.class);
+      PgFactExtractor extractor = mock(PgFactExtractor.class);
+      Timer timer = mock(Timer.class);
+      Timer.Sample sample = mock(Timer.Sample.class);
+      RuntimeException failure = new IllegalStateException("declaration failed");
+      when(metrics.timer(StoreMetrics.OP.RESULT_STREAM_START, true)).thenReturn(timer);
+      when(metrics.startSample()).thenReturn(sample);
+      doThrow(failure).when(cursor).declare(any(), any(), any());
+
+      assertThatThrownBy(
+              () ->
+                  underTest.declareAndFetchFirst(
+                      cursor, queryBuilder, new AtomicLong(0), extractor))
+          .isSameAs(failure);
+
+      verify(sample).stop(timer);
+    }
+
     @Test
     @SneakyThrows
     void testDeclareAndFetchFirst_Empty() {

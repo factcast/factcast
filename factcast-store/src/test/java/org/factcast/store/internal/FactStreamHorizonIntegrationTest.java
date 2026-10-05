@@ -118,7 +118,7 @@ final class FactStreamHorizonIntegrationTest {
 
     assertThat(store.serialOf(fact.id())).isEmpty();
     assertThat(horizonProvider.currentPrimary()).isEqualTo(before);
-    assertThat(horizonProvider.read(dataSource)).isEqualTo(before);
+    assertThat(horizonProvider.readFrom(dataSource)).isEqualTo(before);
   }
 
   @Test
@@ -215,7 +215,7 @@ final class FactStreamHorizonIntegrationTest {
       connection.commit();
     }
 
-    FactStreamHorizon horizon = horizonProvider.read(dataSource);
+    FactStreamHorizon horizon = horizonProvider.readFrom(dataSource);
     assertThat(horizon.factId()).isEqualTo(latest.id());
     assertThat(horizon.factSerial()).isEqualTo(expectedFactSerial);
     assertThat(horizon.notificationSerial()).isEqualTo(expectedNotificationSerial);

@@ -394,8 +394,9 @@ class NudgeNotificationHandlerTest {
   }
 
   @Test
-  void missingCursorWakesSubscribersEvenWhenHorizonDidNotAdvance() {
+  void missingCursorWakesSubscribersWhenHorizonAdvances() {
     handler.notificationSer.set(200);
+    when(horizonProvider.advance()).thenReturn(new FactStreamHorizon(UUID.randomUUID(), 201, 201));
     when(jdbc.queryForObject(NudgeNotificationHandler.BASE_EXISTS_SQL, Boolean.class, 200L))
         .thenReturn(false);
 
@@ -403,7 +404,7 @@ class NudgeNotificationHandlerTest {
 
     verify(bus).post(FactInsertionNotification.internal());
     verify(jdbc, never()).query(anyString(), any(DataClassRowMapper.class), any(Object[].class));
-    assertThat(handler.notificationSer).hasValue(200);
+    assertThat(handler.notificationSer).hasValue(201);
   }
 
   @Test

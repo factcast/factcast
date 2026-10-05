@@ -208,6 +208,20 @@ class PgChunkedCatchupTest {
       verify(jdbc).update(sql.capture(), any(PreparedStatementSetter.class));
       assertThat(sql.getValue()).contains("ser<=?");
     }
+
+    @Test
+    void prepareTemporaryTableSkipsQueryAndTimerAtHorizon() {
+      JdbcTemplate jdbc = mock(JdbcTemplate.class);
+      when(serial.get()).thenReturn(Long.MAX_VALUE);
+      when(req.specs()).thenReturn(java.util.Collections.emptyList());
+
+      int matches = underTest.prepareTemporaryTable(jdbc, "tmp_table");
+
+      assertThat(matches).isZero();
+      verify(jdbc).execute("create temp table tmp_table (ser bigint primary key)");
+      verify(jdbc, never()).update(anyString(), any(PreparedStatementSetter.class));
+      verifyNoInteractions(metrics);
+    }
   }
 
   @Nested

@@ -73,11 +73,13 @@ final class PgFactStreamHorizonProviderTest {
     when(jdbcTemplate.queryForObject(
             PgFactStreamHorizonProvider.MAX_NOTIFICATION_SERIAL, Long.class))
         .thenReturn(10L);
-    when(jdbcTemplate.query(
+    when(jdbcTemplate.queryForObject(
             eq(PgFactStreamHorizonProvider.UPDATE_HORIZON),
             any(RowMapper.class),
-            any(Object[].class)))
-        .thenReturn(List.of(persisted));
+            eq(42L),
+            eq(id),
+            eq(10L)))
+        .thenReturn(persisted);
     doAnswer(
             ignored -> {
               assertThat(underTest.currentPrimary()).isEqualTo(FactStreamHorizon.empty());
@@ -98,10 +100,12 @@ final class PgFactStreamHorizonProviderTest {
         .queryForObject(PgFactStreamHorizonProvider.MAX_NOTIFICATION_SERIAL, Long.class);
     order
         .verify(jdbcTemplate)
-        .query(
+        .queryForObject(
             eq(PgFactStreamHorizonProvider.UPDATE_HORIZON),
             any(RowMapper.class),
-            any(Object[].class));
+            eq(42L),
+            eq(id),
+            eq(10L));
     order.verify(transactionManager).commit(any());
 
     ArgumentCaptor<TransactionDefinition> definition =
@@ -119,9 +123,16 @@ final class PgFactStreamHorizonProviderTest {
         new FactStreamHorizon(liveHorizon.factId(), liveHorizon.factSerial(), 10);
     when(jdbcTemplate.query(eq(PgConstants.LATEST_FACT), any(RowMapper.class)))
         .thenReturn(List.of(liveHorizon));
-    when(jdbcTemplate.queryForObject(anyString(), eq(Long.class))).thenReturn(10L);
-    when(jdbcTemplate.query(anyString(), any(RowMapper.class), any(Object[].class)))
-        .thenReturn(List.of(persisted));
+    when(jdbcTemplate.queryForObject(
+            PgFactStreamHorizonProvider.MAX_NOTIFICATION_SERIAL, Long.class))
+        .thenReturn(10L);
+    when(jdbcTemplate.queryForObject(
+            eq(PgFactStreamHorizonProvider.UPDATE_HORIZON),
+            any(RowMapper.class),
+            eq(42L),
+            eq(liveHorizon.factId()),
+            eq(10L)))
+        .thenReturn(persisted);
     doThrow(new TransactionSystemException("commit failed")).when(transactionManager).commit(any());
 
     assertThatThrownBy(underTest::advance).isInstanceOf(TransactionSystemException.class);
@@ -135,8 +146,15 @@ final class PgFactStreamHorizonProviderTest {
     FactStreamHorizon liveHorizon = new FactStreamHorizon(UUID.randomUUID(), 42, 0);
     when(jdbcTemplate.query(eq(PgConstants.LATEST_FACT), any(RowMapper.class)))
         .thenReturn(List.of(liveHorizon));
-    when(jdbcTemplate.queryForObject(anyString(), eq(Long.class))).thenReturn(10L);
-    when(jdbcTemplate.query(anyString(), any(RowMapper.class), any(Object[].class)))
+    when(jdbcTemplate.queryForObject(
+            PgFactStreamHorizonProvider.MAX_NOTIFICATION_SERIAL, Long.class))
+        .thenReturn(10L);
+    when(jdbcTemplate.queryForObject(
+            eq(PgFactStreamHorizonProvider.UPDATE_HORIZON),
+            any(RowMapper.class),
+            eq(42L),
+            eq(liveHorizon.factId()),
+            eq(10L)))
         .thenThrow(new IllegalStateException("write failed"));
 
     assertThatThrownBy(underTest::advance)
@@ -156,9 +174,16 @@ final class PgFactStreamHorizonProviderTest {
     when(factTableWriteLock.isExclusiveTXLockHeld()).thenReturn(true);
     when(jdbcTemplate.query(eq(PgConstants.LATEST_FACT), any(RowMapper.class)))
         .thenReturn(List.of(liveHorizon));
-    when(jdbcTemplate.queryForObject(anyString(), eq(Long.class))).thenReturn(10L);
-    when(jdbcTemplate.query(anyString(), any(RowMapper.class), any(Object[].class)))
-        .thenReturn(List.of(persisted));
+    when(jdbcTemplate.queryForObject(
+            PgFactStreamHorizonProvider.MAX_NOTIFICATION_SERIAL, Long.class))
+        .thenReturn(10L);
+    when(jdbcTemplate.queryForObject(
+            eq(PgFactStreamHorizonProvider.UPDATE_HORIZON),
+            any(RowMapper.class),
+            eq(42L),
+            eq(liveHorizon.factId()),
+            eq(10L)))
+        .thenReturn(persisted);
 
     TransactionSynchronizationManager.initSynchronization();
     try {

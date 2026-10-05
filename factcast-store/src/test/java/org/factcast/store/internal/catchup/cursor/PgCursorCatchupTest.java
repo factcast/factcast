@@ -192,7 +192,8 @@ class PgCursorCatchupTest {
     PreparedStatementSetter setter = mock(PreparedStatementSetter.class);
     when(serial.get()).thenReturn(5L);
     when(queryBuilder.createBoundedSQL()).thenReturn("SELECT 1");
-    when(queryBuilder.createBoundedStatementSetter(any(AtomicLong.class), eq(42L)))
+    FactStreamHorizon horizon = new FactStreamHorizon(null, 42, 0);
+    when(queryBuilder.createBoundedStatementSetter(any(AtomicLong.class), same(horizon)))
         .thenReturn(setter);
     underTest =
         spy(
@@ -202,7 +203,7 @@ class PgCursorCatchupTest {
                 req,
                 pipeline,
                 serial,
-                new FactStreamHorizon(null, 42, 0),
+                horizon,
                 ds,
                 PgCatchupFactory.Phase.PHASE_1));
     doReturn(queryBuilder).when(underTest).createPgQueryBuilder(anyList());
@@ -210,6 +211,7 @@ class PgCursorCatchupTest {
     underTest.run();
 
     verify(c).prepareStatement("SELECT 1");
+    verify(queryBuilder).createBoundedStatementSetter(any(AtomicLong.class), same(horizon));
     verify(setter).setValues(p);
     verify(pipeline).process(argThat(Signal::indicatesFlush));
   }

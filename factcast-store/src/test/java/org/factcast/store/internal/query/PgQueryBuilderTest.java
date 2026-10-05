@@ -27,6 +27,7 @@ import lombok.SneakyThrows;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import org.assertj.core.util.Lists;
 import org.factcast.core.spec.FactSpec;
+import org.factcast.core.subscription.FactStreamHorizon;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -102,7 +103,9 @@ class PgQueryBuilderTest {
       var underTest = new PgQueryBuilder(Lists.newArrayList(FactSpec.ns("*")));
       var ps = mock(PreparedStatement.class);
 
-      underTest.createBoundedStatementSetter(serial, 42L).setValues(ps);
+      underTest
+          .createBoundedStatementSetter(serial, new FactStreamHorizon(null, 42L, 7L))
+          .setValues(ps);
 
       verify(ps).setLong(1, 12L);
       verify(ps).setLong(2, 42L);

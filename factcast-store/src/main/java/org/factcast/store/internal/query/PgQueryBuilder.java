@@ -21,10 +21,12 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.spec.FactSpec;
+import org.factcast.core.subscription.FactStreamHorizon;
 import org.factcast.store.internal.PgConstants;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 
@@ -57,8 +59,8 @@ public class PgQueryBuilder {
   }
 
   public PreparedStatementSetter createBoundedStatementSetter(
-      @NonNull AtomicLong serial, long horizonSerial) {
-    return createStatementSetter(serial, horizonSerial);
+      @NonNull AtomicLong serial, @Nonnull FactStreamHorizon horizon) {
+    return createStatementSetter(serial, horizon.factSerial());
   }
 
   private PreparedStatementSetter createStatementSetter(
