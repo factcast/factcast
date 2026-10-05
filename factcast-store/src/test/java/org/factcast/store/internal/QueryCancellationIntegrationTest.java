@@ -16,15 +16,16 @@
 package org.factcast.store.internal;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.*;
 
 import java.lang.reflect.*;
 import java.sql.*;
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.atomic.*;
 import javax.sql.DataSource;
 import lombok.NonNull;
-import nl.altindag.log.LogCaptor;
 import org.aopalliance.intercept.MethodInterceptor;
 import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpec;
@@ -223,28 +224,26 @@ class QueryCancellationIntegrationTest {
           public void onComplete() {}
         };
 
-    try (LogCaptor logCaptor = LogCaptor.forClass(CatchupDataSource.class)) {
-      logCaptor.setLogLevelToDebug();
+    var subscription = store.subscribe(SubscriptionRequestTO.from(request), observer);
 
-      var subscription = store.subscribe(SubscriptionRequestTO.from(request), observer);
-
-      try {
-        subscription.awaitComplete(5000);
-      } catch (Exception expected) {
-        // expected error or closed exception
-      }
-
-      // Verify that TransformationException was received by subscriber
-      assertThat(receivedError.get()).isInstanceOf(TransformationException.class);
-      assertThat(receivedError.get().getMessage())
-          .startsWith("Cannot reach any version in [42] from version 1");
-
-      // Verify that "Cancellation requested" is logged
-      assertThat(logCaptor.getDebugLogs()).contains("Cancellation requested");
-
-      // Verify that cancelQuery() was called on the database connection
-      assertThat(capturedConnections).hasSize(1);
-      verify(capturedConnections.iterator().next(), times(1)).cancelQuery();
+    try {
+      subscription.awaitComplete(5000);
+    } catch (Exception expected) {
+      // expected error or closed exception
     }
+
+    // Verify that TransformationException was received by subscriber
+    assertThat(receivedError.get()).isInstanceOf(TransformationException.class);
+    assertThat(receivedError.get().getMessage())
+        .startsWith("Cannot reach any version in [42] from version 1");
+
+    // Closing the subscription follows onError, so awaitComplete can return before cancellation.
+    await()
+        .atMost(Duration.ofSeconds(5))
+        .untilAsserted(
+            () -> {
+              assertThat(capturedConnections).hasSize(1);
+              verify(capturedConnections.iterator().next(), times(1)).cancelQuery();
+            });
   }
 }

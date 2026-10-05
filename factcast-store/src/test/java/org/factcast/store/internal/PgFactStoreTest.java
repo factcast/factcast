@@ -511,24 +511,37 @@ class PgFactStoreTest {
 
     @SneakyThrows
     @Test
-    void validationUsesUnboundedQuery() {
+    void capturesStatementAndExtractsResult() {
       FactSpec spec1 = FactSpec.ns("ns1").type("type1");
       List<FactSpec> specs = Lists.newArrayList(spec1);
 
       PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs);
-      String stateSQL = pgQueryBuilder.createStateSQL(false);
-      PreparedStatementSetter statementSetter =
-          pgQueryBuilder.createUnboundedStatementSetter(new AtomicLong(0));
+      String stateSQL =
+          pgQueryBuilder.createStateSQL(
+              storeConfigurationProperties.getStateQueryBackwardScanWindow());
 
-      ArgumentCaptor<PreparedStatementSetter> captor =
+      ArgumentCaptor<PreparedStatementSetter> setterCaptor =
           ArgumentCaptor.forClass(PreparedStatementSetter.class);
-      when(jdbcTemplate.query(eq(stateSQL), captor.capture(), any(ResultSetExtractor.class)))
+      @SuppressWarnings("unchecked")
+      ArgumentCaptor<ResultSetExtractor<Long>> extractorCaptor =
+          ArgumentCaptor.forClass(ResultSetExtractor.class);
+
+      when(jdbcTemplate.query(eq(stateSQL), setterCaptor.capture(), extractorCaptor.capture()))
           .thenReturn(32L);
       assertThat(underTest.getStateFor(specs, 16L).serialOfLastMatchingFact()).isEqualTo(32L);
 
       PreparedStatement ps = mock(PreparedStatement.class);
-      captor.getValue().setValues(ps);
+      setterCaptor.getValue().setValues(ps);
       verify(ps).setLong(3, 16L);
+      verify(ps).setLong(6, 16L);
+
+      ResultSet rs = mock(ResultSet.class);
+      when(rs.next()).thenReturn(false);
+      assertThat(extractorCaptor.getValue().extractData(rs)).isEqualTo(0L);
+
+      when(rs.next()).thenReturn(true);
+      when(rs.getLong(1)).thenReturn(42L);
+      assertThat(extractorCaptor.getValue().extractData(rs)).isEqualTo(42L);
     }
 
     @SneakyThrows
@@ -539,7 +552,9 @@ class PgFactStoreTest {
       when(horizonProvider.advance()).thenReturn(new FactStreamHorizon(UUID.randomUUID(), 42, 42));
 
       PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs);
-      String stateSQL = pgQueryBuilder.createStateSQL(true);
+      String stateSQL =
+          pgQueryBuilder.createStateSQL(
+              storeConfigurationProperties.getStateQueryBackwardScanWindow(), true);
       ArgumentCaptor<PreparedStatementSetter> captor =
           ArgumentCaptor.forClass(PreparedStatementSetter.class);
       when(jdbcTemplate.query(eq(stateSQL), captor.capture(), any(ResultSetExtractor.class)))
@@ -551,6 +566,8 @@ class PgFactStoreTest {
       captor.getValue().setValues(ps);
       verify(ps).setLong(3, 0L);
       verify(ps).setLong(4, 42L);
+      verify(ps).setLong(7, 0L);
+      verify(ps).setLong(8, 42L);
     }
   }
 
@@ -566,23 +583,25 @@ class PgFactStoreTest {
 
     @SneakyThrows
     @Test
-    void name() {
+    void bindsLastMatchingSerial() {
       FactSpec spec1 = FactSpec.ns("ns1").type("type1");
       List<FactSpec> specs = Lists.newArrayList(spec1);
 
       PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs);
-      String stateSQL = pgQueryBuilder.createStateSQL(false);
-      PreparedStatementSetter statementSetter =
-          pgQueryBuilder.createUnboundedStatementSetter(new AtomicLong(12));
+      String stateSQL =
+          pgQueryBuilder.createStateSQL(
+              storeConfigurationProperties.getStateQueryBackwardScanWindow());
       ArgumentCaptor<PreparedStatementSetter> captor =
           ArgumentCaptor.forClass(PreparedStatementSetter.class);
       when(jdbcTemplate.query(eq(stateSQL), captor.capture(), any(ResultSetExtractor.class)))
           .thenReturn(32L);
-      assertThat(underTest.getStateFor(specs, 16L).serialOfLastMatchingFact()).isEqualTo(32L);
+      assertThat(underTest.getStateFor(specs, LAST_MATCHING_SERIAL).serialOfLastMatchingFact())
+          .isEqualTo(32L);
 
       PreparedStatement ps = mock(PreparedStatement.class);
       captor.getValue().setValues(ps);
-      verify(ps).setLong(3, 16L);
+      verify(ps).setLong(3, LAST_MATCHING_SERIAL);
+      verify(ps).setLong(6, LAST_MATCHING_SERIAL);
     }
   }
 

@@ -15,8 +15,6 @@
  */
 package org.factcast.factus.projector;
 
-import static java.util.Collections.*;
-
 import com.google.common.annotations.VisibleForTesting;
 import jakarta.annotation.Nullable;
 import java.lang.reflect.*;
@@ -222,17 +220,13 @@ public class ProjectorImpl<A extends Projection> implements Projector<A> {
   @Override
   @SuppressWarnings("java:S2589")
   public Collection<FactSpec> createFactSpecs() {
-    List<FactSpec> discovered =
-        dispatchInfo.values().stream().map(d -> d.spec().copy()).collect(Collectors.toList());
+    UUID aggId =
+        projection instanceof Aggregate aggregate ? AggregateUtil.aggregateId(aggregate) : null;
 
-    if (projection instanceof Aggregate aggregate) {
-      UUID aggId = AggregateUtil.aggregateId(aggregate);
-      if (aggId != null) {
-        for (FactSpec factSpec : discovered) {
-          factSpec.aggId(aggId);
-        }
-      }
-    }
+    List<FactSpec> discovered =
+        dispatchInfo.values().stream()
+            .map(d -> aggId != null ? d.specFor(aggId) : d.spec().copy())
+            .collect(Collectors.toList());
 
     Collection<FactSpec> ret = projection.postprocess(discovered);
     //noinspection ConstantConditions

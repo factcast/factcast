@@ -29,3 +29,4 @@ package-lock.json
 **/.codex/**
 **/.agent-logs
 .agent-logs
+**/.codex/**

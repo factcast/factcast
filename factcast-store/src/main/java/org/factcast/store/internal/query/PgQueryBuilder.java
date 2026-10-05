@@ -21,7 +21,7 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
-import javax.annotation.Nonnull;
+import javax.annotation.*;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -55,33 +55,49 @@ public class PgQueryBuilder {
   }
 
   public PreparedStatementSetter createUnboundedStatementSetter(@NonNull AtomicLong serial) {
-    return createStatementSetter(serial, null);
+    return p -> setParameters(p, serial.get(), 0, OptionalLong.empty());
   }
 
   public PreparedStatementSetter createBoundedStatementSetter(
       @NonNull AtomicLong serial, @Nonnull FactStreamHorizon horizon) {
-    return createStatementSetter(serial, horizon.factSerial());
+    return p -> setParameters(p, serial.get(), 0, OptionalLong.of(horizon.factSerial()));
   }
 
-  private PreparedStatementSetter createStatementSetter(
-      @NonNull AtomicLong serial, Long horizonSerial) {
+  @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+  public PreparedStatementSetter createStateStatementSetter(
+      long serial, @NonNull Optional<FactStreamHorizon> horizon) {
     return p -> {
-      int count = 0;
-      for (FactSpec spec : factSpecs) {
-        count = setNs(p, count, spec);
-        count = setType(p, count, spec);
-        // version is intentionally not used here
-        count = setAggIds(p, count, spec);
-        count = setAggProperties(p, count, spec);
-        count = setMeta(p, count, spec);
-        count = setMetaKeyExists(p, count, spec);
-      }
-
-      p.setLong(++count, serial.get());
-      if (horizonSerial != null) {
-        p.setLong(++count, horizonSerial);
-      }
+      OptionalLong horizonSerial = toOptionalLong(horizon.map(FactStreamHorizon::factSerial));
+      int count = setParameters(p, serial, 0, horizonSerial);
+      setParameters(p, serial, count, horizonSerial);
     };
+  }
+
+  public PreparedStatementSetter createStateStatementSetter(long serial) {
+    return createStateStatementSetter(serial, Optional.empty());
+  }
+
+  @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+  private static OptionalLong toOptionalLong(Optional<Long> value) {
+    return value.map(OptionalLong::of).orElseGet(OptionalLong::empty);
+  }
+
+  private int setParameters(PreparedStatement p, long serial, int count, OptionalLong horizonSerial)
+      throws SQLException {
+    for (FactSpec spec : factSpecs) {
+      count = setNs(p, count, spec);
+      count = setType(p, count, spec);
+      // version is intentionally not used here
+      count = setAggIds(p, count, spec);
+      count = setAggProperties(p, count, spec);
+      count = setMeta(p, count, spec);
+      count = setMetaKeyExists(p, count, spec);
+    }
+    p.setLong(++count, serial);
+    if (horizonSerial.isPresent()) {
+      p.setLong(++count, horizonSerial.getAsLong());
+    }
+    return count;
   }
 
   @SneakyThrows
@@ -275,18 +291,44 @@ public class PgQueryBuilder {
     return tempTableName != null;
   }
 
-  public String createStateSQL(boolean bounded) {
+  /**
+   * Probes a bounded recent serial range before searching all matches. Both branches share one
+   * statement snapshot, and COALESCE skips the fallback when the recent probe succeeds.
+   */
+  public String createStateSQL(long backwardScanWindow) {
+    return createStateSQL(backwardScanWindow, false);
+  }
 
-    String sql =
+  public String createStateSQL(long backwardScanWindow, boolean bounded) {
+    String matchingSerials =
         "SELECT "
             + PgConstants.COLUMN_SER
             + FROM
             + PgConstants.TABLE_FACT
             + WHERE
-            + createWhereClause(bounded)
-            + ORDER_BY
-            + PgConstants.COLUMN_SER
-            + " DESC LIMIT 1";
+            + createWhereClause(bounded);
+    // sql query is not easy to grasp, but roughly does something like:
+    // select COALESCE( <most recent quick lookup> , <most recent full GIN search>)
+    //
+    // for 90% of the cases, the first is faster, but if we're looking for a very rarely inserted
+    // facts, it might have a catastrophic runtime.
+    //
+    // Therefore we limit the search for "most recent" to the last $backwardScanWindow facts, and
+    // fall back to the safer method of using a GIN (probably still tail) to search.
+    String sql =
+        "WITH boundary AS MATERIALIZED (SELECT MAX(ser)-"
+            + backwardScanWindow
+            + " AS cutoff FROM fact)"
+            + "SELECT COALESCE(("
+            // try backwards scan downto cutoff, means: find the most recent matching ser or NULL if
+            // none was found within the last 20k facts
+            + matchingSerials
+            + " AND ser > (SELECT cutoff FROM boundary) ORDER BY ser DESC LIMIT 1),"
+            //
+            // only if the above returns NULL, we try the GIN index approach instead:
+            + " (WITH subq AS MATERIALIZED ("
+            + matchingSerials
+            + ") SELECT MAX(ser) FROM subq), 0)";
     log.trace("creating state SQL for {} - SQL={}", factSpecs, sql);
     return sql;
   }

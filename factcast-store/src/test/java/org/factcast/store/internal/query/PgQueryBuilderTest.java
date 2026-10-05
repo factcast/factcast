@@ -19,8 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 import java.sql.PreparedStatement;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -28,10 +27,11 @@ import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import org.assertj.core.util.Lists;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.FactStreamHorizon;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -41,9 +41,6 @@ class PgQueryBuilderTest {
   @Nested
   class WhenCreatingStatementSetter {
     @Mock private @NonNull AtomicLong serial;
-
-    @BeforeEach
-    void setup() {}
 
     @SneakyThrows
     @Test
@@ -94,6 +91,21 @@ class PgQueryBuilderTest {
       // ser>?
       verify(ps).setLong(++index, serial.get());
       verifyNoMoreInteractions(ps);
+
+      // Every branch must bind the full set of predicates in the same order, including the
+      // threshold. Compare against the subscription setter to cover all optional parameters.
+      var stateStatement = mock(PreparedStatement.class);
+      underTest.createStateStatementSetter(serial.get()).setValues(stateStatement);
+      var expected = mockingDetails(ps).getInvocations().stream().toList();
+      var actual = mockingDetails(stateStatement).getInvocations().stream().toList();
+      assertThat(actual).hasSize(expected.size() * 2);
+      for (int i = 0; i < actual.size(); i++) {
+        var reference = expected.get(i % expected.size());
+        assertThat(actual.get(i).getMethod()).isEqualTo(reference.getMethod());
+        assertThat(actual.get(i).getArgument(0, Integer.class)).isEqualTo(i + 1);
+        assertThat(actual.get(i).getArgument(1, Object.class))
+            .isEqualTo(reference.getArgument(1, Object.class));
+      }
     }
 
     @SneakyThrows
@@ -103,13 +115,20 @@ class PgQueryBuilderTest {
       var underTest = new PgQueryBuilder(Lists.newArrayList(FactSpec.ns("*")));
       var ps = mock(PreparedStatement.class);
 
-      underTest
-          .createBoundedStatementSetter(serial, new FactStreamHorizon(null, 42L, 7L))
-          .setValues(ps);
+      FactStreamHorizon horizon = new FactStreamHorizon(null, 42L, 7L);
+      underTest.createBoundedStatementSetter(serial, horizon).setValues(ps);
 
       verify(ps).setLong(1, 12L);
       verify(ps).setLong(2, 42L);
       verifyNoMoreInteractions(ps);
+
+      var stateStatement = mock(PreparedStatement.class);
+      underTest.createStateStatementSetter(12L, Optional.of(horizon)).setValues(stateStatement);
+      verify(stateStatement).setLong(1, 12L);
+      verify(stateStatement).setLong(2, 42L);
+      verify(stateStatement).setLong(3, 12L);
+      verify(stateStatement).setLong(4, 42L);
+      verifyNoMoreInteractions(stateStatement);
     }
   }
 
@@ -377,17 +396,51 @@ SELECT ser, header, payload,
       var spec3 = FactSpec.ns("ns3").type("t3").aggId(new UUID(0, 1), new UUID(0, 2));
       var specs = Lists.newArrayList(spec1, spec2, spec3);
       var underTest = new PgQueryBuilder(specs);
-      var sql = underTest.createStateSQL(false);
-      var expected =
+      var sql = underTest.createStateSQL(512);
+      var matchingSerials =
           """
-SELECT ser FROM fact
-WHERE (
-(true AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)) OR
-(true AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)) OR
-(true AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb))
-AND ser > ? ORDER BY ser DESC LIMIT 1
+  SELECT ser FROM fact
+  WHERE (
+  (true AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)) OR
+  (true AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)) OR
+  (true AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb))
+  AND ser > ?
 """;
 
+      var expected =
+          """
+WITH boundary AS MATERIALIZED (SELECT MAX(ser) - 512 AS cutoff FROM fact)
+SELECT COALESCE(
+  (%1$s AND ser > (SELECT cutoff FROM boundary) ORDER BY ser DESC LIMIT 1),
+  (WITH subq AS MATERIALIZED (%1$s) SELECT MAX(ser) FROM subq),
+  0)
+"""
+              .formatted(matchingSerials);
+
+      assertThat(normalized(sql)).isEqualTo(normalized(expected));
+    }
+
+    @SneakyThrows
+    @ParameterizedTest
+    @ValueSource(longs = {0, 512, 2147483648L})
+    void singleSpec(long backwardScanWindow) {
+      var spec1 = FactSpec.ns("ns1").type("t1");
+      var underTest = new PgQueryBuilder(Lists.newArrayList(spec1));
+      var sql = underTest.createStateSQL(backwardScanWindow);
+      var expected =
+          """
+WITH boundary AS MATERIALIZED (SELECT MAX(ser) - %d AS cutoff FROM fact)
+SELECT COALESCE(
+  (SELECT ser FROM fact
+   WHERE ((true AND header @> ?::jsonb AND header @> ?::jsonb)) AND ser > ?
+   AND ser > (SELECT cutoff FROM boundary) ORDER BY ser DESC LIMIT 1),
+  (WITH subq AS MATERIALIZED (
+     SELECT ser FROM fact
+     WHERE ((true AND header @> ?::jsonb AND header @> ?::jsonb)) AND ser > ?
+   ) SELECT MAX(ser) FROM subq),
+  0)
+"""
+              .formatted(backwardScanWindow);
       assertThat(normalized(sql)).isEqualTo(normalized(expected));
     }
 
@@ -396,14 +449,18 @@ AND ser > ? ORDER BY ser DESC LIMIT 1
     void boundedStateSqlIncludesHorizon() {
       var underTest = new PgQueryBuilder(List.of(FactSpec.ns("ns1").type("t1")));
 
-      var sql = underTest.createStateSQL(true);
+      var sql = underTest.createStateSQL(512, true);
 
       assertThat(normalized(sql))
           .isEqualTo(
               normalized(
-                  "SELECT ser FROM fact WHERE ((true AND header @> ?::jsonb "
+                  "WITH boundary AS MATERIALIZED (SELECT MAX(ser) - 512 AS cutoff FROM fact) "
+                      + "SELECT COALESCE((SELECT ser FROM fact WHERE ((true AND header @> ?::jsonb "
                       + "AND header @> ?::jsonb)) AND ser > ? AND ser <= ? "
-                      + "ORDER BY ser DESC LIMIT 1"));
+                      + "AND ser > (SELECT cutoff FROM boundary) ORDER BY ser DESC LIMIT 1), "
+                      + "(WITH subq AS MATERIALIZED (SELECT ser FROM fact WHERE "
+                      + "((true AND header @> ?::jsonb AND header @> ?::jsonb)) "
+                      + "AND ser > ? AND ser <= ?) SELECT MAX(ser) FROM subq), 0)"));
     }
   }
 

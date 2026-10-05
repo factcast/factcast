@@ -72,6 +72,21 @@ class PgTransformationStoreChangeListenerTest {
     private final SchemaKey key = SchemaKey.of("ns", "type", 1);
 
     @Test
+    void invalidatesTheChangedEdgeIncludingInflightTransformations() {
+      signal = new TransformationStoreChangeNotification(key.ns(), key.type(), 1, 2, 3);
+      underTest.on(signal);
+      verify(executor)
+          .schedule(
+              lambdaCaptor.capture(),
+              eq(INFLIGHT_TRANSFORMATIONS_DELAY_SECONDS),
+              eq(TimeUnit.SECONDS));
+      lambdaCaptor.getValue().run();
+      verify(transformationCache, times(2)).invalidateTransformationFor(key.ns(), key.type(), 2, 3);
+      verifyNoMoreInteractions(transformationCache);
+      verify(transformationChains, times(2)).notifyFor(TransformationKey.of(key.ns(), key.type()));
+    }
+
+    @Test
     void invalidatesCache() {
       signal = new TransformationStoreChangeNotification(key.ns(), key.type(), 1);
       underTest.on(signal);
