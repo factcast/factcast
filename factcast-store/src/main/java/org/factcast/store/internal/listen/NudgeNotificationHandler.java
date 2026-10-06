@@ -172,6 +172,7 @@ public class NudgeNotificationHandler implements DisposableBean {
     if (horizonSerial < lowerSerial) {
       // The unlogged notification sequence has restarted. Wake every subscriber once before
       // continuing from the rebased persisted horizon.
+      log.warn("Notification sequence restarted, waking all subscribers");
       bus.post(FactInsertionNotification.internal());
       notificationSer.set(horizonSerial);
       return;
