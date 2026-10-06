@@ -8,16 +8,16 @@
 ** xref:Concept/index.adoc[Overview]
 ** xref:Concept/fact.adoc[Fact Anatomy]
 ** xref:Concept/factspec.adoc[Fact Specification]
-** xref:Concept/factstreams.adoc[FactStream design]
-** xref:Concept/schema-registry.adoc[Schema validation/registry]
+** xref:Concept/factstreams.adoc[Fact Stream Design]
+** xref:Concept/schema-registry.adoc[Schema Validation/Registry]
 ** xref:Concept/transformation.adoc[Transformation]
 ** xref:Concept/blacklisting.adoc[Blacklisting]
 ** xref:Concept/tail-index.adoc[Tail Index]
 * xref:Setup/index.adoc[Setup]
 ** xref:Setup/index.adoc[Overview]
 ** xref:Setup/prerequisites.adoc[Prerequisites]
-** xref:Setup/fatjar.adoc[FatJar]
-** xref:Setup/fatjar-tls.adoc[FatJar TLS]
+** xref:Setup/fatjar.adoc[Fat Jar]
+** xref:Setup/fatjar-tls.adoc[Fat Jar (TLS)]
 ** xref:Setup/ports.adoc[Ports]
 ** xref:Setup/security.adoc[Security]
 ** gRPC Client
@@ -45,7 +45,7 @@
 *** CLI
 **** xref:Usage/lowlevel/cli/index.adoc[Overview]
 **** xref:Usage/lowlevel/cli/factcast-cli.adoc[FactCast CLI]
-**** xref:Usage/lowlevel/cli/fc-schema-cli.adoc[Schemareg. CLI]
+**** xref:Usage/lowlevel/cli/fc-schema-cli.adoc[Schema Registry CLI]
 
 ** Factus API (high-level)
 *** xref:Usage/factus/index.adoc[Overview]
@@ -60,8 +60,8 @@
 ***** xref:Usage/factus/projections/snapshots/snapshot-caching.adoc[Snapshot Caching]
 **** Types
 ***** xref:Usage/factus/projections/types/index.adoc[Overview]
-***** xref:Usage/factus/projections/types/snapshot-projections.adoc[Snapshot Projections]
-***** xref:Usage/factus/projections/types/aggregates.adoc[Aggregates]
+***** xref:Usage/factus/projections/types/snapshot-projection.adoc[Snapshot Projection]
+***** xref:Usage/factus/projections/types/aggregate.adoc[Aggregate]
 ***** xref:Usage/factus/projections/types/managed-projection.adoc[Managed Projection]
 ***** xref:Usage/factus/projections/types/local-managed-projection.adoc[Managed (local)]
 ***** xref:Usage/factus/projections/types/subscribed-projection.adoc[Subscribed Projection]

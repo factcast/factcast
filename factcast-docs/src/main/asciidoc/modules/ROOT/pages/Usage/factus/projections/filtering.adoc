@@ -6,7 +6,7 @@ When implementing a Projection, you would add handler methods
 in order to express, what the projection is interested in.
 
 Factus will look at these methods in order to discover xref:ROOT:Concept/factspec.adoc#specification[fact specifications].
-These fact specifications form a query which is sent to the FactCast server to create a fact-stream suited for this
+These fact specifications form a query which is sent to the FactCast server to create a fact stream suited for this
 projection.
 In detail, for each handler method, a Projector inspects the method's annotations and parameter types
 including their annotations to build a
@@ -55,7 +55,7 @@ protected void apply(UserCreated created) {
 This will add the additional filter defined by the `@FilterByMeta` annotation to `FactSpec`.
 As a result, the filtering now takes place at the server side instead of
 wasteful client side filtering (like in the body of the `apply` method).
-Only those Facts will be returned, that have a meta key-value-pair with a key of `priority` and a value of `urgent`.
+Only those facts will be returned, that have a meta key-value-pair with a key of `priority` and a value of `urgent`.
 
 === FilterByMetaExists
 
@@ -69,7 +69,7 @@ protected void apply(UserCreated created) {
 ----
 
 This will add the additional filter defined by the `@FilterByMetaExists` annotation to `FactSpec`.
-Only those Facts will be returned, that have a meta key-value-pair with a key of `priority` no matter what the value is.
+Only those facts will be returned, that have a meta key-value-pair with a key of `priority` no matter what the value is.
 `FilterByMetaDoesNotExist` works the opposite way, of course.
 
 === FilterByAggIdProperty
@@ -84,7 +84,7 @@ protected void apply(UserRecommended event) {
 ----
 
 This will add the additional filter defined by the `@FilterByAggIdProperty` annotation to `FactSpec`.
-Only those Facts will be returned, that have a payload that contains a path 'recommendedByUserId' that has a UUID value
+Only those facts will be returned, that have a payload that contains a path 'recommendedByUserId' that has a UUID value
 which
 matches the current Aggregate's ID. This is the reason, this kind of filter is only valid on Aggregate projections.
 Note that you could also define a dot-separated path like 'references.recommendedByUserId' if that matches your

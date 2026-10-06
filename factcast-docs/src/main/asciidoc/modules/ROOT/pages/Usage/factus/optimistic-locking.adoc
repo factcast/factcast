@@ -1,4 +1,4 @@
-= Optimistic locking
+= Optimistic Locking
 :icons: font
 
 
@@ -114,7 +114,7 @@ factus
 
 As you can see here, the attempt call receives a BiConsumer that consumes
 
-. your defined scope, updated to the latest changes in the Fact-stream
+. your defined scope, updated to the latest changes in the fact stream
 . a `RetryableTransaction` that you use to either publish to or abort.
 
 Note that you can use either a `SnapshotProjection` (including aggregates) as well as a `ManagedProjection` to lock on.

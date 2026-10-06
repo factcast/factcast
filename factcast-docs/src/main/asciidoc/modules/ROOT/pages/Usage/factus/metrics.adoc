@@ -6,7 +6,7 @@
 Like xref:ROOT:Ops/metrics.adoc[the FactCast server], also Factus makes use
 of https://micrometer.io/[micrometer.io] metrics.
 
-=== Metric namespaces and their organization
+=== Metric Namespaces and Their Organization
 
 At the time of writing, there are three namespaces exposed:
 
@@ -33,11 +33,11 @@ At the time of writing (Factcast version 0.3.13) the following metrics are suppo
 
 ==== Gauged
 
-- `fetch_size` - size in bytes of a fetched xref:ROOT:Usage/factus/projections/types/snapshot-projections.adoc[Snapshot projection] or xref:ROOT:Usage/factus/projections/types/aggregates.adoc[Aggregate projection]
+- `fetch_size` - size in bytes of a fetched xref:ROOT:Usage/factus/projections/types/snapshot-projection.adoc[Snapshot projection] or xref:ROOT:Usage/factus/projections/types/aggregate.adoc[Aggregate projection]
 
 ==== Timed
 
 - `managed_projection_update_duration` - duration in milliseconds a xref:ROOT:Usage/factus/projections/types/managed-projection.adoc[Managed Projection] took to update
-- `fetch_duration` - duration in milliseconds it took to fetch a xref:ROOT:Usage/factus/projections/types/snapshot-projections.adoc[Snapshot projection]
-- `find_duration` - duration in milliseconds it took to find a specific xref:ROOT:Usage/factus/projections/types/aggregates.adoc[Aggregate]
+- `fetch_duration` - duration in milliseconds it took to fetch a xref:ROOT:Usage/factus/projections/types/snapshot-projection.adoc[Snapshot projection]
+- `find_duration` - duration in milliseconds it took to find a specific xref:ROOT:Usage/factus/projections/types/aggregate.adoc[Aggregate]
 - `event_processing_latency` - for those facts that arrive after catchup: time difference in milliseconds between a fact was published and received by a client. (In case of batch processing, this is only reported for the first/oldest fact of a batch)

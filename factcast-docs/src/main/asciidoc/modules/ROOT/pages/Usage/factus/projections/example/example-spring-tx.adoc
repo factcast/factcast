@@ -10,7 +10,7 @@ The example projects a list of used UserNames in the System.
 We need to store two things in our JDBC Datastore:
 
 - the actual list of UserNames, and
-- the fact-stream-position of your projection.
+- the fact stream position of your projection.
 
 Therefore we create the necessary tables (probably using liquibase/flyway or similar tooling of your choice):
 
@@ -79,7 +79,7 @@ The `@SpringTransactional` annotation provides various configuration options:
 | `timeoutInSeconds` | timeout in seconds | 30
 |===
 
-== Updating the projection
+== Updating the Projection
 
 The two possible abstract base classes, `AbstractSpringTxManagedProjection` or `AbstractSpringTxSubscribedProjection`,
 both require the following methods to be implemented:
@@ -87,16 +87,16 @@ both require the following methods to be implemented:
 [cols="2,3", options="header"]
 |===
 | Method Signature | Description
-| `public UUID factStreamPosition()` | read the last position in the Fact stream from the database
-| `public void factStreamPosition(@NonNull UUID factStreamPosition)` | write the current position of the Fact stream to the database
+| `public UUID factStreamPosition()` | read the last position in the fact stream from the database
+| `public void factStreamPosition(@NonNull UUID factStreamPosition)` | write the current position of the fact stream to the database
 | `public WriterToken acquireWriteToken(@NonNull Duration maxWait)` | coordinates write access to the projection, see xref:ROOT:Usage/factus/projections/types/managed-projection.adoc[managed-projection] for details
 |===
 
-The first two methods tell Factus how to read and write the Fact stream's position from the database.
+The first two methods tell Factus how to read and write the fact stream's position from the database.
 
-=== Writing the fact position
+=== Writing the Fact Position
 
-Provided the table `fact_stream_positions` exists, here is an example of how to write the Fact position:
+Provided the table `fact_stream_positions` exists, here is an example of how to write the fact position:
 
 [source,java]
 ----
@@ -118,9 +118,9 @@ and subsequently only UPDATEs the value.
 To avoid hard-coding a unique name for the projection, the provided method `getScopedName()` is employed.
 The default implementation makes sure the name is unique and includes the serial of the projection.
 
-=== Reading the fact position
+=== Reading the Fact Position
 
-To read the last Fact stream position, we simply select the previously written value:
+To read the last fact stream position, we simply select the previously written value:
 
 [source,java]
 ----
@@ -138,7 +138,7 @@ public UUID factStreamPosition() {
 }
 ----
 
-In case no previous Fact position exists, `null` is returned.
+In case no previous fact position exists, `null` is returned.
 
 === Applying Facts
 
@@ -168,7 +168,7 @@ void apply(UserDeleted e) {
 We have finished the implementation of the event-processing part of our projection. What is missing is a way to
 make the projection's data accessible for users.
 
-== Querying the projection
+== Querying the Projection
 
 Users of our projections (meaning "other code") contact the projection via it's public API.
 Currently, there is no public method offering "user names". So let's change that:
@@ -180,7 +180,7 @@ public List<String> getUserNames() {
 }
 ----
 
-=== Using The Projection
+=== Using the Projection
 
 Calling code that wants to talk to the projection, now just needs to call the `getUserNames` method:
 
@@ -198,7 +198,7 @@ List<String> userNames = userNameProjection.getUserNames();
 First, we create an instance of the projection and provide it with all required dependencies. As an alternative, you may want to let Spring manage the lifecycle of the projection
 and let the dependency injection mechanism provide you an instance.
 
-Next, we call `update(...)` on the projection to fetch the latest events from the Fact stream. Note that when you use a pre-existing (maybe Spring managed singleton) instance of the projection, this step is optional and depends on your use-case. As last step, we ask
+Next, we call `update(...)` on the projection to fetch the latest events from the fact stream. Note that when you use a pre-existing (maybe Spring managed singleton) instance of the projection, this step is optional and depends on your use-case. As last step, we ask
 the projection to provide us with user names by calling `getUserNames()`.
 
 == Full Example

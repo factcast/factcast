@@ -36,7 +36,7 @@ most performant, nor the most compact choice. Feel free to create one on your ow
 like:
 `factcast-factus-serializer-binary` or `factcast-factus-serializer-fury`
 
-=== Choosing serializers
+=== Choosing Serializers
 
 If your `SnapshotProjection` does not declare anything different, it will be serialized using the _default SnapshotSerializer_ known to your `SnapshotSerializerSupplier` (when using Spring boot, normally automatically bound as a Spring bean).
 
@@ -53,7 +53,7 @@ static class MySnapshotProjection implements SnapshotProjection {
 Note that those implementations need to have a default constructor and are expected to be stateless.
 However, if you use Spring boot those implementations can be Spring beans as well which are then retrieved from the Application Context via the type provided in the annotation.
 
-=== Snapshot caching
+=== Snapshot Caching
 
 The Key/Value store that keeps and maintains the snapshots is called a xref:ROOT:Usage/factus/projections/snapshots/snapshot-caching.adoc[SnapshotCache].
 

@@ -8,7 +8,7 @@ https://github.com/factcast/factcast[GitHub] and help!
 
 Have a look at the https://github.com/factcast/factcast/blob/main/CONTRIBUTING.md[guide on contributing] for the first steps.
 
-==== Thank you
+==== Thank You
 
 The current list of contributors is available in the
 https://github.com/factcast/factcast/graphs/contributors[FactCast contributors graph].

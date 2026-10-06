@@ -17,7 +17,7 @@ When it comes to metrics, you'll have to know what you're looking for. There are
 
 We're focussing on _Server_ metrics here.
 
-=== Metric namespaces and their organization
+== Metric Namespaces and Their Organization
 
 At the time of writing, there are six namespaces exposed:
 
@@ -38,7 +38,7 @@ Furthermore, metrics in operations are automatically tagged with
 - a store name ('pgsql' currently) and
 - an exception tag ('None' if unset).
 
-=== Existing metrics
+== Existing Metrics
 
 There are a bunch of metrics already emitted in the server. These metrics can be grouped by type:
 
@@ -57,7 +57,7 @@ At the **time of writing (>0.9.9)**, the metrics exposed by the namespaces group
 
 [cols="1,1,1", options="header"]
 |===
-|operation |type |description
+|Operation |Type |Description
 |handshake |`timer` |Duration of the initial handshake.
 |factsSent |`meter` |Number of facts sent to subscribed clients.
 |bytesSent |`meter` |Amount of facts (in bytes) sent to subscribed clients.
@@ -67,7 +67,7 @@ At the **time of writing (0.9.11)**, the metrics exposed by the namespaces group
 
 [cols="1,1,1", options="header"]
 |===
-|operation |type |description
+|Operation |Type |Description
 |publish |`timer` |Time to publish (write) a fact or a list of facts sent by the client.; Ref: xref:ROOT:Concept/fact.adoc[concepts]
 |subscribe-follow |`timer` |Time to create and return a follow subscription (not the actual stream of facts).; Ref: xref:ROOT:Concept/fact.adoc[concepts]
 |subscribe-catchup |`timer` |Time to create and return a catchup subscription (not the actual stream of facts).; Ref: xref:ROOT:Concept/fact.adoc[concepts]
@@ -95,7 +95,7 @@ At the **time of writing (0.4.3)**, the metrics exposed by the namespaces group 
 
 [cols="1,1,1", options="header"]
 |===
-|operation |type |description
+|Operation |Type |Description
 |transformEvent |`timer` |Time to transform (upcast/downcast) a single fact.; Ref: xref:ROOT:Concept/transformation.adoc[transformation]
 |fetchRegistryFile |`timer` |Time to retrieve a file from the schema registry.; Ref: xref:ROOT:Concept/schema-registry.adoc[facts validation]
 |refreshRegistry |`timer` |Time to execute the schema registry refresh, in order to get the latest schema and transformation updates.
@@ -156,7 +156,7 @@ Special metrics for the FactCast-Server UI are published via `factcast.ui.timer`
 
 [cols="1,1,1", options="header"]
 |===
-|operation |type |description
+|Operation |Type |Description
 |plugin-execution |`timer` |Time to execute a specific plugin for one fact.
 |fact-processing |`timer` |Overall time to process one fact. This includes execution of every plugin, parsing JSON payload and building the final representation model.
 |===

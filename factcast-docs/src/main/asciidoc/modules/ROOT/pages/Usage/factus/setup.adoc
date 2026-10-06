@@ -3,7 +3,7 @@
 
 
 
-=== Dependencies
+== Dependencies
 
 First thing you need in your project is a dependency to factus itself.
 
@@ -31,7 +31,7 @@ However, there is a growing list of optional helpful dependencies when it comes 
 
 ---
 
-=== Binary Snapshot Serializer
+== Binary Snapshot Serializer
 
 The default Snapshot Serializer in Factus uses Jackson to serialize to/from JSON. This might be less than optimal in terms of storage cost and transport performance/efficiency.
 This optional dependency:
@@ -60,11 +60,11 @@ if you need inspiration.
 
 ---
 
-=== Redis SnapshotCache
+== Redis SnapshotCache
 
 From a client's perspective, it is nice to be able to persist snapshots directly into factcast, so that you don't
 need any additional infrastructure to get started. In busy applications with many clients however, it might be
-a good idea to keep that load away from factcast, so that it can use its capacity to deal with Facts only.
+a good idea to keep that load away from factcast, so that it can use its capacity to deal with facts only.
 
 In this case you want to use a different implementation of the SnapshotCache interface on a client, in order to
 persist snapshots in your favorite K/V store, Document Database, etc.

@@ -1,4 +1,4 @@
-= Hitchhiker's Guide To Extending Projection Database Support
+= Hitchhiker's Guide to Extending Projection Database Support
 :icons: font
 
 [NOTE]
@@ -49,7 +49,7 @@ services. Apart from your desired class hierarchy, projections need to implement
 
 Let's imagine you implement support for the XYZ data store.
 
-=== Projections without Transactional Safety
+=== Projections Without Transactional Safety
 
 - Create an `AbstractXYZProjection` that implements `ExternalizedProjection`
 - Override the Getter and Setter for the FactStreamPosition, which represents the information up to which fact your
