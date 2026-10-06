@@ -7,6 +7,14 @@
     background-color: #fafafa;
 }
 
+/* Let long unbreakable cell content (e.g. property names in code) wrap, so tables
+   fit their column instead of overflowing into the TOC. The theme only does this
+   for AsciiDoc cells (td.tableblock > .content). */
+.doc table.tableblock th,
+.doc table.tableblock td {
+    overflow-wrap: anywhere;
+}
+
 .datastore-logos img {
     vertical-align: middle;
 }
@@ -122,13 +130,20 @@ body.landing .doc h1.page {
         flex: 1 1 auto !important;
         max-width: none !important;
         width: auto !important;
-        margin-right: 2rem !important;
+        margin-right: clamp(1rem, 2vw, 2rem) !important;
     }
 
+    /* Keep fixed-size images (e.g. logos) inside the content column */
+    .doc img {
+        max-width: 100%;
+        object-fit: contain;
+    }
+
+    /* TOC narrows with the window (about 12.5rem at 1024px, full 16rem from about 1310px) */
     .toc.sidebar {
         order: 2 !important;
-        flex: 0 0 16rem !important;
-        width: 16rem !important;
+        flex: 0 0 clamp(10rem, 22vw, 16rem) !important;
+        width: clamp(10rem, 22vw, 16rem) !important;
         margin-left: 0 !important;
         position: sticky !important;
         top: 5rem !important;
