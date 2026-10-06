@@ -46,6 +46,13 @@ public class PgFactStreamHorizonProvider extends ReadOnlyPgFactStreamHorizonProv
       "SELECT pg_notify('"
           + PgConstants.CHANNEL_NUDGE
           + "', json_build_object('txId', txid_current())::text)";
+  // pg_sequences exposes last_value to writers with USAGE on the sequence. A restarted
+  // unlogged sequence falls below the durable horizon, unlike ordinary notification cleanup.
+  // Its last_value is null until the first nextval after a restart.
+  private static final String NOTIFICATION_SEQUENCE_LAST_VALUE =
+      "(SELECT COALESCE(last_value, 0) FROM pg_sequences WHERE "
+          + "format('%I.%I', schemaname, sequencename) = "
+          + "pg_get_serial_sequence('notification', 'ser'))";
   static final String UPDATE_HORIZON =
       "UPDATE "
           + PgConstants.TABLE_HORIZON
@@ -56,9 +63,13 @@ public class PgFactStreamHorizonProvider extends ReadOnlyPgFactStreamHorizonProv
           + PgConstants.HORIZON_COLUMN_FACT_ID
           + "=?, "
           + PgConstants.HORIZON_COLUMN_NOTIFICATION_SER
-          + "=GREATEST("
+          + "=CASE WHEN "
+          + NOTIFICATION_SEQUENCE_LAST_VALUE
+          + " < "
           + PgConstants.HORIZON_COLUMN_NOTIFICATION_SER
-          + ", ?) "
+          + " THEN ? ELSE GREATEST("
+          + PgConstants.HORIZON_COLUMN_NOTIFICATION_SER
+          + ", ?) END "
           + "WHERE id = 1 RETURNING "
           + PgConstants.HORIZON_COLUMN_FACT_SER
           + ", "
@@ -143,6 +154,7 @@ public class PgFactStreamHorizonProvider extends ReadOnlyPgFactStreamHorizonProv
                 rs.getLong(PgConstants.HORIZON_COLUMN_NOTIFICATION_SER)),
         next.factSerial(),
         next.factId(),
+        next.notificationSerial(),
         next.notificationSerial());
   }
 

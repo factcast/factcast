@@ -169,6 +169,13 @@ public class NudgeNotificationHandler implements DisposableBean {
     long lowerSerial = notificationSer.get();
     FactStreamHorizon horizon = horizonProvider.advance();
     long horizonSerial = horizon.notificationSerial();
+    if (horizonSerial < lowerSerial) {
+      // The unlogged notification sequence has restarted. Wake every subscriber once before
+      // continuing from the rebased persisted horizon.
+      bus.post(FactInsertionNotification.internal());
+      notificationSer.set(horizonSerial);
+      return;
+    }
     boolean baseLineMissing =
         lowerSerial > 0
             && Boolean.FALSE.equals(

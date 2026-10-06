@@ -78,6 +78,7 @@ final class PgFactStreamHorizonProviderTest {
             any(RowMapper.class),
             eq(42L),
             eq(id),
+            eq(10L),
             eq(10L)))
         .thenReturn(persisted);
     doAnswer(
@@ -105,6 +106,7 @@ final class PgFactStreamHorizonProviderTest {
             any(RowMapper.class),
             eq(42L),
             eq(id),
+            eq(10L),
             eq(10L));
     order.verify(transactionManager).commit(any());
 
@@ -131,6 +133,7 @@ final class PgFactStreamHorizonProviderTest {
             any(RowMapper.class),
             eq(42L),
             eq(liveHorizon.factId()),
+            eq(10L),
             eq(10L)))
         .thenReturn(persisted);
     doThrow(new TransactionSystemException("commit failed")).when(transactionManager).commit(any());
@@ -154,6 +157,7 @@ final class PgFactStreamHorizonProviderTest {
             any(RowMapper.class),
             eq(42L),
             eq(liveHorizon.factId()),
+            eq(10L),
             eq(10L)))
         .thenThrow(new IllegalStateException("write failed"));
 
@@ -182,6 +186,7 @@ final class PgFactStreamHorizonProviderTest {
             any(RowMapper.class),
             eq(42L),
             eq(liveHorizon.factId()),
+            eq(10L),
             eq(10L)))
         .thenReturn(persisted);
 

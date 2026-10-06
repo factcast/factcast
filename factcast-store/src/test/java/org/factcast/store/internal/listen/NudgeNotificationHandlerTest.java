@@ -421,6 +421,18 @@ class NudgeNotificationHandlerTest {
   }
 
   @Test
+  void rebasesCursorAndWakesSubscribersWhenNotificationHorizonResets() {
+    handler.notificationSer.set(200);
+    when(horizonProvider.advance()).thenReturn(new FactStreamHorizon(UUID.randomUUID(), 42, 1));
+
+    handler.fetchPairsAndDispatch();
+
+    verify(bus).post(FactInsertionNotification.internal());
+    verify(jdbc, never()).queryForObject(anyString(), eq(Boolean.class), anyLong());
+    assertThat(handler.notificationSer).hasValue(1);
+  }
+
+  @Test
   void failedBoundedFetchDoesNotAdvanceNotificationCursor() {
     handler.notificationSer.set(100);
     when(jdbc.queryForObject(NudgeNotificationHandler.BASE_EXISTS_SQL, Boolean.class, 100L))
