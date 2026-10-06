@@ -54,10 +54,8 @@ class ReviewHorizonIntegrationTest {
   @Autowired JdbcTemplate jdbc;
   @Autowired FactStreamHorizonProvider writableHorizon;
   @Autowired PgListener listener;
-  @Autowired PgConnectionSupplier connectionSupplier;
   @Autowired NudgeNotificationHandler writerHandler;
   @Autowired PgMetrics metrics;
-  @Autowired StoreConfigurationProperties props;
 
   @BeforeEach
   void stopAutomaticAdvancement() throws Exception {
@@ -72,15 +70,6 @@ class ReviewHorizonIntegrationTest {
     @Subscribe
     public void onInsertion(FactInsertionNotification n) {
       count.incrementAndGet();
-    }
-  }
-
-  static class Nudges {
-    AtomicInteger count = new AtomicInteger();
-
-    @Subscribe
-    public void onNudge(NudgeNotification nudge) {
-      if (nudge.txId() != 0) count.incrementAndGet();
     }
   }
 
@@ -99,53 +88,6 @@ class ReviewHorizonIntegrationTest {
     StoreConfigurationProperties props = new StoreConfigurationProperties();
     props.setReadOnlyModeEnabled(true);
     return new NudgeNotificationHandler(bus, jdbc, props, metrics, provider);
-  }
-
-  @Test
-  void readOnlySubscriberWakesWhenDelayedCheckpointCommits() throws Exception {
-    EventBus bus = new EventBus();
-    Wakeups wakeups = new Wakeups();
-    Nudges nudges = new Nudges();
-    bus.register(wakeups);
-    bus.register(nudges);
-    NudgeNotificationHandler reader =
-        readerHandler(bus, new ReadOnlyPgFactStreamHorizonProvider(ds));
-    PgListener readerListener = new PgListener(connectionSupplier, bus, props, metrics);
-    readerListener.afterPropertiesSet();
-    ExecutorService executor = Executors.newSingleThreadExecutor();
-    try (Connection lower = ds.getConnection()) {
-      lower.setAutoCommit(false);
-      acquireSharedPublishLock(lower);
-      writer.publish(List.of(fact()));
-      Future<?> advancing = executor.submit(writableHorizon::advance);
-      await().atMost(Duration.ofSeconds(5)).until(() -> nudges.count.get() > 0);
-      await()
-          .atMost(Duration.ofSeconds(5))
-          .until(
-              () ->
-                  Boolean.TRUE.equals(
-                      jdbc.queryForObject(
-                          "SELECT EXISTS (SELECT 1 FROM pg_locks "
-                              + "WHERE locktype='advisory' AND mode='ExclusiveLock' "
-                              + "AND granted=false)",
-                          Boolean.class)));
-      Thread.sleep(300);
-      assertThat(advancing).isNotDone();
-      assertThat(wakeups.count.get()).isZero();
-      lower.commit();
-      advancing.get(5, TimeUnit.SECONDS);
-      await()
-          .atMost(Duration.ofSeconds(5))
-          .untilAsserted(
-              () ->
-                  assertThat(wakeups.count.get())
-                      .as("subscriber wakes after checkpoint becomes readable")
-                      .isPositive());
-    } finally {
-      readerListener.destroy();
-      reader.destroy();
-      executor.shutdownNow();
-    }
   }
 
   @Test

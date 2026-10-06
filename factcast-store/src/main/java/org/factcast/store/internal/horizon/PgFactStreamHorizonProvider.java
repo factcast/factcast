@@ -42,10 +42,6 @@ import org.springframework.transaction.support.TransactionTemplate;
 public class PgFactStreamHorizonProvider extends ReadOnlyPgFactStreamHorizonProvider {
 
   static final String MAX_NOTIFICATION_SERIAL = "SELECT COALESCE(MAX(ser),0) FROM notification";
-  static final String NOTIFY_HORIZON_ADVANCED =
-      "SELECT pg_notify('"
-          + PgConstants.CHANNEL_NUDGE
-          + "', json_build_object('txId', txid_current())::text)";
   // pg_sequences exposes last_value to writers with USAGE on the sequence. A restarted
   // unlogged sequence falls below the durable horizon, unlike ordinary notification cleanup.
   // Its last_value is null until the first nextval after a restart.
