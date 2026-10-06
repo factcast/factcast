@@ -63,8 +63,10 @@ module.exports.register = function () {
         })
         .join('\n')
 
+      // Only match trailing spaces/tabs (\s would also swallow the following blank lines),
+      // and surround the list with blank lines so following text does not continue the last item.
       page.contents = Buffer.from(
-        source.replace(/^child-pages::\[\]\s*$/gm, list)
+        source.replace(/^child-pages::\[\][ \t]*$/gm, `\n${list}\n`)
       )
     }
   })
