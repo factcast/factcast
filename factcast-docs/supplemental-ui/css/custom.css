@@ -19,9 +19,37 @@
     vertical-align: middle;
 }
 
-/* Slim footer at the bottom of the content column (see partials/main.hbs). */
+/* Keep the footer visible while scrolling, reserving space so the final content stays readable. */
 :root {
     --footer-height: 2.5rem;
+}
+
+@media screen {
+    html {
+        scroll-padding-bottom: var(--footer-height);
+    }
+
+    main.article {
+        padding-bottom: var(--footer-height);
+    }
+
+    footer.footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 2;
+        background: #fff;
+    }
+
+    body.landing footer.footer {
+        background: #191919;
+    }
+
+    /* Leave the mobile navigation's version selector above the fixed footer. */
+    .nav {
+        height: calc(100vh - 6rem - var(--footer-height));
+    }
 }
 
 footer.footer {
@@ -31,9 +59,7 @@ footer.footer {
     display: grid;
     grid-template-columns: 1fr auto 1fr;
     align-items: center;
-    margin-top: auto;
     padding: 0 1rem;
-    background: none;
     /* same line as the sidebar's version selector (.nav-panel-explore .context), so both align */
     box-shadow: 0 -1px 0 #e1e1e1;
     color: #8e8e8e;
@@ -113,6 +139,15 @@ body.landing .doc h1.page {
 
 /* Maximize main content column width and align TOC to the right */
 @media screen and (min-width: 1024px) {
+    /* Start the footer after the sidebar so its version selector stays accessible. */
+    footer.footer {
+        left: 15rem;
+    }
+
+    .nav {
+        height: calc(100vh - 3.5rem);
+    }
+
     .article {
         max-width: none !important;
         width: 100% !important;
@@ -151,7 +186,7 @@ body.landing .doc h1.page {
         overflow-y: auto !important;
     }
 
-    /* Stretch the content column to the viewport, so the footer sits at its bottom */
+    /* Fill short pages while reserving the footer's space in the content column. */
     main.article {
         display: flex;
         flex-direction: column;
@@ -165,6 +200,10 @@ body.landing .doc h1.page {
 
     body.landing .nav-container {
         display: none;
+    }
+
+    body.landing footer.footer {
+        left: 0;
     }
 
     body.landing .toolbar {
