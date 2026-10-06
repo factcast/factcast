@@ -172,6 +172,6 @@ class SnapshotRepositoryTest {
     }
   }
 
-  @ProjectionMetaData(revision = 43)
+  @ProjectionMetaData(revisionId = "43")
   public static class SomeSnapshotProjection implements SnapshotProjection {}
 }

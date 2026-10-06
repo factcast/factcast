@@ -34,11 +34,11 @@ public class InMemTransformationCache implements TransformationCache {
 
   private final Map<Key, Fact> cache;
 
-  public InMemTransformationCache(RegistryMetrics registryMetrics) {
+  public InMemTransformationCache(@NonNull RegistryMetrics registryMetrics) {
     this(DEFAULT_CAPACITY, registryMetrics);
   }
 
-  public InMemTransformationCache(int capacity, RegistryMetrics registryMetrics) {
+  public InMemTransformationCache(int capacity, @NonNull RegistryMetrics registryMetrics) {
     cache = Collections.synchronizedMap(new LRUMap<>(Math.min(capacity, DEFAULT_CAPACITY)));
     this.registryMetrics = registryMetrics;
   }
@@ -97,6 +97,24 @@ public class InMemTransformationCache implements TransformationCache {
         toBeInvalidated.forEach(cache::remove);
       }
     }
+  }
+
+  @Override
+  public void invalidateTransformationFor(
+      @NonNull String ns, @NonNull String type, int fromVersion, int toVersion) {
+    synchronized (cache) {
+      cache
+          .entrySet()
+          .removeIf(
+              e ->
+                  e.getValue().ns().equals(ns)
+                      && Objects.equals(e.getValue().type(), type)
+                      && containsAnyOf(e.getKey().path(), fromVersion, toVersion));
+    }
+  }
+
+  private boolean containsAnyOf(@NonNull List<Integer> path, int fromVersion, int toVersion) {
+    return path.stream().anyMatch(i -> (i == fromVersion) || (i == toVersion));
   }
 
   @Override

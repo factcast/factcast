@@ -72,7 +72,7 @@ class DatabaseUnhealthyITest extends AbstractFactCastIntegrationTest {
     proxy.reset();
   }
 
-  @ProjectionMetaData(revision = 1)
+  @ProjectionMetaData(revisionId = "1")
   static class UserProjection extends LocalManagedProjection {
 
     @Handler

@@ -241,12 +241,12 @@ class RedissonSnapshotCacheTest {
     }
   }
 
-  @ProjectionMetaData(revision = 1)
+  @ProjectionMetaData(revisionId = "1")
   public class TestAggregate extends Aggregate {}
 
-  @ProjectionMetaData(revision = 1)
+  @ProjectionMetaData(revisionId = "1")
   public class TestSnapshotProjection implements SnapshotProjection {}
 
-  @ProjectionMetaData(name = "hugo", revision = 1)
+  @ProjectionMetaData(name = "hugo", revisionId = "1")
   static class MyAgg extends Aggregate {}
 }

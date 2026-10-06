@@ -123,7 +123,7 @@ class AbstractMongoDbManagedProjectionTest {
     }
   }
 
-  @ProjectionMetaData(revision = 1)
+  @ProjectionMetaData(revisionId = "1")
   static class TestProjection extends AbstractMongoDbManagedProjection {
 
     public TestProjection(@NonNull MongoDatabase mongoDatabase) {
