@@ -169,15 +169,21 @@ public class NudgeNotificationHandler implements DisposableBean {
     long lowerSerial = notificationSer.get();
     FactStreamHorizon horizon = horizonProvider.advance();
     long horizonSerial = horizon.notificationSerial();
-    // should not happen, but just in case
-    if (horizonSerial <= lowerSerial) return;
-
     boolean baseLineMissing =
         lowerSerial > 0
             && Boolean.FALSE.equals(
                 jdbc.queryForObject(BASE_EXISTS_SQL, Boolean.class, lowerSerial));
 
-    if (baseLineMissing || lowerSerial == 0) {
+    if (baseLineMissing) {
+      log.trace("No reliable notification baseline, waking all subscribers");
+      bus.post(FactInsertionNotification.internal());
+      notificationSer.set(horizonSerial);
+      return;
+    }
+
+    if (horizonSerial <= lowerSerial) return;
+
+    if (lowerSerial == 0) {
       log.trace("No reliable notification baseline, waking all subscribers");
       bus.post(FactInsertionNotification.internal());
       notificationSer.set(horizonSerial);

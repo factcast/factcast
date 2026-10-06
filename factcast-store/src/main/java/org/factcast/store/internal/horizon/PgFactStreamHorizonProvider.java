@@ -42,6 +42,10 @@ import org.springframework.transaction.support.TransactionTemplate;
 public class PgFactStreamHorizonProvider extends ReadOnlyPgFactStreamHorizonProvider {
 
   static final String MAX_NOTIFICATION_SERIAL = "SELECT COALESCE(MAX(ser),0) FROM notification";
+  static final String NOTIFY_HORIZON_ADVANCED =
+      "SELECT pg_notify('"
+          + PgConstants.CHANNEL_NUDGE
+          + "', json_build_object('txId', txid_current())::text)";
   static final String UPDATE_HORIZON =
       "UPDATE "
           + PgConstants.TABLE_HORIZON

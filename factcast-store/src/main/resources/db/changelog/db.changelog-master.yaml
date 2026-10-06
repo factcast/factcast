@@ -786,6 +786,17 @@ databaseChangeLog:
             stripComments: true
 
   - changeSet:
+      id: safe-horizon-publication-barrier
+      author: uweschaefer
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue4976/refresh_factstream_horizon.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+  - changeSet:
       id: append-only-notification-tw-index
       author: uweschaefer
       runInTransaction: false
