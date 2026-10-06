@@ -98,12 +98,12 @@
     <nexus-staging-maven-plugin.version>1.6.8</nexus-staging-maven-plugin.version>
     <directory-maven-plugin.version>0.3.1</directory-maven-plugin.version>
     <jacoco-maven-plugin.version>0.8.15</jacoco-maven-plugin.version>
-    <maven.version>3.9.16</maven.version>
+    <maven.version>3.10.0</maven.version>
     <!-- defaults to 11, client modules will be compiled with/to 8 -->
     <maven.compiler.source>21</maven.compiler.source>
     <maven.compiler.target>21</maven.compiler.target>
     <maven.compiler.version>3.16.0</maven.compiler.version>
-    <spotless-maven-plugin.version>3.10.2</spotless-maven-plugin.version>
+    <spotless-maven-plugin.version>3.10.3</spotless-maven-plugin.version>
     <directory-maven-plugin.version>1.0</directory-maven-plugin.version>
     <nexus-staging-maven-plugin.version>1.7.0</nexus-staging-maven-plugin.version>
     <assertj.version>3.27.7</assertj.version>
@@ -129,9 +129,9 @@
     <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
     <mockk.version>1.14.11</mockk.version>
     <graaljs.version>25.4.4.1.1</graaljs.version>
-    <redisson.version>4.7.0</redisson.version>
-    <aws-sdk.version>2.55.3</aws-sdk.version>
-    <mongodb-driver.version>5.12.0</mongodb-driver.version>
+    <redisson.version>4.8.0</redisson.version>
+    <aws-sdk.version>2.55.11</aws-sdk.version>
+    <mongodb-driver.version>5.13.0</mongodb-driver.version>
     <shedlock.version>7.10.1</shedlock.version>
     <byte-buddy.version>1.18.14-jdk5</byte-buddy.version>
     <rewrite-java.version>8.90.4</rewrite-java.version>
@@ -691,6 +691,7 @@
       </activation>
       <modules>
         <module>factcast-site</module>
+        <module>factcast-docs</module>
         <module>factcast-docker</module>
         <module>factcast-docker-dep</module>
         <module>factcast-examples</module>

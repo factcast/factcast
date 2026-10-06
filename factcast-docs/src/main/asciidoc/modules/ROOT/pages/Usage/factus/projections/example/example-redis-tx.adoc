@@ -1,0 +1,147 @@
+= UserNames (Redis Transactional)
+:icons: font
+
+
+
+Here is a projection that handles _UserCreated_ and
+_UserDeleted_ events. It solves the same problem as the example we've seen in xref:ROOT:Usage/factus/projections/example/example-spring-tx.adoc[Spring transactional projections]. However, this time we use Redis as our data store and https://github.com/redisson/redisson[Redisson] as the access API.
+
+== Configuration
+
+The `@RedisTransactional` annotation provides various configuration options:
+
+[cols="1,1,1", options="header"]
+|===
+|Parameter Name |Description |Default Value
+|`bulkSize` |bulk size |50
+|`timeout` |timeout in milliseconds until a transaction is interrupted and rolled back |30000
+|`responseTimeout` |timeout in milliseconds for Redis response. Starts to countdown when transaction has been successfully submitted |5000
+|`retryAttempts` |maximum attempts to send transaction |5
+|`retryInterval` |time interval in milliseconds between retry attempts |3000
+|===
+
+== Constructing
+
+Since we decided to use a managed projection, we extended the `AbstractRedisTxManagedProjection` class.
+To configure the connection to Redis via Redisson, we injected `RedissonClient` in the constructor, calling the parent constructor.
+
+[source,java]
+----
+@ProjectionMetaData(revision = 1)
+@RedisTransactional
+public class UserNames extends AbstractRedisTxManagedProjection {
+
+  public UserNames(RedissonClient redisson) {
+    super(redisson);
+  }
+    ...
+----
+
+FactStreamPosition and Lock-Management are automatically taken care of by the underlying `AbstractRedisManagedProjection`.
+
+In contrast to non-atomic projections, when applying Facts to the Redis data structure, the instance variable `userNames` cannot be used
+as this would violate the transactional semantics. Instead, accessing and updating the
+state is carried out on a transaction derived data-structure (`Map` here) inside the handler methods.
+
+== Updating the projection
+
+=== Applying Events
+
+Received events are processed inside the methods annotated with `@Handler` (the _handler methods_). To participate in
+the transaction, these methods have an additional `RTransaction` parameter which represents the current transaction.
+
+Let's have a closer look at the handler for the `UserCreated` event:
+
+[source,java]
+----
+@Handler
+void apply(UserCreated e, RTransaction tx){
+        Map<UUID, String> userNames=tx.getMap(getRedisKey());
+        userNames.put(e.getAggregateId(),e.getUserName());
+}
+----
+
+[NOTE]
+====
+RTransaction handling is the responsibility of Factus. As developers, you must not call e.g. `commit()`
+or `rollback()` yourself.
+====
+
+In the previous example, the method `getRedisKeys()` was used to retrieve the Redis key of the projection. Let's have a
+closer look at this method in the next section.
+
+== Default redisKey
+
+The data structures provided by Redisson all require a unique identifier which is used to store them in Redis. The method `getRedisKey()` provides an
+automatically generated name, assembled from the class name of the projection and the serial number configured with
+the `@ProjectionMetaData`.
+
+Additionally, an `AbstractRedisManagedProjection` or a `AbstractRedisSubscribedProjection`, as well as their transactional
+(`Tx`) counterparts, maintain the following keys in Redis:
+
+- `getRedisKey() + "_state_tracking"` - contains the UUID of the last position of the Fact stream
+- `getRedisKey() + "_lock"` - shared lock that needs to be acquired to update the projection.
+
+== Redisson API Datastructures vs. Java Collections
+
+As seen in the above example, some Redisson data structures also implement the appropriate Java Collections interface.
+For example, you can assign
+a https://www.javadoc.io/doc/org.redisson/redisson/latest/org/redisson/api/RMap.html[Redisson RMap]
+also to a standard Java `Map`:
+
+[source,java]
+----
+// 1) use specific Redisson type
+RMap<UUID, String> = tx.getMap(getRedisKey());
+
+// 2) use Java Collections type
+        Map<UUID, String> = tx.getMap(getRedisKey());
+----
+
+There are good reasons for either variant, `1)` and `2)`:
+
+[cols="1,1", options="header"]
+|===
+|Redisson specific |plain Java
+|extended functionality which e.g. reduces I/O load. (e.g. see https://www.javadoc.io/doc/org.redisson/redisson/latest/org/redisson/api/RMap.html[`RMap.fastPut(...)` and `RMap.fastRemove(...)`]) |standard, intuitive
+|only option when using data-structures which are not available in standard Java Collections (e.g. https://javadoc.io/doc/org.redisson/redisson/latest/org/redisson/RedissonListMultimap.html[RedissonListMultimap]) |easier to test
+|===
+
+== Full Example
+
+[source,java]
+----
+
+@ProjectionMetaData(revision = 1)
+@RedisTransactional
+public class UserNames extends AbstractRedisTxManagedProjection {
+
+  private final Map<UUID, String> userNames;
+
+  public UserNames(RedissonClient redisson) {
+    super(redisson);
+
+     userNames = redisson.getMap(getRedisKey());
+  }
+
+  public List<String> getUserNames() {
+    return new ArrayList<>(userNames.values());
+  }
+
+  @Handler
+  void apply(UserCreated e, RTransaction tx) {
+    tx.getMap(getRedisKey()).put(e.getAggregateId(), e.getUserName());
+  }
+
+  @Handler
+  void apply(UserDeleted e, RTransaction tx) {
+    tx.getMap(getRedisKey()).remove(e.getAggregateId());
+  }
+}
+----
+
+To study the full example, see
+
+- https://github.com/factcast/factcast/blob/main/factcast-itests/factcast-itests-factus/src/test/java/org/factcast/itests/factus/proj/RedisTransactionalProjectionExample.java[the UserNames projection using `@RedisTransactional`]
+  and
+- https://github.com/factcast/factcast/blob/main/factcast-itests/factcast-itests-factus/src/test/java/org/factcast/itests/factus/RedisTransactionalProjectionExampleITest.java[example code using this projection]
