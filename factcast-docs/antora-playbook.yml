@@ -1,0 +1,23 @@
+site:
+  title: FactCast Documentation
+  url: https://docs2.factcast.org/
+  start_page: docs:ROOT:/About/index.adoc
+content:
+  sources:
+    - url: ..
+      branches: HEAD
+      start_path: factcast-docs/src/main/asciidoc
+      edit_url: 'https://github.com/factcast/factcast/edit/{refname}/{path}'
+
+ui:
+  bundle:
+    url: https://gitlab.com/antora/antora-ui-default/-/jobs/artifacts/HEAD/raw/build/ui-bundle.zip?job=bundle-stable
+    snapshot: true
+  supplemental_files: ./supplemental-ui
+asciidoc:
+  attributes:
+    experimental: ''
+antora:
+  extensions:
+    - require: '@sntke/antora-mermaid-extension'
+    - require: '@antora/lunr-extension'
