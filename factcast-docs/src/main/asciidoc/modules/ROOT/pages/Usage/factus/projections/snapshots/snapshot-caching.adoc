@@ -1,22 +1,19 @@
 = Snapshot Caching
 :icons: font
-
-
+:stable: snapshot-caching
 
 The component responsible for storing and managing snapshots is called the SnapshotCache.
 
-Factus does not provide a default SnapshotCache, requiring users to make an explicit configuration choice. If a
-SnapshotCache is not configured, any attempt to use snapshots will result in an UnsupportedOperationException.
+Factus does not provide a default SnapshotCache, requiring users to make an explicit configuration choice.
+If a SnapshotCache is not configured, any attempt to use snapshots will result in an UnsupportedOperationException.
 
 By default, the SnapshotCache retains only the latest version of a particular snapshot.
 
-There are several predefined SnapshotCache implementations available, with plans to introduce additional options in the
-future.
+There are several predefined SnapshotCache implementations available, with plans to introduce additional options in the future.
 
 === In-Memory SnapshotCache
 
-For scenarios where persistence and sharing of snapshots are not necessary, and sufficient RAM is available, the
-in-memory solution can be used:
+For scenarios where persistence and sharing of snapshots are not necessary, and sufficient RAM is available, the in-memory solution can be used:
 
 [source,xml]
 ----
@@ -42,16 +39,14 @@ To persist snapshots on disk, consider using the following configuration:
 </dependency>
 ----
 
-Note that this setup is designed for single-instance applications and handles file access synchronization within the
-active instance. It is not recommended for distributed application architectures.
+Note that this setup is designed for single-instance applications and handles file access synchronization within the active instance.
+It is not recommended for distributed application architectures.
 
-Refer to the xref:ROOT:Setup/properties.adoc#inmemanddisk-snapshots[In-Memory and Disk Properties] for more
-information.
+Refer to the xref:ROOT:Setup/properties.adoc#inmemanddisk-snapshots[In-Memory and Disk Properties] for more information.
 
 === Redis SnapshotCache
 
-For applications utilizing Redis, the Redis-based SnapshotCache offers an optimal solution to implement a
-snapshotcache that can be shared between / used by many instances:
+For applications utilizing Redis, the Redis-based SnapshotCache offers an optimal solution to implement a snapshotcache that can be shared between / used by many instances:
 
 [source,xml]
 ----
@@ -62,8 +57,8 @@ snapshotcache that can be shared between / used by many instances:
 </dependency>
 ----
 
-This option supports multiple instances of the same application, making it suitable for distributed environments. By
-default, this cache automatically deletes stale snapshots after 90 days.
+This option supports multiple instances of the same application, making it suitable for distributed environments.
+By default, this cache automatically deletes stale snapshots after 90 days.
 
 For further details, see the xref:ROOT:Setup/properties.adoc#redissnapshots[Redis Properties].
 
@@ -80,12 +75,10 @@ For applications utilizing a JDBC storage solution, the JDBC-based SnapshotCache
 </dependency>
 ----
 
-This option also enables the use of multiple instances of the same application, facilitating distributed environments by
-leveraging the ACID properties of the databases. Additionally, the cache is configured by default to automatically
-purge stale snapshots after 90 days.
+This option also enables the use of multiple instances of the same application, facilitating distributed environments by leveraging the ACID properties of the databases.
+Additionally, the cache is configured by default to automatically purge stale snapshots after 90 days.
 
-> ⚠️ **Warning:** This SnapshotCache assumes that you already created the needed table with the specified schema and
-> will fail on startup when this condition is not met.
+> ⚠️ **Warning:** This SnapshotCache assumes that you already created the needed table with the specified schema and > will fail on startup when this condition is not met.
 
 You can run one of the following SQL scripts to create the necessary table:
 
@@ -184,8 +177,7 @@ For further details, see the xref:ROOT:Setup/properties.adoc#jdbc-snapshots[JDBC
 
 === MongoDB SnapshotCache
 
-For applications utilizing MongoDB, the Mongo-based SnapshotCache offers simple solution for storing snapshots in a
-centralized MongoDB collection which can be used by multiple instances of the same application.
+For applications utilizing MongoDB, the Mongo-based SnapshotCache offers simple solution for storing snapshots in a centralized MongoDB collection which can be used by multiple instances of the same application.
 The MongoDB SnapshotCache uses GridFS to store snapshot data, this means, that snapshots can be larger than 16MB.
 
 [source,xml]
@@ -197,7 +189,7 @@ The MongoDB SnapshotCache uses GridFS to store snapshot data, this means, that s
 </dependency>
 ----
 
-By default, this cache automatically deletes stale snapshots after 90 days. But chunks stored by GridFS are not
-automatically deleted, so you have to take care of that on your own.
+By default, this cache automatically deletes stale snapshots after 90 days.
+But chunks stored by GridFS are not automatically deleted, so you have to take care of that on your own.
 
 For further details, see the xref:ROOT:Setup/properties.adoc#mongodb-snapshots[Mongo Properties].

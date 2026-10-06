@@ -1,6 +1,6 @@
 = gRPC BasicAuth
 :icons: font
-
+:stable: grpc-config-basicauth
 
 
 === Using BasicAuth from a client
