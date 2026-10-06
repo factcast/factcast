@@ -47,7 +47,7 @@ public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
 
 As you can see, you can either call a void method, or pass a function that translates the published facts to a return value, in case you need it.
 
-==== Batches
+== Batches
 
 Just like FactCast's `publish(List<Fact>)`, you can publish a list of events/facts atomically.
 

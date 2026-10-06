@@ -6,7 +6,7 @@
 Like xref:ROOT:Ops/metrics.adoc[the FactCast server], also Factus makes use
 of https://micrometer.io/[micrometer.io] metrics.
 
-=== Metric Namespaces and Their Organization
+== Metric Namespaces and Their Organization
 
 At the time of writing, there are three namespaces exposed:
 
@@ -22,20 +22,20 @@ The metrics are automatically tagged with
 - the emitting class (`class` tag)
 - the name of the metric (`name` tag)
 
-=== Existing Metrics
+== Existing Metrics
 
 At the time of writing (Factcast version 0.3.13) the following metrics are supported:
 
-==== Counted
+=== Counted
 
 - `transaction_attempts` - how often was a transaction retried. See xref:ROOT:Usage/factus/optimistic-locking.adoc[Optimistic Locking] for more background
 - `transaction_abort` - how often was an attempted transaction aborted
 
-==== Gauged
+=== Gauged
 
 - `fetch_size` - size in bytes of a fetched xref:ROOT:Usage/factus/projections/types/snapshot-projection.adoc[Snapshot projection] or xref:ROOT:Usage/factus/projections/types/aggregate.adoc[Aggregate projection]
 
-==== Timed
+=== Timed
 
 - `managed_projection_update_duration` - duration in milliseconds a xref:ROOT:Usage/factus/projections/types/managed-projection.adoc[Managed Projection] took to update
 - `fetch_duration` - duration in milliseconds it took to fetch a xref:ROOT:Usage/factus/projections/types/snapshot-projection.adoc[Snapshot projection]

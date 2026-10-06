@@ -52,7 +52,7 @@ What the more applicable alternative is (Managed or Subscribed Projection), depe
 on your tolerance for the window of inconsistency and the level of control you'd like to have over
 updating your model.
 
-===== Managed Projection
+==== Managed Projection
 
 A managed projection is called managed because the application can decide how often & when to update it.
 For instance, you could decide that a window of inconsistency can be as large as 60 seconds, so that ideally
@@ -64,7 +64,7 @@ This would also be slightly more efficient than using a subscribed projection if
 relevant facts to be published within this interval, but less efficient if there was nothing
 published in between.
 
-===== Subscribed Projection
+==== Subscribed Projection
 
 A subscribed projection will have its handler method invoked, when a relevant fact arrived.
 This method is more convenient (as there is less on the application layer to do) and also
