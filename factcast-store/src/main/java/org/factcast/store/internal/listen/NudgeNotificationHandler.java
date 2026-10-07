@@ -22,6 +22,7 @@ import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReentrantLock;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.subscription.FactStreamHorizon;
@@ -44,9 +45,8 @@ public class NudgeNotificationHandler implements DisposableBean {
   @VisibleForTesting protected final Timer timer = new Timer(true);
   // this we need in order to skip obsolete tasks
   @VisibleForTesting protected final AtomicLong timerVersion = new AtomicLong(0);
-  @VisibleForTesting protected final AtomicLong requestedRefresh = new AtomicLong(0);
-  @VisibleForTesting protected final AtomicLong completedRefresh = new AtomicLong(0);
-  private final AtomicBoolean refreshInProgress = new AtomicBoolean(false);
+  private final AtomicBoolean refreshRequested = new AtomicBoolean(false);
+  private final ReentrantLock refreshLock = new ReentrantLock();
   private final io.micrometer.core.instrument.@NonNull Timer metricsTimer;
 
   public NudgeNotificationHandler(
@@ -133,36 +133,42 @@ public class NudgeNotificationHandler implements DisposableBean {
   }
 
   void fetchPairsAndDispatch() {
-    requestedRefresh.incrementAndGet();
+    refreshRequested.set(true);
     drainRefreshRequests();
   }
 
   private void drainRefreshRequests() {
-    RuntimeException firstFailure = null;
-    while (refreshInProgress.compareAndSet(false, true)) {
+    // EventBus dispatch can request another refresh on this thread. Let the current pass finish
+    // updating its cursor before processing that request.
+    if (refreshLock.isHeldByCurrentThread()) return;
+
+    RuntimeException exception = null;
+
+    if (refreshLock.tryLock()) {
       try {
-        long generation;
-        do {
-          generation = requestedRefresh.get();
+        while (refreshRequested.getAndSet(false)) {
           try {
             fetchPairsAndDispatchOnce();
           } catch (RuntimeException e) {
-            if (firstFailure == null) firstFailure = e;
-          } finally {
-            completedRefresh.set(generation);
+            if (exception != null && exception != e) {
+              exception.addSuppressed(e);
+            } else {
+              exception = e;
+            }
           }
-        } while (requestedRefresh.get() != generation);
+        }
       } finally {
-        refreshInProgress.set(false);
+        refreshLock.unlock();
       }
 
-      // A request can arrive between the last generation check and releasing the single-flight
-      // flag. In that case this thread picks it up unless the requesting thread already did.
-      if (completedRefresh.get() == requestedRefresh.get()) {
-        if (firstFailure != null) throw firstFailure;
-        return;
-      }
+    } else {
+      // just quit
+      return;
     }
+
+    // let check a final time if another request was made in parallel, and if so recurse
+    if (refreshRequested.get() && exception == null) drainRefreshRequests();
+    if (exception != null) throw exception;
   }
 
   private void fetchPairsAndDispatchOnce() {
