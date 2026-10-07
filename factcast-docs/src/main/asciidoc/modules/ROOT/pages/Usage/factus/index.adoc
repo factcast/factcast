@@ -1,4 +1,4 @@
-= Factus (high-level)
+= Factus (High-Level)
 :icons: font
 
 
@@ -10,9 +10,10 @@ Kotlin or any other JVM language of your choice).
 It has dedicated modules to integrate with several datastores for storage of snapshots and other projections. For
 details, have a look at xref:ROOT:Usage/factus/projections/index.adoc[Projections].
 
-**Please be aware that the Factus API is in experimental stage and is expected to change while getting more mature.**
-If you find sharp edges or feel like things are missing,
-please https://github.com/factcast/factcast/issues/new/choose[open an issue on GitHub].
+**Please be aware that while the Factus API is used in production since several years, it is subject to active development and expected to change.**
+If you find sharp edges or feel like things are missing, please https://github.com/factcast/factcast/issues/new/choose[open an issue on GitHub].
 
-If you want to have more control and don't want to opt in to Factus, you can have a look at the lower-level FactCast
-API. See the xref:ROOT:Usage/lowlevel/index.adoc[Lowlevel] section instead.
+child-pages::[]
+
+If you want to have more control and don't want to opt in to Factus, you can have a look at the lower-level FactCast API.
+See the xref:ROOT:Usage/lowlevel/index.adoc[low-level] section instead.

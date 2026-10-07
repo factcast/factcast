@@ -1,11 +1,11 @@
-= PostgreSQL
+= Postgres
 :icons: font
 
 
 
-= General Tips
+== General Tips
 
-== Optimize GIN indexes updates
+=== Optimize GIN Indexes Updates
 
 While GIN Indexes make querying jsonb faster they are also expensive to update. Especially because a single change can
 cause the update of multiple index entries. In order to keep the overhead on write and update statements low, postgres
@@ -24,7 +24,7 @@ this kind of behavior is observed it might make sense to consider to:
 - turn off `fastupdate`
 - let autovacuum run more often or manually call the clean operation
 
-== Autoanalyse & Autovacuum settings
+=== Autoanalyse & Autovacuum Settings
 
 Postgres has a built-in mechanism to keep the statistics up to date and to clean up dead tuples, called
 https://www.postgresql.org/docs/15/runtime-config-autovacuum.html[Automatic Vacuuming].
@@ -44,9 +44,9 @@ autovacuum_analyze_threshold:<number of new facts each week>
 
 ---
 
-= When used as AWS RDS
+== When Used as AWS RDS
 
-== AWS RDS Configuration
+=== AWS RDS Configuration
 
 Most of the time, the default RDS configuration of PostgreSQL is sufficient. However, in some cases, it might be
 necessary to adjust some settings in the RDS Parameter Groups to improve performance.

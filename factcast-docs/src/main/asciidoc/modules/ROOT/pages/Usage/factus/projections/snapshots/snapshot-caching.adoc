@@ -11,7 +11,7 @@ By default, the SnapshotCache retains only the latest version of a particular sn
 
 There are several predefined SnapshotCache implementations available, with plans to introduce additional options in the future.
 
-=== In-Memory SnapshotCache
+== In-Memory SnapshotCache
 
 For scenarios where persistence and sharing of snapshots are not necessary, and sufficient RAM is available, the in-memory solution can be used:
 
@@ -26,7 +26,7 @@ For scenarios where persistence and sharing of snapshots are not necessary, and 
 
 Refer to the xref:ROOT:Setup/properties.adoc#inmem-snapshots[In-Memory Properties] for configuration details.
 
-=== In-Memory and Disk SnapshotCache
+== In-Memory and Disk SnapshotCache
 
 To persist snapshots on disk, consider using the following configuration:
 
@@ -44,7 +44,7 @@ It is not recommended for distributed application architectures.
 
 Refer to the xref:ROOT:Setup/properties.adoc#inmemanddisk-snapshots[In-Memory and Disk Properties] for more information.
 
-=== Redis SnapshotCache
+== Redis SnapshotCache
 
 For applications utilizing Redis, the Redis-based SnapshotCache offers an optimal solution to implement a snapshotcache that can be shared between / used by many instances:
 
@@ -62,7 +62,7 @@ By default, this cache automatically deletes stale snapshots after 90 days.
 
 For further details, see the xref:ROOT:Setup/properties.adoc#redissnapshots[Redis Properties].
 
-=== JDBC SnapshotCache
+== JDBC SnapshotCache
 
 For applications utilizing a JDBC storage solution, the JDBC-based SnapshotCache offers an optimal solution:
 
@@ -78,7 +78,8 @@ For applications utilizing a JDBC storage solution, the JDBC-based SnapshotCache
 This option also enables the use of multiple instances of the same application, facilitating distributed environments by leveraging the ACID properties of the databases.
 Additionally, the cache is configured by default to automatically purge stale snapshots after 90 days.
 
-> ⚠️ **Warning:** This SnapshotCache assumes that you already created the needed table with the specified schema and > will fail on startup when this condition is not met.
+[WARNING]
+This SnapshotCache assumes that you already created the needed table with the specified schema and will fail on startup when this condition is not met.
 
 You can run one of the following SQL scripts to create the necessary table:
 
@@ -175,7 +176,7 @@ CREATE INDEX factcast_snapshot_last_accessed_index ON factcast_snapshot_last_acc
 
 For further details, see the xref:ROOT:Setup/properties.adoc#jdbc-snapshots[JDBC Properties].
 
-=== MongoDB SnapshotCache
+== MongoDB SnapshotCache
 
 For applications utilizing MongoDB, the Mongo-based SnapshotCache offers simple solution for storing snapshots in a centralized MongoDB collection which can be used by multiple instances of the same application.
 The MongoDB SnapshotCache uses GridFS to store snapshot data, this means, that snapshots can be larger than 16MB.

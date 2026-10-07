@@ -5,11 +5,11 @@
 
 == Facts
 
-FactCast is centered around _Facts_. We say Facts instead of Events, because Event has become a blurry term that could mean any number of things from a simple `onWhatNot() ` call handled by an Event-Loop to a `LegalContractCreated` with any flavor of semantics.
+FactCast is centered around _facts_. We say facts instead of events, because Event has become a blurry term that could mean any number of things from a simple `onWhatNot() ` call handled by an Event-Loop to a `LegalContractCreated` with any flavor of semantics.
 
-We decided to use the term Fact over Domain-Event because we want to highlight the notion of an Event being an immutable thing that, once it is published, became an observable Fact.
+We decided to use the term fact over Domain-Event because we want to highlight the notion of an Event being an immutable thing that, once it is published, became an observable fact.
 
-Obviously, a Fact is history and cannot be changed, after it happened. This is one of the cornerstones of EventSourcing and provides us with Facts being **immutable**, which plays an important role when it comes to caching.
+Obviously, a fact is history and cannot be changed, after it happened. This is one of the cornerstones of EventSourcing and provides us with facts being **immutable**, which plays an important role when it comes to caching.
 
 Facts consist of two JSON documents: Header and Payload.
 
@@ -18,12 +18,12 @@ Facts consist of two JSON documents: Header and Payload.
 
 consists of:
 
-- a **required** Fact-Id 'id' of type UUID
+- a **required** fact ID 'id' of type UUID
 - a **required** namespace 'ns' of type String
 - an optional set of aggregateIds 'aggId' of type array of UUIDs
-- an optional (but mostly used) Fact-Type 'type' of type String
+- an optional (but mostly used) fact type 'type' of type String
 - an optional Object 'meta' containing any number of key-value pairs, where the values are Strings
-- any additional information you want to put in a Fact Header
+- any additional information you want to put in a fact header
 
 JSON-Schema:
 
@@ -73,22 +73,22 @@ JSON-Schema:
 }
 ----
 
-=== The Metadata Object
+==== The Metadata Object
 
-The Meta-Data Object is optional and consist of key:value pairs. The reason for it is that implementations can filter facts on certain attributes efficiently (without indexing the whole Fact payload).
+The Meta-Data Object is optional and consist of key:value pairs. The reason for it is that implementations can filter facts on certain attributes efficiently (without indexing the whole fact payload).
 When a fact is read from FactCast, it is guaranteed to have two field set in the Meta-Data object of the header:
 
 [cols="1,1,2", options="header"]
 |===
 |Attribute |Type |Semantics
-|_ser |long / int64 |unique serial number for the fact, that determines a before/after relationship between facts
-|_ts |long / int64 |timestamp in milliseconds, when this fact was published to factcast.
+|_ser |long / int64 |Unique serial number for the fact, that determines a before/after relationship between facts
+|_ts |long / int64 |Timestamp in milliseconds, when this fact was published to FactCast.
 |===
 
-As you can see, all meta-data attributes prefixed with "\_" are supposed to be server created, so please do not use an "\_" prefix yourself.
+As you can see, all meta-data attributes prefixed with pass:[<code>_</code>] are supposed to be server created, so please do not use an pass:[<code>_</code>] prefix yourself.
 
 === The Payload
 
 The payload has no constraints other than being a valid JSON document.
 
-please, see GRPC docs for further details.
+Please, see https://grpc.io/blog/grpc-with-json/[gRPC docs] for further details.

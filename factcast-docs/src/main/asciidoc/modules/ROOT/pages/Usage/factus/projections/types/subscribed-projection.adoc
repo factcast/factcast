@@ -1,4 +1,4 @@
-= Subscribed
+= Subscribed Projection
 :icons: font
 
 
@@ -12,11 +12,11 @@ necessarily a good thing. This is where the `SubscribedProjection` comes into pl
 
 == Definition
 
-A `SubscribedProjection` is subscribed once to a Fact-stream and is asynchronously updated as soon as the application
+A `SubscribedProjection` is subscribed once to a fact stream and is asynchronously updated as soon as the application
 receives relevant facts.
 
 Subscribed projections are created by the application and subscribed (once) to factus. As soon as Factus receives
-matching Facts from the FactCast Server, it updates the projection. The expected latency is obviously dependent on a
+matching facts from the FactCast Server, it updates the projection. The expected latency is obviously dependent on a
 variety of parameters, but under normal circumstances it is expected to be <100ms, sometimes <10ms.
 
 However, its strength (being updated in the background) is also its weakness: the application never knows what state the

@@ -1,7 +1,7 @@
-= nodeJS GRPC Consumer
+= Node.js GRPC Consumer
 :icons: font
 
-
+Example of a simple consumer, subscribing to all facts from the namespace _myapp_:
 
 [source,javascript]
 ----

@@ -1,4 +1,4 @@
-= Subscribed (local)
+= Subscribed (Local) Projection
 :icons: font
 
 

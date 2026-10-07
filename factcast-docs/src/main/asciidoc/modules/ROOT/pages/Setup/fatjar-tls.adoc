@@ -1,27 +1,24 @@
-= fat-jar (TLS)
+= Fat Jar (TLS)
 :icons: font
 
+This page describes how to run a FactCast server with TLS enabled.
+The example is provided under `factcast-examples/factcast-example-tls-server`.
+It sticks as close as possible to the unencrypted example described under xref:ROOT:Setup/fatjar.adoc[Fat Jar], to demonstrate the necessary changes and nothing more.
 
+== Setup
 
-==== Non-Encrypted
+First, for running a TLS server, you need a certificate. We packaged a *snakeoil* localhost certificate for you to test.
+This cert can be found in the repository's `src/etc/certificates/`.
+In order to create your own self-signed certificate, you can use the shell script `generate_selfsigned_cert.sh` in the same folder as a starting point.
 
-In order to run a simple example FactCast server, you could enter the project **factcast-examples/factcast-example-server**; see xref:ROOT:Setup/fatjar.adoc[fatjar].
+[WARNING]
+The snakeoil certificate is for testing only. Always use valid trusted certificates when you run FactCast in production.
 
-== TLS Server
-
-There is an extra example project that demonstrates the usage of TLS for your server that can be found **factcast-example-tls-server**
-
-We tried to stick as close as possible to what we have in **factcast-examples/factcast-example-server** to demonstrate the necessary changes and nothing more.
-
-Obviously, for running a TLS Server, you need a certificate. We packaged a snakeoil localhost certificate for you to test. This cert can be found in **src/etc/certificates/**. In order to create your own selfsigned certificate, there is a shell script you can use as a starting point.
-
-==== obviously, you should use proper trusted certificates when you run FactCast in production - you have been warned
-
-In order to run the TLS Server, go to **factcast-examples/factcast-example-tls-server** and run
+In order to run the TLS server, go to `factcast-examples/factcast-example-tls-server` and run
 
 [source,shell]
 ----
 mvn spring-boot:run
 ----
 
-xref:ROOT:Setup/ports.adoc[Read more on Ports]
+To connect to it, see xref:ROOT:Setup/ports.adoc[Ports].
