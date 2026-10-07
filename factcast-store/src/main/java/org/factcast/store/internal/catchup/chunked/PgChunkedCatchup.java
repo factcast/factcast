@@ -155,6 +155,7 @@ public class PgChunkedCatchup extends AbstractPgCatchup {
     if (fromSerial.get() >= horizon.factSerial()) {
       // no need to even run a query, if we know there is no matching fact within the bounds of the
       // horizon
+      log.trace("{} catchup {}, from >= horizon - nothing to see here. Skipping.", req, phase);
       matches = 0;
     } else {
       final var timer = metrics.timer(StoreMetrics.OP.RESULT_STREAM_START, isFromScratch);

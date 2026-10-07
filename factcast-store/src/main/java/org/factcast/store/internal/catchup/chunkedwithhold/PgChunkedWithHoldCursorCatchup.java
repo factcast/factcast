@@ -93,6 +93,7 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
     final var fromSerial = new AtomicLong(Math.max(serial.get(), fastForward));
     if (fromSerial.get() >= horizon.factSerial()) {
       // we're done in that case.
+      log.trace("{} catchup {}, from >= horizon - nothing to see here. Skipping.", req, phase);
       return false;
     }
 
@@ -139,8 +140,8 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
   Boolean declareAndFetchFirst(
       @NonNull Cursor cursor,
       @NonNull PgQueryBuilder queryBuilder,
-      @org.jspecify.annotations.NonNull AtomicLong fromSerial,
-      @org.jspecify.annotations.NonNull PgFactExtractor extractor)
+      @NonNull AtomicLong fromSerial,
+      @NonNull PgFactExtractor extractor)
       throws SQLException {
 
     Preconditions.checkArgument(

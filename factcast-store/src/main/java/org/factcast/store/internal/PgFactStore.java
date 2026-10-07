@@ -317,6 +317,7 @@ public class PgFactStore extends AbstractFactStore {
     return doGetState(specs, lastMatchingSerial, Optional.empty());
   }
 
+  @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
   private State doGetState(
       @NotNull Collection<FactSpec> specs,
       long lastMatchingSerial,

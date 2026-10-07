@@ -37,6 +37,7 @@ import org.springframework.jdbc.core.PreparedStatementSetter;
  * @author uwe.schaefer@prisma-capacity.eu
  */
 @Slf4j
+@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 public class PgQueryBuilder {
 
   private static final String ORDER_BY = " ORDER BY ";
@@ -63,7 +64,6 @@ public class PgQueryBuilder {
     return p -> setParameters(p, serial.get(), 0, OptionalLong.of(horizon.factSerial()));
   }
 
-  @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
   public PreparedStatementSetter createStateStatementSetter(
       long serial, @NonNull Optional<FactStreamHorizon> horizon) {
     return p -> {
@@ -77,7 +77,6 @@ public class PgQueryBuilder {
     return createStateStatementSetter(serial, Optional.empty());
   }
 
-  @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
   private static OptionalLong toOptionalLong(Optional<Long> value) {
     return value.map(OptionalLong::of).orElseGet(OptionalLong::empty);
   }
@@ -252,14 +251,14 @@ public class PgQueryBuilder {
   }
 
   public String createUnboundedSQL() {
-    return createUnboundedSQL(false);
+    return createSQL(false);
   }
 
   public String createBoundedSQL() {
-    return createUnboundedSQL(true);
+    return createSQL(true);
   }
 
-  private String createUnboundedSQL(boolean bounded) {
+  private String createSQL(boolean bounded) {
 
     if (useTemporaryTable()) {
       return "INSERT INTO "
