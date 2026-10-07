@@ -17,6 +17,7 @@ package org.factcast.store.internal.listen;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.*;
+import jakarta.annotation.*;
 import java.sql.*;
 import java.time.Duration;
 import java.util.*;
@@ -144,31 +145,37 @@ public class NudgeNotificationHandler implements DisposableBean {
 
     RuntimeException exception = null;
 
-    if (refreshLock.tryLock()) {
+    // Keep the accumulated failures while picking up requests arriving during unlock.
+    while (refreshLock.tryLock()) {
       try {
-        while (refreshRequested.getAndSet(false)) {
-          try {
-            fetchPairsAndDispatchOnce();
-          } catch (RuntimeException e) {
-            if (exception != null && exception != e) {
-              exception.addSuppressed(e);
-            } else {
-              exception = e;
-            }
-          }
-        }
+        exception = processPendingRefreshRequests(exception);
       } finally {
         refreshLock.unlock();
       }
 
-    } else {
-      // just quit
-      return;
+      if (!refreshRequested.get()) break;
     }
 
-    // let check a final time if another request was made in parallel, and if so recurse
-    if (refreshRequested.get() && exception == null) drainRefreshRequests();
     if (exception != null) throw exception;
+  }
+
+  private RuntimeException processPendingRefreshRequests(@Nullable RuntimeException exception) {
+    // The caller holds refreshLock. Clear before work so incoming requests trigger another pass.
+    while (refreshRequested.getAndSet(false)) {
+      try {
+        fetchPairsAndDispatchOnce();
+      } catch (RuntimeException e) {
+        exception = accumulateFailure(exception, e);
+      }
+    }
+    return exception;
+  }
+
+  private static RuntimeException accumulateFailure(
+      @Nullable RuntimeException firstFailure, @Nonnull RuntimeException nextFailure) {
+    if (firstFailure == null) return nextFailure;
+    if (firstFailure != nextFailure) firstFailure.addSuppressed(nextFailure);
+    return firstFailure;
   }
 
   private void fetchPairsAndDispatchOnce() {
