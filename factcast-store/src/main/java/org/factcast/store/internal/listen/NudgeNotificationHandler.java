@@ -188,7 +188,7 @@ public class NudgeNotificationHandler implements DisposableBean {
             && Boolean.FALSE.equals(
                 jdbc.queryForObject(BASE_EXISTS_SQL, Boolean.class, lowerSerial));
 
-    if (baseLineMissing) {
+    if (baseLineMissing || lowerSerial == 0) {
       log.trace("No reliable notification baseline, waking all subscribers");
       bus.post(FactInsertionNotification.internal());
       notificationSer.set(horizonSerial);
@@ -196,13 +196,6 @@ public class NudgeNotificationHandler implements DisposableBean {
     }
 
     if (horizonSerial <= lowerSerial) return;
-
-    if (lowerSerial == 0) {
-      log.trace("No reliable notification baseline, waking all subscribers");
-      bus.post(FactInsertionNotification.internal());
-      notificationSer.set(horizonSerial);
-      return;
-    }
 
     final var timerSample = metrics.startSample();
     try {
