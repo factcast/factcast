@@ -3,6 +3,9 @@
 
 
 
-This section will walk you through how to use FactCast from an application programmers perspective.
+This section will walk you through how to use FactCast with JavaScript from an application programmers perspective.
 
-Please note, that this is a **low-level** API. If you're a Java Programmer and want to use a higher-level API or explore what you can do with FactCast in a more approachable way first, you should have a look at the xref:ROOT:Usage/factus/index.adoc[Factus] section.
+Please note, that this is a **low-level** API.
+If you are new to FactCast, we suggest to consider exploring our higher-level API xref:ROOT:Usage/factus/index.adoc[Factus] first, althought it is available in Java only.
+
+child-pages::[]

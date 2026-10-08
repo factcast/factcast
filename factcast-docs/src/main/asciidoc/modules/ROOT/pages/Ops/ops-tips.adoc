@@ -3,7 +3,7 @@
 
 
 
-== Conditional execution date2serial migration
+== Conditional Execution date2serial Migration
 
 In FactCast v0.7.1, a new UI feature was introduced to allow filtering of events based on their publishing date. For
 this purpose, the `date2serial` mapping table was introduced in the schema.
@@ -14,7 +14,7 @@ store contains more than **10 million events**. This is to prevent the migration
 As mentioned in the changeset comments, it is suggested to run the changeset manually in such cases. The changeset can
 be found in the `factcast-store` module under https://github.com/factcast/factcast/blob/main/factcast-store/src/main/resources/db/changelog/factcast/issue2479/date2serial_for_existing_events.sql[`src/main/resources/db/changelog/factcast/issue2479/date2serial_for_existing_events.sql`].
 
-== Optimize GIN indexes updates
+== Optimize GIN Indexes Updates
 
 While GIN Indexes make querying jsonb faster, they are also expensive to update. Especially because a single change can
 cause the update of multiple index entries. To keep the overhead on write and update statements low, postgres per
@@ -44,7 +44,7 @@ Please note that flushing the pending list as part of disabling the `fastupdate`
 query. This is why this change set is **not executed automatically** if the attached condition senses a larger setup
 (> 10 million events). In this case please execute the change set manually to disable the `fastupdate` setting.
 
-== Autoanalyse & Autovacuum settings
+== Autoanalyse & Autovacuum Settings
 
 Postgres has a built-in mechanism to keep the statistics up to date and to clean up dead tuples, called
 https://www.postgresql.org/docs/15/runtime-config-autovacuum.html[Automatic Vacuuming].
@@ -80,7 +80,7 @@ log_min_duration_statement:500
 default_statistics_target:100
 ----
 
-== Clearing near caches
+== Clearing Near Caches
 
 In some cases (e.g. whenever applying manual changes due to emergency scenarios), it might be necessary to clear the
 near/in-memory caches of every FactCast instance; this can be achieved by executing the following query on the database:

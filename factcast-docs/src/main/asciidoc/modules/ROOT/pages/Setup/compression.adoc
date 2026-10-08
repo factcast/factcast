@@ -1,21 +1,18 @@
 = Compression
 :icons: font
 
-
-
-== Why ?
-
-Wherever there is network communication, the question of compression comes up. The FactCast server currently supports
-three compressors out of the box:
+Wherever there is network communication, the question of compression comes up.
+The FactCast server currently supports three compressors out of the box:
 
 - LZ4
 - Snappy
 - GZip
 
-Unfortunately, GRPC does not support stream-compression, but only message-compression. This means that the
-efficiency of the compression is dependent on the message size. We'll get to that...
+Unfortunately, gRPC does not support stream-compression, but only message-compression.
+This means that the efficiency of the compression is dependent on the message size.
+We'll get to that...
 
-== Client chooses
+== Client Chooses
 
 In order to agree on which compressor to use, there is an initial handshake when the client connects to the server,
 in which the available compressors on client and server are compared, and the server selects the one to use.
@@ -78,15 +75,15 @@ For versions before 0.7.9 the respective dependencies were
 
 `org.xerial.snappy` and `net.jpountz.lz4` are deprecated now and will be removed in 0.8.
 
-== Compressor efficiency
+== Compressor Efficiency
 
-As there currently is no stream-compression in GRPC, the server compresses each message transferred to the client
+As there currently is no stream-compression in gRPC, the server compresses each message transferred to the client
 separately.
 The smaller this message is, the less efficient the compression can be. For this reason it is important (during the
-catchup phase, where you expect a lot of messages) to allow the server to bundle facts into a batch that it will
+_catchup_ phase, where you expect a lot of messages) to allow the server to bundle facts into a batch that it will
 compress and send as one message. The default maximum message size is 3.5MB, but it can be configured up to 32MB.
 
-See xref:ROOT:Setup/properties.adoc#factcast-client-specific[`factcast.grpc.client.max-inbound-message-size`]
+See xref:ROOT:Setup/properties.adoc#factcast-client-specific[`factcast.grpc.client.max-inbound-message-size`].
 
-In the follow phase, this setting is not important, as you don't want to wait for your batch to fill up before you
+In the _follow_ phase, this setting is not important, as you don't want to wait for your batch to fill up before you
 receive the latest publications from the server. Latency is more important than compression efficiency in that case.

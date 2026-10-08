@@ -3,7 +3,7 @@
 
 
 
-== keep-alive settings
+== Settings Recommendations
 
 Here are some good settings for an initial configuration of a SpringBoot FactCast client/server setup in case you ran
 into gRPC related client server communication troubles.
@@ -14,7 +14,7 @@ into gRPC related client server communication troubles.
 - The proposed values are defining a scenario where the client sends keep-alive HTTP/2 PINGs every 300s and the server
   accepts this behavior without sending `GO_AWAY ENHANCE_YOUR_CALM` to the client. Please adapt to your specific needs.
 
-=== Client side
+=== Client Side
 
 [cols="1,1,1,1", options="header"]
 |===
@@ -25,7 +25,7 @@ into gRPC related client server communication troubles.
 
 Further details can be found here : `org.springframework.grpc.autoconfigure.client.GrpcClientProperties`.
 
-=== Server side
+=== Server Side
 
 [cols="1,1,1,1", options="header"]
 |===
