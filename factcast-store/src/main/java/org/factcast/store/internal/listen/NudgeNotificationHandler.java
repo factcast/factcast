@@ -49,7 +49,7 @@ public class NudgeNotificationHandler implements DisposableBean {
       @NonNull JdbcTemplate jdbc,
       @NonNull StoreConfigurationProperties props,
       @NonNull PgMetrics metrics) {
-    this(bus, jdbc, props, metrics, true);
+    this(bus, jdbc, props, metrics, !props.isReadOnlyModeEnabled());
   }
 
   @VisibleForTesting

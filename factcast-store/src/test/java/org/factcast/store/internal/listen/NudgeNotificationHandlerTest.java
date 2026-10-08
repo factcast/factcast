@@ -67,6 +67,41 @@ class NudgeNotificationHandlerTest {
   }
 
   @Test
+  void readOnlyModeDoesNotScheduleCleanup() throws Exception {
+    handler.destroy();
+    when(props.isReadOnlyModeEnabled()).thenReturn(true);
+
+    handler = new NudgeNotificationHandler(bus, jdbc, props, metrics);
+    awaitInitialTimerTasks();
+
+    verifyNoInteractions(jdbc);
+  }
+
+  @Test
+  void writableModeRunsCleanup() throws Exception {
+    handler.destroy();
+
+    handler = new NudgeNotificationHandler(bus, jdbc, props, metrics);
+    awaitInitialTimerTasks();
+
+    verify(jdbc).execute("CALL notificationCleanup()");
+  }
+
+  private void awaitInitialTimerTasks() throws InterruptedException {
+    var completed = new CountDownLatch(1);
+    // The timer runs tasks serially, so this runs after any immediate cleanup scheduled at startup.
+    handler.timer.schedule(
+        new TimerTask() {
+          @Override
+          public void run() {
+            completed.countDown();
+          }
+        },
+        0);
+    assertThat(completed.await(5, TimeUnit.SECONDS)).isTrue();
+  }
+
+  @Test
   void testDestroyUnregistersBus() throws Exception {
     handler.destroy();
     verify(bus).unregister(handler);

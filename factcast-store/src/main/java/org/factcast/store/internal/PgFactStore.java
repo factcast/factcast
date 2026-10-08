@@ -21,14 +21,13 @@ import java.sql.Date;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicLong;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.*;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.*;
 import org.factcast.core.subscription.*;
-import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.core.subscription.observer.*;
 import org.factcast.core.util.ExceptionHelper;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.lock.FactTableWriteLock;
@@ -308,9 +307,11 @@ public class PgFactStore extends AbstractFactStore {
         StoreMetrics.OP.GET_STATE_FOR,
         () -> {
           PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs);
-          String stateSQL = pgQueryBuilder.createStateSQL();
+          int backwardScanWindow = props.getStateQueryBackwardScanWindow();
+
+          String stateSQL = pgQueryBuilder.createStateSQL(backwardScanWindow);
           PreparedStatementSetter statementSetter =
-              pgQueryBuilder.createStatementSetter(new AtomicLong(lastMatchingSerial));
+              pgQueryBuilder.createStateStatementSetter(lastMatchingSerial);
 
           ResultSetExtractor<Long> rch =
               resultSet -> {

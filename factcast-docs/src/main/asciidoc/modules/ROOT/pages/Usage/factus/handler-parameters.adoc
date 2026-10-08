@@ -1,0 +1,99 @@
+= Handler Parameters
+:icons: font
+
+
+
+Inside projections, Factus uses xref:ROOT:Usage/factus/projections/index.adoc#projections-in-general[methods annotated with `@Handler` or `@HandlerFor`]
+to process events. These methods allow various parameters, also in combination, which can serve as "input" during event handling.
+
+== Common Handler Parameters
+
+[cols="1,1,1,1", options="header"]
+|===
+|Parameter Type & Annotation |Description |valid on @Handler |valid on @HandlerFor
+|`Fact` |Provides access to all xref:ROOT:Concept/fact.adoc[Fact] details including header (JSON) and payload (JSON) |yes |yes
+|`FactHeader` |the xref:ROOT:Concept/fact.adoc#the-header[Fact header]. Provides access to event namespace, type, version, meta entries and others |yes |yes
+|`UUID` |the xref:ROOT:Concept/fact.adoc#the-header[Fact ID of the Fact header] |yes |yes
+|`FactStreamPosition` |the FactStreamPosition that identifies the position of the given fact in the global fact stream |yes |yes
+|`@Nullable @Meta("foo") String` |if present, the value of the fact-header's meta object attribute "foo", otherwise null |yes |yes
+|`@Meta("foo") Optional<String> ` |if present, the value of the fact-header's meta object attribute "foo" wrapped in an Optional, otherwise Optional.empty |yes |yes
+|`? extends EventObject` |an instance of a concrete class xref:ROOT:Usage/factus/introduction.adoc#eventobjects[implementing `EventObject`]. |yes |no
+|===
+
+== Extras on Redis atomic Projections
+
+Additional to these common parameters, Projections can add parameters to be used by handler methods.
+For instance handler methods on @RedisTransactional projections that should use:
+
+[cols="1,1,1,1", options="header"]
+|===
+|Parameter Type |Description |valid on @Handler |valid on @HandlerFor
+|`RTransaction` |needed in a xref:ROOT:Usage/factus/projections/atomicity/redis-transactional-projections.adoc[Redis transactional projection] |yes |yes
+|===
+
+== Examples
+
+=== @Handler
+
+Here are some examples:
+
+[source,java]
+----
+// handle the "SomeThingStarted" event.
+// deserialization happened automatically
+@Handler
+void apply(SomethingStarted event) {
+    var someValue = event.getSomeProperty();
+    ...
+}
+
+// handle the "SomethingChanged" event.
+// additionally use information from the Fact header
+@Handler
+void apply(SomethingChanged event, FactHeader header) {
+    int eventVersion = header.version();
+    String someMetaDataValue = header.meta().get("some-metadata-key");
+    ...
+}
+
+// use multiple parameters
+@Handler
+void apply(SomethingReactivated event,
+           FactHeader factHeader,
+           UUID factId,
+           Fact fact) {
+    ...
+}
+----
+
+These examples were all based on handling events which
+
+- xref:ROOT:Usage/factus/introduction.adoc#eventobjects[implement the `EventObject` interface] and
+- provide their specification details via xref:ROOT:Usage/factus/introduction.adoc#eventobjects[the `@Specification` annotation].
+
+The next section introduces a more direct alternative.
+
+=== @HandlerFor
+
+The `@HandlerFor` annotation allows only direct access to the Fact data like header or payload without any deserialization.
+
+[source,java]
+----
+// handle "SomethingAdded" events in their version 1
+// living in the "test" namespace
+@HandlerFor(ns = "test", type = "SomethingAdded", version = 1)
+void applySomethingAdded(Fact fact) {
+    String payload = fact.jsonPayload();
+    ...
+}
+
+// also here, multiple parameters can be used
+@HandlerFor(ns = "test", type = "SomethingRemoved", version = 2)
+void applySomethingRemoved(FactHeader factHeader, UUID factId, Fact fact) {
+    ...
+}
+----
+
+=== Full Example
+
+See https://github.com/factcast/factcast/blob/main/factcast-itests/factcast-itests-factus/src/test/java/org/factcast/itests/factus/FactusVariousHandlerParametersDemoITest.java[here] for the full example.
