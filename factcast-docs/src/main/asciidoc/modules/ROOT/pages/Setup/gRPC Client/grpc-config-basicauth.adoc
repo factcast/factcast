@@ -1,0 +1,21 @@
+= gRPC Basic Auth
+:icons: font
+:stable: grpc-config-basicauth
+
+
+=== Using Basic Auth from a Client
+
+From a client's perspective, all you need to do is to provide credentials. Once the credentials are configured, they are
+sent with every request using HTTP Basic authentication (as an `Authorization` header).
+
+In order to define credentials, just set the appropriate property to a value of the format 'username:password', just as
+you would type them into your browser when a Basic Auth popup appears.
+
+----
+# if this property is set with a value of the format 'username:password', Basic Auth will be used.
+grpc.client.factstore.credentials=myUserName:mySecretPassword
+----
+
+You can always use environment variables or a `-D` switch in order to inject the credentials.
+
+See module https://github.com/factcast/factcast/tree/main/factcast-examples/factcast-example-client-basicauth[examples/factcast-example-client-basicauth] for an example.

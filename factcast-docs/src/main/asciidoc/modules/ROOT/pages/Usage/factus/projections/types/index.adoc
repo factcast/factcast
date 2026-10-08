@@ -1,0 +1,10 @@
+= Projection Types
+:icons: font
+
+
+
+image::ph_p.png[, align="center"]
+
+To learn about the different flavors of projections, explore their respective pages:
+
+child-pages::[]
