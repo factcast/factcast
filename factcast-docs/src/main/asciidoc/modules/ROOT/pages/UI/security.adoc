@@ -5,7 +5,7 @@
 
 == Authentication & Authorization
 
-By default, the FactCast-Server UI supports the same authentication/authorization approach as the GRPC server
+By default, the FactCast-Server UI supports the same authentication/authorization approach as the gRPC server
 explained xref:ROOT:Setup/security.adoc[here].
 
 However, you might want to make UI accessible via a centrally managed Active Directory. Luckily, we use Spring Security
@@ -15,14 +15,17 @@ under the hood and all this is possible.
 
 The following example shows an OIDC integration:
 
-1. You have to exclude the standard configuration, that configures Spring Security & Vaadin to support the default
+. You have to exclude the standard configuration, that configures Spring Security & Vaadin to support the default
    authentication/authorization approach.
++
 
 ----
 @SpringBootApplication(exclude = {FactCastServerUISecurityAutoConfiguration.class})
 ----
 
-2. Add necessary Spring Security dependencies and configurations:
++
+. Add necessary Spring Security dependencies and configurations:
++
 
 ----
 <dependency>
@@ -35,7 +38,9 @@ The following example shows an OIDC integration:
 </dependency>
 ----
 
-3. Implement custom security configuration
++
+. Implement custom security configuration
++
 
 ----
 @Configuration
@@ -49,9 +54,10 @@ public class SecurityConfig extends VaadinWebSecurity {
 }
 ----
 
-4. Implement a `OAuth2UserService` that maps from a `OidcUser` to a `FactCastOidcUser` which is usable by the
++
+. Implement a `OAuth2UserService` that maps from a `OidcUser` to a `FactCastOidcUser` which is usable by the
    FactCast-Server UI.
-
++
 ----
 @Component
 public class FactCastUserService implements OAuth2UserService<OidcUserRequest, OidcUser> {
@@ -69,9 +75,9 @@ public class FactCastUserService implements OAuth2UserService<OidcUserRequest, O
   }
 }
 ----
-
++
 with this being the `FactCastOidcUser`
-
++
 ----
 public class FactCastOidcUser extends FactCastUser implements OidcUser {
   private final OidcUser user;

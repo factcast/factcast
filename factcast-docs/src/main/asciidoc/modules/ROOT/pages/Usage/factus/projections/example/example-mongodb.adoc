@@ -1,10 +1,9 @@
-= UserNames (MongoDB)
+= MongoDB Projection Example
 :icons: font
 
 
-
-Here is a projection that handles _UserCreated_ and _UserDeleted_ events using MongoDB as datastore. Currently, for
-MongoDB no transactionally aware projection implementation is provided.
+An example for a projection that handles _UserCreated_ and _UserDeleted_ events using MongoDB as datastore.
+Currently, for MongoDB no transactionally aware projection implementation is provided.
 
 == Configuration
 
@@ -49,7 +48,7 @@ public class UserNames extends AbstractMongoDbSubscribedProjection {
 FactStreamPosition and lock management are automatically handled by `AbstractMongoDbSubscribedProjection`.
 For this purpose, two shared collections named `locks` and `states` are created.
 
-== Updating the projection
+== Updating the Projection
 
 === Applying Events
 

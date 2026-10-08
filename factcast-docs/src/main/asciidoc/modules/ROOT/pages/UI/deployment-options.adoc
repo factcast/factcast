@@ -5,7 +5,7 @@
 
 The FactCast Server-UI can be deployed in different ways:
 
-=== Option 1: as part of the factcast server
+=== Option 1: As Part of the FactCast Server
 
 Just add the dependency `factcast-server-ui` to your server project (next to server-grpc), so that you can use the UI
 directly from within the Server. In
@@ -14,7 +14,7 @@ additional configuration is needed.
 
 (!) Beware that this way, the UI is vulnerable to anyone, who can access the Server via HTTP, obviously.
 
-=== Option 2: as a standalone instance accessing the Database
+=== Option 2: As a Standalone Instance Accessing the Database
 
 You can add a new project to your landscape that just acts as a UI Server. In this configuration you don't even need
 the gRPC layer (factcast-server-grpc) because it uses a jdbc connection to your database directly. The config is
@@ -22,7 +22,7 @@ basically the
 same than with your FactCast Server (in terms of how to access the backing database), but additionally, you may want
 to set the role of this instance to readOnly (see xref:ROOT:Setup/deployment-options.adoc[readonly deployment]).
 
-=== Option 3: as standalone instance facilitating an existing factcast-server over gRPC
+=== Option 3: As a Standalone Instance Facilitating an Existing FactCast Server over gRPC
 
 This is useful when you don't want to publish the UI (much recommended) and also cannot / don't want to access the
 Database directly. This
@@ -32,5 +32,5 @@ accordingly.
 === Security
 
 The UI uses spring-security. Some helpful settings are documented
-xref:ROOT:UI/Setup/security.adoc[here].
+xref:ROOT:UI/security.adoc[here].
 If security is disabled you can log in with any username and `security_disabled` as password.
