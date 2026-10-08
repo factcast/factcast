@@ -15,63 +15,69 @@
  */
 package org.factcast.store.registry.transformation.cache;
 
+import static org.factcast.store.registry.metrics.RegistryMetrics.GAUGE.CACHE_BUFFER;
+
 import com.google.common.annotations.VisibleForTesting;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import javax.annotation.Nullable;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
+import org.factcast.store.internal.PgFact;
+import org.factcast.store.registry.metrics.RegistryMetrics;
 
+@Slf4j
 class CacheBuffer {
-  private final Object mutex = new Object() {};
 
   @Getter(AccessLevel.PROTECTED)
-  private final Map<TransformationCache.Key, Fact> buffer = new HashMap<>();
+  private final Map<TransformationCache.Key, PgFact> buffer =
+      Collections.synchronizedMap(new HashMap<>());
 
-  Fact get(@NonNull TransformationCache.Key key) {
-    synchronized (mutex) {
-      return buffer.get(key);
-    }
+  @Getter(AccessLevel.PROTECTED)
+  private final AtomicLong bufferSizeMetric;
+
+  public CacheBuffer(RegistryMetrics registryMetrics) {
+    this.bufferSizeMetric = registryMetrics.gauge(CACHE_BUFFER, new AtomicLong(0));
   }
 
-  void put(@NonNull TransformationCache.Key cacheKey, @Nullable Fact factOrNull) {
-    synchronized (mutex) {
-      // do not override potential transformations
-      // cannot use computeIfAbsent here as null values are not allowed.
-      if (factOrNull != null || !buffer.containsKey(cacheKey)) {
-        buffer.put(cacheKey, factOrNull);
-      }
-    }
+  PgFact get(@NonNull TransformationCache.Key key) {
+    // we accept that we may get a null result here during flushing of the buffer
+    return buffer.get(key);
+  }
+
+  void put(@NonNull TransformationCache.Key cacheKey, @NonNull PgFact f) {
+    buffer.putIfAbsent(cacheKey, f);
   }
 
   int size() {
-    synchronized (mutex) {
-      return buffer.size();
-    }
+    return buffer.size();
   }
 
-  Map<TransformationCache.Key, Fact> clear() {
-    synchronized (mutex) {
-      Map<TransformationCache.Key, Fact> ret = Collections.unmodifiableMap(new HashMap<>(buffer));
+  /**
+   * Copies the buffer content, clears it and passes a copy to the consumer. This allows for a
+   * consistent view of the data during processing.
+   *
+   * @param consumer the consumer that will process the buffered data before being cleared.
+   */
+  void iterateSnapshotAndClear(@NonNull Consumer<Map<TransformationCache.Key, Fact>> consumer) {
+    HashMap<TransformationCache.Key, Fact> flushing;
+    synchronized (buffer) {
+      bufferSizeMetric.set(buffer.size());
+      flushing = new HashMap<>(buffer);
       buffer.clear();
-      return ret;
     }
-  }
-
-  void putAllNull(Collection<TransformationCache.Key> keys) {
-    synchronized (mutex) {
-      keys.forEach(k -> put(k, null));
+    try {
+      consumer.accept(flushing);
+    } catch (Exception e) {
+      log.warn("While flushing cacheBuffer", e);
     }
   }
 
   @VisibleForTesting
   boolean containsKey(TransformationCache.Key key) {
-    synchronized (mutex) {
-      return buffer.containsKey(key);
-    }
+    return buffer.containsKey(key);
   }
 }

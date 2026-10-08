@@ -15,10 +15,7 @@
  */
 package org.factcast.core;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import lombok.NonNull;
 import org.factcast.core.lock.LockedOperationBuilder;
 import org.factcast.core.lock.MultiAggregateLockedOperationBuilder;
@@ -50,7 +47,7 @@ public interface FactCast extends ReadFactCast {
     return new DefaultFactCast(store);
   }
 
-  LockedOperationBuilder lock(@NonNull List<FactSpec> scope);
+  LockedOperationBuilder lock(@NonNull Collection<FactSpec> scope);
 
   default LockedOperationBuilder lock(@NonNull FactSpec scope) {
     return lock(Collections.singletonList(scope));

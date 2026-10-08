@@ -16,10 +16,10 @@
 package org.factcast.factus.projection.parameter;
 
 import com.google.common.base.Predicates;
+import jakarta.annotation.Nullable;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.util.*;
-import javax.annotation.Nullable;
 import lombok.NonNull;
 import org.factcast.core.*;
 import org.factcast.factus.Meta;

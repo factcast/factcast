@@ -15,22 +15,19 @@
  */
 package org.factcast.store;
 
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.LoggerContext;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.Appender;
-import ch.qos.logback.core.ConsoleAppender;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
 import java.time.Duration;
 import java.util.*;
-import lombok.Data;
+import lombok.*;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.LoggerFactory;
+import org.factcast.store.internal.pipeline.AutoFlushingServerPipeline;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.jdbc.autoconfigure.DataSourceProperties;
 import org.springframework.validation.annotation.Validated;
 
 @ConfigurationProperties(prefix = StoreConfigurationProperties.PROPERTIES_PREFIX)
@@ -45,10 +42,28 @@ public class StoreConfigurationProperties implements InitializingBean {
   /** defines the fetchSize of a database query */
   @Positive int pageSize = 50;
 
+  /**
+   * Recent serial range to probe backwards before searching all matching facts for state queries.
+   * This counts serial positions, not rows or milliseconds. Set to zero to disable the probe.
+   */
+  @Min(1)
+  int stateQueryBackwardScanWindow = 20000;
+
   /** defines the max number of Facts being scheduled for transformation */
   @Positive
-  @Max(32000)
+  @Max(5000)
+  @Min(10)
   int transformationCachePageSize = 100;
+
+  /**
+   * defines the max number of transformed Facts being buffered in order to make flushing more
+   * efficient. This cannot be equal or greater than 10000, due to JDBC restrictions. Be careful
+   * when setting this to a high value, as this could cause memory issues in combination with large
+   * Facts.
+   */
+  @Positive
+  @Max(9999)
+  int transformationCacheBufferSize = 50;
 
   /**
    * Optional URL to a Schema Registry. If this is null, validation will be disabled and a warning
@@ -70,13 +85,6 @@ public class StoreConfigurationProperties implements InitializingBean {
    * psql or just kept in mem. (Defaults to true)
    */
   boolean persistentRegistry = true;
-
-  /**
-   * when using the persistent impl of the transformation cache, this is the min number of days a
-   * transformation result is not read in order to be considered stale. This should free some space
-   * in a regular cleanup job
-   */
-  @Positive int deleteTransformationsStaleForDays = 14;
 
   /**
    * If validation is enabled, this controls if transformed facts are persistently cached in
@@ -142,7 +150,7 @@ public class StoreConfigurationProperties implements InitializingBean {
   boolean tailIndexingEnabled = true;
 
   /** defines, if tail indexes should enable the fastUpdate feature */
-  boolean tailIndexingFastUpdateEnabled = false;
+  boolean tailIndexingFastUpdateEnabled;
 
   /** parameter will only be used, if fastUpdate is enabled */
   int tailIndexingPendingListLimit = 4096;
@@ -198,22 +206,76 @@ public class StoreConfigurationProperties implements InitializingBean {
   boolean readOnlyModeEnabled;
 
   /**
+   * Size of a chunk, that is used to fetch events from the store during CHUNKED_WITH_HOLD catchup
+   * strategy.
+   */
+  @Positive
+  @Max(1_000_000)
+  @Min(1000)
+  int chunkSize = 10000;
+
+  /**
    * used to direct the enumerateTypes/Namespaces calls against the store directly, thus bypass the
    * schema-registry even it is configured. This is useful, if you want to see ns/types that are not
    * yet found in the registry, but exist in the factStore.
    */
   boolean enumerationDirectModeEnabled;
 
+  @Valid LogSuppressionProperties logSuppression = new LogSuppressionProperties();
+
   public boolean isSchemaRegistryConfigured() {
     return schemaRegistryUrl != null;
   }
 
+  public enum CatchupStrategy {
+    CURSOR,
+    CHUNKED,
+    CHUNKED_WITH_HOLD
+  }
+
+  CatchupStrategy catchupStrategy = CatchupStrategy.CURSOR;
+
+  boolean catchupAsyncFetch = false; // might default to true in the future
+
+  @Data
+  public static class PublishBatch {
+    boolean enabled = false;
+
+    @Positive
+    @Min(10)
+    @Max(10000)
+    int maxBatchSize = 500;
+  }
+
+  @Valid public PublishBatch publishBatch = new PublishBatch();
+
+  /**
+   * When catching up, if production of a full notification of facts takes longer than this (10
+   * seconds default, 2 seconds minimum), an additional flush is inserted into the pipelin in order
+   * to send the notification as is to the client. This is done in order to balance parallelization
+   * vs. network/compression efficiency
+   */
+  @Positive
+  @Max(60000)
+  @Min(AutoFlushingServerPipeline.AUTOFLUSH_CHECK_INTERVAL)
+  int autoFlushDelay = 10000; // 10 seconds default
+
+  @Positive
+  @Min(5)
+  @Max(50)
+  long maxNotificationPollLatencyInMillis = 25;
+
+  @Getter
+  @Setter
+  public static class OffloadDataSourceProperties extends DataSourceProperties {
+    boolean enabled;
+  }
+
+  @Valid OffloadDataSourceProperties offload = new OffloadDataSourceProperties();
+
   @Override
   public void afterPropertiesSet() throws Exception {
     if (integrationTestMode) {
-
-      adjustLogbackAppender();
-
       log.warn(
           "**** You are running in INTEGRATION TEST MODE. If you see this in production, "
               + "this would be a good time to panic. (See "
@@ -231,20 +293,6 @@ public class StoreConfigurationProperties implements InitializingBean {
         log.warn(
             "**** SchemaRegistry-mode is enabled but validation of Facts is disabled. This is"
                 + " discouraged for production environments. You have been warned. ****");
-      }
-    }
-  }
-
-  private void adjustLogbackAppender() {
-    LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
-    for (Logger logger : context.getLoggerList()) {
-      Iterator<Appender<ILoggingEvent>> iter = logger.iteratorForAppenders();
-      while (iter.hasNext()) {
-        Appender<ILoggingEvent> appender = iter.next();
-        if (appender instanceof ConsoleAppender) {
-          log.debug("Setting {} to immediate flush", appender.getClass());
-          ((ConsoleAppender<?>) appender).setImmediateFlush(true);
-        }
       }
     }
   }

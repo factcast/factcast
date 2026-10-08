@@ -26,7 +26,7 @@ import org.factcast.core.store.FactStore;
 public final class LockedOperationBuilder {
   @NonNull final FactStore store;
 
-  final List<FactSpec> specs;
+  final Collection<FactSpec> specs;
 
   public WithOptimisticLock optimistic() {
     return new WithOptimisticLock(store, specs);

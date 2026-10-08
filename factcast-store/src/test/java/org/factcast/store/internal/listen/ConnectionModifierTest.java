@@ -15,12 +15,12 @@
  */
 package org.factcast.store.internal.listen;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 
 import java.sql.*;
 import lombok.SneakyThrows;
 import org.assertj.core.api.Assertions;
+import org.factcast.store.internal.ConnectionModifier;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
@@ -62,6 +62,25 @@ class ConnectionModifierTest {
       Mockito.reset(p);
       uut.beforeReturn(c);
       Mockito.verify(p).execute("RESET enable_bitmapscan");
+    }
+  }
+
+  @Nested
+  class ForceCustomPlan {
+
+    @Mock PreparedStatement p;
+
+    @SneakyThrows
+    @Test
+    void forcesCustomPlan() {
+      var uut = new ConnectionModifier.ForceCustomPlan();
+      when(c.createStatement()).thenReturn(p);
+      uut.afterBorrow(c);
+      Mockito.verify(p).execute("SET plan_cache_mode='force_custom_plan'");
+
+      Mockito.reset(p);
+      uut.beforeReturn(c);
+      Mockito.verify(p).execute("RESET plan_cache_mode");
     }
   }
 

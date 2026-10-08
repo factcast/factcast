@@ -30,7 +30,7 @@ public abstract class AbstractTransformationStore implements TransformationStore
 
   private final List<TransformationStoreListener> listeners = new CopyOnWriteArrayList<>();
 
-  @Getter(value = AccessLevel.PROTECTED)
+  @Getter(AccessLevel.PROTECTED)
   private final ExecutorService executorService =
       Executors.newCachedThreadPool(
           r -> {

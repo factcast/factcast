@@ -18,55 +18,47 @@ package org.factcast.store.internal;
 import static org.mockito.Mockito.*;
 
 import com.google.common.eventbus.EventBus;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import org.factcast.core.subscription.MissingTransformationInformationException;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.TransformationException;
 import org.factcast.core.subscription.observer.FactObserver;
-import org.factcast.core.subscription.observer.FastForwardTarget;
-import org.factcast.core.subscription.transformation.FactTransformerService;
-import org.factcast.core.subscription.transformation.MissingTransformationInformationException;
+import org.factcast.core.subscription.observer.HighWaterMarkFetcher;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
+import org.factcast.store.internal.logsuppression.*;
 import org.factcast.store.internal.pipeline.ServerPipelineFactory;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
-import org.factcast.store.internal.query.PgLatestSerialFetcher;
-import org.factcast.store.internal.script.JSEngineFactory;
 import org.factcast.store.internal.telemetry.PgStoreTelemetry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.jdbc.core.JdbcTemplate;
 
 @ExtendWith(MockitoExtension.class)
 class PgSubscriptionFactoryTest {
 
-  @Mock private JdbcTemplate jdbcTemplate;
   @Mock private EventBus eventBus;
   @Mock private PgFactIdToSerialMapper idToSerialMapper;
-  @Mock private PgLatestSerialFetcher fetcher;
   @Mock private PgCatchupFactory catchupFactory;
 
   @Mock private StoreConfigurationProperties props;
 
-  @Mock private FastForwardTarget target;
-  @Mock private FactTransformerService transformerService;
+  @Mock private HighWaterMarkFetcher target;
   @Mock private PgMetrics metrics;
   @Mock private PgStoreTelemetry telemetry;
 
-  @Mock private JSEngineFactory engineFactory;
   @Mock private ServerPipelineFactory pipelineFactory;
   @Mock private PgConnectionSupplier connectionSupplier;
 
   @Spy private ExecutorService executorService = Executors.newSingleThreadExecutor();
+  @Spy private LogSuppression logsup = new NopLogSuppression();
   private PgSubscriptionFactory underTest;
 
   @BeforeEach
@@ -76,16 +68,16 @@ class PgSubscriptionFactoryTest {
     underTest =
         new PgSubscriptionFactory(
             connectionSupplier,
+            null,
             eventBus,
             idToSerialMapper,
-            fetcher,
             props,
             catchupFactory,
             target,
             pipelineFactory,
-            engineFactory,
             metrics,
-            telemetry);
+            telemetry,
+            logsup);
   }
 
   @Nested
@@ -97,12 +89,11 @@ class PgSubscriptionFactoryTest {
     void testSubscribe_happyCase() {
       final var runnable = mock(Runnable.class);
       final var spyUut = spy(underTest);
-      doReturn(runnable).when(spyUut).connect(any(), any(), any());
+      doReturn(runnable).when(spyUut).connect(any(), any());
 
-      try (var cf = Mockito.mockStatic(CompletableFuture.class)) {
-        spyUut.subscribe(req, observer);
-        cf.verify(() -> CompletableFuture.runAsync(runnable, executorService));
-      }
+      spyUut.subscribe(req, observer);
+      verify(spyUut).connect(any(), any());
+      verify(runnable, timeout(100)).run();
     }
   }
 
@@ -112,21 +103,26 @@ class PgSubscriptionFactoryTest {
     @Mock private SubscriptionImpl subscription;
     @Mock private PgFactStream pgsub;
 
+    @BeforeEach
+    void setUp() {
+      lenient().when(pgsub.request()).thenReturn(req);
+    }
+
     @Test
     void testConnect_happyCase() {
-      underTest.connect(req, subscription, pgsub).run();
-      verify(pgsub).connect(req);
+      underTest.connect(subscription, pgsub).run();
+      verify(pgsub).connect();
     }
 
     @Test
     void testConnect_transformationException() {
       var e = new TransformationException("foo");
 
-      doThrow(e).when(pgsub).connect(req);
+      doThrow(e).when(pgsub).connect();
 
-      underTest.connect(req, subscription, pgsub).run();
+      underTest.connect(subscription, pgsub).run();
 
-      verify(pgsub).connect(req);
+      verify(pgsub).connect();
       verify(subscription).notifyError(e);
     }
 
@@ -134,20 +130,20 @@ class PgSubscriptionFactoryTest {
     void testConnect_someException() {
       var e = new IllegalArgumentException("foo");
 
-      doThrow(e).when(pgsub).connect(req);
+      doThrow(e).when(pgsub).connect();
 
-      underTest.connect(req, subscription, pgsub).run();
+      underTest.connect(subscription, pgsub).run();
 
-      verify(pgsub).connect(req);
+      verify(pgsub).connect();
       verify(subscription).notifyError(e);
     }
 
     @Test
     void warnsForMissingTransformations() {
       underTest = spy(underTest);
-      doThrow(MissingTransformationInformationException.class).when(pgsub).connect(any());
+      doThrow(MissingTransformationInformationException.class).when(pgsub).connect();
 
-      underTest.connect(req, subscription, pgsub).run();
+      underTest.connect(subscription, pgsub).run();
 
       verify(underTest)
           .warnAndNotify(
@@ -161,9 +157,9 @@ class PgSubscriptionFactoryTest {
     @Test
     void errsForTransformationErrors() {
       underTest = spy(underTest);
-      doThrow(TransformationException.class).when(pgsub).connect(any());
+      doThrow(TransformationException.class).when(pgsub).connect();
 
-      underTest.connect(req, subscription, pgsub).run();
+      underTest.connect(subscription, pgsub).run();
 
       verify(underTest)
           .errorAndNotify(
@@ -177,9 +173,9 @@ class PgSubscriptionFactoryTest {
     @Test
     void warnsForRuntimeExceptions() {
       underTest = spy(underTest);
-      doThrow(RuntimeException.class).when(pgsub).connect(any());
+      doThrow(RuntimeException.class).when(pgsub).connect();
 
-      underTest.connect(req, subscription, pgsub).run();
+      underTest.connect(subscription, pgsub).run();
 
       verify(underTest)
           .warnAndNotify(same(subscription), same(req), eq("runtime"), any(RuntimeException.class));

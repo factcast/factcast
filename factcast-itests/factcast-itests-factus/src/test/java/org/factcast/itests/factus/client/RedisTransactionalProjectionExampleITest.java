@@ -24,12 +24,14 @@ import org.factcast.factus.Factus;
 import org.factcast.itests.factus.event.UserCreated;
 import org.factcast.itests.factus.event.UserDeleted;
 import org.factcast.itests.factus.proj.RedisTxProjectionExample;
-import org.factcast.test.AbstractFactCastIntegrationTest;
+import org.factcast.test.*;
 import org.junit.jupiter.api.Test;
 import org.redisson.api.RedissonClient;
+import org.slf4j.event.Level;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Slf4j
+@FactcastTestConfig(serverLogLevel = Level.DEBUG)
 public class RedisTransactionalProjectionExampleITest extends AbstractFactCastIntegrationTest {
 
   @Autowired Factus factus;

@@ -18,27 +18,35 @@ package org.factcast.store.registry.transformation;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Stopwatch;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ForkJoinPool;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.NonNull;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.core.subscription.TransformationException;
-import org.factcast.core.subscription.transformation.FactTransformerService;
-import org.factcast.core.subscription.transformation.TransformationRequest;
 import org.factcast.core.util.ExceptionHelper;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.Pair;
+import org.factcast.store.internal.PgFact;
+import org.factcast.store.internal.script.JsonString;
+import org.factcast.store.internal.transformation.FactTransformerService;
+import org.factcast.store.internal.transformation.TransformationRequest;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.transformation.cache.TransformationCache;
 import org.factcast.store.registry.transformation.chains.TransformationChain;
 import org.factcast.store.registry.transformation.chains.TransformationChains;
 import org.factcast.store.registry.transformation.chains.Transformer;
+import org.slf4j.MDC;
 
 @Slf4j
 public class FactTransformerServiceImpl implements FactTransformerService, AutoCloseable {
@@ -53,6 +61,8 @@ public class FactTransformerServiceImpl implements FactTransformerService, AutoC
 
   private final ExecutorService pool;
 
+  private final long transformationThresholdMs;
+
   public FactTransformerServiceImpl(
       @NonNull TransformationChains chains,
       @NonNull Transformer trans,
@@ -65,13 +75,33 @@ public class FactTransformerServiceImpl implements FactTransformerService, AutoC
     this.registryMetrics = registryMetrics;
     this.pool =
         registryMetrics.monitor(
-            Executors.newWorkStealingPool(props.getSizeOfThreadPoolForBufferedTransformations()),
+            new ForkJoinPool(props.getSizeOfThreadPoolForBufferedTransformations()),
             "parallel-transformation");
+    this.transformationThresholdMs = 5000; // 5s
+  }
+
+  @VisibleForTesting
+  protected FactTransformerServiceImpl(
+      @NonNull TransformationChains chains,
+      @NonNull Transformer trans,
+      @NonNull TransformationCache cache,
+      @NonNull RegistryMetrics registryMetrics,
+      @NonNull StoreConfigurationProperties props,
+      long transformationThresholdMs) {
+    this.chains = chains;
+    this.trans = trans;
+    this.cache = cache;
+    this.registryMetrics = registryMetrics;
+    this.pool =
+        registryMetrics.monitor(
+            new ForkJoinPool(props.getSizeOfThreadPoolForBufferedTransformations()),
+            "parallel-transformation");
+    this.transformationThresholdMs = transformationThresholdMs;
   }
 
   @Override
   public Fact transform(@NonNull TransformationRequest req) throws TransformationException {
-    Fact e = req.toTransform();
+    PgFact e = req.toTransform();
     Set<Integer> targetVersions = req.targetVersions();
     int sourceVersion = e.version();
     if (targetVersions.contains(sourceVersion) || targetVersions.contains(0)) {
@@ -80,14 +110,13 @@ public class FactTransformerServiceImpl implements FactTransformerService, AutoC
 
     TransformationKey key = TransformationKey.of(e.ns(), e.type());
     TransformationChain chain = chains.get(key, sourceVersion, req.targetVersions());
-    String chainId = chain.id();
     TransformationCache.Key cacheKey =
-        TransformationCache.Key.of(e.id(), chain.toVersion(), chainId);
+        TransformationCache.Key.of(e.id(), chain.toVersion(), chain.versionPath());
     return cache.find(cacheKey).orElseGet(() -> doTransform(e, chain));
   }
 
   @Override
-  public List<Fact> transform(@NonNull List<TransformationRequest> req)
+  public List<PgFact> transform(@NonNull List<TransformationRequest> req)
       throws TransformationException {
 
     if (req.isEmpty()) {
@@ -95,47 +124,68 @@ public class FactTransformerServiceImpl implements FactTransformerService, AutoC
     }
 
     try {
+      // Capture caller's MDC so it propagates to pool threads.
+      Map<String, String> callerMdc = MDC.getCopyOfContextMap();
+
       return CompletableFuture.supplyAsync(
               () -> {
-                log.trace("batch processing {} transformation requests", req.size());
+                setMdc(callerMdc);
+                try {
+                  log.trace("batch processing {} transformation requests", req.size());
 
-                List<Pair<TransformationRequest, TransformationChain>> pairs =
-                    req.stream().map(r -> Pair.of(r, toChain(r))).toList();
-                Set<TransformationCache.Key> keys =
-                    pairs.parallelStream()
-                        .map(
-                            p ->
-                                TransformationCache.Key.of(
-                                    p.left().toTransform().id(),
-                                    p.right().toVersion(),
-                                    p.right().id()))
-                        .collect(Collectors.toSet());
+                  List<Pair<TransformationRequest, TransformationChain>> pairs =
+                      req.stream().map(r -> Pair.of(r, toChain(r))).toList();
 
-                Map<UUID, Fact> found =
-                    cache.findAll(keys).stream().collect(Collectors.toMap(Fact::id, f -> f));
-                log.trace(
-                    "batch lookup found {} out of {} pre transformed facts",
-                    found.size(),
-                    req.size());
+                  Set<TransformationCache.Key> keys =
+                      pairs.parallelStream()
+                          .map(
+                              p ->
+                                  TransformationCache.Key.of(
+                                      p.left().toTransform().id(),
+                                      p.right().toVersion(),
+                                      p.right().versionPath()))
+                          .collect(Collectors.toSet());
 
-                Stream<Pair<TransformationRequest, TransformationChain>> pairStream =
-                    pairs.stream();
-                if (shouldBeParallel(pairs.stream().map(Pair::right))) {
-                  //noinspection DataFlowIssue
-                  pairStream = pairStream.parallel();
+                  // ConcurrentHashMap needed because remove is used from a potentially
+                  // parallel stream below
+                  Map<UUID, PgFact> found =
+                      cache.findAll(keys).stream()
+                          .map(x -> (PgFact) x)
+                          .collect(Collectors.toConcurrentMap(PgFact::id, f -> f));
+                  log.trace(
+                      "batch lookup found {} out of {} pre transformed facts",
+                      found.size(),
+                      req.size());
+
+                  Stream<Pair<TransformationRequest, TransformationChain>> pairStream =
+                      pairs.parallelStream();
+
+                  try {
+
+                    // trying to avoid default FJP
+                    // https://blog.krecan.net/2014/03/18/how-to-specify-thread-pool-for-java-8-parallel-streams/
+
+                    return pool.submit(
+                            () ->
+                                pairStream
+                                    .map(
+                                        c -> {
+                                          PgFact e = c.left().pop();
+                                          PgFact cached = found.remove(e.id());
+                                          return Objects.requireNonNullElseGet(
+                                              cached, () -> doTransform(e, c.right()));
+                                        })
+                                    .toList())
+                        .get();
+                  } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw ExceptionHelper.toRuntime(e);
+                  } catch (Exception e) {
+                    throw ExceptionHelper.toRuntime(e.getCause());
+                  }
+                } finally {
+                  MDC.clear();
                 }
-                return pairStream
-                    .map(
-                        c -> {
-                          Fact e = c.left().toTransform();
-                          Fact cached = found.get(e.id());
-                          if (cached != null) {
-                            return cached;
-                          } else {
-                            return doTransform(e, c.right());
-                          }
-                        })
-                    .toList();
               },
               pool)
           .get();
@@ -148,39 +198,14 @@ public class FactTransformerServiceImpl implements FactTransformerService, AutoC
     }
   }
 
-  /**
-   * idea is to prevent the overhead of going parallel if all chains target the same warm
-   * script-engine as we'd have a serializing effect there due to synchronization.
-   *
-   * @return if the transformations should go parallel
-   */
-  @VisibleForTesting
-  boolean shouldBeParallel(@NonNull Stream<TransformationChain> chains) {
-    // if there is more than one distinct engine used, return true
-    return chains
-            .filter(Objects::nonNull)
-            .mapToInt(tc -> tc.id().hashCode() + tc.key().hashCode())
-            .distinct()
-            .count()
-        > 1;
-  }
-
   @NonNull
-  public Fact doTransform(@NonNull Fact e, @NonNull TransformationChain chain) {
-
+  public PgFact doTransform(@NonNull PgFact e, @NonNull TransformationChain chain) {
     return registryMetrics.timed(
         RegistryMetrics.OP.TRANSFORMATION,
         () -> {
+          Stopwatch stopwatch = Stopwatch.createStarted();
           try {
-            JsonNode input = FactCastJson.readTree(e.jsonPayload());
-            JsonNode header = FactCastJson.readTree(e.jsonHeader());
-            ((ObjectNode) header).put("version", chain.toVersion());
-            JsonNode transformedPayload = trans.transform(chain, input);
-            Fact transformed = Fact.of(header, transformedPayload);
-            cache.put(
-                TransformationCache.Key.of(transformed.id(), transformed.version(), chain.id()),
-                transformed);
-            return transformed;
+            return performTransformation(e, chain);
           } catch (Exception e1) {
             registryMetrics.count(
                 RegistryMetrics.EVENT.TRANSFORMATION_FAILED,
@@ -188,8 +213,46 @@ public class FactTransformerServiceImpl implements FactTransformerService, AutoC
                     Tag.of(RegistryMetrics.TAG_IDENTITY_KEY, String.valueOf(chain.key())),
                     Tag.of("version", String.valueOf(chain.toVersion()))));
             throw new TransformationException("Failed to transform " + chain, e1);
+          } finally {
+            stopwatch.stop();
+            long elapsed = stopwatch.elapsed().toMillis();
+            if (elapsed > transformationThresholdMs) {
+              log.warn(
+                  "Transformation exceeded threshold: {}ms for fact {} with chain {}",
+                  elapsed,
+                  e.id(),
+                  chain);
+            }
           }
         });
+  }
+
+  @NonNull
+  @SneakyThrows
+  private PgFact performTransformation(@NonNull PgFact e, @NonNull TransformationChain chain) {
+    // patch new version to header
+    JsonNode header = FactCastJson.readTree(e.jsonHeader());
+    ((ObjectNode) header).put("version", chain.toVersion());
+
+    JsonString input = JsonString.of(e.jsonPayload());
+    JsonString transformedPayload = trans.transform(chain, input);
+
+    // we're intentionally using string here, keeping the jsonNodes around consumes more
+    // memory
+    PgFact transformed = PgFact.of(header.toString(), transformedPayload.json());
+    cache.put(
+        TransformationCache.Key.of(transformed.id(), transformed.version(), chain.versionPath()),
+        transformed);
+
+    return transformed;
+  }
+
+  private static void setMdc(Map<String, String> mdc) {
+    if (mdc != null) {
+      MDC.setContextMap(mdc);
+    } else {
+      MDC.clear();
+    }
   }
 
   private TransformationChain toChain(TransformationRequest req) {

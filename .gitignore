@@ -24,3 +24,8 @@ release.properties
 package-lock.json
 .idea
 
+**/AGENTS.md
+**/.junie/**
+**/.agent-logs
+.agent-logs
+**/.codex/**

@@ -15,8 +15,9 @@
  */
 package org.factcast.factus.projector;
 
+import jakarta.annotation.Nullable;
+import java.util.Collection;
 import java.util.List;
-import javax.annotation.Nullable;
 import lombok.NonNull;
 import org.factcast.core.Fact;
 import org.factcast.core.FactStreamPosition;
@@ -26,7 +27,7 @@ import org.factcast.factus.projection.Projection;
 public interface Projector<A extends Projection> {
   void apply(@NonNull List<Fact> facts);
 
-  List<FactSpec> createFactSpecs();
+  Collection<FactSpec> createFactSpecs();
 
   void onCatchup(@Nullable FactStreamPosition lastFactApplied);
 }

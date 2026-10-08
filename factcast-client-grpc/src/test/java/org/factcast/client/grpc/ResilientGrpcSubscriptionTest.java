@@ -29,7 +29,8 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
-import lombok.*;
+import lombok.NonNull;
+import lombok.SneakyThrows;
 import org.factcast.client.grpc.FactCastGrpcClientProperties.ResilienceConfiguration;
 import org.factcast.client.grpc.ResilientGrpcSubscription.*;
 import org.factcast.core.Fact;
@@ -249,11 +250,13 @@ class ResilientGrpcSubscriptionTest {
   @Test
   void testFail() {
     IOException ex = new IOException();
-    assertThatThrownBy(() -> uut.fail(ex))
-        .isInstanceOf(RuntimeException.class)
-        .cause()
-        .isInstanceOf(IOException.class);
 
+    // see issue4904
+    assertThatThrownBy(
+            () -> {
+              uut.fail(ex);
+            })
+        .isInstanceOf(RuntimeException.class);
     verify(obs).onError(ex);
   }
 

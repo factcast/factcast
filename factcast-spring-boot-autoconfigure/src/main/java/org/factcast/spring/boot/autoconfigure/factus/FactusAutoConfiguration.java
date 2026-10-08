@@ -21,6 +21,7 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.FactCast;
 import org.factcast.factus.*;
+import org.factcast.factus.aggregate.cache.AggregateCacheFactory;
 import org.factcast.factus.event.*;
 import org.factcast.factus.metrics.*;
 import org.factcast.factus.projection.parameter.HandlerParameterContributors;
@@ -70,6 +71,12 @@ public class FactusAutoConfiguration {
 
   @Bean
   @ConditionalOnMissingBean
+  public AggregateCacheFactory aggregateCacheFactory(Factus factus, FactSpecProvider fsp) {
+    return new AggregateCacheFactory(factus, fsp);
+  }
+
+  @Bean
+  @ConditionalOnMissingBean
   public SnapshotSerializerSelector snapshotSerializerSelector(
       ApplicationContext ctx, SnapshotSerializer defaultSnapshotSerializer) {
     return new SnapshotSerializerSelector(
@@ -93,5 +100,11 @@ public class FactusAutoConfiguration {
   @ConditionalOnMissingBean
   public EventConverter eventConverter(@NonNull EventSerializer ser) {
     return new EventConverter(ser);
+  }
+
+  @Bean
+  @ConditionalOnMissingBean
+  public FactSpecProvider factSpecProvider(ProjectorFactory pf) {
+    return new FactSpecProviderImpl(pf);
   }
 }

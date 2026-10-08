@@ -20,8 +20,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.postgresql.Driver;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.containers.localstack.LocalStackContainer;
+import org.testcontainers.localstack.LocalStackContainer;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
 @Slf4j
@@ -60,12 +60,12 @@ public class ExampleUiServerWithS3Reports {
     localStackContainer =
         new LocalStackContainer(
                 DockerImageName.parse("localstack/localstack:" + S3_LOCALSTACK_VERSION))
-            .withServices(LocalStackContainer.Service.S3);
+            .withServices("s3");
 
     localStackContainer.start();
 
     final var endpointConfiguration =
-        localStackContainer.getEndpointOverride(LocalStackContainer.Service.S3);
+        localStackContainer.getEndpoint(); // one endpoint for all services in LocalStack v2+
     System.setProperty(S3Configuration.LOCAL_S_3_ENDPOINT, endpointConfiguration.toString());
     System.setProperty(S3Configuration.LOCAL_S_3_SIGNING_REGION, localStackContainer.getRegion());
     System.setProperty("aws.accessKeyId", localStackContainer.getAccessKey());

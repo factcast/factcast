@@ -48,9 +48,9 @@ public class Follow implements Command {
       fc.subscribeEphemeral(catchup.fromNowOn(), obs);
     } else {
       if (from == null) {
-        fc.subscribeEphemeral(catchup.fromScratch(), obs);
+        fc.subscribe(catchup.fromScratch(), obs);
       } else {
-        fc.subscribeEphemeral(catchup.from(from), obs);
+        fc.subscribe(catchup.from(from), obs);
       }
     }
     obs.awaitTermination();

@@ -4,6 +4,253 @@ type = "docs"
 weight = 100015
 +++
 
+## Upgrading to 0.12.5
+
+### `@ProjectionMetaData(revision = …)` is deprecated in favor of `revisionId`
+
+`@ProjectionMetaData` used to identify a projection's revision with a `long`. It now offers a `String` attribute
+`revisionId` instead, so that revisions no longer have to be numeric (a commit hash, a date or a semantic version
+work just as well). The goal is to reduce the chance of conflicting revisions when working on projections on multiple
+branches.
+
+```java
+// before
+@ProjectionMetaData(revision = 1)
+public class MyProjection extends AbstractManagedProjection { ... }
+
+// after
+@ProjectionMetaData(revisionId = "issue1234")
+public class MyProjection extends AbstractManagedProjection { ... }
+```
+
+`revision` and `revisionId` are **mutually exclusive** and setting both will resolve in an `IllegalArgumentException`
+when the projection is first resolved.
+
+{{% alert title="Keep the value identical" theme="warning" %}}
+The revision is part of the key under which projection state and snapshots are persisted. `revisionId = "1"` produces
+exactly the same scoped name as `revision = 1` did, so migration is stable. If you decide to change the name during
+migration (for instance `"1.0"` instead of `"1"`), the key changes and the projection will be rebuilt from scratch on
+the next run.
+{{% /alert %}}
+
+#### Migrating with OpenRewrite
+
+FactCast ships a recipe that rewrites the attribute for you. Unlike the `postprocess` recipe below, **run it after
+bumping your FactCast dependency**. A guide to add the plugin can be found below in the guide for `0.11.0`.
+
+```xml
+<configuration>
+    <activeRecipes>
+      <recipe>org.factcast.factus.migration.RevisionToRevisionIdRecipe</recipe>
+    </activeRecipes>
+</configuration>
+```
+
+##### Migrate what the recipe left alone
+
+The recipe only rewrites integer literals, because only for those it can guarantee an unchanged
+scoped name. It deliberately leaves these cases to you:
+
+- a constant reference or a computed expression (`revision = MY_REVISION`, `revision = 1 + 1`) — an annotation
+  attribute has to be a constant expression, so there is no mechanical way to turn it into a string
+- an annotation that sets both `revision` and `revisionId` (which violates the contract)
+
+Migrate those by hand and make the string equal to what `String.valueOf(oldValue)` would have produced.
+
+Finally remember to remove the OpenRewrite plugin config (or just the `activeRecipes` entry) from your `pom.xml`
+and run `mvn clean verify`.
+
+## Upgrading to 0.11.0
+
+### `Projection.postprocess` now takes a `Collection` instead of a `List`
+
+`Projection.postprocess` used to accept and return `List<FactSpec>`. It now uses `Collection<FactSpec>`.
+
+If you override it, update the signature:
+
+```java
+// before
+@Override
+public @NonNull List<FactSpec> postprocess(@NonNull List<FactSpec> specsAsDiscovered) {
+    // ...
+    return specsAsDiscovered;
+}
+
+// after
+@Override
+public @NonNull Collection<FactSpec> postprocess(@NonNull Collection<FactSpec> specsAsDiscovered) {
+    // ...
+    return specsAsDiscovered;
+}
+```
+
+#### Migrating with OpenRewrite
+
+FactCast ships a recipe that rewrites the signature for you. **Run it before upgrading your FactCast dependency.** Once
+you bump to 0.11.0, the old `List<FactSpec>` signature is gone and the project won't compile, the recipe needs the old
+code still in place to match against.
+
+##### Step 1: Add the plugin
+
+While still on your current FactCast version, add the OpenRewrite Maven plugin to your `pom.xml`. The plugin dependency
+points at `0.11.0` since that's where the recipe lives:
+
+```xml
+<build>
+  <plugins>
+    <plugin>
+      <groupId>org.openrewrite.maven</groupId>
+      <artifactId>rewrite-maven-plugin</artifactId>
+      <version>6.34.0</version>
+      <configuration>
+        <activeRecipes>
+          <recipe>org.factcast.factus.migration.PostprocessToCollection</recipe>
+        </activeRecipes>
+      </configuration>
+      <dependencies>
+        <dependency>
+          <groupId>org.factcast</groupId>
+          <artifactId>factcast-factus-migration</artifactId>
+          <version>0.11.0</version>
+        </dependency>
+      </dependencies>
+    </plugin>
+  </plugins>
+</build>
+```
+
+##### Step 2: Preview
+
+```bash
+mvn rewrite:dryRun
+```
+
+Writes a patch to `target/rewrite/rewrite.patch` without touching your source. Check that it only affects `postprocess`
+overrides.
+
+##### Step 3: Apply
+
+```bash
+mvn rewrite:run
+```
+
+Updates parameter and return types from `List<FactSpec>` to `Collection<FactSpec>` and fixes imports.
+
+##### Step 4: Check method bodies
+
+The recipe only touches the signature, not the body. `forEach`, `stream`, and `isEmpty` all work on `Collection`, so
+most implementations need nothing more. If your body calls `get(int)`, `set(int, E)`, `sort(Comparator)`, or
+`subList(int, int)`, or assigns the parameter to a `List<FactSpec>` variable, fix those manually.
+
+##### Step 5: Upgrade FactCast
+
+Bump `factcast-factus` and any other FactCast modules to `0.11.0`.
+
+##### Step 6: Clean up
+
+Remove the OpenRewrite plugin config (or just the `activeRecipes` entry) from your `pom.xml`.
+
+##### Step 7: Verify
+
+```bash
+mvn clean verify
+```
+
+## Upgrading to 0.12.0
+
+Version 0.12.0 updated `spring-grpc` dependencies to `1.1.0` which makes them being part of the Spring Boot BOM.
+
+The following properties (documented for factcast) should be renamed accordingly:
+
+| Old Property                                                     | New Property                                                   | Notes                                           |
+| ---------------------------------------------------------------- | -------------------------------------------------------------- | ----------------------------------------------- |
+| `spring.grpc.client.channels.factstore.address`                  | `spring.grpc.client.channel.factstore.tagrte`                  |                                                 |
+| `spring.grpc.client.channels.factstore.negotiation-type`         | `spring.grpc.client.channel.factstore.ssl.enabled`             | The property was replaced by a new one for SSL. |
+| `spring.grpc.client.channels.factstore.enable-keep-alive`        |                                                                | The property was removed.                       |
+| `spring.grpc.client.channels.factstore.keep-alive-time`          | `spring.grpc.client.channel.factstore.keepalive.time`          |                                                 |
+| `spring.grpc.client.channels.factstore.keep-alive-without-calls` | `spring.grpc.client.channel.factstore.keepalive.without-calls` |                                                 |
+| `spring.grpc.server.keep-alive.permit-without-calls`             | `spring.grpc.server.keepalive.permit.without-calls`            |                                                 |
+| `spring.grpc.server.keep-alive.permit-time`                      | `spring.grpc.server.keepalive.permit.time`                     |                                                 |
+
+Check
+the [spring-grpc migration guide](https://github.com/spring-projects/spring-grpc/wiki/Spring-gRPC-1.1-Migration-Guide)
+for more details.
+
+## Upgrading to 0.10.0
+
+Version 0.10.0 switched from `net.devh:grpc-client-spring-boot-starter` to
+`org.springframework.grpc:spring-grpc-client-spring-boot-starter`.
+
+The following properties (documented for factcast) should be renamed accordingly:
+
+| Old Property                                     | New Property                                                     | Notes |
+| ------------------------------------------------ | ---------------------------------------------------------------- | ----- |
+| `grpc.client.factstore.address`                  | `spring.grpc.client.channels.factstore.address`                  |       |
+| `grpc.client.factstore.negotiation-type`         | `spring.grpc.client.channels.factstore.negotiation-type`         |       |
+| `grpc.client.factstore.enable-keep-alive`        | `spring.grpc.client.channels.factstore.enable-keep-alive`        |       |
+| `grpc.client.factstore.keep-alive-time`          | `spring.grpc.client.channels.factstore.keep-alive-time`          |       |
+| `grpc.client.factstore.keep-alive-without-calls` | `spring.grpc.client.channels.factstore.keep-alive-without-calls` |       |
+| `grpc.server.permit-keep-alive-without-calls`    | `spring.grpc.server.keep-alive.permit-without-calls`             |       |
+| `grpc.server.permit-keep-alive-time`             | `spring.grpc.server.keep-alive.permit-time`                      |       |
+
+For every other property previously made available by `net.devh:grpc-client-spring-boot-starter`, follow the rule of
+thumb:
+
+- `grpc.client.factstore.*` becomes `spring.grpc.client.channels.factstore.*`
+- `grpc.server.*` becomes `spring.grpc.server.*`
+
+Check the [spring-grpc documentation](https://docs.spring.io/spring-grpc/reference/appendix.html) for more details.
+
+## Upgrading to 0.9.14
+
+Version 0.9.14 introduces changes to the way `factcast-snapshotcache-jdbc` stores the `last_accessed` timestamps of
+snapshots. In case you are using this module, please follow the migration steps below.
+
+### Migration of the last_accessed timestamps
+
+_This only applies if you are already using `factcast-snapshotcache-jdbc` in your project._
+
+In previous versions, the `last_accessed` timestamp was stored together with the snapshot in the same table. As
+postgres copies the entire row on updates, updating the `last_accessed` field for every read of a snapshot causes the
+snapshot being copied frequently without any need. Therefore, the timestamp is now stored in a separate table.
+
+Analog to the initial creation of the snapshot table, please also create a new table for the `last_accessed` timestamps
+(as documented [here](/Usage/factus/projections/snapshots/snapshot-caching)).
+
+#### Transfer existing timestamps
+
+To migrate the existing timestamps to the new table, please execute the following SQL command (take into account that
+usage of the default table names is assumed here):
+
+```sql
+-- Examples provided in PSQL syntax, please adapt accordingly.
+
+-- For performance it might be best to drop the temp index if it was created before
+DROP INDEX IF EXISTS factcast_snapshot_last_accessed_index;
+
+-- migrate existing timestamps
+INSERT INTO factcast_snapshot_last_accessed(projection_class, aggregate_id, last_accessed)
+    (SELECT projection_class, aggregate_id, last_accessed::date FROM factcast_snapshot)
+ON CONFLICT DO NOTHING;
+-- should not happen, but you never know
+
+-- recreate index
+CREATE INDEX IF NOT EXISTS factcast_snapshot_last_accessed_index ON factcast_snapshot_last_accessed USING BTREE (last_accessed DESC);
+```
+
+If your table name differs from the default one, please provide it via the new application property with the name:
+`factcast.snapshot.jdbc.snapshot-access-table-name`.
+
+#### Cleanup
+
+At a later point in time, when the option to roll back to an older version of FactCast is no longer necessary, the
+deprecated field can be removed from the snapshot table by executing:
+
+```sql
+ALTER TABLE factcast_snapshot
+    DROP COLUMN last_accessed;
+```
+
 ## Upgrading to 0.8.0
 
 Version 0.8.0 introduces changes to snapshot serialization, impacting the management of Redisson snapshots.
@@ -20,7 +267,7 @@ database before migrating to FactCast 0.8.0.
 Please note that, even though the max bulk size of a transaction in Factus can be configured per projection (by
 implementing maxBatchSizePerTransaction or by annotation), the maximum size of a transaction bulk is ultimately limited
 by the value of
-`factcast.grpc.client.maxInboundMessageSize`, which defaults to 3.5MB and can be configured up to 32MB max.
+`factcast.grpc.client.max-inbound-message-size`, which defaults to 3.5MB and can be configured up to 32MB max.
 
 ### @RedisTransactional
 
@@ -83,7 +330,7 @@ a simpler
 codec.
 
 The migration to new snapshots happens automatically. Old snapshots will remain in Redis for the duration specified by
-the `factcast.redis.deleteSnapshotStaleForDays` property (default: 90 days), even though they are no longer read. This
+the `factcast.redis.delete-snapshot-stale-for-days` property (default: 90 days), even though they are no longer read. This
 has two implications:
 
 1. You can roll back to the previous version of FactCast without losing any snapshots for a certain number of days.
@@ -140,8 +387,7 @@ _Please make sure you followed the migration guide if your current version is <0
   new namespace, so please adjust your projects accordingly.
 
 - Note that the default catchup strategy was changed from PAGED or TMPPAGED to FETCHING. Make sure your postgres does
-  not
-  timeout connections.
+  not timeout connections.
 
 #### Client
 

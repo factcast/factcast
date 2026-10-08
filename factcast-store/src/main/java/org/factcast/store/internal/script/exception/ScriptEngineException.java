@@ -15,10 +15,11 @@
  */
 package org.factcast.store.internal.script.exception;
 
+import java.io.Serial;
 import lombok.NonNull;
 
 public class ScriptEngineException extends RuntimeException {
-  private static final long serialVersionUID = 1L;
+  @Serial private static final long serialVersionUID = 1L;
 
   public ScriptEngineException(@NonNull Throwable e) {
     super(e);

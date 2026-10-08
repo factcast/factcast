@@ -61,7 +61,7 @@ public interface FactStore {
       @NonNull List<? extends Fact> factsToPublish, @NonNull Optional<StateToken> token);
 
   @NonNull
-  StateToken stateFor(@NonNull List<FactSpec> specs);
+  StateToken stateFor(@NonNull Collection<FactSpec> specs);
 
   void invalidate(@NonNull StateToken token);
 
@@ -75,7 +75,7 @@ public interface FactStore {
       throws TransformationException;
 
   @NonNull
-  StateToken currentStateFor(List<FactSpec> factSpecs);
+  StateToken currentStateFor(Collection<FactSpec> factSpecs);
 
   /**
    * @return 0 if the store is empty

@@ -17,5 +17,7 @@ package org.factcast.store.internal.lock;
 
 public interface FactTableWriteLock {
 
-  void aquireExclusiveTXLock();
+  void acquireSharedTXLock();
+
+  void acquireExclusiveTXLock();
 }

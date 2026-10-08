@@ -15,7 +15,7 @@
  */
 package org.factcast.factus.lock;
 
-import java.util.List;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -37,7 +37,7 @@ public class LockedOnSpecs {
 
   @NonNull final FactCast fc;
   @NonNull final Factus factus;
-  @NonNull final List<FactSpec> specs;
+  @NonNull final Collection<FactSpec> specs;
   @NonNull final FactusMetrics metrics;
 
   @Setter

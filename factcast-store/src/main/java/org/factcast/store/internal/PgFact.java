@@ -15,11 +15,15 @@
  */
 package org.factcast.store.internal;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Lists;
+import jakarta.annotation.Nullable;
 import java.sql.*;
 import java.util.*;
-import javax.annotation.Nullable;
+import java.util.stream.Collectors;
 import lombok.*;
 import org.factcast.core.*;
 import org.factcast.core.util.FactCastJson;
@@ -53,6 +57,37 @@ public class PgFact implements Fact {
 
   @JsonProperty MetaMap meta;
 
+  public static PgFact of(@NonNull JsonNode header, @NonNull JsonNode transformedPayload) {
+
+    // twice as fast as going through deser.
+    // note that meta is materialized lazily
+    UUID id = UUID.fromString(header.path("id").asText());
+    String ns = header.path("ns").asText();
+    String type = header.path("type").asText();
+    int version = header.path("version").asInt();
+    ArrayNode aggIdsNode = (ArrayNode) header.path("aggIds");
+    Set<UUID> aggIds =
+        Lists.newArrayList(aggIdsNode).stream()
+            .map(JsonNode::asText)
+            .map(UUID::fromString)
+            .collect(Collectors.toSet());
+    // this might be reasonable to turn to lazy, some day
+    String jsonHeader = header.toString();
+    String jsonPayload = transformedPayload.toString();
+
+    return new PgFact(id, ns, type, version, aggIds, jsonHeader, jsonPayload);
+  }
+
+  public static PgFact of(@NonNull String header, @NonNull String transformedPayload) {
+    return from(Fact.of(header, transformedPayload));
+  }
+
+  @VisibleForTesting
+  public static PgFact from(@NonNull Fact f) {
+    return new PgFact(
+        f.id(), f.ns(), f.type(), f.version(), f.aggIds(), f.jsonHeader(), f.jsonPayload());
+  }
+
   /**
    * @param key
    * @return value as String or null
@@ -67,6 +102,8 @@ public class PgFact implements Fact {
     return meta.getFirst(key);
   }
 
+  @SuppressWarnings("java:S2065")
+  @JsonIgnore
   private transient FactHeader header;
 
   @Override
@@ -81,7 +118,7 @@ public class PgFact implements Fact {
     return header().meta();
   }
 
-  public static Fact from(ResultSet resultSet) throws SQLException {
+  public static PgFact from(ResultSet resultSet) throws SQLException {
     String id = resultSet.getString(PgConstants.ALIAS_ID);
     String aggId = resultSet.getString(PgConstants.ALIAS_AGGID);
     String type = resultSet.getString(PgConstants.ALIAS_TYPE);

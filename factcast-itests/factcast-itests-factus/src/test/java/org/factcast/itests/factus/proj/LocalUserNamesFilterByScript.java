@@ -26,7 +26,7 @@ import org.factcast.factus.serializer.ProjectionMetaData;
 import org.factcast.itests.factus.event.UserCreated;
 
 @Slf4j
-@ProjectionMetaData(revision = 1)
+@ProjectionMetaData(revisionId = "1")
 public class LocalUserNamesFilterByScript extends LocalManagedProjection {
   ConcurrentHashMap<UUID, String> map = new ConcurrentHashMap<>();
 
@@ -54,8 +54,7 @@ public class LocalUserNamesFilterByScript extends LocalManagedProjection {
 
   @SneakyThrows
   @Handler
-  @FilterByScript(
-      "function isGeorge(header, payload){" + "return payload.userName == 'George';" + "}")
+  @FilterByScript("function isGeorge(header, payload){ return payload.userName == 'George'; }")
   protected void apply(UserCreated created) {
     userNames().put(created.aggregateId(), created.userName());
   }

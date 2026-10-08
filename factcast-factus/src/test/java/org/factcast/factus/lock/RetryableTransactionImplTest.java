@@ -18,17 +18,18 @@ package org.factcast.factus.lock;
 import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.function.Supplier;
-import lombok.*;
+import lombok.NonNull;
+import lombok.SneakyThrows;
 import org.factcast.core.Fact;
 import org.factcast.factus.Factus;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)

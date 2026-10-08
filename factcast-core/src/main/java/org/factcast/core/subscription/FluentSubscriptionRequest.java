@@ -19,9 +19,10 @@ import java.util.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.spec.FactSpec;
+import org.factcast.core.util.RollingCounter;
 
 /**
  * SubscriptionRequest intended to be used by clients for convenience.
@@ -31,14 +32,20 @@ import org.factcast.core.spec.FactSpec;
 @FieldDefaults(level = AccessLevel.PROTECTED)
 @Getter
 class FluentSubscriptionRequest implements SubscriptionRequest {
+  @SuppressWarnings("java:S2140")
+  private static final String INSTANCE_ID = Long.toHexString((long) (Math.random() * 0xffff));
+
+  private static final RollingCounter REQUEST_ID = new RollingCounter(0);
 
   boolean ephemeral;
 
-  long maxBatchDelayInMs = SubscriptionRequestTO.DEFAULT_MAX_BATCH_DELAY_IN_MS;
-
   long keepaliveIntervalInMs;
 
-  boolean streamInfo;
+  /**
+   * no way for current versions to not want a streamInfo from the server, but removing it would
+   * break compatibility with older clients (that do not support FSInfo Signals.
+   */
+  final boolean streamInfo = true;
 
   boolean continuous;
 
@@ -46,76 +53,69 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
 
   final List<FactSpec> specs = new LinkedList<>();
 
-  final String debugInfo;
+  String debugInfo;
 
   String pid;
 
-  FluentSubscriptionRequest() {
-    debugInfo = createDebugInfo();
-    streamInfo = true;
+  private FluentSubscriptionRequest() {
+    // this is no longer useful
+    // debugInfo = createDebugInfo();
+
+    debugInfo = "req(" + INSTANCE_ID + ":" + Long.toHexString(REQUEST_ID.getAndIncrement()) + ")";
   }
 
-  private String createDebugInfo() {
-    StackTraceElement stackTraceElement = new Exception().getStackTrace()[3];
-    return UUID.randomUUID()
-        + " ("
-        + stackTraceElement
-            .getClassName()
-            .substring(stackTraceElement.getClassName().lastIndexOf(".") + 1)
-        + "."
-        + stackTraceElement.getMethodName()
-        + ":"
-        + stackTraceElement.getLineNumber()
-        + ")";
+  public static SpecBuilder builder() {
+    return new Builder();
   }
 
-  @RequiredArgsConstructor
+  @Slf4j
   public static class Builder implements SpecBuilder {
 
-    private final FluentSubscriptionRequest toBuild;
+    private final FluentSubscriptionRequest toBuild = new FluentSubscriptionRequest();
 
     @Override
-    public SpecBuilder or(@NonNull FactSpec specification) {
+    public @NonNull SpecBuilder or(@NonNull FactSpec specification) {
       toBuild.specs.add(specification);
       return this;
     }
 
     @Override
-    public SubscriptionRequest fromScratch() {
+    public @NonNull SubscriptionRequest fromScratch() {
       return toBuild;
     }
 
     @Override
-    public SubscriptionRequest fromNowOn() {
+    public @NonNull SubscriptionRequest fromNowOn() {
       toBuild.ephemeral = true;
       return toBuild;
     }
 
     @Override
-    public SubscriptionRequest from(@NonNull UUID id) {
+    public @NonNull SubscriptionRequest from(@NonNull UUID id) {
+      return fromNullable(id);
+    }
+
+    @Override
+    public @NonNull SubscriptionRequest fromNullable(UUID id) {
       toBuild.startingAfter = id;
       return toBuild;
     }
 
     @Override
-    public SubscriptionRequest fromNullable(UUID id) {
-      toBuild.startingAfter = id;
-      return toBuild;
-    }
-
-    public SpecBuilder follow(@NonNull FactSpec specification) {
+    public @NonNull SpecBuilder follow(@NonNull FactSpec specification) {
       or(specification);
       toBuild.continuous = true;
       return this;
     }
 
-    public SpecBuilder catchup(@NonNull FactSpec specification) {
+    @Override
+    public @NonNull SpecBuilder catchup(@NonNull FactSpec specification) {
       or(specification);
       toBuild.continuous = false;
       return this;
     }
 
-    public SpecBuilder catchup(Collection<FactSpec> specification) {
+    public @NonNull SpecBuilder catchup(Collection<FactSpec> specification) {
       if (specification.isEmpty()) {
         throw new IllegalArgumentException("At least one FactSpec is needed for a subscription");
       }
@@ -124,17 +124,20 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
     }
 
     @Override
-    public SpecBuilder withMaxBatchDelayInMs(long msec) {
-      if (msec < 10) {
-        throw new IllegalArgumentException("The minimum maxBatchDelayInMs is 10msec");
-      }
-
-      toBuild.maxBatchDelayInMs = msec;
+    @Deprecated(forRemoval = true, since = "0.11.2")
+    public @NonNull SpecBuilder withMaxBatchDelayInMs(long msec) {
+      log.warn("Max batch delay has been deprecated");
       return this;
     }
 
     @Override
-    public SpecBuilder withKeepaliveIntervalInMs(long msec) {
+    public @NonNull SpecBuilder withDebugHintFrom(Class<?> clazz) {
+      toBuild.debugInfo += " | " + clazz.getName();
+      return this;
+    }
+
+    @Override
+    public @NonNull SpecBuilder withKeepaliveIntervalInMs(long msec) {
       if (msec > 0 && msec < 3000) {
         throw new IllegalArgumentException(
             "The minimum keepaliveIntervalInMs is 3000ms. To disable keepalive, set it to 0.");
@@ -144,7 +147,7 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
       return this;
     }
 
-    public SpecBuilder follow(Collection<FactSpec> specification) {
+    public @NonNull SpecBuilder follow(Collection<FactSpec> specification) {
       if (specification.isEmpty()) {
         throw new IllegalArgumentException("At least one FactSpec is needed for a subscription");
       }

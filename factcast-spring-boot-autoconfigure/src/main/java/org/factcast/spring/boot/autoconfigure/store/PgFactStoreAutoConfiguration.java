@@ -16,7 +16,7 @@
 package org.factcast.spring.boot.autoconfigure.store;
 
 import com.google.common.eventbus.EventBus;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.store.PgFactStoreConfiguration;
@@ -27,6 +27,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.*;
 
+@SuppressWarnings("resource")
 @Slf4j
 @AutoConfiguration
 @EnableConfigurationProperties
@@ -46,10 +47,19 @@ public class PgFactStoreAutoConfiguration {
   @Primary
   public EventBus dedupEventBus(@NonNull PgMetrics metrics) {
     log.info(
-        "A {} was detected. Deduplication eventStore. ",
+        "A {} was detected. Deduplication eventBus. ",
         StoreNotificationSubscriber.class.getSimpleName());
+    ThreadPoolExecutor listenerPool =
+        new ThreadPoolExecutor(
+            PgFactStoreInternalConfiguration.LISTENER_POOL_CORE_SIZE,
+            PgFactStoreInternalConfiguration.LISTENER_POOL_MAX_SIZE,
+            PgFactStoreInternalConfiguration.LISTENER_POOL_KEEP_ALIVE_SECONDS,
+            TimeUnit.SECONDS,
+            new LinkedBlockingQueue<>() // unbounded queue
+            );
+    listenerPool.allowCoreThreadTimeOut(true);
     return new DeduplicatingEventBus(
         DeduplicatingEventBus.class.getSimpleName(),
-        metrics.monitor(Executors.newCachedThreadPool(), EVENTBUS_IDENTIFIER));
+        metrics.monitor(listenerPool, EVENTBUS_IDENTIFIER));
   }
 }

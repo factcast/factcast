@@ -19,6 +19,7 @@ import io.micrometer.core.instrument.Tags;
 import java.util.function.*;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.experimental.UtilityClass;
 import org.factcast.core.util.RunnableWithException;
 import org.factcast.core.util.SupplierWithException;
 
@@ -48,6 +49,8 @@ public interface ServerMetrics {
 
   void count(EVENT event, Tags tags);
 
+  void count(EVENT event, Tags tags, int incrementBy);
+
   enum OP {
     HANDSHAKE("handshake");
 
@@ -60,12 +63,21 @@ public interface ServerMetrics {
 
   enum EVENT {
     SOME_EVENT_CHANGE_ME("something"),
-    CLIENT_VERSION("clientversion");
+    CLIENT_VERSION("clientversion"),
+    FACTS_SENT("factsSent"),
+    BYTES_SENT("bytesSent");
 
     @NonNull @Getter final String event;
 
     EVENT(@NonNull String event) {
       this.event = event;
     }
+  }
+
+  @UtilityClass
+  class MetricsTag {
+    public static final String CLIENT_ID_KEY = "id";
+    public static final String VERSION_KEY = "version";
+    public static final String NAME_KEY = "name";
   }
 }

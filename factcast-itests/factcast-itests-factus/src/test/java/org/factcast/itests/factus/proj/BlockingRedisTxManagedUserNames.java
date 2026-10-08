@@ -15,7 +15,7 @@
  */
 package org.factcast.itests.factus.proj;
 
-import lombok.*;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.factus.Handler;
 import org.factcast.factus.redis.tx.AbstractRedisTxManagedProjection;
@@ -24,7 +24,7 @@ import org.factcast.itests.factus.event.UserCreated;
 import org.redisson.api.*;
 
 @Slf4j
-@ProjectionMetaData(revision = 1)
+@ProjectionMetaData(revisionId = "1")
 public class BlockingRedisTxManagedUserNames extends AbstractRedisTxManagedProjection {
 
   public BlockingRedisTxManagedUserNames(RedissonClient redisson) {

@@ -17,16 +17,27 @@ package org.factcast.store.internal.lock;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.*;
 
 @RequiredArgsConstructor
+@SuppressWarnings("java:S2077")
 public class AdvisoryWriteLock implements FactTableWriteLock {
+  private static final String LOCK_SHARED_SQL =
+      "SELECT pg_advisory_xact_lock_shared(" + AdvisoryLocks.PUBLISH.code() + ")";
+  private static final String LOCK_EXCLUSIVE_SQL =
+      "SELECT pg_advisory_xact_lock(" + AdvisoryLocks.PUBLISH.code() + ")";
+
   private final JdbcTemplate tpl;
 
   @Override
   @Transactional(propagation = Propagation.MANDATORY)
-  public void aquireExclusiveTXLock() {
-    tpl.execute("SELECT pg_advisory_xact_lock(" + AdvisoryLocks.PUBLISH.code() + ")");
+  public void acquireSharedTXLock() {
+    tpl.execute(LOCK_SHARED_SQL);
+  }
+
+  @Override
+  @Transactional(propagation = Propagation.MANDATORY)
+  public void acquireExclusiveTXLock() {
+    tpl.execute(LOCK_EXCLUSIVE_SQL);
   }
 }

@@ -15,11 +15,12 @@
  */
 package org.factcast.core.store;
 
+import java.io.Serial;
 import lombok.NonNull;
 
 public class RetryableException extends RuntimeException {
 
-  private static final long serialVersionUID = 1L;
+  @Serial private static final long serialVersionUID = 1L;
 
   public RetryableException(@NonNull Throwable cause) {
     super(cause);

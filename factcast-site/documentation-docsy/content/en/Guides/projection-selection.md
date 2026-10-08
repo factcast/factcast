@@ -90,15 +90,13 @@ type concerning the identified requirements.
 
 [Snapshot Projection documentation]({{< ref "/usage/factus/projections/types/snapshot-projections">}})
 
-- **Scalability**: by default, a Snapshot Projection stores its cached state in the FactCast server (aka the Event
-  Store). This can create bottlenecks, or impact the performance of the Event Store, whenever the workload increases.
-  It can be optimized, depending on the use case, by hooking into the snapshot lifecycle and changing the way it is
-  accessed, serialized, stored, and retained. Alternatively, the _factcast-snapshotcache-redisson_ module can be used,
-  to easily store the snapshots in a Redis cluster (see Best Practices and Tips section below).
+- **Scalability**: different modules can be used to configure the snapshot cache. Whenever scalability is a requirement,
+  consider using snapshot cache modules that allow storing the snapshots in a shared database, like
+  _factcast-snapshotcache-redisson_ or _factcast-snapshotcache-jdbc_.
 
 - **Performance**: whenever the projection is fetched for new events, the most recent snapshot is transferred,
-  de-serialized, updated, then re-serialized, and transferred back to the Event Store. Performance might decrease with
-  the increase of the snapshots size, and/or the frequency of the queries.
+  de-serialized, updated, then re-serialized, and transferred back to the snapshot cache. Performance might decrease
+  with the increase of the snapshots size, and/or the frequency of the queries.
 
 - **Query flexibility**: a Snapshot Projection allows to query, and aggregate, multiple event types on-demand. Any type
   of data structure can be used to store the projected events, considering that it needs to be serializable.
@@ -269,8 +267,8 @@ That being said, here are some general Q&As to help you make an informed choice:
 
 **Q: Are you still modelling for a prototype?**
 
-A: If yes, then you can start with a Local, as it's the easiest and most intuitive projection to
-implement and quick to change an rebuild.
+A: If yes, then you can start with a Local, as it's the easiest and most intuitive projection to implement and quick to
+change and rebuild.
 
 **Q: Do you need to easily rebuild your projection?**
 
@@ -278,10 +276,9 @@ A: If yes, then consider using a Local Projection, as it allows to rebuild the i
 simply restarting the application. Consider anyway that this might have an impact on the overall application
 performance, as this will produce an overhead on each deployment.
 
-**Q: Do you need to ensure high availability for queries of a usecase, even when the Event Store is unavailable?**
+**Q: Do you need to ensure high availability for queries, even when the Event Store is unavailable?**
 
-A: If yes, then make sure to go for a projection that doesn't rely on the Event Store for persisting its state. Consider
-the trade-offs between local and externalized states:
+A: If yes, then consider the trade-offs between local and externalized states:
 
 - Local states are faster to query, easier to implement and to maintain, but they need to be rebuilt from scratch on
   every restart
@@ -307,14 +304,13 @@ easier to implement and to maintain, but they might be not suitable for very com
 multiple event types. You can still use different projection types for different queries, and combine them together in
 your application.
 
+For instance, using an Aggregates/Snapshots for a public endpoint query, is usually a bad idea, due to the fact that
+this might easily expose your Event Store to a load proportional with the amount of requests, as the projection would
+ask each time the server for new events (regardless of those being available or not).
+
 ---
 
 ## Best Practices and Tips
 
 Check the following [guide](https://docs.factcast.org/usage/factus/tips/) regularly, as it is updated with tips to
 improve performance, or fix common issues.
-
-When using Snapshot Projections, consider using
-the [factcast-snapshotcache-redisson](https://docs.factcast.org/usage/factus/setup/#redis-snapshotcache)
-module, to store the snapshots in a Redis cluster, instead of the Event Store.
-This will reduce the load on the Event Store, and will allow to scale the snapshots cache independently.

@@ -15,8 +15,9 @@
  */
 package org.factcast.spring.boot.autoconfigure.store;
 
-import javax.annotation.Nullable;
-import lombok.*;
+import jakarta.annotation.Nullable;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgFactStore;

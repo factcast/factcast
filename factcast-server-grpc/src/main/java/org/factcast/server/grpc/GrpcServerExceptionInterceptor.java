@@ -17,18 +17,19 @@ package org.factcast.server.grpc;
 
 import com.google.common.annotations.VisibleForTesting;
 import io.grpc.*;
+import java.util.function.Supplier;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.devh.boot.grpc.server.interceptor.GrpcGlobalServerInterceptor;
 import org.factcast.core.FactValidationException;
 import org.slf4j.Logger;
+import org.springframework.grpc.server.GlobalServerInterceptor;
 
 @Slf4j
-@GrpcGlobalServerInterceptor
+@GlobalServerInterceptor
 @RequiredArgsConstructor
 public class GrpcServerExceptionInterceptor implements ServerInterceptor {
-  final GrpcRequestMetadata scopedBean;
+  final Supplier<GrpcRequestMetadata> provider;
 
   @Override
   public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(
@@ -36,25 +37,24 @@ public class GrpcServerExceptionInterceptor implements ServerInterceptor {
       Metadata metadata,
       ServerCallHandler<ReqT, RespT> serverCallHandler) {
     ServerCall.Listener<ReqT> listener = serverCallHandler.startCall(serverCall, metadata);
-    return new ExceptionHandlingServerCallListener<>(listener, serverCall, metadata, scopedBean);
+    return new ExceptionHandlingServerCallListener<>(listener, serverCall, metadata, provider);
   }
 
   static class ExceptionHandlingServerCallListener<ReqT, RespT>
       extends ForwardingServerCallListener.SimpleForwardingServerCallListener<ReqT> {
     private final ServerCall<ReqT, RespT> serverCall;
-
     private final Metadata metadata;
-    private final GrpcRequestMetadata grpcMetadata;
+    private final Supplier<GrpcRequestMetadata> provider;
 
     ExceptionHandlingServerCallListener(
         ServerCall.Listener<ReqT> listener,
         ServerCall<ReqT, RespT> serverCall,
         Metadata metadata,
-        @NonNull GrpcRequestMetadata grpcMetadata) {
+        @NonNull Supplier<GrpcRequestMetadata> provider) {
       super(listener);
       this.serverCall = serverCall;
       this.metadata = metadata;
-      this.grpcMetadata = grpcMetadata;
+      this.provider = provider;
     }
 
     @Override
@@ -109,7 +109,7 @@ public class GrpcServerExceptionInterceptor implements ServerInterceptor {
       if (exception instanceof RequestCanceledByClientException) {
         // maybe we can even skip this close call?
         serverCall.close(Status.CANCELLED.withDescription(exception.getMessage()), metadata);
-        String clientId = grpcMetadata.clientIdAsString();
+        String clientId = provider.get().clientIdAsString();
         log.debug("Connection cancelled by client '{}'.", clientId);
         return;
       }
@@ -121,7 +121,7 @@ public class GrpcServerExceptionInterceptor implements ServerInterceptor {
 
     @VisibleForTesting
     protected void logIfNecessary(@NonNull Logger logger, @NonNull Exception exception) {
-      String clientId = grpcMetadata.clientIdAsString();
+      String clientId = provider.get().clientIdAsString();
       if (exception instanceof FactValidationException) {
         logger.warn("Exception triggered by client '{}':", clientId, exception);
       } else {

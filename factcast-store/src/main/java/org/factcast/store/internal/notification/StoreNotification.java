@@ -15,11 +15,11 @@
  */
 package org.factcast.store.internal.notification;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.databind.JsonNode;
+import jakarta.annotation.Nullable;
 import java.util.UUID;
 import java.util.function.Function;
-import javax.annotation.Nullable;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.util.FactCastJson;
@@ -87,7 +87,7 @@ public abstract class StoreNotification {
     String json = n.getParameter();
     try {
       return initialization.apply(FactCastJson.readTree(json));
-    } catch (JsonProcessingException | NullPointerException e) {
+    } catch (JacksonException | NullPointerException e) {
       // unparseable, probably longer than 8k ?
       // fall back to informingAllSubscribers
       log.warn("Unparseable or incomplete JSON Parameter from Notification: {}.", n.getName());
@@ -105,12 +105,15 @@ public abstract class StoreNotification {
       case PgConstants.CHANNEL_SCHEMASTORE_CHANGE -> SchemaStoreChangeNotification.from(n);
       case PgConstants.CHANNEL_TRANSFORMATIONSTORE_CHANGE ->
           TransformationStoreChangeNotification.from(n);
-      case PgConstants.CHANNEL_FACT_INSERT -> FactInsertionNotification.from(n);
       case PgConstants.CHANNEL_FACT_TRUNCATE -> FactTruncationNotification.from(n);
       case PgConstants.CHANNEL_FACT_UPDATE -> FactUpdateNotification.from(n);
+      case PgConstants.CHANNEL_CACHE_CLEAR -> CacheClearNotification.from(n);
+      case PgConstants.CHANNEL_NUDGE -> NudgeNotification.from(n);
       default -> {
-        if (!n.getName().equals(PgConstants.CHANNEL_ROUNDTRIP))
+        String channel = n.getName();
+        if (!PgConstants.CHANNEL_ROUNDTRIP.equals(channel)) {
           log.warn("Ignored notification from unknown channel: {}", name);
+        }
         yield null;
       }
     };

@@ -140,11 +140,10 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
 
     @Test
     void testTokenReleaseAfterTooManyFailures_redis() throws Exception {
-      org.factcast.itests.factus.client.RedisTransactionalITest
-              .TxRedissonSubscribedUserNamesTokenExposedAndThrowsError
+      RedisTransactionalITest.TxRedissonSubscribedUserNamesTokenExposedAndThrowsError
           subscribedUserNames =
-              new org.factcast.itests.factus.client.RedisTransactionalITest
-                  .TxRedissonSubscribedUserNamesTokenExposedAndThrowsError(redissonClient);
+              new RedisTransactionalITest.TxRedissonSubscribedUserNamesTokenExposedAndThrowsError(
+                  redissonClient);
 
       factus.publish(new UserDeleted(UUID.randomUUID()));
 
@@ -238,7 +237,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
     }
   }
 
-  @ProjectionMetaData(revision = 1)
+  @ProjectionMetaData(revisionId = "1")
   @RedisTransactional(bulkSize = 2)
   static class TxRedissonManagedUserNamesSize2 extends TrackingTxRedissonManagedUserNames {
     public TxRedissonManagedUserNamesSize2(RedissonClient redisson) {
@@ -246,7 +245,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
     }
   }
 
-  @ProjectionMetaData(revision = 1)
+  @ProjectionMetaData(revisionId = "1")
   @RedisTransactional(bulkSize = 3)
   static class TxRedissonManagedUserNamesSize3 extends TrackingTxRedissonManagedUserNames {
     public TxRedissonManagedUserNamesSize3(RedissonClient redisson) {
@@ -254,7 +253,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
     }
   }
 
-  @ProjectionMetaData(revision = 1)
+  @ProjectionMetaData(revisionId = "1")
   @RedisTransactional(bulkSize = 2)
   static class TxRedissonSubscribedUserNamesSize2 extends TrackingTxRedissonSubscribedUserNames {
     public TxRedissonSubscribedUserNamesSize2(RedissonClient redisson) {
@@ -262,7 +261,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
     }
   }
 
-  @ProjectionMetaData(revision = 1)
+  @ProjectionMetaData(revisionId = "1")
   @RedisTransactional(bulkSize = 3)
   static class TxRedissonSubscribedUserNamesSize3 extends TrackingTxRedissonSubscribedUserNames {
     public TxRedissonSubscribedUserNamesSize3(RedissonClient redisson) {
@@ -270,7 +269,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
     }
   }
 
-  @ProjectionMetaData(revision = 1)
+  @ProjectionMetaData(revisionId = "1")
   @RedisTransactional(bulkSize = 5)
   static class TxRedissonManagedUserNamesSizeBlowAt7th extends TrackingTxRedissonManagedUserNames {
     private int count;
@@ -288,7 +287,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
     }
   }
 
-  @ProjectionMetaData(revision = 1)
+  @ProjectionMetaData(revisionId = "1")
   @RedisTransactional(bulkSize = 5)
   static class TxRedissonSubscribedUserNamesSizeBlowAt7th
       extends TrackingTxRedissonSubscribedUserNames {
@@ -308,7 +307,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
   }
 
   @Getter
-  @ProjectionMetaData(revision = 1)
+  @ProjectionMetaData(revisionId = "1")
   @RedisTransactional(bulkSize = 1)
   static class TxRedissonSubscribedUserNamesTokenExposedAndThrowsError
       extends TrackingTxRedissonSubscribedUserNames {
@@ -332,7 +331,7 @@ public class RedisTransactionalITest extends AbstractFactCastIntegrationTest {
     }
   }
 
-  @ProjectionMetaData(revision = 1)
+  @ProjectionMetaData(revisionId = "1")
   @RedisTransactional
   static class TxMultipleHandler extends AbstractRedisTxManagedProjection {
     public TxMultipleHandler(RedissonClient redisson) {

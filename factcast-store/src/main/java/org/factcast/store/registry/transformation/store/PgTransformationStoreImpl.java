@@ -103,13 +103,14 @@ public class PgTransformationStoreImpl extends AbstractTransformationStore {
     return jdbcTemplate.query(
         "SELECT from_version, to_version, transformation FROM transformationstore WHERE ns=? AND"
             + " type=?",
-        new Object[] {key.ns(), key.type()},
         (rs, rowNum) -> {
           int from = rs.getInt("from_version");
           int to = rs.getInt("to_version");
           String code = rs.getString("transformation");
 
           return new SingleTransformation(key, from, to, Optional.ofNullable(code));
-        });
+        },
+        key.ns(),
+        key.type());
   }
 }

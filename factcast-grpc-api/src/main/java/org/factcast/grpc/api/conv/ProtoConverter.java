@@ -366,7 +366,7 @@ public class ProtoConverter {
     return FactCastJson.readValue(new TypeReference<List<FactSpec>>() {}, request.getJson());
   }
 
-  public MSG_FactSpecsJson toProtoFactSpecs(List<FactSpec> specs) {
+  public MSG_FactSpecsJson toProtoFactSpecs(Collection<FactSpec> specs) {
     return MSG_FactSpecsJson.newBuilder().setJson(FactCastJson.writeValueAsString(specs)).build();
   }
 

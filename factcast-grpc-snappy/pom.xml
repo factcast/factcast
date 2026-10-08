@@ -6,15 +6,12 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.9.10</version>
+    <version>0.12.5-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-grpc-snappy</artifactId>
   <name>${project.groupId}:${project.artifactId}</name>
-  <properties>
-    <maven.compiler.source>1.8</maven.compiler.source>
-    <maven.compiler.target>1.8</maven.compiler.target>
-  </properties>
+  <properties></properties>
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -33,8 +30,8 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>net.devh</groupId>
-      <artifactId>grpc-client-spring-boot-starter</artifactId>
+      <groupId>org.springframework.grpc</groupId>
+      <artifactId>spring-grpc-core</artifactId>
     </dependency>
     <dependency>
       <groupId>io.grpc</groupId>
@@ -74,7 +71,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>
-        <version>3.6.1</version>
+        <version>3.6.2</version>
         <executions>
           <execution>
             <id>add-source</id>
@@ -96,8 +93,7 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>${maven.compiler.version}</version>
         <configuration>
-          <source>1.8</source>
-          <target>1.8</target>
+          <release>17</release>
         </configuration>
       </plugin>
     </plugins>

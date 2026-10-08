@@ -26,8 +26,3 @@ These reports can be stored either in S3 (`S3ReportStore`) or in your local file
 If you want to use the `S3ReportStore`, you need to provide the configuration property of `factcast.ui.report.store.s3`.
 If you chose to use the `FileSystemReportStore`, you need to set the configuration property of
 `factcast.ui.report.store.path`.
-
-## Keeping the package.json in correct state
-
-When making changes to the ui code make sure to run the ExampleUiServer once and then execute `mvn clean install`  
-before commiting your changes. This will ensure that the package.json and the created bundle are in sync.

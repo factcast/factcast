@@ -21,17 +21,15 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.experimental.Delegate;
-import org.testcontainers.containers.ToxiproxyContainer;
-import org.testcontainers.containers.ToxiproxyContainer.ContainerProxy;
+import org.factcast.test.FactCastIntegrationTestExecutionListener.ProxiedEndpoint;
 
 @RequiredArgsConstructor
-public abstract class AbstractToxiProxySupplier implements Supplier<ContainerProxy> {
-  @Delegate @NonNull private ToxiproxyContainer.ContainerProxy proxy;
-  @NonNull private final String name;
+public abstract class AbstractToxiProxySupplier implements Supplier<ProxiedEndpoint> {
+  @Delegate @NonNull private ProxiedEndpoint proxy;
   @NonNull private final ToxiproxyClient client;
 
   @Override
-  public ContainerProxy get() {
+  public ProxiedEndpoint get() {
     return proxy;
   }
 
@@ -42,25 +40,23 @@ public abstract class AbstractToxiProxySupplier implements Supplier<ContainerPro
 
   @SneakyThrows
   public void disable() {
-    client.getProxy(name).disable();
+    client.getProxy(proxy.proxy().getName()).disable();
   }
 
   @SneakyThrows
   public void enable() {
-    client.getProxy(name).enable();
+    client.getProxy(proxy.proxy().getName()).enable();
   }
 
   @Override
   public String toString() {
     return this.getClass().getSimpleName()
-        + "[ip="
-        + getContainerIpAddress()
-        + ",proxyPort="
-        + getProxyPort()
-        + ",origProxyPort="
-        + getOriginalProxyPort()
+        + "[listen="
+        + proxy().getListen()
+        + ",upstream="
+        + proxy().getUpstream()
         + ",name="
-        + getName()
+        + proxy().getName()
         + "]";
   }
 }

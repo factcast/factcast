@@ -25,4 +25,6 @@ import lombok.NonNull;
 public interface ServerPipeline {
 
   void process(@NonNull Signal s);
+
+  void close(); // does not throw exception, just for freeing resources
 }

@@ -18,11 +18,11 @@ package org.factcast.itests.security;
 import static org.assertj.core.api.Assertions.*;
 
 import io.grpc.Metadata;
+import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import java.util.List;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
-import net.devh.boot.grpc.client.channelfactory.GrpcChannelFactory;
 import org.factcast.client.grpc.*;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
@@ -36,6 +36,7 @@ import org.factcast.test.FactcastTestConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.grpc.client.GrpcChannelFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
@@ -176,5 +177,17 @@ class ClientWithSeparateCredentialsTest extends AbstractFactCastIntegrationTest 
     assertThatThrownBy(() -> stubs.blocking().handshake(converter.empty()))
         .isInstanceOf(StatusRuntimeException.class)
         .hasMessageContaining("UNAUTHENTICATED");
+  }
+
+  @Test
+  void failsHandshakeForAccountWithoutSecret() {
+    var stub =
+        stubs
+            .blocking()
+            .withCallCredentials(BasicAuthCallCredentials.of("client-without-secret", "test123"));
+
+    assertThatExceptionOfType(StatusRuntimeException.class)
+        .isThrownBy(() -> stub.handshake(converter.empty()))
+        .satisfies(e -> assertThat(e.getStatus().getCode()).isEqualTo(Status.Code.UNAUTHENTICATED));
   }
 }

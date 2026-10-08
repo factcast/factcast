@@ -15,8 +15,8 @@
  */
 package org.factcast.itests.factus.proj;
 
+import jakarta.annotation.Nullable;
 import java.util.*;
-import javax.annotation.Nullable;
 import org.factcast.factus.Handler;
 import org.factcast.factus.Meta;
 import org.factcast.factus.projection.Projection;

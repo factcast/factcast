@@ -26,16 +26,13 @@ import org.assertj.core.api.Assertions;
 import org.factcast.store.internal.PgTestConfiguration;
 import org.factcast.test.IntegrationTest;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.context.annotation.Bean;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
-@ContextConfiguration(classes = {PgTestConfiguration.class, PgSchedLockTestConfiguration.class})
-@ExtendWith(SpringExtension.class)
+@SpringJUnitConfig(classes = {PgTestConfiguration.class, PgSchedLockTestConfiguration.class})
 @IntegrationTest
 class PgShedLockSpringScheduleTest {
   static final CountDownLatch latch = new CountDownLatch(1);

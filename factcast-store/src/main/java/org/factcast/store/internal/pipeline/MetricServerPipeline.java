@@ -23,17 +23,17 @@ import org.factcast.store.internal.StoreMetrics;
 
 @Slf4j
 public class MetricServerPipeline extends AbstractServerPipeline {
-  private final Counter counter;
+  private final Counter factsCounter;
 
   public MetricServerPipeline(@NonNull ServerPipeline parent, @NonNull PgMetrics metrics) {
     super(parent);
-    counter = metrics.counter(StoreMetrics.EVENT.FACTS_SENT);
+    factsCounter = metrics.counter(StoreMetrics.EVENT.FACTS_SENT);
   }
 
   @Override
   public void process(@NonNull Signal s) {
     if (s instanceof Signal.FactSignal) {
-      counter.increment();
+      factsCounter.increment();
     }
     // either way
     parent.process(s);

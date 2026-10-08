@@ -188,7 +188,7 @@ class DynamoITest extends AbstractFactCastIntegrationTest {
     }
 
     @Test
-    void testTokenReleaseAfterTooManyFailures_redis() throws Exception {
+    void testTokenReleaseAfterTooManyFailures() throws Exception {
       var subscribedUserNames =
           new TxDynamoSubscribedUserNamesTokenExposedAndThrowsError(dynamoDbClient);
 
@@ -250,21 +250,21 @@ class DynamoITest extends AbstractFactCastIntegrationTest {
     }
   }
 
-  @ProjectionMetaData(revision = 1)
+  @ProjectionMetaData(revisionId = "1")
   static class ManagedUserNames extends TrackingDynamoManagedUserNames {
     public ManagedUserNames(DynamoDbClient dynamoDbClient) {
       super(dynamoDbClient);
     }
   }
 
-  @ProjectionMetaData(revision = 1)
+  @ProjectionMetaData(revisionId = "1")
   static class SubscribedUserNames extends TrackingDynamoSubscribedUserNames {
     public SubscribedUserNames(DynamoDbClient dynamoDbClient) {
       super(dynamoDbClient);
     }
   }
 
-  @ProjectionMetaData(revision = 1)
+  @ProjectionMetaData(revisionId = "1")
   static class DynamoManagedUserNamesSizeBlowAt7th extends TrackingDynamoManagedUserNames {
     private int count;
 
@@ -282,7 +282,7 @@ class DynamoITest extends AbstractFactCastIntegrationTest {
   }
 
   @Getter
-  @ProjectionMetaData(revision = 1)
+  @ProjectionMetaData(revisionId = "1")
   static class TxDynamoSubscribedUserNamesTokenExposedAndThrowsError
       extends TrackingDynamoSubscribedUserNames {
     private final CountDownLatch latch = new CountDownLatch(1);
@@ -300,12 +300,12 @@ class DynamoITest extends AbstractFactCastIntegrationTest {
     }
 
     @Override
-    public void apply(UserCreated created) {
+    public void apply(UserDeleted created) {
       throw new IllegalArgumentException("user should be in map but wasnt");
     }
   }
 
-  @ProjectionMetaData(revision = 1)
+  @ProjectionMetaData(revisionId = "1")
   static class DynamoSubscribedUserNamesSizeBlowAt7Th extends TrackingDynamoSubscribedUserNames {
     private int count;
 

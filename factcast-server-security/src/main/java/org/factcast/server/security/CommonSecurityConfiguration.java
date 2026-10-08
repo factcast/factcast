@@ -127,7 +127,7 @@ public class CommonSecurityConfiguration {
     log.error(
         "* by adding a property 'factcast.security.enabled=false' to your setup. However, it is");
     log.error("* highly encouraged to provide a factcast-access.json instead.");
-    log.error("**** -> see https://docs.factcast.org/setup/grpc-client/grpc-config-basicauth/");
+    log.error("**** -> see https://docs.factcast.org/docs/t/grpc-config-basicauth");
     System.exit(1);
     // dead code
     return null;
@@ -155,9 +155,8 @@ public class CommonSecurityConfiguration {
       for (String k : accessSecrets.getSecrets().keySet()) {
         if (!ids.contains(k)) {
           log.error(
-              "Secret found for account '"
-                  + k
-                  + "' but the account is not defined in FactCastAccessConfiguration");
+              "Secret found for account '{}' but the account is not defined in FactCastAccessConfiguration",
+              k);
         }
       }
 

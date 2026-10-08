@@ -18,19 +18,17 @@ package org.factcast.store.internal.pipeline;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.FluentIterable;
+import jakarta.annotation.Nullable;
 import java.util.*;
 import java.util.function.Supplier;
-import javax.annotation.Nullable;
 import lombok.Getter;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.core.Fact;
 import org.factcast.core.subscription.TransformationException;
-import org.factcast.core.subscription.transformation.FactTransformerService;
-import org.factcast.core.subscription.transformation.FactTransformers;
-import org.factcast.core.subscription.transformation.TransformationRequest;
+import org.factcast.store.internal.PgFact;
+import org.factcast.store.internal.transformation.FactTransformerService;
+import org.factcast.store.internal.transformation.FactTransformers;
+import org.factcast.store.internal.transformation.TransformationRequest;
 
 /**
  * this class is NOT Threadsafe!
@@ -54,10 +52,18 @@ public class BufferedTransformingServerPipeline extends AbstractServerPipeline {
     BUFFERING
   }
 
-  @RequiredArgsConstructor
   static class TransformedFactSupplier implements Supplier<Signal> {
-    @Getter final TransformationRequest transformationRequest;
-    @Setter Fact resolved;
+    @Getter private TransformationRequest transformationRequest;
+    private PgFact resolved;
+
+    TransformedFactSupplier(@NonNull TransformationRequest transformationRequest) {
+      this.transformationRequest = transformationRequest;
+    }
+
+    void resolved(PgFact fact) {
+      this.resolved = fact;
+      this.transformationRequest = null;
+    }
 
     @Override
     public Signal.FactSignal get() {
@@ -86,18 +92,17 @@ public class BufferedTransformingServerPipeline extends AbstractServerPipeline {
       passOrBuffer(s);
     } else {
 
-      Fact fact = signal.fact();
+      PgFact fact = signal.fact();
 
       TransformationRequest transformationRequest = transformers.prepareTransformation(fact);
 
       if (transformationRequest == null) {
-        log.trace("passing fact signal without transformation: {}", fact);
         passOrBuffer(s);
       } else {
         // needs transformation
+        log.trace("passing fact signal WITH transformation: {}", fact);
 
         // switch to buffering no matter what it was before
-        log.trace("passing fact signal WITH transformation: {}", fact);
         mode = Mode.BUFFERING;
         buffer(transformationRequest);
       }
@@ -158,7 +163,7 @@ public class BufferedTransformingServerPipeline extends AbstractServerPipeline {
                   .map(TransformedFactSupplier::transformationRequest)
                   .toList();
 
-          List<Fact> transformedFacts = service.transform(requests);
+          List<PgFact> transformedFacts = service.transform(requests);
 
           if (pendingTransformations.size() != transformedFacts.size()) {
             throw new IllegalStateException(
@@ -166,12 +171,15 @@ public class BufferedTransformingServerPipeline extends AbstractServerPipeline {
           }
 
           // pass results back to TransformedFactSuppliers
-          Iterator<Fact> transformedIterator = transformedFacts.iterator();
+          Iterator<PgFact> transformedIterator = transformedFacts.iterator();
           pendingTransformations.forEach(t -> t.resolved(transformedIterator.next()));
 
-          buffer.stream().map(Supplier::get).forEach(parent::process);
+          for (Supplier<Signal> signalSupplier : buffer) {
+            Signal signal = signalSupplier.get();
+            parent.process(signal);
+          }
         } catch (TransformationException e) {
-          // swallows the signals at the beginning of the buffer.
+          log.warn("Transformation failed", e);
           parent.process(Signal.of(e));
         }
       } finally {

@@ -15,6 +15,7 @@
  */
 package org.factcast.core.snap;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.UUID;
 import lombok.NonNull;
@@ -27,7 +28,7 @@ import lombok.Value;
 @Value(staticConstructor = "of")
 @Deprecated
 public class SnapshotId implements Serializable {
-  private static final long serialVersionUID = -3207528229703207635L;
+  @Serial private static final long serialVersionUID = -3207528229703207635L;
   @NonNull String key;
   @NonNull UUID uuid;
 }

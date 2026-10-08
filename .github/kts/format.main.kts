@@ -1,13 +1,13 @@
 #!/usr/bin/env kotlin
 
-@file:DependsOn("io.github.typesafegithub:github-workflows-kt:3.5.0")
+@file:DependsOn("io.github.typesafegithub:github-workflows-kt:4.0.0")
 
 
 @file:Repository("https://repo.maven.apache.org/maven2/")
 @file:Repository("https://bindings.krzeminski.it")
 
-@file:DependsOn("actions:checkout:v5")
-@file:DependsOn("actions:setup-java:v5")
+@file:DependsOn("actions:checkout:v7")
+@file:DependsOn("actions:setup-java:v6")
 
 import io.github.typesafegithub.workflows.actions.actions.Checkout
 import io.github.typesafegithub.workflows.actions.actions.SetupJava
@@ -53,7 +53,7 @@ workflow(
             action = CustomAction(
                 actionOwner = "stefanzweifel",
                 actionName = "git-auto-commit-action",
-                actionVersion = "v6",
+                actionVersion = "778341af668090896ca464160c2def5d1d1a3eb0", // v6.0.1
                 inputs = mapOf(
                     "commit_message" to "Apply formatter",
                 )

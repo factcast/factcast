@@ -15,15 +15,29 @@
  */
 package org.factcast.spring.boot.autoconfigure.server.grpc;
 
-import net.devh.boot.grpc.server.autoconfigure.GrpcServerAutoConfiguration;
+import io.grpc.Codec;
 import org.factcast.server.grpc.*;
 import org.springframework.boot.autoconfigure.*;
 import org.springframework.boot.autoconfigure.condition.*;
+import org.springframework.boot.grpc.server.autoconfigure.GrpcServerAutoConfiguration;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 
 @AutoConfiguration
 @Import({FactCastGrpcServerConfiguration.class, FactCastSecurityConfiguration.class})
 @ConditionalOnClass(FactStoreGrpcService.class)
 @ConditionalOnMissingBean(FactStoreGrpcService.class)
-@AutoConfigureBefore(GrpcServerAutoConfiguration.class)
-public class FactCastGrpcServerAutoConfiguration {}
+@AutoConfigureBefore({GrpcServerAutoConfiguration.class})
+public class FactCastGrpcServerAutoConfiguration {
+  // simple noop codec for the handshake without compression
+  @Bean
+  public Codec noopCodec() {
+    return Codec.Identity.NONE;
+  }
+
+  // default gzip codec
+  @Bean
+  public Codec gzipCodec() {
+    return new Codec.Gzip();
+  }
+}

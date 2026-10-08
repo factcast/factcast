@@ -19,7 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.postgresql.Driver;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 
 /**
  * Spring boot starter for running a factcast server.
@@ -43,7 +43,7 @@ public class ExampleServerWithPostgresContainer {
 
   private static void startPostgresContainer() {
     log.info("Trying to start postgres testcontainer");
-    PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:11.4");
+    PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:15.2");
     postgres.start();
     String url = postgres.getJdbcUrl();
     System.setProperty("spring.datasource.driver-class-name", Driver.class.getName());

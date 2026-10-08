@@ -16,7 +16,6 @@
 package org.factcast.client.grpc.cli.cmd;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.util.ArrayList;
@@ -68,6 +67,6 @@ class CatchupTest {
             });
     cmd.runWith(fc, opt);
 
-    verify(fc).subscribeEphemeral(any(SubscriptionRequest.class), any(ConsoleFactObserver.class));
+    verify(fc).subscribe(any(SubscriptionRequest.class), any(ConsoleFactObserver.class));
   }
 }

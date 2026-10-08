@@ -27,6 +27,7 @@ import org.factcast.store.StoreConfigurationProperties;
  */
 @FieldDefaults(level = AccessLevel.PUBLIC, makeFinal = true)
 @Generated
+@SuppressWarnings("java:S1192")
 public class PgConstants {
 
   public static final String CURRENT_TIME_MILLIS = "SELECT TRUNC(EXTRACT(EPOCH FROM now()) * 1000)";
@@ -72,10 +73,11 @@ public class PgConstants {
 
   private static final String TABLE_TOKENSTORE = "tokenstore";
 
-  public static final String CHANNEL_FACT_INSERT = "fact_insert";
+  public static final String CHANNEL_NUDGE = "nudge";
   public static final String CHANNEL_BLACKLIST_CHANGE = "blacklist_change";
   public static final String CHANNEL_SCHEMASTORE_CHANGE = "schemastore_change";
   public static final String CHANNEL_TRANSFORMATIONSTORE_CHANGE = "transformationstore_change";
+  public static final String CHANNEL_CACHE_CLEAR = "factcast_cache_clear";
   public static final String CHANNEL_FACT_UPDATE = "fact_update";
   // for testing
   public static final String CHANNEL_FACT_TRUNCATE = "fact_truncate";
@@ -202,7 +204,7 @@ public class PgConstants {
       "SELECT " + COLUMN_SER + " FROM " + TABLE_FACT + " WHERE " + COLUMN_HEADER + " @> ?::jsonb";
 
   private static final String LISTEN = "LISTEN ";
-  public static final String LISTEN_INSERT_CHANNEL_SQL = LISTEN + CHANNEL_FACT_INSERT;
+  public static final String LISTEN_NUDGE_CHANNEL_SQL = LISTEN + CHANNEL_NUDGE;
   public static final String LISTEN_TRUNCATION_CHANNEL_SQL = LISTEN + CHANNEL_FACT_TRUNCATE;
   public static final String LISTEN_UPDATE_CHANNEL_SQL = LISTEN + CHANNEL_FACT_UPDATE;
   public static final String LISTEN_ROUNDTRIP_CHANNEL_SQL = LISTEN + CHANNEL_ROUNDTRIP;
@@ -212,6 +214,7 @@ public class PgConstants {
       LISTEN + CHANNEL_SCHEMASTORE_CHANGE;
   public static final String LISTEN_TRANSFORMATIONSTORE_CHANGE_CHANNEL_SQL =
       LISTEN + CHANNEL_TRANSFORMATIONSTORE_CHANGE;
+  public static final String LISTEN_CACHE_INVALIDATE_ALL_CHANNEL_SQL = LISTEN + CHANNEL_CACHE_CLEAR;
 
   public static final String NOTIFY_ROUNDTRIP_SQL = "NOTIFY " + CHANNEL_ROUNDTRIP;
   public static final String UPDATE_FACT_SERIALS =
@@ -293,7 +296,7 @@ public class PgConstants {
       "SELECT " + COLUMN_NAMESPACE + " FROM " + TABLE_TOKENSTORE + " WHERE " + COLUMN_TOKEN + "=?";
 
   public static final String LAST_SERIAL_IN_LOG =
-      "SELECT COALESCE(MAX(" + COLUMN_SER + "),0) from " + TABLE_FACT;
+      "SELECT COALESCE(MAX(" + COLUMN_SER + "),0) FROM " + TABLE_FACT;
   public static final String HIGHWATER_MARK =
       "SELECT ("
           + COLUMN_HEADER
@@ -303,27 +306,19 @@ public class PgConstants {
           + TABLE_FACT
           + " WHERE "
           + COLUMN_SER
-          + "=(SELECT max("
+          + "=(SELECT MAX("
           + COLUMN_SER
           + ") FROM "
           + TABLE_FACT
           + ")";
 
-  public static final String HIGHWATER_SERIAL = "SELECT max(" + COLUMN_SER + ") FROM " + TABLE_FACT;
+  public static final String HIGHWATER_SERIAL = "SELECT MAX(" + COLUMN_SER + ") FROM " + TABLE_FACT;
 
   public static final String LAST_SERIAL_BEFORE_DATE =
-      "SELECT COALESCE(max(lastSer),0) AS lastSer FROM "
-          + TABLE_DATE2SERIAL
-          + " where factDate < ?";
+      "SELECT COALESCE(MIN(firstser),0)-1 FROM " + TABLE_DATE2SERIAL + " WHERE factDate >= ?";
 
   public static final String FIRST_SERIAL_AFTER_DATE =
-      "SELECT COALESCE("
-          + "(SELECT MIN(lastSer) FROM "
-          + TABLE_DATE2SERIAL
-          + " WHERE factDate > ?), "
-          + "(SELECT MAX(lastSer) FROM "
-          + TABLE_DATE2SERIAL
-          + "))";
+      "SELECT MIN(firstser) FROM " + TABLE_DATE2SERIAL + " WHERE factDate >= ?";
 
   private static String fromHeader(String attributeName) {
     return PgConstants.COLUMN_HEADER + "->>'" + attributeName + "' AS " + attributeName;

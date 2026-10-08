@@ -30,8 +30,7 @@ import java.util.function.IntToLongFunction;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import nl.altindag.log.LogCaptor;
-import org.factcast.core.Fact;
-import org.factcast.core.FactStreamPosition;
+import org.factcast.core.*;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.Subscription;
@@ -50,10 +49,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class FactusTest {
 
   @Mock FactStore mockedStore;
+  @Mock FactCast mockedFactCast;
 
   private final Factus underTest =
       spy(
           new Factus() {
+
             @Override
             public <T> T publish(@NonNull EventObject e, @NonNull Function<Fact, T> resultFn) {
               return null;
@@ -142,9 +143,15 @@ class FactusTest {
             @Override
             public void publish(@NonNull Fact f) {}
 
+            @SuppressWarnings("deprecation")
             @Override
-            public FactStore store() {
+            public @NonNull FactStore store() {
               return mockedStore;
+            }
+
+            @Override
+            public @NonNull FactCast factCast() {
+              return mockedFactCast;
             }
           });
 
@@ -359,6 +366,7 @@ class FactusTest {
       // INIT
       long epochMilli = 1_234;
       Instant now = Instant.ofEpochMilli(epochMilli);
+      when(mockedFactCast.store()).thenReturn(mockedStore);
       when(mockedStore.currentTime()).thenReturn(epochMilli);
 
       // RUN / ASSERT

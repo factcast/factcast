@@ -44,6 +44,7 @@ public class PgTransformationStoreChangeListener
   static final long INFLIGHT_TRANSFORMATIONS_DELAY_SECONDS = 10L;
 
   @VisibleForTesting
+  @SuppressWarnings("unused")
   protected PgTransformationStoreChangeListener(
       EventBus bus,
       TransformationCache cache,
@@ -73,7 +74,12 @@ public class PgTransformationStoreChangeListener
 
   @VisibleForTesting
   void invalidateCachesFor(TransformationStoreChangeNotification signal) {
-    cache.invalidateTransformationFor(signal.ns(), signal.type());
+    if (signal.fromVersion() == null || signal.toVersion() == null) {
+      cache.invalidateTransformationFor(signal.ns(), signal.type());
+    } else {
+      cache.invalidateTransformationFor(
+          signal.ns(), signal.type(), signal.fromVersion(), signal.toVersion());
+    }
     chains.notifyFor(TransformationKey.of(signal.ns(), signal.type()));
   }
 

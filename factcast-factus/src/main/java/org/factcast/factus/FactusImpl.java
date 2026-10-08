@@ -21,18 +21,17 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import io.micrometer.core.instrument.*;
-import java.lang.reflect.Constructor;
+import jakarta.annotation.Nullable;
 import java.time.*;
 import java.util.*;
 import java.util.concurrent.atomic.*;
 import java.util.function.*;
-import java.util.stream.Collectors;
-import javax.annotation.Nullable;
-import lombok.*;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.*;
 import org.factcast.core.spec.FactSpec;
-import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.*;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.factus.batch.*;
@@ -112,7 +111,7 @@ public class FactusImpl implements Factus {
     assertNotClosed();
     InLockedOperation.assertNotInLockedOperation();
 
-    List<Fact> facts = e.stream().map(eventConverter::toFact).collect(Collectors.toList());
+    List<Fact> facts = e.stream().map(eventConverter::toFact).toList();
     fc.publish(facts);
     return resultFn.apply(facts);
   }
@@ -175,7 +174,7 @@ public class FactusImpl implements Factus {
     FactObserver fo =
         new AbstractFactObserver(subscribedProjection, PROGRESS_INTERVAL, factusMetrics) {
 
-          FactStreamPosition lastPositionApplied = null;
+          FactStreamPosition lastPositionApplied;
 
           @Override
           public void onNextFacts(@NonNull List<Fact> elements) {
@@ -216,6 +215,7 @@ public class FactusImpl implements Factus {
 
     return fc.subscribe(
         SubscriptionRequest.follow(handler.createFactSpecs())
+            .withDebugHintFrom(subscribedProjection.getClass())
             .fromNullable(
                 Optional.ofNullable(subscribedProjection.factStreamPosition())
                     .map(FactStreamPosition::factId)
@@ -245,7 +245,8 @@ public class FactusImpl implements Factus {
     ProjectionAndState<P> projectionAndState =
         projectionSnapshotRepository
             .findLatest(projectionClass)
-            .orElseGet(() -> ProjectionAndState.of(instantiate(projectionClass), null));
+            .orElseGet(
+                () -> ProjectionAndState.of(ReflectionUtils.instantiate(projectionClass), null));
 
     // catchup
     P projection = projectionAndState.projectionInstance();
@@ -373,8 +374,8 @@ public class FactusImpl implements Factus {
 
             FactStreamPosition factStreamPosition = positionOfLastFactApplied.get();
             if (factIdToFfwdTo.isAfter(factStreamPosition)) {
-              if (projection instanceof FactStreamPositionAware) {
-                ((FactStreamPositionAware) projection).factStreamPosition(factIdToFfwdTo);
+              if (projection instanceof FactStreamPositionAware aware) {
+                aware.factStreamPosition(factIdToFfwdTo);
               }
 
               // only persist ffwd if we ever had a state or applied facts in this catchup
@@ -385,13 +386,17 @@ public class FactusImpl implements Factus {
           }
         };
 
-    List<FactSpec> factSpecs = handler.createFactSpecs();
+    Collection<FactSpec> factSpecs = handler.createFactSpecs();
 
     // the sole purpose of this synchronization is to make sure that writes from the fact delivery
     // thread are guaranteed to be visible when leaving the block
     //
     synchronized (projection) {
-      fc.subscribe(SubscriptionRequest.catchup(factSpecs).fromNullable(stateOrNull), fo)
+      fc.subscribe(
+              SubscriptionRequest.catchup(factSpecs)
+                  .withDebugHintFrom(projection.getClass())
+                  .fromNullable(stateOrNull),
+              fo)
           .awaitComplete();
     }
     return Optional.ofNullable(positionOfLastFactApplied.get())
@@ -406,18 +411,9 @@ public class FactusImpl implements Factus {
         "Creating initial aggregate version for {} with id {}",
         aggregateClass.getSimpleName(),
         aggregateId);
-    A a = instantiate(aggregateClass);
+    A a = ReflectionUtils.instantiate(aggregateClass);
     AggregateUtil.aggregateId(a, aggregateId);
     return a;
-  }
-
-  @NonNull
-  @SneakyThrows
-  private <P extends SnapshotProjection> P instantiate(Class<P> projectionClass) {
-    log.trace("Creating initial projection version for {}", projectionClass);
-    Constructor<P> con = projectionClass.getDeclaredConstructor();
-    con.setAccessible(true);
-    return con.newInstance();
   }
 
   @Override
@@ -448,8 +444,8 @@ public class FactusImpl implements Factus {
   @Override
   public <M extends ManagedProjection> Locked<M> withLockOn(@NonNull M managedProjection) {
     Projector<M> applier = ehFactory.create(managedProjection);
-    List<FactSpec> specs = applier.createFactSpecs();
-    return new Locked<>(fc, this, managedProjection, specs, factusMetrics);
+    Collection<FactSpec> specs = applier.createFactSpecs();
+    return new Locked<>(fc, this, managedProjection, new ArrayList<>(specs), factusMetrics);
   }
 
   @Override
@@ -459,19 +455,18 @@ public class FactusImpl implements Factus {
             .orElseThrow(
                 () ->
                     new IllegalArgumentException(
-                        String.format(
-                            "Aggregate %s with id %s does not exist.",
-                            aggregateClass.getSimpleName(), id)));
+                        "Aggregate %s with id %s does not exist."
+                            .formatted(aggregateClass.getSimpleName(), id)));
     Projector<SnapshotProjection> snapshotProjectionEventApplier = ehFactory.create(fresh);
-    List<FactSpec> specs = snapshotProjectionEventApplier.createFactSpecs();
-    return new Locked<>(fc, this, fresh, specs, factusMetrics);
+    Collection<FactSpec> specs = snapshotProjectionEventApplier.createFactSpecs();
+    return new Locked<>(fc, this, fresh, new ArrayList<>(specs), factusMetrics);
   }
 
   @Override
   public <P extends SnapshotProjection> Locked<P> withLockOn(@NonNull Class<P> projectionClass) {
     P fresh = fetch(projectionClass);
     Projector<SnapshotProjection> snapshotProjectionEventApplier = ehFactory.create(fresh);
-    List<FactSpec> specs = snapshotProjectionEventApplier.createFactSpecs();
+    Collection<FactSpec> specs = snapshotProjectionEventApplier.createFactSpecs();
     return new Locked<>(fc, this, fresh, specs, factusMetrics);
   }
 
@@ -497,9 +492,8 @@ public class FactusImpl implements Factus {
   }
 
   @Override
-  @NonNull
-  public FactStore store() {
-    return fc.store();
+  public @NonNull FactCast factCast() {
+    return fc;
   }
 
   private void tryClose(AutoCloseable c) {

@@ -3,7 +3,7 @@ package org.factcast.schema.registry.cli.registry.impl
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.core.test.TestCase
-import io.kotest.core.test.TestResult
+import io.kotest.engine.test.TestResult
 import io.mockk.*
 import org.factcast.schema.registry.cli.domain.*
 import org.factcast.schema.registry.cli.fs.FileSystemService

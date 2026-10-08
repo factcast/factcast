@@ -15,8 +15,10 @@
  */
 package org.factcast.server.grpc;
 
+import java.io.Serial;
+
 public class RequestCanceledByClientException extends RuntimeException {
-  private static final long serialVersionUID = 4963973755426184988L;
+  @Serial private static final long serialVersionUID = 4963973755426184988L;
 
   public RequestCanceledByClientException(String s) {
     super(s);

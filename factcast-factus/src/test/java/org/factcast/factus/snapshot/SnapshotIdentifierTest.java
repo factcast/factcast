@@ -106,4 +106,19 @@ class SnapshotIdentifierTest {
           .isInstanceOf(IllegalArgumentException.class);
     }
   }
+
+  @Nested
+  class WhenRetrievingPossibleAggId {
+    @Test
+    void isNull() {
+      assertThat(SnapshotIdentifier.of(S.class).aggIdAsStringOrNull()).isNull();
+    }
+
+    @Test
+    void isNotNull() {
+      final UUID aggId = UUID.randomUUID();
+      assertThat(SnapshotIdentifier.of(A.class, aggId).aggIdAsStringOrNull())
+          .isEqualTo(aggId.toString());
+    }
+  }
 }

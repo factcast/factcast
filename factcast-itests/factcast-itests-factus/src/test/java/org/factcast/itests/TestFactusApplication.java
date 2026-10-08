@@ -17,7 +17,6 @@ package org.factcast.itests;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -26,11 +25,12 @@ import org.factcast.factus.serializer.JacksonSnapshotSerializer;
 import org.factcast.factus.serializer.SnapshotSerializer;
 import org.factcast.spring.boot.autoconfigure.snap.InMemoryAndDiskSnapshotCacheAutoConfiguration;
 import org.factcast.spring.boot.autoconfigure.snap.InMemorySnapshotCacheAutoConfiguration;
+import org.factcast.spring.boot.autoconfigure.snap.MongoDbSnapshotCacheAutoConfiguration;
 import org.factcast.spring.boot.autoconfigure.snap.RedissonSnapshotCacheAutoConfiguration;
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.actuate.autoconfigure.metrics.CompositeMeterRegistryAutoConfiguration;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.micrometer.metrics.autoconfigure.CompositeMeterRegistryAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 
@@ -41,6 +41,7 @@ import org.springframework.context.annotation.Primary;
     exclude = {
       CompositeMeterRegistryAutoConfiguration.class,
       RedissonSnapshotCacheAutoConfiguration.class,
+      MongoDbSnapshotCacheAutoConfiguration.class,
       InMemorySnapshotCacheAutoConfiguration.class,
       InMemoryAndDiskSnapshotCacheAutoConfiguration.class,
     })
@@ -55,7 +56,6 @@ public class TestFactusApplication {
     ObjectMapper mapper = new ObjectMapper();
     mapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.NONE);
     mapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
-    mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
     return new JacksonSnapshotSerializer(mapper);
   }

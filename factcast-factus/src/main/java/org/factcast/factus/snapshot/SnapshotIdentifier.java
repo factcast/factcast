@@ -16,8 +16,8 @@
 package org.factcast.factus.snapshot;
 
 import com.google.common.base.Preconditions;
+import jakarta.annotation.Nullable;
 import java.util.UUID;
-import javax.annotation.Nullable;
 import lombok.NonNull;
 import lombok.Value;
 import org.factcast.factus.projection.Aggregate;
@@ -51,5 +51,10 @@ public class SnapshotIdentifier {
 
   public static SnapshotIdentifier from(@NonNull Aggregate agg) {
     return new SnapshotIdentifier(agg.getClass(), AggregateUtil.aggregateId(agg));
+  }
+
+  @Nullable
+  public String aggIdAsStringOrNull() {
+    return aggregateId() != null ? aggregateId().toString() : null;
   }
 }

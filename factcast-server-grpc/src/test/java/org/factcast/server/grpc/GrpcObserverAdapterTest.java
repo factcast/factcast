@@ -16,14 +16,19 @@
 package org.factcast.server.grpc;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.factcast.server.grpc.metrics.ServerMetrics.EVENT.BYTES_SENT;
+import static org.factcast.server.grpc.metrics.ServerMetrics.EVENT.FACTS_SENT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
-import java.util.UUID;
-import java.util.function.Function;
+import io.micrometer.core.instrument.Tags;
+import java.nio.charset.StandardCharsets;
+import java.sql.SQLFeatureNotSupportedException;
 import lombok.NonNull;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.Fact;
@@ -31,10 +36,10 @@ import org.factcast.core.FactStreamPosition;
 import org.factcast.core.TestFact;
 import org.factcast.core.TestFactStreamPosition;
 import org.factcast.core.subscription.FactStreamInfo;
-import org.factcast.core.subscription.observer.FastForwardTarget;
 import org.factcast.grpc.api.conv.ProtoConverter;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification;
 import org.factcast.grpc.api.gen.FactStoreProto.MSG_Notification.Type;
+import org.factcast.server.grpc.metrics.ServerMetrics;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -42,13 +47,11 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-@SuppressWarnings({"rawtypes", "unchecked", "deprecation"})
+@SuppressWarnings({"deprecation"})
 @ExtendWith(MockitoExtension.class)
 class GrpcObserverAdapterTest {
 
   @Mock private StreamObserver<MSG_Notification> observer;
-
-  @Mock private Function<Fact, MSG_Notification> projection;
 
   @Mock private ServerExceptionLogger serverExceptionLogger;
 
@@ -92,8 +95,7 @@ class GrpcObserverAdapterTest {
 
     GrpcRequestMetadata mockGrpcRequestMetaData = mock(GrpcRequestMetadata.class);
     when(mockGrpcRequestMetaData.supportsFastForward()).thenReturn(true);
-
-    FastForwardTarget ffwd = FastForwardTarget.of(null, 112);
+    when(mockGrpcRequestMetaData.clientIdAsString()).thenReturn("testClient");
 
     GrpcObserverAdapter uut =
         new GrpcObserverAdapter("foo", observer, mockGrpcRequestMetaData, serverExceptionLogger);
@@ -102,7 +104,7 @@ class GrpcObserverAdapterTest {
     verify(observer, never()).onNext(any());
     uut.onCatchup();
     verify(observer, times(1)).onNext(any());
-    assertEquals(Type.Catchup, msg.getAllValues().get(0).getType());
+    assertEquals(Type.Catchup, msg.getAllValues().getFirst().getType());
   }
 
   @Test
@@ -110,8 +112,7 @@ class GrpcObserverAdapterTest {
 
     GrpcRequestMetadata mockGrpcRequestMetaData = mock(GrpcRequestMetadata.class);
     when(mockGrpcRequestMetaData.supportsFastForward()).thenReturn(true);
-
-    FastForwardTarget ffwd = FastForwardTarget.of(new UUID(1, 1), 0);
+    when(mockGrpcRequestMetaData.clientIdAsString()).thenReturn("testClient");
 
     GrpcObserverAdapter uut =
         new GrpcObserverAdapter("foo", observer, mockGrpcRequestMetaData, serverExceptionLogger);
@@ -120,7 +121,7 @@ class GrpcObserverAdapterTest {
     verify(observer, never()).onNext(any());
     uut.onCatchup();
     verify(observer, times(1)).onNext(any());
-    assertEquals(Type.Catchup, msg.getAllValues().get(0).getType());
+    assertEquals(Type.Catchup, msg.getAllValues().getFirst().getType());
   }
 
   @Test
@@ -128,8 +129,7 @@ class GrpcObserverAdapterTest {
 
     GrpcRequestMetadata mockGrpcRequestMetaData = mock(GrpcRequestMetadata.class);
     when(mockGrpcRequestMetaData.supportsFastForward()).thenReturn(false);
-
-    FastForwardTarget ffwd = FastForwardTarget.of(new UUID(10, 10), 112);
+    when(mockGrpcRequestMetaData.clientIdAsString()).thenReturn("testClient");
 
     GrpcObserverAdapter uut =
         new GrpcObserverAdapter("foo", observer, mockGrpcRequestMetaData, serverExceptionLogger);
@@ -138,7 +138,7 @@ class GrpcObserverAdapterTest {
     verify(observer, never()).onNext(any());
     uut.onCatchup();
     verify(observer, times(1)).onNext(any());
-    assertEquals(Type.Catchup, msg.getAllValues().get(0).getType());
+    assertEquals(Type.Catchup, msg.getAllValues().getFirst().getType());
   }
 
   @Test
@@ -149,6 +149,21 @@ class GrpcObserverAdapterTest {
     uut.onError(exception);
     verify(observer).onError(any());
     verify(serverExceptionLogger).log(exception, "foo");
+  }
+
+  @Test
+  void sendsUnsupportedJdbcFeatureAsUnimplemented() {
+    GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, serverExceptionLogger);
+    var exception = new SQLFeatureNotSupportedException("Operation not yet supported");
+    ArgumentCaptor<Throwable> error = ArgumentCaptor.forClass(Throwable.class);
+
+    uut.onError(exception);
+
+    verify(observer).onError(error.capture());
+    assertThat(error.getValue())
+        .isInstanceOf(StatusRuntimeException.class)
+        .extracting(e -> ((StatusRuntimeException) e).getStatus().getCode())
+        .isEqualTo(Status.Code.UNIMPLEMENTED);
   }
 
   @Test
@@ -163,7 +178,7 @@ class GrpcObserverAdapterTest {
     verify(observer).onNext(any());
     MSG_Notification notification = msg.getValue();
     assertEquals(MSG_Notification.Type.Facts, notification.getType());
-    assertEquals(f, conv.fromProto(notification.getFacts()).get(0));
+    assertEquals(f, conv.fromProto(notification.getFacts()).getFirst());
   }
 
   @Test
@@ -177,9 +192,9 @@ class GrpcObserverAdapterTest {
 
   @Test
   void skipsOnFastForwardIfUnsupported() {
-    ProtoConverter conv = new ProtoConverter();
     @NonNull GrpcRequestMetadata meta = mock(GrpcRequestMetadata.class);
     when(meta.supportsFastForward()).thenReturn(false);
+    when(meta.clientIdAsString()).thenReturn("testClient");
     GrpcObserverAdapter uut = new GrpcObserverAdapter("foo", observer, meta);
     FactStreamPosition id = TestFactStreamPosition.random();
     uut.onFastForward(id);
@@ -204,10 +219,7 @@ class GrpcObserverAdapterTest {
     uut.shutdown();
 
     // if keepalive is shutdown, reschedule should throw illegalstateexceptions
-    assertThatThrownBy(
-            () -> {
-              uut.keepalive().reschedule();
-            })
+    assertThatThrownBy(() -> uut.keepalive().reschedule())
         .isInstanceOf(IllegalStateException.class);
   }
 
@@ -265,5 +277,35 @@ class GrpcObserverAdapterTest {
     Assertions.assertThat(msg2.getFacts().getFactCount()).isOne();
 
     verifyNoMoreInteractions(observer);
+  }
+
+  @Test
+  void testMetricsOnFlush() {
+    ServerMetrics metrics = mock(ServerMetrics.class);
+    GrpcRequestMetadata meta = mock(GrpcRequestMetadata.class);
+    when(meta.clientMaxInboundMessageSize()).thenReturn(1024);
+    when(meta.clientIdAsString()).thenReturn("testClient");
+    GrpcObserverAdapter uut =
+        new GrpcObserverAdapter("foo", observer, meta, serverExceptionLogger, metrics, 1L);
+    Fact f1 = new TestFact();
+    Fact f2 = new TestFact();
+    uut.onNext(f1);
+    uut.onNext(f2);
+
+    uut.flush();
+
+    var expectedBytes =
+        f1.jsonHeader().getBytes(StandardCharsets.UTF_8).length
+            + f1.jsonPayload().getBytes(StandardCharsets.UTF_8).length
+            + f2.jsonHeader().getBytes(StandardCharsets.UTF_8).length
+            + f2.jsonPayload().getBytes(StandardCharsets.UTF_8).length
+            + 16; // protobuf overhead
+    verify(metrics)
+        .count(
+            BYTES_SENT,
+            Tags.of(ServerMetrics.MetricsTag.CLIENT_ID_KEY, "testClient"),
+            expectedBytes);
+    verify(metrics)
+        .count(FACTS_SENT, Tags.of(ServerMetrics.MetricsTag.CLIENT_ID_KEY, "testClient"), 2);
   }
 }

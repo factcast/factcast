@@ -19,8 +19,8 @@ before delving into this guide.
 When projections consume a lot of events or are complex to calculate it usually makes sense to persist their state into
 an external data store instead of using local projections. This way the state is not lost when the service is restarted,
 can be shared between service instances,
-and the load on the server is reduced. Factus currently supports Redis, all Datastores that support Spring Transactions
-and AWS DynamoDb out of the box.
+and the load on the server is reduced. Factus currently supports Redis, all Datastores that support Spring Transactions,
+AWS DynamoDb and MongoDb/ AWS DocumentDB out of the box.
 If you want to use a different data store you can implement your own support for projecting into the desired data store.
 
 ---

@@ -18,20 +18,20 @@ package org.factcast.store.internal;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.EventBus;
 import java.util.concurrent.*;
+import javax.annotation.Nullable;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.subscription.*;
+import org.factcast.core.subscription.MissingTransformationInformationException;
 import org.factcast.core.subscription.observer.*;
-import org.factcast.core.subscription.transformation.MissingTransformationInformationException;
-import org.factcast.store.StoreConfigurationProperties;
+import org.factcast.store.*;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
+import org.factcast.store.internal.logsuppression.LogSuppression;
 import org.factcast.store.internal.pipeline.*;
 import org.factcast.store.internal.query.*;
-import org.factcast.store.internal.script.JSEngineFactory;
 import org.factcast.store.internal.telemetry.PgStoreTelemetry;
 
-// TODO integrate with PGQuery
 @SuppressWarnings("UnstableApiUsage")
 @Slf4j
 public class PgSubscriptionFactory implements AutoCloseable {
@@ -42,40 +42,40 @@ public class PgSubscriptionFactory implements AutoCloseable {
 
   final PgFactIdToSerialMapper idToSerialMapper;
 
-  final PgLatestSerialFetcher fetcher;
-
   final PgCatchupFactory catchupFactory;
 
-  final FastForwardTarget target;
+  final HighWaterMarkFetcher hwmFetcher;
   final ServerPipelineFactory pipelineFactory;
-  final JSEngineFactory jsEngineFactory;
   final ExecutorService es;
   final PgStoreTelemetry telemetry;
+  final StoreConfigurationProperties props;
+  final OffloadDataSource offloadDataSource;
   private final int maxPipelineBufferSize;
+  private final LogSuppression logSuppression;
 
   public PgSubscriptionFactory(
       PgConnectionSupplier connectionSupplier,
+      @Nullable OffloadDataSource offloadDataSource,
       EventBus eventBus,
       PgFactIdToSerialMapper idToSerialMapper,
-      PgLatestSerialFetcher fetcher,
       StoreConfigurationProperties props,
       PgCatchupFactory catchupFactory,
-      FastForwardTarget target,
+      HighWaterMarkFetcher hwmFetcher,
       ServerPipelineFactory pipelineFactory,
-      JSEngineFactory jsEngineFactory,
       PgMetrics metrics,
-      PgStoreTelemetry telemetry) {
+      PgStoreTelemetry telemetry,
+      LogSuppression logSuppression) {
     this.connectionSupplier = connectionSupplier;
     this.eventBus = eventBus;
     this.idToSerialMapper = idToSerialMapper;
-    this.fetcher = fetcher;
     this.catchupFactory = catchupFactory;
-    this.target = target;
+    this.hwmFetcher = hwmFetcher;
     this.pipelineFactory = pipelineFactory;
-    this.jsEngineFactory = jsEngineFactory;
     this.telemetry = telemetry;
-
+    this.props = props;
+    this.offloadDataSource = offloadDataSource;
     this.maxPipelineBufferSize = props.getTransformationCachePageSize();
+    this.logSuppression = logSuppression;
 
     this.es =
         metrics.monitor(
@@ -86,43 +86,43 @@ public class PgSubscriptionFactory implements AutoCloseable {
   public Subscription subscribe(SubscriptionRequestTO req, FactObserver observer) {
     SubscriptionImpl subscription = SubscriptionImpl.on(observer);
 
-    ServerPipeline pipe =
-        pipelineFactory.create(
-            req, subscription, new PostQueryMatcher(req, jsEngineFactory), maxPipelineBufferSize);
+    ServerPipeline pipe = pipelineFactory.create(req, subscription, maxPipelineBufferSize);
 
-    PgFactStream pgsub =
+    PgFactStream factStream =
         new PgFactStream(
             connectionSupplier,
+            offloadDataSource,
             eventBus,
             idToSerialMapper,
-            fetcher,
             catchupFactory,
-            target,
-            pipe,
-            telemetry);
+            hwmFetcher,
+            new PushbackServerPipeline(pipe),
+            telemetry,
+            req,
+            logSuppression);
 
     // when closing the subscription, also close the PgFactStream
-    subscription.onClose(pgsub::close);
-    CompletableFuture.runAsync(connect(req, subscription, pgsub), es);
+    subscription.onClose(factStream::close);
+    CompletableFuture.runAsync(connect(subscription, factStream), es);
 
     return subscription;
   }
 
   @NonNull
   @VisibleForTesting
-  Runnable connect(SubscriptionRequestTO req, SubscriptionImpl subscription, PgFactStream pgsub) {
+  Runnable connect(SubscriptionImpl subscription, PgFactStream pgSub) {
     return () -> {
       try {
-        pgsub.connect(req);
+        pgSub.connect();
       } catch (MissingTransformationInformationException e) {
         // warn level because it hints at broken transformations/schema registry
-        warnAndNotify(subscription, req, "missing transformation", e);
+        warnAndNotify(subscription, pgSub.request(), "missing transformation", e);
       } catch (TransformationException e) {
-        errorAndNotify(subscription, req, "failing transformation", e);
+        errorAndNotify(subscription, pgSub.request(), "failing transformation", e);
       } catch (Exception e) {
         // warn level because it is unexpected and unlikely to be a client induced error
         // not limiting to RuntimeException, in case anyone used @SneakyThrows
-        warnAndNotify(subscription, req, "runtime", e);
+        warnAndNotify(subscription, pgSub.request(), "runtime", e);
       }
     };
   }

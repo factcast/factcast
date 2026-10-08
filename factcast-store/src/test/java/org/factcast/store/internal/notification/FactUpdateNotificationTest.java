@@ -38,7 +38,7 @@ class FactUpdateNotificationTest {
     void happyPath() {
       Notification n1 =
           new Notification(
-              PgConstants.CHANNEL_FACT_UPDATE, 1, String.format("{\"id\":\"%s\"}", FACT_ID));
+              PgConstants.CHANNEL_FACT_UPDATE, 1, "{\"id\":\"%s\"}".formatted(FACT_ID));
       assertThat(Objects.requireNonNull(FactUpdateNotification.from(n1)).uniqueId())
           .isEqualTo(PgConstants.CHANNEL_FACT_UPDATE + "-" + FACT_ID);
     }
@@ -59,4 +59,6 @@ class FactUpdateNotificationTest {
           .isEqualTo(PgConstants.CHANNEL_FACT_UPDATE + "-" + FACT_ID);
     }
   }
+
+  private FactUpdateNotificationTest() {}
 }

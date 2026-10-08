@@ -20,8 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 import java.time.OffsetDateTime;
@@ -36,13 +34,11 @@ import org.junitpioneer.jupiter.RetryingTest;
 @Slf4j
 class ReportQueryPageIntTest extends AbstractBrowserTest {
 
-  final ObjectMapper om = new ObjectMapper();
+  final ObjectMapper om = new ObjectMapper().findAndRegisterModules();
 
   @RetryingTest(maxAttempts = 3)
   @SneakyThrows
   void createReportHappyPath() {
-    om.registerModule(new JavaTimeModule());
-    om.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     // ARRANGE
     loginFor("/ui/report");
     assertThat(page.getByLabel("Types")).isDisabled();
@@ -77,24 +73,25 @@ class ReportQueryPageIntTest extends AbstractBrowserTest {
                                 AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Download"))
                             .click()));
 
-    final var e0id = UUID.fromString("82369346-3b82-4703-9803-d91ae71d0b7e");
-    final var u0id = UUID.fromString("07ff11b5-437e-4ab8-92c8-e5d29ed376d4");
-    final var e1id = UUID.fromString("7ea100c6-9175-423d-b7e2-2d9bc66e328f");
-    final var u1id = UUID.fromString("fe3d3a2e-9b36-4b1b-8e68-406f4b37c70d");
-    final var e2id = UUID.fromString("da716582-1fe2-4576-917b-124d3a4ec086");
-    final var u2id = UUID.fromString("da716582-1fe2-4576-917b-124d3a4ec087");
-    final var e3id = UUID.fromString("da716582-1fe2-4576-917b-124d3a4ec084");
-    final var u3id = UUID.fromString("da716582-1fe2-4576-917b-124d3a4ec085");
+    final var eventId1 = UUID.fromString("da716582-1fe2-4576-917b-124d3a4ec084");
+    final var userId1 = UUID.fromString("da716582-1fe2-4576-917b-124d3a4ec085");
+    final var eventId2 = UUID.fromString("da716582-1fe2-4576-917b-124d3a4ec086");
+    final var userId2 = UUID.fromString("da716582-1fe2-4576-917b-124d3a4ec087");
+    final var eventId3 = UUID.fromString("7ea100c6-9175-423d-b7e2-2d9bc66e328f");
+    final var userId3 = UUID.fromString("fe3d3a2e-9b36-4b1b-8e68-406f4b37c70d");
+    final var eventId4 = UUID.fromString("82369346-3b82-4703-9803-d91ae71d0b7e");
+    final var userId4 = UUID.fromString("07ff11b5-437e-4ab8-92c8-e5d29ed376d4");
 
     try (final var input = download.createReadStream()) {
       final var report = om.readTree(input.readAllBytes());
       assertThat(report.get("name").asText()).isEqualTo(id + ".json");
       assertThat(report.get("events")).hasSize(4);
 
-      assertJsonEvent(report.get("events").get(0), e0id, u0id, type, "Edwin", "Jäger");
-      assertJsonEvent(report.get("events").get(1), e1id, u1id, type, "Dillon", "Keller");
-      assertJsonEvent(report.get("events").get(2), e2id, u2id, type, "Werner", "Ernst");
-      assertJsonEvent(report.get("events").get(3), e3id, u3id, type, "Peter", "Lustig");
+      // events are sorted from old to new
+      assertJsonEvent(report.get("events").get(0), eventId1, userId1, type, "Peter", "Lustig");
+      assertJsonEvent(report.get("events").get(1), eventId2, userId2, type, "Werner", "Ernst");
+      assertJsonEvent(report.get("events").get(2), eventId3, userId3, type, "Dillon", "Keller");
+      assertJsonEvent(report.get("events").get(3), eventId4, userId4, type, "Edwin", "Jäger");
 
       log.info(report.get("query").toString());
       final var query = om.readValue(report.get("query").toString(), ReportFilterBean.class);

@@ -15,17 +15,24 @@
  */
 package org.factcast.spring.boot.autoconfigure.client.grpc;
 
+import io.grpc.Codec;
+import io.grpc.CompressorRegistry;
+import io.grpc.ManagedChannelBuilder;
+import jakarta.annotation.Nullable;
 import java.util.Optional;
-import javax.annotation.Nullable;
 import lombok.NonNull;
-import net.devh.boot.grpc.client.channelfactory.*;
 import org.factcast.client.grpc.*;
 import org.factcast.core.store.FactStore;
+import org.factcast.grpc.api.CompressionCodecs;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.*;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.grpc.client.autoconfigure.GrpcClientAutoConfiguration;
 import org.springframework.context.annotation.*;
+import org.springframework.grpc.client.GrpcChannelBuilderCustomizer;
+import org.springframework.grpc.client.GrpcChannelFactory;
 import org.springframework.util.StringUtils;
 
 /**
@@ -36,21 +43,26 @@ import org.springframework.util.StringUtils;
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 @AutoConfiguration
 @ConditionalOnClass({GrpcFactStore.class, GrpcChannelFactory.class})
-@Import(FactCastGrpcClientProperties.class)
+@Import({FactCastGrpcClientProperties.class})
 @EnableConfigurationProperties
+@AutoConfigureBefore(GrpcClientAutoConfiguration.class)
 public class GrpcFactStoreAutoConfiguration {
+  @Bean
+  public FactCastGrpcChannelFactory factCastGrpcChannelFactory(@NonNull GrpcChannelFactory af) {
+    return FactCastGrpcChannelFactory.createDefault(af);
+  }
 
   @Bean
   @ConditionalOnMissingBean(FactStore.class)
   @Lazy
   public FactStore factStore(
-      @NonNull GrpcChannelFactory af,
+      @NonNull FactCastGrpcChannelFactory factCastGrpcChannelFactory,
       // we need a new namespace for those client properties
       @NonNull @Value("${grpc.client.factstore.credentials:#{null}}") Optional<String> credentials,
       @NonNull FactCastGrpcClientProperties properties,
+      @NonNull CompressionCodecs compressionCodecs,
       @Nullable @Value("${spring.application.name:#{null}}") String applicationName) {
 
-    FactCastGrpcChannelFactory f = FactCastGrpcChannelFactory.createDefault(af);
     String id =
         Optional.ofNullable(properties.getId())
             .orElseGet(
@@ -60,11 +72,30 @@ public class GrpcFactStoreAutoConfiguration {
                         .filter(StringUtils::hasText)
                         .orElse(null));
 
-    return new GrpcFactStore(f, credentials, properties, id);
+    return new GrpcFactStore(
+        factCastGrpcChannelFactory, credentials, properties, compressionCodecs, id);
   }
 
   @Bean
-  public GrpcChannelConfigurer retryChannelConfigurer() {
-    return (channelBuilder, name) -> channelBuilder.enableRetry().maxRetryAttempts(100);
+  public <T extends ManagedChannelBuilder<T>>
+      GrpcChannelBuilderCustomizer<T> retryChannelConfigurer() {
+    return (name, channelBuilder) -> channelBuilder.enableRetry().maxRetryAttempts(100);
+  }
+
+  @Bean
+  public CompressionCodecs compressionCodecs(CompressorRegistry compressorRegistry) {
+    return new CompressionCodecs(compressorRegistry);
+  }
+
+  // simple noop codec for the handshake without compression
+  @Bean
+  public Codec noopCodec() {
+    return Codec.Identity.NONE;
+  }
+
+  // default gzip codec
+  @Bean
+  public Codec gzipCodec() {
+    return new Codec.Gzip();
   }
 }

@@ -1,0 +1,24 @@
+= Fat Jar (TLS)
+:icons: font
+
+This page describes how to run a FactCast server with TLS enabled.
+The example is provided under `factcast-examples/factcast-example-tls-server`.
+It sticks as close as possible to the unencrypted example described under xref:ROOT:Setup/fatjar.adoc[Fat Jar], to demonstrate the necessary changes and nothing more.
+
+== Setup
+
+First, for running a TLS server, you need a certificate. We packaged a *snakeoil* localhost certificate for you to test.
+This cert can be found in the repository's `src/etc/certificates/`.
+In order to create your own self-signed certificate, you can use the shell script `generate_selfsigned_cert.sh` in the same folder as a starting point.
+
+[WARNING]
+The snakeoil certificate is for testing only. Always use valid trusted certificates when you run FactCast in production.
+
+In order to run the TLS server, go to `factcast-examples/factcast-example-tls-server` and run
+
+[source,shell]
+----
+mvn spring-boot:run
+----
+
+To connect to it, see xref:ROOT:Setup/ports.adoc[Ports].

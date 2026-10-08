@@ -1,0 +1,7 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: org.factcast.factus.migration.PostprocessToCollection
+displayName: Migrate postprocess to Collection<FactSpec>
+description: Updates Projection.postprocess overrides from List<FactSpec> to Collection<FactSpec>
+recipeList:
+  - org.factcast.factus.migration.PostprocessToCollectionRecipe

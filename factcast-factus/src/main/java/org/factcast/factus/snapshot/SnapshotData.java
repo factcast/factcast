@@ -23,6 +23,7 @@ import java.util.Optional;
 import java.util.UUID;
 import lombok.NonNull;
 import lombok.Value;
+import org.factcast.core.snap.Snapshot;
 import org.factcast.factus.serializer.SnapshotSerializerId;
 
 @Value
@@ -42,8 +43,7 @@ public class SnapshotData {
    */
   @SuppressWarnings("deprecation")
   @Deprecated
-  public static SnapshotData from(
-      org.factcast.core.snap.Snapshot snapshot, @NonNull SnapshotSerializerId serId) {
+  public static SnapshotData from(Snapshot snapshot, @NonNull SnapshotSerializerId serId) {
     return new SnapshotData(snapshot.bytes(), serId, snapshot.lastFact());
   }
 

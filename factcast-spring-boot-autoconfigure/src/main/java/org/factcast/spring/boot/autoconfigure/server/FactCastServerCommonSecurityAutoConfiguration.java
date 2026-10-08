@@ -18,7 +18,7 @@ package org.factcast.spring.boot.autoconfigure.server;
 import org.factcast.server.security.CommonSecurityConfiguration;
 import org.springframework.boot.autoconfigure.*;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
+import org.springframework.boot.security.autoconfigure.SecurityAutoConfiguration;
 import org.springframework.context.annotation.Import;
 
 @AutoConfiguration

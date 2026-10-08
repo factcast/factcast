@@ -36,8 +36,10 @@ import org.factcast.factus.snapshot.SnapshotIdentifier;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.mockito.Captor;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 class SnapshotDiskRepositoryImplTest {
 
   private SnapshotDiskRepositoryImpl uut;
@@ -55,7 +57,7 @@ class SnapshotDiskRepositoryImplTest {
 
   @Nested
   class WhenCrud {
-    @Captor private LogCaptor logCaptor = LogCaptor.forClass(SnapshotDiskRepositoryImpl.class);
+    private LogCaptor logCaptor = LogCaptor.forClass(SnapshotDiskRepositoryImpl.class);
 
     @BeforeEach
     void setup() {
@@ -65,7 +67,7 @@ class SnapshotDiskRepositoryImplTest {
     @Test
     @SneakyThrows
     void getNotFound() {
-      @ProjectionMetaData(name = "key", revision = 1)
+      @ProjectionMetaData(name = "key", revisionId = "1")
       class key implements SnapshotProjection {}
 
       // Get by the ID
@@ -108,7 +110,7 @@ class SnapshotDiskRepositoryImplTest {
     @Test
     @SneakyThrows
     void saveGetAndDelete() {
-      @ProjectionMetaData(name = "key", revision = 1)
+      @ProjectionMetaData(name = "key", revisionId = "1")
       class key implements SnapshotProjection {}
       SnapshotIdentifier id = new SnapshotIdentifier(key.class, UUID.randomUUID());
 
@@ -133,11 +135,11 @@ class SnapshotDiskRepositoryImplTest {
     @Test
     @SneakyThrows
     void testMultipleFiles() {
-      @ProjectionMetaData(name = "key1", revision = 1)
+      @ProjectionMetaData(name = "key1", revisionId = "1")
       class key1 implements SnapshotProjection {}
-      @ProjectionMetaData(name = "key2", revision = 1)
+      @ProjectionMetaData(name = "key2", revisionId = "1")
       class key2 implements SnapshotProjection {}
-      @ProjectionMetaData(name = "key3", revision = 1)
+      @ProjectionMetaData(name = "key3", revisionId = "1")
       class key3 implements SnapshotProjection {}
       SnapshotIdentifier id1 = new SnapshotIdentifier(key1.class, UUID.randomUUID());
       SnapshotIdentifier id2 = new SnapshotIdentifier(key2.class, UUID.randomUUID());
@@ -183,11 +185,11 @@ class SnapshotDiskRepositoryImplTest {
 
       uut = new SnapshotDiskRepositoryImpl(properties);
 
-      @ProjectionMetaData(name = "key1", revision = 1)
+      @ProjectionMetaData(name = "key1", revisionId = "1")
       class key1 implements SnapshotProjection {}
-      @ProjectionMetaData(name = "key2", revision = 1)
+      @ProjectionMetaData(name = "key2", revisionId = "1")
       class key2 implements SnapshotProjection {}
-      @ProjectionMetaData(name = "key3", revision = 1)
+      @ProjectionMetaData(name = "key3", revisionId = "1")
       class key3 implements SnapshotProjection {}
       SnapshotIdentifier id1 = new SnapshotIdentifier(key1.class, UUID.randomUUID());
       SnapshotIdentifier id2 = new SnapshotIdentifier(key2.class, UUID.randomUUID());
@@ -206,7 +208,7 @@ class SnapshotDiskRepositoryImplTest {
       uut.save(id3, snap).get();
 
       // After saving snap3 the cleanup should be triggered and snap1 (the oldest) should be deleted
-      Awaitility.await().until(() -> !uut.findById(id1).isPresent());
+      Awaitility.await().until(() -> uut.findById(id1).isEmpty());
     }
 
     @Test
@@ -223,11 +225,11 @@ class SnapshotDiskRepositoryImplTest {
 
       uut = new SnapshotDiskRepositoryImpl(properties);
 
-      @ProjectionMetaData(name = "key1", revision = 1)
+      @ProjectionMetaData(name = "key1", revisionId = "1")
       class key1 implements SnapshotProjection {}
-      @ProjectionMetaData(name = "key2", revision = 1)
+      @ProjectionMetaData(name = "key2", revisionId = "1")
       class key2 implements SnapshotProjection {}
-      @ProjectionMetaData(name = "key3", revision = 1)
+      @ProjectionMetaData(name = "key3", revisionId = "1")
       class key3 implements SnapshotProjection {}
       SnapshotIdentifier id1 = new SnapshotIdentifier(key1.class, UUID.randomUUID());
       SnapshotIdentifier id2 = new SnapshotIdentifier(key2.class, UUID.randomUUID());
@@ -246,18 +248,18 @@ class SnapshotDiskRepositoryImplTest {
       uut.save(id3, snap).get();
 
       // After saving snap3 the cleanup should be triggered and snap1 (the oldest) should be deleted
-      Awaitility.await().until(() -> !uut.findById(id1).isPresent());
+      Awaitility.await().until(() -> uut.findById(id1).isEmpty());
 
       // update the modified date of snap2
       uut.findById(id2);
 
-      @ProjectionMetaData(name = "key4", revision = 1)
+      @ProjectionMetaData(name = "key4", revisionId = "1")
       class key4 implements SnapshotProjection {}
       SnapshotIdentifier id4 = new SnapshotIdentifier(key4.class, UUID.randomUUID());
 
       // Should Trigger cleanup again and delete snap3 because 2 is now not the oldest
       uut.save(id4, snap).get();
-      Awaitility.await().until(() -> !uut.findById(id3).isPresent());
+      Awaitility.await().until(() -> uut.findById(id3).isEmpty());
       assertThat(uut.findById(id2)).isPresent();
       assertThat(uut.findById(id4)).isPresent();
     }

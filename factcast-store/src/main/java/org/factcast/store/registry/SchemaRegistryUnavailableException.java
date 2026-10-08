@@ -15,11 +15,12 @@
  */
 package org.factcast.store.registry;
 
+import java.io.Serial;
 import lombok.NonNull;
 
 public class SchemaRegistryUnavailableException extends RuntimeException {
 
-  private static final long serialVersionUID = 1L;
+  @Serial private static final long serialVersionUID = 1L;
 
   public SchemaRegistryUnavailableException(Exception e) {
     super(e);

@@ -32,7 +32,9 @@ public class LocalWriteToken {
 
     do {
       try {
-        if (lock.tryAcquire(maxWait.toMillis(), TimeUnit.MILLISECONDS)) return lock::release;
+        if (lock.tryAcquire(maxWait.toMillis(), TimeUnit.MILLISECONDS)) {
+          return lock::release;
+        }
       } catch (InterruptedException e) {
         // nobody cares
       }

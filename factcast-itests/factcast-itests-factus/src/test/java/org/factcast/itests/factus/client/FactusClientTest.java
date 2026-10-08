@@ -28,9 +28,13 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 import java.util.function.Supplier;
-import lombok.*;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
+import lombok.SneakyThrows;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
+import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.RetryableException;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.factus.*;
@@ -89,9 +93,26 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
   }
 
   @Test
-  void allWaysToPublish() {
+  @SneakyThrows
+  void differentNamespacesWhenSubscribing() {
+    factus.publish(new StarTrekCharacterCreated("Kirk"));
+    factus.publish(new StarWarsCharacterCreated("Han"));
+    factus.publish(new StarWarsCharacterCreated("Luke"));
+    factus.publish(new IndianaJonesCharacterCreated("Indy"));
 
-    UUID johnsId = randomUUID();
+    SubscribedLucasNames names = new SubscribedLucasNames();
+    final var sub = factus.subscribeAndBlock(names);
+    sub.awaitCatchup();
+    // Publish fact after catchup
+    final var factId = factus.publish(new IndianaJonesCharacterCreated("Shorty"), Fact::id);
+    factus.waitFor(names, factId, Duration.ofSeconds(2));
+    sub.close();
+
+    assertThat(names.userNames()).containsValues("Han", "Luke", "Indy", "Shorty");
+  }
+
+  @Test
+  void allWaysToPublish() {
 
     factus.publish(new UserCreated(johnsId, "John"));
 
@@ -124,6 +145,31 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
     assertThat(externalizedUserNames.contains("Mick")).isTrue();
     assertThat(externalizedUserNames.contains("Keith")).isTrue();
     assertThat(externalizedUserNames.contains("Brian")).isTrue();
+  }
+
+  static final UUID johnsId = randomUUID();
+
+  @ProjectionMetaData(revisionId = "3")
+  @NoArgsConstructor
+  static class JohnOnlyUserNames extends SnapshotUserNames {
+    @Override
+    public @NonNull Collection<FactSpec> postprocess(
+        @NonNull Collection<FactSpec> specsAsDiscovered) {
+      specsAsDiscovered.forEach(s -> s.aggIdProperty("aggregateId", johnsId));
+      return super.postprocess(specsAsDiscovered);
+    }
+  }
+
+  @Test
+  void factSpecWithAggIdProperties() {
+    factus.publish(new UserCreated(johnsId, "John"));
+    factus.publish(
+        asList(new UserCreated(randomUUID(), "Paul"), new UserCreated(randomUUID(), "George")));
+
+    var johnOnly = factus.fetch(JohnOnlyUserNames.class);
+
+    assertThat(johnOnly.count()).isOne();
+    assertThat(johnOnly.contains("John")).isTrue();
   }
 
   void measure(String s, Runnable r) {
@@ -301,7 +347,6 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
   void simpleSnapshotProjectionRoundtrip() {
     assertThat(factus.fetch(SnapshotUserNames.class)).isNotNull();
 
-    UUID johnsId = randomUUID();
     factus
         .batch()
         .add(new UserCreated(johnsId, "John"))
@@ -474,7 +519,6 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
 
     externalizedUserNames.clear();
 
-    UUID johnsId = randomUUID();
     factus
         .batch()
         .add(new UserCreated(johnsId, "John"))
@@ -613,7 +657,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
         });
   }
 
-  @ProjectionMetaData(revision = 1)
+  @ProjectionMetaData(revisionId = "1")
   static class SimpleAggregate extends Aggregate {
     static final String ns = "ns";
     static final String type = "foo";
@@ -731,7 +775,7 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
       assertThat(subscribedUserNames.names()).hasSize(1);
 
       // publish an event that is not consumed by the subscribed projection
-      var factId1 = factus.publish(new UserBored("Kenny"), Fact::id);
+      var factId1 = factus.publish(new UserBored(), Fact::id);
       assertThatThrownBy(() -> factus.waitFor(subscribedUserNames, factId1, timeout))
           .isInstanceOf(TimeoutException.class);
     }
@@ -1045,6 +1089,48 @@ class FactusClientTest extends AbstractFactCastIntegrationTest {
 
       assertThat(executions).hasValue(3);
       assertThat(callbacks).hasValue(0);
+    }
+  }
+
+  /**
+   * Testing, if a subscribed projection will receive duplicates. We check here if all events
+   * published are in fact consumed, and none of them pop up more than once.
+   */
+  @SneakyThrows
+  @Test
+  void issue4328_checkDuplicatesWithSubscribedProjection() throws InterruptedException {
+
+    DuplicateChecker subscribedProjection = new DuplicateChecker();
+
+    for (int i = 0; i < 10; i++) {
+      var f =
+          Fact.builder().ns("test").type("UserCreated").id(new UUID(0, i)).buildWithoutPayload();
+      factus.publish(f);
+    }
+    // then subscribe
+    factus.subscribe(subscribedProjection);
+
+    // then add plenty of facts while being subscribed, in order to trigger a fetch condensed
+    // queries and flushes to the client
+    for (int i = 10; i < 100; i++) {
+      var f =
+          Fact.builder().ns("test").type("UserCreated").id(new UUID(0, i)).buildWithoutPayload();
+      factus.publish(f);
+      // we'd like to be sure, we at least have two flushes, so we add some minor pauses.
+      if (i % 10 == 0) Thread.sleep(10);
+    }
+
+    UUID lastExpectedId = new UUID(0, 99);
+    factus.waitFor(subscribedProjection, lastExpectedId, Duration.ofSeconds(5));
+    assertThat(subscribedProjection.seen).hasSize(100);
+  }
+
+  static class DuplicateChecker extends LocalSubscribedProjection {
+    final Set<UUID> seen = new HashSet<>();
+
+    @HandlerFor(ns = "test", type = "UserCreated")
+    synchronized void apply(Fact f) {
+      if (!seen.add(f.id())) throw new IllegalStateException("duplicate");
     }
   }
 }

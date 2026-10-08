@@ -15,6 +15,7 @@
  */
 package org.factcast.core.store;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import lombok.NonNull;
@@ -63,14 +64,14 @@ public abstract class AbstractFactStore implements FactStore {
 
   @Override
   @NonNull
-  public StateToken stateFor(@NonNull List<FactSpec> specs) {
+  public StateToken stateFor(@NonNull Collection<FactSpec> specs) {
     State state = getStateFor(specs);
     return tokenStore.create(state);
   }
 
   @Override
   @NonNull
-  public StateToken currentStateFor(@NonNull List<FactSpec> specs) {
+  public StateToken currentStateFor(@NonNull Collection<FactSpec> specs) {
     State state = getCurrentStateFor(specs);
     return tokenStore.create(state);
   }
@@ -83,14 +84,14 @@ public abstract class AbstractFactStore implements FactStore {
     return currentState.serialOfLastMatchingFact() == 0L;
   }
 
-  protected abstract State getStateFor(@NonNull List<FactSpec> specs);
+  protected abstract State getStateFor(@NonNull Collection<FactSpec> specs);
 
   @NonNull
-  protected abstract State getCurrentStateFor(List<FactSpec> specs);
+  protected abstract State getCurrentStateFor(Collection<FactSpec> specs);
 
   /** This can be overridden for performance optimizations */
   @NonNull
-  protected State getStateFor(@NonNull List<FactSpec> specs, long lastMatchingSerial) {
+  protected State getStateFor(@NonNull Collection<FactSpec> specs, long lastMatchingSerial) {
     return getStateFor(specs);
   }
 }

@@ -15,9 +15,11 @@
  */
 package org.factcast.client.grpc;
 
+import java.io.Serial;
+
 public class MissesRequiredContructorException extends RuntimeException {
 
-  private static final long serialVersionUID = 2419646008542020255L;
+  @Serial private static final long serialVersionUID = 2419646008542020255L;
 
   MissesRequiredContructorException(int i) {
     super("");

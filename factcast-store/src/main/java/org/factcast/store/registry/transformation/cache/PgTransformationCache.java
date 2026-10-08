@@ -17,31 +17,33 @@ package org.factcast.store.registry.transformation.cache;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.*;
-import java.time.ZonedDateTime;
+import java.sql.*;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.stream.Collectors;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.Fact;
 import org.factcast.store.StoreConfigurationProperties;
+import org.factcast.store.internal.PgFact;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.metrics.RegistryMetrics.*;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.namedparam.*;
+import org.jetbrains.annotations.NotNull;
+import org.springframework.jdbc.core.*;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 @Slf4j
 public class PgTransformationCache implements TransformationCache, AutoCloseable {
-  private static final int MAX_BATCH_SIZE = 20_000;
   private final JdbcTemplate jdbcTemplate;
-  private final NamedParameterJdbcTemplate namedJdbcTemplate;
   private final RegistryMetrics registryMetrics;
   private final StoreConfigurationProperties storeConfigurationProperties;
 
-  private final ThreadPoolExecutor tpe =
+  @Getter(AccessLevel.PACKAGE)
+  final ThreadPoolExecutor tpe =
       new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
 
   private static final CompletableFuture<Void> COMPLETED_FUTURE =
@@ -49,47 +51,47 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
 
   @Getter(AccessLevel.PROTECTED)
   @VisibleForTesting
-  /* entry of null means read, entry of non-null means write */ private final CacheBuffer buffer =
-      new CacheBuffer();
+  // entry of null means read, entry of non-null means write
+  private final CacheBuffer buffer;
 
   private final PlatformTransactionManager platformTransactionManager;
 
-  private int bufferThreshold = 1000;
+  static final int THRESHOLD_PERCENT = 80;
 
   public final int maxBufferSize;
+  private final int bufferThreshold;
 
   public PgTransformationCache(
       PlatformTransactionManager platformTransactionManager,
       JdbcTemplate jdbcTemplate,
-      NamedParameterJdbcTemplate namedJdbcTemplate,
       RegistryMetrics registryMetrics,
       StoreConfigurationProperties storeConfigurationProperties) {
+    this(
+        platformTransactionManager,
+        jdbcTemplate,
+        registryMetrics,
+        storeConfigurationProperties,
+        storeConfigurationProperties.getTransformationCacheBufferSize());
+  }
+
+  @VisibleForTesting
+  PgTransformationCache(
+      @NonNull PlatformTransactionManager platformTransactionManager,
+      @NonNull JdbcTemplate jdbcTemplate,
+      @NonNull RegistryMetrics registryMetrics,
+      @NonNull StoreConfigurationProperties storeConfigurationProperties,
+      int maxBufferSize) {
     this.platformTransactionManager = platformTransactionManager;
     this.jdbcTemplate = jdbcTemplate;
-    this.namedJdbcTemplate = namedJdbcTemplate;
     this.registryMetrics = registryMetrics;
     this.storeConfigurationProperties = storeConfigurationProperties;
 
     registryMetrics.monitor(tpe, "transformation-cache");
 
-    this.maxBufferSize = bufferThreshold * 30;
-  }
-
-  @VisibleForTesting
-  PgTransformationCache(
-      PlatformTransactionManager platformTransactionManager,
-      JdbcTemplate jdbcTemplate,
-      NamedParameterJdbcTemplate namedJdbcTemplate,
-      RegistryMetrics registryMetrics,
-      StoreConfigurationProperties storeConfigurationProperties,
-      int bufferThreshold) {
-    this.platformTransactionManager = platformTransactionManager;
-    this.jdbcTemplate = jdbcTemplate;
-    this.namedJdbcTemplate = namedJdbcTemplate;
-    this.registryMetrics = registryMetrics;
-    this.bufferThreshold = bufferThreshold;
-    this.maxBufferSize = bufferThreshold;
-    this.storeConfigurationProperties = storeConfigurationProperties;
+    this.maxBufferSize =
+        Math.min(maxBufferSize, 9999); // the batchUpdates used only support up to 10k
+    this.buffer = new CacheBuffer(registryMetrics);
+    this.bufferThreshold = (THRESHOLD_PERCENT * this.maxBufferSize) / 100;
   }
 
   @Override
@@ -100,24 +102,18 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
   @Override
   public Optional<Fact> find(Key key) {
 
-    Fact factFromBuffer = buffer.get(key);
+    PgFact factFromBuffer = buffer.get(key);
     if (factFromBuffer != null) {
-      registerAccess(key);
       registryMetrics.count(EVENT.TRANSFORMATION_CACHE_HIT);
       return Optional.of(factFromBuffer);
     }
 
-    List<Fact> facts =
-        jdbcTemplate.query(
-            "SELECT header, payload FROM transformationcache WHERE cache_key = ?",
-            new Object[] {key.id()},
-            new FactRowMapper());
+    List<PgFact> facts = jdbcTemplate.query(selectByKeys(List.of(key)), new PgFactRowMapper());
 
     if (facts.isEmpty()) {
       registryMetrics.count(EVENT.TRANSFORMATION_CACHE_MISS);
       return Optional.empty();
     } else {
-      registerAccess(key);
       registryMetrics.count(EVENT.TRANSFORMATION_CACHE_HIT);
       return Optional.of(facts.get(0));
     }
@@ -128,11 +124,11 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
 
     ArrayList<Key> keys = Lists.newArrayList(keysToFind);
 
-    List<Fact> facts = new ArrayList<>();
+    List<PgFact> facts = new ArrayList<>();
     Iterator<Key> iterator = keys.iterator();
     while (iterator.hasNext()) {
       Key key = iterator.next();
-      Fact found = buffer.get(key);
+      PgFact found = buffer.get(key);
       if (found != null) {
         iterator.remove();
         facts.add(found);
@@ -141,13 +137,7 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
 
     if (!keys.isEmpty()) {
 
-      SqlParameterSource parameters =
-          new MapSqlParameterSource("ids", keys.stream().map(Key::id).collect(Collectors.toList()));
-      facts.addAll(
-          namedJdbcTemplate.query(
-              "SELECT header, payload FROM transformationcache WHERE cache_key IN (:ids)",
-              parameters,
-              new FactRowMapper()));
+      facts.addAll(jdbcTemplate.query(selectByKeys(keys), new PgFactRowMapper()));
     }
 
     int hits = facts.size();
@@ -155,26 +145,35 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
     registryMetrics.increase(EVENT.TRANSFORMATION_CACHE_MISS, misses);
     registryMetrics.increase(EVENT.TRANSFORMATION_CACHE_HIT, hits);
 
-    registerAccess(keys);
-
     return Sets.newHashSet(facts);
   }
 
-  @VisibleForTesting
-  CompletableFuture<Void> registerAccess(Collection<Key> keys) {
-    buffer.putAllNull(keys);
-    return flushIfNecessary();
-  }
+  @NotNull
+  static PreparedStatementCreator selectByKeys(@NonNull List<Key> keys) {
+    return con -> {
+      StringBuilder sql =
+          new StringBuilder(
+              "SELECT header, payload FROM transformation_cache WHERE (fact_id, version, path) IN (");
+      for (int i = 0; i < keys.size(); i++) {
+        if (i > 0) sql.append(", ");
+        sql.append("(?, ?, ?::int[])");
+      }
+      sql.append(")");
 
-  @VisibleForTesting
-  CompletableFuture<Void> registerAccess(Key cacheKey) {
-    buffer.put(cacheKey, null);
-    return flushIfNecessary();
+      PreparedStatement ps = con.prepareStatement(sql.toString());
+      int idx = 1;
+      for (Key key : keys) {
+        ps.setObject(idx++, key.factId());
+        ps.setInt(idx++, key.version());
+        ps.setArray(idx++, con.createArrayOf("int4", key.path().toArray(new Integer[0])));
+      }
+      return ps;
+    };
   }
 
   @VisibleForTesting
   CompletableFuture<Void> registerWrite(@NonNull TransformationCache.Key key, @NonNull Fact f) {
-    buffer.put(key, f);
+    buffer.put(key, (PgFact) f);
     return flushIfNecessary();
   }
 
@@ -183,49 +182,46 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
   CompletableFuture<Void> flushIfNecessary() {
     final var size = buffer.size();
 
-    if (size > maxBufferSize) {
+    if (size >= maxBufferSize) {
+      // make sure it does not exceed maxBufferSize
       flush();
       return COMPLETED_FUTURE;
     } else {
-      if (size >= bufferThreshold && tpe.getQueue().isEmpty()) {
-        return CompletableFuture.runAsync(this::flush, tpe);
-      } else {
-        return COMPLETED_FUTURE;
+      // try to do it async if not already scheduled
+      synchronized (tpe) {
+        if (size >= bufferThreshold && tpe.getQueue().isEmpty()) {
+          return CompletableFuture.runAsync(this::flush, tpe);
+        } else {
+          return COMPLETED_FUTURE;
+        }
       }
     }
   }
 
   @Override
-  public void compact(@NonNull ZonedDateTime thresholdDate) {
-    // we need to flush even if we're in read only mode in order to prevent a buffer overflow
-    flush();
-
-    if (!storeConfigurationProperties.isReadOnlyModeEnabled()) {
-      // it is fine if flush worked in another transaction, it just has to be serialized
-      registryMetrics.timed(
-          OP.COMPACT_TRANSFORMATION_CACHE,
-          () ->
-              inTransactionWithLock(
-                  () ->
-                      jdbcTemplate.update(
-                          "DELETE FROM transformationcache WHERE last_access < ?",
-                          new Date(thresholdDate.toInstant().toEpochMilli()))));
-    }
+  public void invalidateTransformationFor(String ns, String type) {
+    invalidateTransformationFor(ns, type, null, null);
   }
 
   @Override
-  public void invalidateTransformationFor(String ns, String type) {
+  public void invalidateTransformationFor(String ns, String type, int fromVersion, int toVersion) {
+    invalidateTransformationFor(ns, type, Integer.valueOf(fromVersion), Integer.valueOf(toVersion));
+  }
+
+  private void invalidateTransformationFor(
+      String ns, String type, Integer fromVersion, Integer toVersion) {
     // we need to flush even if we're in read only mode in order to prevent a buffer overflow
     flush();
 
     if (!storeConfigurationProperties.isReadOnlyModeEnabled()) {
       // it is fine if flush worked in another transaction, it just has to be serialized
-      inTransactionWithLock(
-          () ->
-              jdbcTemplate.update(
-                  "DELETE FROM transformationcache WHERE header ->> 'ns' = ? AND header ->> 'type' = ?",
-                  ns,
-                  type));
+      // The procedure collects keys before acquiring the lock that serializes cache writers.
+      jdbcTemplate.update(
+          "CALL invalidate_transformation_cache(?, ?, ?::int, ?::int)",
+          ns,
+          type,
+          fromVersion,
+          toVersion);
     }
   }
 
@@ -235,34 +231,31 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
     flush();
 
     if (!storeConfigurationProperties.isReadOnlyModeEnabled()) {
-      final var cacheKeySearchString = factId.toString() + "%";
       // it is fine if flush worked in another transaction, it just has to be serialized
       inTransactionWithLock(
-          () ->
-              jdbcTemplate.update(
-                  "DELETE FROM transformationcache WHERE cache_key LIKE ?", cacheKeySearchString));
+          () -> jdbcTemplate.update("DELETE FROM transformation_cache WHERE fact_id = ?", factId));
     }
   }
 
   @Scheduled(fixedRate = 10, timeUnit = TimeUnit.MINUTES)
   public void flush() {
-    // after this call, the buffer is wiped and again open for business
-    // note that this is important even in readonly mode, as otherwise we'd run short on memory
-    Map<Key, Fact> copy = buffer.clear();
+    // Before flushing, the buffer is wiped and again open for business.
+    // Until the flush is done, a copy of the buffer can be used to read from.
+    // Note that this is important even in readonly mode, as otherwise we'd run short on memory
 
-    if (!copy.isEmpty() && !storeConfigurationProperties.isReadOnlyModeEnabled()) {
-      // we want to serialize flushing beyond instances in order to avoid parallel
-      // updates/insertions/deletions causing deadlocks
-      try {
-        inTransactionWithLock(
-            () -> {
-              insertBufferedTransformations(copy);
-              insertBufferedAccesses(copy);
-            });
-      } catch (Exception e) {
-        log.error("Could not complete batch update of transformations on transformation cache.", e);
-      }
-    }
+    buffer.iterateSnapshotAndClear(
+        copy -> {
+          if (!copy.isEmpty() && !storeConfigurationProperties.isReadOnlyModeEnabled()) {
+            // we want to serialize flushing beyond instances in order to avoid parallel
+            // updates/insertions/deletions causing deadlocks
+            try {
+              inTransactionWithLock(() -> insertBufferedTransformations(copy));
+            } catch (Exception e) {
+              log.error(
+                  "Could not complete batch update of transformations on transformation cache.", e);
+            }
+          }
+        });
   }
 
   /**
@@ -275,8 +268,9 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
         // will join an existing tx, or create and commit a new one
         .execute(
             status -> {
-              // we're using share mode here in order not to block reads from happening
-              jdbcTemplate.execute("LOCK TABLE transformationcache IN EXCLUSIVE MODE");
+              // EXCLUSIVE mode serializes writers against each other (see #3279) while still
+              // allowing reads (ACCESS SHARE) to proceed - it only conflicts with non-read locks.
+              jdbcTemplate.execute("LOCK TABLE transformation_cache IN EXCLUSIVE MODE");
               o.run();
               return null;
             });
@@ -284,52 +278,46 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
 
   @VisibleForTesting
   void insertBufferedTransformations(Map<Key, Fact> copy) {
-    List<Object[]> parameters =
-        copy.entrySet().stream()
-            .filter(e -> e.getValue() != null)
-            .map(
-                p ->
-                    new Object[] {
-                      p.getKey().id(), p.getValue().jsonHeader(), p.getValue().jsonPayload()
-                    })
-            .collect(Collectors.toList());
+    List<Map.Entry<Key, Fact>> entries =
+        copy.entrySet().stream().filter(e -> e.getValue() != null).toList();
 
-    if (!parameters.isEmpty()) {
+    if (!entries.isEmpty()) {
+      new TransactionTemplate(platformTransactionManager)
+          // will join an existing tx, or create and commit a new one
+          .execute(
+              status -> {
 
-      // dup-keys can be ignored, in case another node just did the same
-      Iterables.partition(parameters, MAX_BATCH_SIZE)
-          .forEach(
-              p ->
-                  jdbcTemplate.batchUpdate(
-                      "INSERT INTO transformationcache (cache_key, header, payload) VALUES (?, ? :: JSONB, ? ::"
-                          + " JSONB) ON CONFLICT(cache_key) DO NOTHING",
-                      p));
-    }
-  }
+                // dup-keys can be ignored, in case another node just did the same
+                jdbcTemplate.batchUpdate(
+                    "INSERT INTO transformation_cache (fact_id, version, path, header, payload) VALUES (?, ?, ?, ? :: JSONB, ? ::"
+                        + " JSONB) ON CONFLICT(fact_id, version, path) DO NOTHING",
+                    new BatchPreparedStatementSetter() {
+                      @Override
+                      public void setValues(PreparedStatement ps, int i) throws SQLException {
+                        Map.Entry<Key, Fact> e = entries.get(i);
+                        ps.setObject(1, e.getKey().factId());
+                        ps.setInt(2, e.getKey().version());
+                        ps.setArray(
+                            3,
+                            ps.getConnection()
+                                .createArrayOf("int4", e.getKey().path().toArray(new Integer[0])));
+                        ps.setString(4, e.getValue().jsonHeader());
+                        ps.setString(5, e.getValue().jsonPayload());
+                      }
 
-  @VisibleForTesting
-  void insertBufferedAccesses(Map<Key, Fact> copy) {
-    List<String> keys =
-        copy.entrySet().stream()
-            .filter(e -> e.getValue() == null)
-            .map(p -> p.getKey().id())
-            .collect(Collectors.toList());
+                      @Override
+                      public int getBatchSize() {
+                        return entries.size();
+                      }
+                    });
 
-    if (!keys.isEmpty()) {
-
-      Iterables.partition(keys, MAX_BATCH_SIZE)
-          .forEach(
-              k -> {
-                SqlParameterSource parameters = new MapSqlParameterSource("ids", k);
-                namedJdbcTemplate.update(
-                    "UPDATE transformationcache SET last_access=now() WHERE cache_key IN (:ids)",
-                    parameters);
+                return null;
               });
     }
   }
 
   @Override
   public void close() throws Exception {
-    tpe.shutdown();
+    tpe.shutdownNow();
   }
 }

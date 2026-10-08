@@ -16,7 +16,7 @@
 package org.factcast.store.registry.transformation.cache;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.when;
 
 import java.sql.ResultSet;
 import lombok.SneakyThrows;
@@ -32,7 +32,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class FactRowMapperTest {
-  @InjectMocks private FactRowMapper underTest;
+  @InjectMocks private PgFactRowMapper underTest;
 
   @Nested
   class WhenMapingRow {
@@ -49,7 +49,7 @@ class FactRowMapperTest {
       when(rs.getString("header")).thenReturn(f.jsonHeader());
       when(rs.getString("payload")).thenReturn(f.jsonPayload());
 
-      Fact r = new FactRowMapper().mapRow(rs, 1);
+      Fact r = new PgFactRowMapper().mapRow(rs, 1);
 
       assertThat(r.jsonHeader()).isEqualTo(f.jsonHeader());
       assertThat(r.jsonPayload()).isEqualTo(f.jsonPayload());

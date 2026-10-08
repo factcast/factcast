@@ -20,13 +20,11 @@ import static org.mockito.Mockito.*;
 import java.io.IOException;
 import java.util.List;
 import java.util.Set;
-import org.factcast.core.Fact;
-import org.factcast.core.TestFact;
 import org.factcast.core.subscription.TransformationException;
-import org.factcast.core.subscription.transformation.FactTransformerService;
-import org.factcast.core.subscription.transformation.FactTransformers;
-import org.factcast.core.subscription.transformation.TransformationRequest;
-import org.factcast.store.internal.PgMetrics;
+import org.factcast.store.internal.*;
+import org.factcast.store.internal.transformation.FactTransformerService;
+import org.factcast.store.internal.transformation.FactTransformers;
+import org.factcast.store.internal.transformation.TransformationRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -47,7 +45,7 @@ public class BufferedTransformingServerPipelineTest {
   class BufferingMode {
     @Mock private TransformationRequest transformationRequest;
 
-    @Mock private Fact fact;
+    @Mock private PgFact fact;
 
     @BeforeEach
     void setUp() {
@@ -79,9 +77,9 @@ public class BufferedTransformingServerPipelineTest {
 
     @Test
     void afterSwitchingToBufferingModeFlushesAfterMaxSizeReached() {
-      final var factToTransform = mock(Fact.class);
-      final var noopFact = mock(Fact.class);
-      final var factToTransform2 = mock(Fact.class);
+      final var factToTransform = mock(PgFact.class);
+      final var noopFact = mock(PgFact.class);
+      final var factToTransform2 = mock(PgFact.class);
 
       TransformationRequest t1 = new TransformationRequest(factToTransform, Set.of(1));
       TransformationRequest t2 = new TransformationRequest(factToTransform2, Set.of(1));
@@ -105,9 +103,9 @@ public class BufferedTransformingServerPipelineTest {
 
     @Test
     void escalatesTransformationException() {
-      final var factToTransform = mock(Fact.class);
-      final var noopFact = mock(Fact.class);
-      final var factToTransform2 = mock(Fact.class);
+      final var factToTransform = mock(PgFact.class);
+      final var noopFact = mock(PgFact.class);
+      final var factToTransform2 = mock(PgFact.class);
 
       TransformationRequest t1 = new TransformationRequest(factToTransform, Set.of(1));
       TransformationRequest t2 = new TransformationRequest(factToTransform2, Set.of(1));
@@ -133,7 +131,7 @@ public class BufferedTransformingServerPipelineTest {
   @Nested
   class DirectMode {
 
-    @Mock private Fact fact;
+    @Mock private PgFact fact;
 
     @BeforeEach
     void setUp() {
@@ -199,7 +197,7 @@ public class BufferedTransformingServerPipelineTest {
     //
     @Test
     void doesNotFLushOnFact() {
-      @NonNull Fact fact = new TestFact();
+      @NonNull PgFact fact = mock(PgFact.class);
       uut.flushIfNecessary(Signal.of(fact));
       verify(uut).flushIfNecessary(any());
       verifyNoMoreInteractions(uut);

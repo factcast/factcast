@@ -18,9 +18,8 @@ package org.factcast.store.registry.transformation;
 import liquibase.integration.spring.SpringLiquibase;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.core.subscription.transformation.FactTransformerService;
 import org.factcast.store.StoreConfigurationProperties;
-import org.factcast.store.internal.script.JSEngineFactory;
+import org.factcast.store.internal.transformation.FactTransformerService;
 import org.factcast.store.registry.SchemaRegistry;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.transformation.cache.*;
@@ -61,7 +60,7 @@ public class TransformationConfiguration {
       @Autowired(required = false) SpringLiquibase unused) {
     if (props.isSchemaRegistryConfigured() && props.isPersistentTransformationCache()) {
       return new PgTransformationCache(
-          platformTransactionManager, jdbcTemplate, namedJdbcTemplate, registryMetrics, props);
+          platformTransactionManager, jdbcTemplate, registryMetrics, props);
     }
 
     // otherwise
@@ -75,9 +74,8 @@ public class TransformationConfiguration {
     return new TransformationChains(r, registryMetrics);
   }
 
-  @Bean
-  public Transformer transformer(@NonNull JSEngineFactory engineFactory) {
-    return new JsTransformer(engineFactory);
+  public Transformer transformer() {
+    return new JsTransformer();
   }
 
   @Bean
@@ -88,11 +86,5 @@ public class TransformationConfiguration {
       RegistryMetrics registryMetrics,
       StoreConfigurationProperties props) {
     return new FactTransformerServiceImpl(chains, trans, cache, registryMetrics, props);
-  }
-
-  @Bean
-  public TransformationCacheCompactor transformationCacheCompactor(
-      TransformationCache cache, StoreConfigurationProperties props) {
-    return new TransformationCacheCompactor(cache, props.getDeleteTransformationsStaleForDays());
   }
 }

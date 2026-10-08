@@ -53,7 +53,7 @@ class UserEmailsLowLevelProjectionITest extends AbstractFactCastIntegrationTest 
             .ns("user")
             .type("UserAdded")
             .version(1)
-            .build(String.format("{\"id\":\"%s\", \"email\": \"%s\"}", userId, "user@bar.com"));
+            .build("{\"id\":\"%s\", \"email\": \"%s\"}".formatted(userId, "user@bar.com"));
 
     factCast.publish(userAdded);
 
@@ -79,7 +79,7 @@ class UserEmailsLowLevelProjectionITest extends AbstractFactCastIntegrationTest 
             .ns("user")
             .type("UserAdded")
             .version(1)
-            .build(String.format("{\"id\":\"%s\", \"email\": \"%s\"}", userId1, "user1@bar.com"));
+            .build("{\"id\":\"%s\", \"email\": \"%s\"}".formatted(userId1, "user1@bar.com"));
 
     Fact user2Added =
         Fact.builder()
@@ -87,7 +87,7 @@ class UserEmailsLowLevelProjectionITest extends AbstractFactCastIntegrationTest 
             .ns("user")
             .type("UserAdded")
             .version(1)
-            .build(String.format("{\"id\":\"%s\", \"email\": \"%s\"}", userId2, "user2@bar.com"));
+            .build("{\"id\":\"%s\", \"email\": \"%s\"}".formatted(userId2, "user2@bar.com"));
 
     Fact user2Removed =
         Fact.builder()
@@ -95,7 +95,7 @@ class UserEmailsLowLevelProjectionITest extends AbstractFactCastIntegrationTest 
             .ns("user")
             .type("UserRemoved")
             .version(1)
-            .build(String.format("{\"id\":\"%s\"}", userId2));
+            .build("{\"id\":\"%s\"}".formatted(userId2));
 
     factCast.publish(List.of(user1Added, user2Added, user2Removed));
 

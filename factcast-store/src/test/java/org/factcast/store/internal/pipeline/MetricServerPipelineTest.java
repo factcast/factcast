@@ -20,8 +20,7 @@ import static org.mockito.Mockito.*;
 import io.micrometer.core.instrument.Counter;
 import lombok.NonNull;
 import org.assertj.core.api.Assertions;
-import org.factcast.core.Fact;
-import org.factcast.store.internal.PgMetrics;
+import org.factcast.store.internal.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -39,7 +38,7 @@ class MetricServerPipelineTest {
 
   @Nested
   class WhenProcessing {
-    @Mock Fact fact;
+    @Mock PgFact fact;
     @Mock Counter count;
 
     @BeforeEach

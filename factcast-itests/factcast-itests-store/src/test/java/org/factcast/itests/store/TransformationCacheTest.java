@@ -23,7 +23,8 @@ import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
-import org.factcast.core.subscription.transformation.MissingTransformationInformationException;
+import org.factcast.core.subscription.MissingTransformationInformationException;
+import org.factcast.store.internal.notification.TransformationStoreChangeNotification;
 import org.factcast.store.registry.transformation.cache.PgTransformationCache;
 import org.factcast.store.registry.transformation.cache.PgTransformationStoreChangeListener;
 import org.factcast.store.registry.transformation.cache.TransformationCache;
@@ -35,9 +36,9 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 @ExtendWith(MockitoExtension.class)
 @SpringBootTest
@@ -50,7 +51,7 @@ public class TransformationCacheTest {
 
   @Autowired TransformationCache transformationCache;
 
-  @SpyBean PgTransformationStoreChangeListener listener;
+  @MockitoSpyBean PgTransformationStoreChangeListener listener;
 
   @Nested
   @DirtiesContext
@@ -65,7 +66,7 @@ public class TransformationCacheTest {
                 return null;
               })
           .when(listener)
-          .on(any());
+          .on(any(TransformationStoreChangeNotification.class));
       UUID id = UUID.randomUUID();
       Fact f = createTestFact(id, 1, "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\"}");
       fc.publish(f);
@@ -75,8 +76,8 @@ public class TransformationCacheTest {
       ((PgTransformationCache) transformationCache).flush();
 
       jdbcTemplate.update(
-          String.format(
-              "DELETE FROM transformationstore WHERE type='%s' AND from_version=%d", f.type(), 2));
+          "DELETE FROM transformationstore WHERE type='%s' AND from_version=%d"
+              .formatted(f.type(), 2));
       wasOned.await();
 
       assertDoesNotThrow(() -> fc.fetchByIdAndVersion(id, 1));
@@ -99,7 +100,7 @@ public class TransformationCacheTest {
                 return null;
               })
           .when(listener)
-          .on(any());
+          .on(any(TransformationStoreChangeNotification.class));
       UUID id = UUID.randomUUID();
       Fact f = createTestFact(id, 1, "{\"firstName\":\"Peter\",\"lastName\":\"Peterson\"}");
       fc.publish(f);
@@ -110,9 +111,8 @@ public class TransformationCacheTest {
 
       String randomUUID = UUID.randomUUID().toString();
       jdbcTemplate.update(
-          String.format(
-              "UPDATE transformationstore SET transformation='function transform(event){event.displayName=\"%s\"}' WHERE type='%s' AND from_version=%d AND to_version=%d",
-              randomUUID, f.type(), 2, 3));
+          "UPDATE transformationstore SET transformation='function transform(event){event.displayName=\"%s\"}' WHERE type='%s' AND from_version=%d AND to_version=%d"
+              .formatted(randomUUID, f.type(), 2, 3));
       wasOned.await();
 
       assertDoesNotThrow(() -> fc.fetchByIdAndVersion(id, 1));

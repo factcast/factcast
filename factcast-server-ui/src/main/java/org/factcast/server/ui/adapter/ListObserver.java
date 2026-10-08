@@ -15,7 +15,8 @@
  */
 package org.factcast.server.ui.adapter;
 
-import lombok.*;
+import lombok.Getter;
+import lombok.NonNull;
 import org.factcast.core.Fact;
 
 @Getter

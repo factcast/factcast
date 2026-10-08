@@ -18,7 +18,6 @@ package org.factcast.core;
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.util.*;
@@ -47,14 +46,14 @@ class DefaultFactCastTest {
   @Captor private ArgumentCaptor<List<Fact>> cfacts;
 
   @Test
-  void testSubscribeEphemeral() {
+  void testSubscribe() {
     when(store.subscribe(csr.capture(), any())).thenReturn(mock(Subscription.class));
     final UUID since = UUID.randomUUID();
     SubscriptionRequest r =
         SubscriptionRequest.follow(FactSpec.ns("foo"))
             .or(FactSpec.ns("some").type("type"))
             .from(since);
-    uut.subscribeEphemeral(r, f -> {});
+    uut.subscribe(r, f -> {});
     verify(store).subscribe(any(), any());
     final SubscriptionRequestTO req = csr.getValue();
     assertTrue(req.continuous());

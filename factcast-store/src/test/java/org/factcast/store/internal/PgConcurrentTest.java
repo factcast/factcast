@@ -28,15 +28,11 @@ import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.test.IntegrationTest;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
-@ContextConfiguration(classes = {PgTestConfiguration.class})
-@ExtendWith(SpringExtension.class)
+@SpringJUnitConfig(classes = {PgTestConfiguration.class})
 @IntegrationTest
 public class PgConcurrentTest {
 
@@ -84,7 +80,7 @@ public class PgConcurrentTest {
     FactObserver observer = element -> l.get().countDown();
     SubscriptionRequest request =
         SubscriptionRequest.follow(FactSpec.ns("concurrenttest")).fromScratch();
-    uut.subscribeEphemeral(request, observer);
+    uut.subscribe(request, observer);
     return l;
   }
 }

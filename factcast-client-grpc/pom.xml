@@ -6,15 +6,12 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast</artifactId>
-    <version>0.9.10</version>
+    <version>0.12.5-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-client-grpc</artifactId>
   <name>${project.groupId}:${project.artifactId}</name>
-  <properties>
-    <maven.compiler.source>1.8</maven.compiler.source>
-    <maven.compiler.target>1.8</maven.compiler.target>
-  </properties>
+  <properties></properties>
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -67,8 +64,8 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>net.devh</groupId>
-      <artifactId>grpc-client-spring-boot-starter</artifactId>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-grpc-client</artifactId>
     </dependency>
     <!-- deprecated, will be removed -->
     <dependency>
@@ -108,8 +105,7 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>${maven.compiler.version}</version>
         <configuration>
-          <source>1.8</source>
-          <target>1.8</target>
+          <release>17</release>
         </configuration>
       </plugin>
     </plugins>

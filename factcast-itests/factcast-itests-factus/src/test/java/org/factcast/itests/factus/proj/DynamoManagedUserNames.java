@@ -24,7 +24,7 @@ import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
 @Slf4j
-@ProjectionMetaData(revision = 1)
+@ProjectionMetaData(revisionId = "1")
 public class DynamoManagedUserNames extends AbstractDynamoManagedProjection
     implements DynamoUserNames {
 

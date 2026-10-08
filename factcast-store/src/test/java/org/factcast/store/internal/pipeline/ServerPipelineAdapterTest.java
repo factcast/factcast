@@ -15,13 +15,14 @@
  */
 package org.factcast.store.internal.pipeline;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import lombok.NonNull;
-import org.factcast.core.Fact;
 import org.factcast.core.FactStreamPosition;
 import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.SubscriptionImpl;
+import org.factcast.store.internal.PgFact;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -37,7 +38,7 @@ class ServerPipelineAdapterTest {
 
   @Nested
   class WhenFacting {
-    @Mock private Fact fact;
+    @Mock private PgFact fact;
 
     @BeforeEach
     void setup() {}

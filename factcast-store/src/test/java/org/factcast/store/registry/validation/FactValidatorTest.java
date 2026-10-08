@@ -136,16 +136,18 @@ public class FactValidatorTest {
 
     SchemaRegistry sr = mock(SchemaRegistry.class);
     String schemaJson =
-        "\n"
-            + "{\n"
-            + "  \"additionalProperties\" : false,\n"
-            + "  \"properties\" : {\n"
-            + "    \"firstName\" : {\n"
-            + "      \"type\": \"string\"\n"
-            + "    }\n"
-            + "  },\n"
-            + "  \"required\": [\"firstName\"]\n"
-            + "}";
+        """
+
+        {
+          "additionalProperties" : false,
+          "properties" : {
+            "firstName" : {
+              "type": "string"
+            }
+          },
+          "required": ["firstName"]
+        }\
+        """;
 
     Schema schema = ValidationConstants.jsonString2SchemaV7(schemaJson);
     when(sr.get(Mockito.any(SchemaKey.class))).thenReturn(Optional.of(schema));
@@ -184,16 +186,18 @@ public class FactValidatorTest {
 
     SchemaRegistry sr = mock(SchemaRegistry.class);
     String schemaJson =
-        "\n"
-            + "{\n"
-            + "  \"additionalProperties\" : false,\n"
-            + "  \"properties\" : {\n"
-            + "    \"firstName\" : {\n"
-            + "      \"type\": \"string\"\n"
-            + "    }\n"
-            + "  },\n"
-            + "  \"required\": [\"firstName\"]\n"
-            + "}";
+        """
+
+        {
+          "additionalProperties" : false,
+          "properties" : {
+            "firstName" : {
+              "type": "string"
+            }
+          },
+          "required": ["firstName"]
+        }\
+        """;
 
     Schema schema = ValidationConstants.jsonString2SchemaV7(schemaJson);
     when(sr.get(Mockito.any(SchemaKey.class))).thenReturn(Optional.of(schema));
@@ -282,17 +286,19 @@ public class FactValidatorTest {
         uut.tryValidate(
             mock(SchemaKey.class),
             ValidationConstants.jsonString2SchemaV7(
-                "{\n"
-                    + "    \"properties\": {\n"
-                    + "        \"bubabi\": {\n"
-                    + "            \"description\": \"A unique identifier\",\n"
-                    + "            \"type\": \"string\"\n"
-                    + "        }\n"
-                    + "    },\n"
-                    + "    \"required\": [\n"
-                    + "        \"bubabi\"  \n"
-                    + "    ]\n"
-                    + "}"),
+                """
+                {
+                    "properties": {
+                        "bubabi": {
+                            "description": "A unique identifier",
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "bubabi" \s
+                    ]
+                }\
+                """),
             new JSONObject("{}"));
     assertThat(errors)
         .hasSize(1)

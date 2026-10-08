@@ -16,7 +16,8 @@
 package org.factcast.store.internal.rowmapper;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.sql.ResultSet;
 import java.util.UUID;

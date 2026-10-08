@@ -119,12 +119,14 @@ public abstract class AbstractBrowserTest {
     page.navigate(url);
     waitForLoadState();
 
-    assertThat(page.locator("h2")).hasText("Log in");
+    final var loginButton =
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Log in"));
+    assertThat(loginButton).isEnabled();
 
     page.getByLabel("Username").fill("admin");
     page.getByLabel("Password").first().fill("security_disabled");
 
-    page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Log in")).click();
+    loginButton.click();
 
     page.waitForURL(url + "?continue");
     waitForLoadState();
@@ -183,10 +185,17 @@ public abstract class AbstractBrowserTest {
         .click();
   }
 
+  protected void setSerialToNull() {
+    page.locator("#starting-serial > input").fill("");
+  }
+
   protected Locator openSerialSelector() {
     page.locator("#starting-serial > input").click();
-    final var dialog = page.getByRole(AriaRole.DIALOG);
-    dialog.waitFor();
+    final var dialog = page.locator("#toSerialOverlay");
+    dialog.waitFor(
+        new Locator.WaitForOptions()
+            .setState(
+                WaitForSelectorState.ATTACHED)); // needed because playwright thinks its hidden
     return dialog;
   }
 

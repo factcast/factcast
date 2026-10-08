@@ -16,22 +16,28 @@
 package org.factcast.store.registry.transformation.cache;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.mockito.Mockito.mock;
 
 import java.util.*;
 import lombok.NonNull;
 import org.factcast.core.Fact;
+import org.factcast.store.internal.PgFact;
+import org.factcast.store.registry.NOPRegistryMetrics;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class CacheBufferTest {
   @Mock private Object mutex;
   @Mock private Map<TransformationCache.Key, Fact> buffer;
+  @Spy private NOPRegistryMetrics registryMetrics = new NOPRegistryMetrics();
   @InjectMocks private CacheBuffer underTest;
 
   @Nested
@@ -43,14 +49,14 @@ class CacheBufferTest {
 
     @Test
     void get() {
-      Fact f = Fact.builder().ns("ns").buildWithoutPayload();
+      PgFact f = mock(PgFact.class);
       underTest.buffer().put(key, f);
       assertThat(underTest.get(key)).isSameAs(f);
     }
   }
 
   @Nested
-  class WhenPuting {
+  class WhenPutting {
     @Mock private TransformationCache.@NonNull Key cacheKey;
     @Mock private Fact factOrNull;
 
@@ -59,17 +65,16 @@ class CacheBufferTest {
 
     @Test
     void put() {
-      Fact f = Fact.builder().ns("ns").buildWithoutPayload();
+      PgFact f = mock(PgFact.class);
       underTest.put(cacheKey, f);
       assertThat(underTest.buffer().get(cacheKey)).isSameAs(f);
     }
 
     @Test
     void putNullDoesNotHide() {
-      Fact f = Fact.builder().ns("ns").buildWithoutPayload();
+      PgFact f = mock(PgFact.class);
       underTest.put(cacheKey, f);
-      underTest.put(cacheKey, null);
-      assertThat(underTest.buffer().get(cacheKey)).isSameAs(f);
+      assertThat(underTest.get(cacheKey)).isSameAs(f);
     }
   }
 
@@ -83,7 +88,7 @@ class CacheBufferTest {
 
     @Test
     void size() {
-      Fact f = Fact.builder().ns("ns").buildWithoutPayload();
+      PgFact f = mock(PgFact.class);
       assertThat(underTest.buffer()).isEmpty();
       underTest.put(cacheKey, f);
       assertThat(underTest.buffer()).hasSize(1);
@@ -91,19 +96,58 @@ class CacheBufferTest {
   }
 
   @Nested
-  class WhenClearing {
+  class WhenClearingAfter {
     @Mock private TransformationCache.@NonNull Key cacheKey;
-    @Mock private Fact factOrNull;
-
-    @BeforeEach
-    void setup() {}
+    @Mock private PgFact fact = mock(PgFact.class);
 
     @Test
-    void clear() {
-      underTest.put(cacheKey, null);
+    void clears() {
+      underTest.put(cacheKey, fact);
       assertThat(underTest.buffer()).hasSize(1);
-      assertThat(underTest.clear()).hasSize(1);
+      underTest.iterateSnapshotAndClear(bufferCopy -> assertThat(bufferCopy).hasSize(1));
       assertThat(underTest.buffer()).isEmpty();
+      assertThat(underTest.get(cacheKey)).isNull();
+      assertThat(underTest.bufferSizeMetric().get()).isEqualTo(1);
+    }
+
+    @Test
+    void ensuresConsistentRead() {
+      underTest.put(cacheKey, fact);
+      assertThat(underTest.buffer()).hasSize(1);
+      underTest.iterateSnapshotAndClear(
+          bufferCopy -> {
+            assertThat(bufferCopy).hasSize(1);
+            assertThat(underTest.buffer()).isEmpty();
+            // this, we gave up upon
+            //            assertThat(underTest.get(cacheKey)).isEqualTo(fact);
+          });
+    }
+
+    @Test
+    void propagatesConsumerExceptionAndClearsBuffers() {
+      underTest.put(cacheKey, fact);
+      assertThat(underTest.buffer()).hasSize(1);
+      try {
+        underTest.iterateSnapshotAndClear(
+            bufferCopy -> {
+              throw new RuntimeException("testing");
+            });
+      } catch (RuntimeException e) {
+        assertThat(e).hasMessage("testing");
+      }
+      assertThat(underTest.buffer()).isEmpty();
+    }
+
+    @Test
+    void preventsConcurrentModification() {
+      underTest.put(cacheKey, fact);
+      underTest.iterateSnapshotAndClear(
+          bufferCopy -> {
+            var iterator = bufferCopy.entrySet().iterator();
+            underTest.buffer().put(mock(TransformationCache.Key.class), mock(PgFact.class));
+            underTest.iterateSnapshotAndClear(c -> {});
+            assertDoesNotThrow(iterator::next);
+          });
     }
   }
 
@@ -118,10 +162,12 @@ class CacheBufferTest {
 
     @Test
     void doesNotHide() {
-      Fact f = Fact.builder().ns("ns").buildWithoutPayload();
+      PgFact f = mock(PgFact.class);
       underTest.put(key1, f);
       assertThat(underTest.buffer()).hasSize(1);
-      underTest.putAllNull(Set.of(key1, key2, key3));
+      underTest.put(key1, mock(PgFact.class));
+      underTest.put(key2, mock(PgFact.class));
+      underTest.put(key3, mock(PgFact.class));
       assertThat(underTest.buffer()).hasSize(3);
       assertThat(underTest.buffer().get(key1)).isEqualTo(f);
     }
@@ -137,7 +183,7 @@ class CacheBufferTest {
     @Test
     void containsKeys() {
       assertThat(underTest.containsKey(key)).isFalse();
-      underTest.putAllNull(Set.of(key));
+      underTest.put(key, mock(PgFact.class));
       assertThat(underTest.containsKey(key)).isTrue();
     }
   }

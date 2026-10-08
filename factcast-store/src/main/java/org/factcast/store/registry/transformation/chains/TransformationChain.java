@@ -16,8 +16,7 @@
 package org.factcast.store.registry.transformation.chains;
 
 import com.google.common.base.Preconditions;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.ToString;
@@ -29,6 +28,9 @@ import org.factcast.store.registry.transformation.TransformationKey;
 public class TransformationChain implements Transformation {
 
   @NonNull String id;
+
+  // the ordered version path of this chain, e.g. [1, 2, 3]
+  @NonNull List<Integer> versionPath;
 
   @NonNull TransformationKey key;
 
@@ -48,23 +50,27 @@ public class TransformationChain implements Transformation {
     int to = orderedListOfSteps.get(orderedListOfSteps.size() - 1).toVersion();
     String compositeJson = createCompositeJS(orderedListOfSteps);
 
-    return new TransformationChain(id, key, from, to, Optional.of(compositeJson));
+    // the version path mirrors the id string ("[from, to1, to2, ...]") as a list of ints
+    List<Integer> versionPath = new ArrayList<>();
+    versionPath.add(from);
+    orderedListOfSteps.forEach(t -> versionPath.add(t.toVersion()));
+
+    return new TransformationChain(id, versionPath, key, from, to, Optional.of(compositeJson));
   }
 
   private static String createCompositeJS(List<Transformation> list) {
     StringBuilder sb = new StringBuilder();
-    sb.append("var steps = [");
+    sb.append("function (event) { var steps = [");
 
     List<String> code =
         list.stream()
             .map(Transformation::transformationCode)
-            .filter(Optional::isPresent)
-            .map(Optional::get)
+            .flatMap(Optional::stream)
             .collect(Collectors.toList());
 
     sb.append(String.join(",", code));
     sb.append("]; ");
-    sb.append("function transform(event) { steps.forEach( function(f){f(event)} ); }");
+    sb.append("steps.forEach( function(f){f(event)} ); }");
     return sb.toString();
   }
 }

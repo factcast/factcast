@@ -1,8 +1,8 @@
 package org.factcast.schema.registry.cli.validation
 
 import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.core.annotation.Tags
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.extensions.spring.SpringExtension
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.mockk.every
@@ -13,7 +13,6 @@ import org.factcast.schema.registry.cli.domain.Namespace
 import org.factcast.schema.registry.cli.domain.Transformation
 import org.factcast.schema.registry.cli.fixture
 import org.factcast.schema.registry.cli.fs.FileSystemService
-import org.factcast.schema.registry.cli.integration
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 
@@ -36,9 +35,6 @@ class TransformationEvaluatorIntTest :
     val skippedTransformation = fixture("transformation/skipped.js")
 
     init {
-        extension(SpringExtension)
-        tags(integration)
-
         "basic transformations" {
             every { ns.name } returns "ns"
             every { event.type } returns "type"

@@ -19,7 +19,7 @@ import com.vaadin.flow.server.*;
 import java.io.FileInputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -41,7 +41,7 @@ public class FilesystemServiceInitListener implements VaadinServiceInitListener 
           if (request.getPathInfo().startsWith("/files/")) {
             final String requestedFile = getRequestedFilename(request);
             final String userName = getUserName();
-            final var filePath = Paths.get(persistenceDir, userName, requestedFile);
+            final var filePath = Path.of(persistenceDir, userName, requestedFile);
 
             if (Files.exists(filePath)) {
               response.setContentType("application/json");

@@ -79,3 +79,15 @@ log_statement:'none'
 log_min_duration_statement:500
 default_statistics_target:100
 ```
+
+## Clearing near caches
+
+In some cases (e.g. whenever applying manual changes due to emergency scenarios), it might be necessary to clear the
+near/in-memory caches of every FactCast instance; this can be achieved by executing the following query on the database:
+
+```sql
+NOTIFY factcast_cache_clear;
+```
+
+See `org.factcast.store.internal.CacheClearListener` for more details on the implementation and the use cases for this
+operation.

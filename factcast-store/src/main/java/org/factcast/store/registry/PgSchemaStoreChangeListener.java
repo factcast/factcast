@@ -40,8 +40,11 @@ public class PgSchemaStoreChangeListener implements SmartInitializingSingleton, 
 
   @Subscribe
   public void on(SchemaStoreChangeNotification signal) {
-    if (signal.needToClearWholeNearCache()) registry.clearNearCache();
-    else registry.invalidateNearCache(SchemaKey.of(signal.ns(), signal.type(), signal.version()));
+    if (signal.needToClearWholeNearCache()) {
+      registry.clearNearCache();
+    } else {
+      registry.invalidateNearCache(SchemaKey.of(signal.ns(), signal.type(), signal.version()));
+    }
   }
 
   @Override

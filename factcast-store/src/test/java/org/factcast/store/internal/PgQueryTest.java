@@ -26,21 +26,19 @@ import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.core.subscription.observer.FactObserver;
-import org.factcast.test.IntegrationTest;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.factcast.core.subscription.observer.*;
+import org.factcast.store.StoreConfigurationProperties;
+import org.factcast.test.*;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
-@ContextConfiguration(classes = {PgTestConfiguration.class})
-@ExtendWith(SpringExtension.class)
+@SpringJUnitConfig(classes = {PgTestConfiguration.class})
 @IntegrationTest
 @Sql(scripts = "/wipe.sql", config = @SqlConfig(separator = "#"))
 class PgQueryTest {
@@ -69,9 +67,8 @@ class PgQueryTest {
             sb.append("\"").append(k).append("\":");
             sb.append("\"").append(v).append("\"");
           });
-      return String.format(
-          "{\"id\":\"%s\",\"ns\":\"%s\",\"type\":\"%s\",\"meta\":{%s}}",
-          id, ns, type, sb.toString());
+      return "{\"id\":\"%s\",\"ns\":\"%s\",\"type\":\"%s\",\"meta\":{%s}}"
+          .formatted(id, ns, type, sb.toString());
     }
 
     public static TestHeader create() {
@@ -87,11 +84,24 @@ class PgQueryTest {
   @Autowired PgSubscriptionFactory pq;
 
   @Autowired JdbcTemplate tpl;
+  @Autowired StoreConfigurationProperties props;
+
+  StoreConfigurationProperties.CatchupStrategy originalCatchupStrategy;
 
   @Bean
   @Primary
   public EventBus eventBus() {
     return new EventBus(this.getClass().getSimpleName());
+  }
+
+  @BeforeEach
+  void saveStrategy() {
+    originalCatchupStrategy = props.getCatchupStrategy();
+  }
+
+  @AfterEach
+  void restoreStrategy() {
+    props.setCatchupStrategy(originalCatchupStrategy);
   }
 
   @Test
@@ -106,16 +116,36 @@ class PgQueryTest {
   }
 
   @Test
-  void testRoundtripInsertBefore() {
+  void testRoundtripInsertBeforeWithCursor() {
+    assertRoundtripInsertBeforeWithStrategy(StoreConfigurationProperties.CatchupStrategy.CURSOR);
+  }
+
+  @Test
+  void testRoundtripInsertBeforeWithChunked() {
+    assertRoundtripInsertBeforeWithStrategy(StoreConfigurationProperties.CatchupStrategy.CHUNKED);
+  }
+
+  @Test
+  void testRoundtripInsertBeforeWithHoldCursor() {
+    assertRoundtripInsertBeforeWithStrategy(
+        StoreConfigurationProperties.CatchupStrategy.CHUNKED_WITH_HOLD);
+  }
+
+  private void assertRoundtripInsertBeforeWithStrategy(
+      StoreConfigurationProperties.CatchupStrategy catchupStrategy) {
+    props.setCatchupStrategy(catchupStrategy);
     insertTestFact(TestHeader.create());
     insertTestFact(TestHeader.create());
     insertTestFact(TestHeader.create().ns("other-ns"));
     insertTestFact(TestHeader.create().type("type2"));
     insertTestFact(TestHeader.create().ns("other-ns").type("type2"));
+
     SubscriptionRequestTO req =
         SubscriptionRequestTO.from(SubscriptionRequest.catchup(defaultSpec).fromScratch());
     FactObserver c = mock(FactObserver.class);
+
     pq.subscribe(req, c).awaitComplete();
+
     verify(c).onCatchup();
     verify(c).onComplete();
     verify(c, times(2)).onNext(any());

@@ -90,6 +90,8 @@ abstract class AbstractSnapshotRepository {
       SnapshotData sd = snapshotData.get();
       return Optional.ofNullable(deserialize(sd.serializedProjection(), type))
           .map(i -> ProjectionAndState.of(i, sd.lastFactId()));
-    } else return Optional.empty();
+    } else {
+      return Optional.empty();
+    }
   }
 }

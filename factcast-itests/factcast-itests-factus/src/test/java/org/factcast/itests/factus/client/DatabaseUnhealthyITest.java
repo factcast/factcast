@@ -59,7 +59,7 @@ class DatabaseUnhealthyITest extends AbstractFactCastIntegrationTest {
 
     final var userProjection = new UserProjection();
 
-    proxy.toxics().resetPeer("db-gone", ToxicDirection.UPSTREAM, 0);
+    proxy.proxy().toxics().resetPeer("db-gone", ToxicDirection.UPSTREAM, 0);
 
     assertThatThrownBy(() -> factus.update(userProjection))
         .isInstanceOf(RetryableException.class)
@@ -72,7 +72,7 @@ class DatabaseUnhealthyITest extends AbstractFactCastIntegrationTest {
     proxy.reset();
   }
 
-  @ProjectionMetaData(revision = 1)
+  @ProjectionMetaData(revisionId = "1")
   static class UserProjection extends LocalManagedProjection {
 
     @Handler

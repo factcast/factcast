@@ -1,0 +1,141 @@
+= Security
+:icons: font
+
+
+
+== Authentication & Authorization
+
+In order to control access, the FactCast server supports a very basic way of defining which client is allowed to do what.
+The security feature is enabled by default, but can be disabled (for example, for integration tests) by
+setting `factcast.security.enabled` to `false`.
+
+In order to make use of the security features, a bean of type `FactCastAccessConfiguration` must be defined.
+This is done either by providing one in your FactCast server's application context, or by using the dead-simple approach of putting a
+`factcast-access.json` at the root of your classpath or into `./config/` (relative to the working directory), from where it is deserialised.
+See the example below.
+
+Now that you've defined the access configuration, you also need to define the secrets for each account.
+Again, you can do that programmatically by providing `FactCastSecretProperties`, or by defining a property for each account like this:
+
+----
+factcast.access.secrets.brain=world
+factcast.access.secrets.pinky=narf
+factcast.access.secrets.snowball=grim
+----
+
+[WARNING]
+For demonstration only.
+Do not store credentials in plaintext like this on production systems.
+Provide them via a layer of your Docker container, pull them from the AWS Parameter Store, etc.
+
+[NOTE]
+If FactCast misses a secret for a configured account on startup, it does not fail to start up but logs a warning.
+The same applies if a secret is defined for a non-existing account.
+
+=== Example `factcast-access.json`
+
+The contents of `factcast-access.json` might look like:
+
+[source,json]
+----
+{
+	"accounts": [
+		{
+			"id": "brain",
+			"roles": ["anything"]
+		},
+		{
+			"id": "pinky",
+			"roles": ["anything", "limited"]
+		},
+		{
+			"id": "snowball",
+			"roles": ["readOnlyWithoutAudit"]
+		}
+	],
+	"roles": [
+		{
+			"id": "anything",
+			"read": {
+				"include": ["*"]
+			},
+			"write": {
+				"include": ["*"]
+			}
+		},
+		{
+			"id": "limited",
+			"read": {
+				"include": ["*"],
+				"exclude": ["secret"]
+			},
+			"write": {
+				"exclude": ["audit*"]
+			}
+		},
+		{
+			"id": "readOnlyWithoutAudit",
+			"read": {
+				"include": ["*"],
+				"exclude": ["audit*", "secret"]
+			},
+			"write": {
+				"exclude": ["*"]
+			}
+		}
+	]
+}
+----
+
+Here, `brain` is authorized to use the full functionality of the FactStore.
+`pinky` can do the same, except that it can neither read the `secret` namespace nor write to namespaces that start with `audit`.
+`snowball` can read everything except the `secret` namespace and namespaces that start with `audit`, but cannot write anything.
+
+In case of conflicting information:
+
+- explicit wins over implicit
+- exclude wins over include
+
+Note that there is no fancy wildcard handling other than a trailing `*`.
+
+See module https://github.com/factcast/factcast/tree/main/factcast-examples/factcast-example-server-basicauth[examples/factcast-example-server-basicauth] for an example.
+
+=== Using Basic Auth from a Client
+
+From a client's perspective, all you need to do is to provide credentials.
+Once the credentials are configured, they are sent with every request using HTTP Basic authentication (as an `Authorization` header).
+
+`factcast.grpc.client.user` and `factcast.grpc.client.password` are the properties to set.
+
+You can always use environment variables or a `-D` switch in order to inject the credentials.
+
+See module https://github.com/factcast/factcast/tree/main/factcast-examples/factcast-example-client-basicauth[examples/factcast-example-client-basicauth]
+for an example.
+
+=== Customizing Credential Loading
+
+If you don't want to configure your passwords via properties, you can provide either a custom `FactCastSecretProperties`
+bean or an implementation of a `UserDetailsService`.
+That's a simple interface coming from Spring Security, which provides a mapping method from `username` to user. In our
+case, it has to return a `FactCastUser`.
+
+If you want to externalize secret loading but keep the `factcast-access.json` file for managing authorization, an
+implementation of such a `UserDetailsService` could look like this:
+
+[source,java]
+----
+@Bean
+UserDetailsService userDetailsService(FactCastAccessConfiguration cc, PasswordEncoder passwordEncoder) {
+    return username -> {
+        // fetching account info from factcast-access.json
+        Optional<FactCastAccount> account = cc.findAccountById(username);
+
+        // your way to fetch the user + password
+        User user = loadUserByName(username);
+
+        return account
+            .map(acc -> new FactCastUser(acc, passwordEncoder.encode(user.getPassword())))
+            .orElseThrow(() -> new UsernameNotFoundException(username));
+    };
+}
+----

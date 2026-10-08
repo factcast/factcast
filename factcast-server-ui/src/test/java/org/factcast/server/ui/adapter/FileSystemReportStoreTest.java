@@ -24,7 +24,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.vaadin.flow.server.*;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.*;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.stream.Stream;
@@ -41,6 +42,8 @@ class FileSystemReportStoreTest {
 
   private static final String PERSISTENCE_DIR = "factcast-ui/reports";
   private static final String USER_NAME = "user";
+  private static final String REPORT_NAME = "report.json";
+  final ReportFilterBean queryBean = new ReportFilterBean(1);
 
   @AfterEach
   @SneakyThrows
@@ -56,33 +59,23 @@ class FileSystemReportStoreTest {
 
   @Nested
   class WhenSavingReports {
+    final ReportFilterBean queryBean = new ReportFilterBean(1);
+
     @Test
     void createsReportFileAndParentDirectories() {
-      uut.save(USER_NAME, getReport("name.json"));
-      assertTrue(Files.exists(new File(PERSISTENCE_DIR + "/user/name.json").toPath()));
+      final var upload = uut.createBatchUpload(USER_NAME, REPORT_NAME, queryBean);
+      upload.close();
+      assertTrue(Files.exists(Path.of(PERSISTENCE_DIR, "user", REPORT_NAME)));
     }
 
     @Test
     void throwsIllegalArgumentExceptionIfReportExists() {
-      Report report = getReport("name.json");
-      uut.save(USER_NAME, report);
+      final var upload = uut.createBatchUpload(USER_NAME, REPORT_NAME, queryBean);
+      upload.close();
       // try again
-      assertThrows(IllegalArgumentException.class, () -> uut.save(USER_NAME, report));
-    }
-
-    @Test
-    @SneakyThrows
-    void throwsWrappedIOExceptionIfSavingFails() {
-      Report report = getReport("name.json");
-      ObjectMapper explodingOm = mock(ObjectMapper.class);
-      doThrow(new IOException("foo"))
-          .when(explodingOm)
-          .writeValue(any(File.class), any(Object.class));
-      uut.objectMapper(explodingOm);
-
-      assertThatThrownBy(() -> uut.save(USER_NAME, report))
-          .isInstanceOf(RuntimeException.class)
-          .hasCauseInstanceOf(IOException.class);
+      assertThrows(
+          IllegalArgumentException.class,
+          () -> uut.createBatchUpload(USER_NAME, REPORT_NAME, queryBean));
     }
   }
 
@@ -95,23 +88,23 @@ class FileSystemReportStoreTest {
 
     @Test
     void returnsEmptyListIfNoReportsExistForUser() {
-      uut.save("user2", getReport("name.json"));
+      uut.createBatchUpload("user2", REPORT_NAME, queryBean);
 
       assertTrue(uut.listAllForUser(USER_NAME).isEmpty());
     }
 
     @Test
     void listsAllReports() {
-      uut.save(USER_NAME, getReport("report1.json"));
-      uut.save(USER_NAME, getReport("report2.json"));
-      uut.save("user2", getReport("report3.json"));
+      uut.createBatchUpload(USER_NAME, REPORT_NAME, queryBean);
+      uut.createBatchUpload(USER_NAME, "report2.json", queryBean);
+      uut.createBatchUpload("user2", "report3.json", queryBean);
 
       final var actual = uut.listAllForUser(USER_NAME);
 
       assertThat(actual).hasSize(2);
       assertThat(actual)
           .extracting(ReportEntry::name)
-          .containsExactly("report1.json", "report2.json");
+          .containsExactly("report.json", "report2.json");
     }
   }
 
@@ -122,7 +115,7 @@ class FileSystemReportStoreTest {
     @SneakyThrows
     void happyPath() {
       final var reportName = "report.json";
-      final var filePath = Paths.get(PERSISTENCE_DIR, USER_NAME, reportName);
+      final var filePath = Path.of(PERSISTENCE_DIR, USER_NAME, reportName);
       createFile(filePath);
 
       assertThatCode(() -> uut.delete(USER_NAME, "report.json")).doesNotThrowAnyException();

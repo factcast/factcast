@@ -15,11 +15,15 @@
  */
 package org.factcast.store.registry.metrics;
 
+import static org.factcast.store.registry.metrics.RegistryMetrics.GAUGE.CACHE_BUFFER;
+import static org.factcast.store.registry.metrics.RegistryMetricsImpl.METRIC_NAME_GAUGE;
+import static org.factcast.store.registry.metrics.RegistryMetricsImpl.TAG_NAME_KEY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 import io.micrometer.core.instrument.*;
 import java.time.Duration;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -54,10 +58,7 @@ class RegistryMetricsImplTest {
     verify(meterRegistry)
         .timer(
             RegistryMetricsImpl.METRIC_NAME_TIMINGS,
-            Tags.of(
-                Tag.of(
-                    RegistryMetricsImpl.TAG_NAME_KEY,
-                    RegistryMetrics.OP.COMPACT_TRANSFORMATION_CACHE.op())));
+            Tags.of(Tag.of(TAG_NAME_KEY, RegistryMetrics.OP.COMPACT_TRANSFORMATION_CACHE.op())));
   }
 
   @Test
@@ -68,9 +69,7 @@ class RegistryMetricsImplTest {
         .counter(
             RegistryMetricsImpl.METRIC_NAME_COUNTS,
             Tags.of(
-                Tag.of(
-                    RegistryMetricsImpl.TAG_NAME_KEY,
-                    RegistryMetrics.EVENT.SCHEMA_REGISTRY_UNAVAILABLE.event())));
+                Tag.of(TAG_NAME_KEY, RegistryMetrics.EVENT.SCHEMA_REGISTRY_UNAVAILABLE.event())));
   }
 
   @Test
@@ -91,9 +90,7 @@ class RegistryMetricsImplTest {
             RegistryMetricsImpl.METRIC_NAME_TIMINGS,
             Tags.of(
                 customTag,
-                Tag.of(
-                    RegistryMetricsImpl.TAG_NAME_KEY,
-                    RegistryMetrics.OP.COMPACT_TRANSFORMATION_CACHE.op())));
+                Tag.of(TAG_NAME_KEY, RegistryMetrics.OP.COMPACT_TRANSFORMATION_CACHE.op())));
   }
 
   @Test
@@ -120,9 +117,7 @@ class RegistryMetricsImplTest {
             RegistryMetricsImpl.METRIC_NAME_TIMINGS,
             Tags.of(
                 customTag,
-                Tag.of(
-                    RegistryMetricsImpl.TAG_NAME_KEY,
-                    RegistryMetrics.OP.COMPACT_TRANSFORMATION_CACHE.op())));
+                Tag.of(TAG_NAME_KEY, RegistryMetrics.OP.COMPACT_TRANSFORMATION_CACHE.op())));
   }
 
   @Test
@@ -143,9 +138,7 @@ class RegistryMetricsImplTest {
             RegistryMetricsImpl.METRIC_NAME_TIMINGS,
             Tags.of(
                 customTag,
-                Tag.of(
-                    RegistryMetricsImpl.TAG_NAME_KEY,
-                    RegistryMetrics.OP.COMPACT_TRANSFORMATION_CACHE.op())));
+                Tag.of(TAG_NAME_KEY, RegistryMetrics.OP.COMPACT_TRANSFORMATION_CACHE.op())));
   }
 
   @Test
@@ -200,8 +193,18 @@ class RegistryMetricsImplTest {
             RegistryMetricsImpl.METRIC_NAME_COUNTS,
             Tags.of(
                 customTag,
-                Tag.of(
-                    RegistryMetricsImpl.TAG_NAME_KEY,
-                    RegistryMetrics.EVENT.MISSING_TRANSFORMATION_INFO.event())));
+                Tag.of(TAG_NAME_KEY, RegistryMetrics.EVENT.MISSING_TRANSFORMATION_INFO.event())));
+  }
+
+  @Test
+  void testGauge() {
+    AtomicLong value = new AtomicLong(42);
+    when(meterRegistry.gauge(eq(METRIC_NAME_GAUGE), any(Tags.class), eq(value))).thenReturn(value);
+
+    var gauge = uut.gauge(CACHE_BUFFER, value);
+
+    verify(meterRegistry)
+        .gauge(METRIC_NAME_GAUGE, Tags.of(Tag.of(TAG_NAME_KEY, CACHE_BUFFER.metric())), value);
+    assertEquals(42, gauge.get());
   }
 }

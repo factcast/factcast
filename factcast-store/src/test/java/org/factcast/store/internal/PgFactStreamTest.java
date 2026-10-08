@@ -16,112 +16,261 @@
 package org.factcast.store.internal;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import ch.qos.logback.classic.Level;
 import com.google.common.eventbus.EventBus;
-import io.micrometer.core.instrument.DistributionSummary;
-import java.sql.ResultSet;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.sql.*;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
+import javax.sql.DataSource;
 import lombok.SneakyThrows;
 import org.assertj.core.api.Assertions;
-import org.factcast.core.FactStreamPosition;
-import org.factcast.core.TestFactStreamPosition;
-import org.factcast.core.subscription.SubscriptionImpl;
-import org.factcast.core.subscription.SubscriptionRequest;
+import org.factcast.core.*;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.*;
-import org.factcast.store.internal.catchup.PgCatchup;
-import org.factcast.store.internal.catchup.PgCatchupFactory;
-import org.factcast.store.internal.pipeline.ServerPipeline;
+import org.factcast.store.*;
+import org.factcast.store.internal.catchup.*;
+import org.factcast.store.internal.listen.*;
+import org.factcast.store.internal.logsuppression.*;
+import org.factcast.store.internal.pipeline.PushbackServerPipeline;
 import org.factcast.store.internal.pipeline.Signal;
-import org.factcast.store.internal.query.CurrentStatementHolder;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
-import org.factcast.store.internal.query.PgLatestSerialFetcher;
 import org.factcast.store.internal.telemetry.PgStoreTelemetry;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
-import org.mockito.quality.Strictness;
-import org.postgresql.util.PSQLException;
-import org.postgresql.util.ServerErrorMessage;
-import org.springframework.jdbc.core.JdbcTemplate;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.postgresql.util.*;
+import org.slf4j.MDC;
+import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
+@ExtendWith(MockitoExtension.class)
+@SuppressWarnings({"unused"})
 class PgFactStreamTest {
 
-  @Mock SubscriptionRequest req;
-  @Mock SubscriptionImpl sub;
-  @Mock PgSynchronizedQuery query;
-  @Mock FastForwardTarget ffwdTarget;
-  @Mock PgMetrics metrics;
-  @Mock SubscriptionRequestTO reqTo;
+  @Mock PgConnectionSupplier connectionSupplier;
+  @Mock EventBus eventBus;
   @Mock PgFactIdToSerialMapper id2ser;
-  @Mock JdbcTemplate jdbc;
-  @Mock PgLatestSerialFetcher fetcher;
-  @Mock DistributionSummary distributionSummary;
-
   @Mock PgCatchupFactory pgCatchupFactory;
-  @InjectMocks PgFactStream uut;
+  @Mock HighWaterMarkFetcher hwmFetcher;
+  @Mock PushbackServerPipeline pipeline;
+  @Mock PgStoreTelemetry telemetry;
+  @Mock StoreConfigurationProperties props;
+  @Mock SubscriptionRequestTO reqTo;
+  @Spy LogSuppression logSuppression = new DefaultLogSuppression(Level.INFO, 0, 0);
+  @Mock CatchupDataSource mds;
 
-  @BeforeEach
-  void setup() {
-    MockitoAnnotations.openMocks(this);
-  }
+  @InjectMocks @Spy PgFactStream uut;
 
-  @Test
-  public void testConnectNullParameter() {
-    assertThrows(NullPointerException.class, () -> uut.connect(null));
-  }
-
-  @SuppressWarnings({"unused", "UnstableApiUsage"})
   @Nested
-  class FastForward {
+  class WhenConnecting {
+    @Mock(answer = Answers.RETURNS_DEEP_STUBS)
+    Connection c;
 
-    @Mock JdbcTemplate jdbcTemplate;
+    @Mock private Statement s;
 
-    @Mock EventBus eventBus;
-
-    @Mock PgFactIdToSerialMapper idToSerMapper;
-
-    @Mock SubscriptionImpl subscription;
-
-    @Mock final AtomicBoolean disconnected = new AtomicBoolean(false);
-
-    @Mock PgLatestSerialFetcher fetcher;
-
-    @Mock PgCatchupFactory pgCatchupFactory;
-    @Mock FastForwardTarget ffwdTarget;
-    @Mock SubscriptionRequest request;
-    @Mock ServerPipeline pipeline;
-    @Mock PgStoreTelemetry telemetry;
-    @InjectMocks PgFactStream underTest;
+    @Mock SingleConnectionDataSource ds;
+    @Mock PgSynchronizedQuery pgSynchronizedQuery;
+    final HighWaterMark hwm = HighWaterMark.empty();
 
     @BeforeEach
     void setup() {
-      MockitoAnnotations.openMocks(this);
+      // doReturn(ds).when(uut).createSingleDataSource(reqTo);
+      lenient().doReturn(pgSynchronizedQuery).when(uut).createPgSynchronizedQuery();
+      // doNothing().when(uut).catchupAndFastForward(any(), any(), any());
+      lenient().doNothing().when(uut).follow(any(), any());
+      lenient().when(hwmFetcher.highWaterMark(any())).thenReturn(hwm);
+      lenient().when(connectionSupplier.dataSource()).thenReturn(ds);
+      lenient().when(reqTo.debugInfo()).thenReturn("foo");
+      lenient().when(uut.catchupConnectionModifiers(reqTo)).thenReturn(Collections.emptyList());
+      lenient().doReturn(mds).when(uut).createCatchupDataSource(ds, pipeline);
+      lenient().when(reqTo.debugInfo()).thenReturn("test-debug-info");
+    }
+
+    @AfterEach
+    void tearDown() {
+      logSuppression.stop();
+    }
+
+    @SneakyThrows
+    @Test
+    void catchesUpAndFollows() {
+      doNothing().when(uut).doCatchup();
+
+      uut.connect();
+
+      verify(telemetry).onConnect(reqTo);
+      verify(uut).initializeSerialToStartAfter();
+      verify(uut).doCatchup();
+      verify(uut).follow(reqTo, pgSynchronizedQuery);
+    }
+
+    @SneakyThrows
+    @Test
+    void sendsStreamInfoSignal() {
+
+      when(pgCatchupFactory.create(any(), any(), any(), any(), any()))
+          .thenReturn(
+              new PgCatchup() {
+                @Override
+                public void fastForward(long serialToStartFrom) {}
+
+                public void run() {}
+              });
+      lenient().when(uut.catchupPhaseOne(ds)).thenReturn(12L);
+
+      when(reqTo.streamInfo()).thenReturn(true);
+      uut.doCatchup();
+      verify(pipeline, times(1)).process(any(Signal.FactStreamInfoSignal.class));
+    }
+  }
+
+  @Nested
+  class WhenCreatingSingleDataSource {
+    @Mock SingleConnectionDataSource ds;
+
+    @Mock(answer = Answers.RETURNS_DEEP_STUBS)
+    Connection c;
+
+    @Mock private Statement s;
+
+    @SneakyThrows
+    @Test
+    void setsModifiers() {
+      when(reqTo.debugInfo()).thenReturn("foo");
+      when(ds.getConnection()).thenReturn(c);
+      when(c.createStatement()).thenReturn(s);
+      when(uut.catchupConnectionModifiers(reqTo))
+          .thenReturn(Collections.singletonList(ConnectionModifier.withCustomPlanForced()));
+
+      CatchupDataSource catchupDataSource = uut.createCatchupDataSource(ds, pipeline);
+      verify(c).createStatement();
+      verify(s).execute("SET plan_cache_mode='force_custom_plan'");
+    }
+  }
+
+  @Nested
+  class WhenCatchingUpAndFastForwarding {
+    @Mock SingleConnectionDataSource ds;
+    final HighWaterMark hwm = HighWaterMark.of(UUID.randomUUID(), 66L);
+
+    @BeforeEach
+    @SneakyThrows
+    void setup() {
+      lenient().doNothing().when(uut).doCatchup();
+      lenient().when(reqTo.debugInfo()).thenReturn("foo");
+      lenient().when(hwmFetcher.highWaterMark(any())).thenReturn(hwm);
+    }
+
+    @SneakyThrows
+    @Test
+    void nonEphemeralRequestCatchesUp() {
+      when(reqTo.ephemeral()).thenReturn(false);
+
+      uut.connect();
+
+      assertThat(uut.serial().get()).isZero();
+      verify(uut).doCatchup();
+    }
+
+    @SneakyThrows
+    @Test
+    void onlyFastForwardsOnEphemeralRequest() {
+      when(reqTo.ephemeral()).thenReturn(true);
+
+      uut.connect();
+
+      assertThat(uut.serial().get()).isEqualTo(hwm.targetSer());
+      verify(uut, never()).doCatchup();
+    }
+
+    @SneakyThrows
+    @Test
+    void signalsCatchup() {
+      doReturn(true).when(uut).isConnected();
+
+      uut.connect();
+
+      verify(telemetry).onCatchup(reqTo);
+      verify(pipeline, times(1)).process(any(Signal.CatchupSignal.class));
+    }
+  }
+
+  @Nested
+  class WhenFollowing {
+    @Mock PgSynchronizedQuery query;
+    @Mock QueryExecutor queryExecutor;
+
+    @Test
+    void doesNothingIfNotConnected() {
+      doReturn(false).when(uut).isConnected();
+
+      uut.follow(reqTo, query);
+
+      verifyNoInteractions(telemetry);
+      verifyNoInteractions(eventBus);
+      verifyNoInteractions(pipeline);
     }
 
     @Test
-    void noFfwdNotConnected() {
+    void registersQueryExecutorIfRequestIsContinuous() {
+      var maxBatchDelay = 0L;
+      doReturn(true).when(uut).isConnected();
+      doReturn(queryExecutor).when(uut).createQueryExecutor(reqTo, query);
+      when(reqTo.continuous()).thenReturn(true);
 
-      underTest.close();
-      underTest.fastForward(HighWaterMark.of(UUID.randomUUID(), 1000));
+      uut.follow(reqTo, query);
 
+      verify(telemetry, times(1)).onFollow(reqTo);
+      verify(eventBus, times(1)).register(queryExecutor);
+      verify(queryExecutor, times(1)).trigger();
       verifyNoInteractions(pipeline);
+    }
+
+    @Test
+    void computesDelayForConsumers() {
+      var maxBatchDelay = 100L;
+      doReturn(true).when(uut).isConnected();
+      when(reqTo.continuous()).thenReturn(true);
+
+      uut.follow(reqTo, query);
+
+      verify(uut).createQueryExecutor(eq(reqTo), eq(query));
+      verifyNoInteractions(pipeline);
+    }
+
+    @Test
+    void signalsCompleteIfRequestIsNotContinuous() {
+      doReturn(true).when(uut).isConnected();
+      when(reqTo.continuous()).thenReturn(false);
+
+      uut.follow(reqTo, query);
+
+      verify(pipeline, times(1)).process(any(Signal.CompleteSignal.class));
+      verify(telemetry, times(1)).onComplete(reqTo);
+      verifyNoInteractions(eventBus);
+    }
+  }
+
+  @Nested
+  class FastForward {
+
+    @Test
+    void noFfwdNotConnected() {
+      uut.close();
+      uut.fastForward(HighWaterMark.of(UUID.randomUUID(), 1000));
+
+      verify(pipeline, never()).process(any(Signal.class));
     }
 
     @Test
     void noFfwdIfNoTarget() {
       UUID uuid = UUID.randomUUID();
-      when(request.startingAfter()).thenReturn(Optional.of(uuid));
-      when(idToSerMapper.retrieve(uuid)).thenReturn(10L);
 
-      underTest.fastForward(HighWaterMark.empty());
+      uut.fastForward(HighWaterMark.empty());
 
       verifyNoInteractions(pipeline);
     }
@@ -129,21 +278,20 @@ class PgFactStreamTest {
     @Test
     void ffwdIfTargetAhead() {
       UUID uuid = UUID.randomUUID();
-      when(idToSerMapper.retrieve(uuid)).thenReturn(10L);
       FactStreamPosition target = TestFactStreamPosition.random();
 
       UUID targetId = UUID.randomUUID();
       long targetSer = 1000;
-      underTest.fastForward(HighWaterMark.of(targetId, targetSer));
+      uut.fastForward(HighWaterMark.of(targetId, targetSer));
 
       verify(pipeline).process(Signal.of(FactStreamPosition.of(targetId, targetSer)));
     }
 
     @Test
     void noFfwdIfTargetBehind() {
-      underTest.serial().set(10);
+      uut.serial().set(10);
 
-      underTest.fastForward(HighWaterMark.of(UUID.randomUUID(), 9));
+      uut.fastForward(HighWaterMark.of(UUID.randomUUID(), 9));
 
       verifyNoInteractions(pipeline);
     }
@@ -151,10 +299,9 @@ class PgFactStreamTest {
     @Test
     void noFfwdIfTargetBehindConsumed() {
       UUID uuid = UUID.randomUUID();
-      when(request.startingAfter()).thenReturn(Optional.empty());
-      underTest.serial().set(6);
+      uut.serial().set(6);
 
-      underTest.fastForward(HighWaterMark.of(UUID.randomUUID(), 5));
+      uut.fastForward(HighWaterMark.of(UUID.randomUUID(), 5));
 
       verifyNoInteractions(pipeline);
     }
@@ -162,7 +309,7 @@ class PgFactStreamTest {
 
   @Nested
   class FactRowCallbackHandlerTest {
-    @Mock(lenient = true)
+    @Mock(strictness = Mock.Strictness.LENIENT)
     private ResultSet rs;
 
     @Mock Supplier<Boolean> isConnectedSupplier;
@@ -170,15 +317,9 @@ class PgFactStreamTest {
     @Mock AtomicLong serial;
 
     @Mock SubscriptionRequestTO request;
-    @Mock ServerPipeline factPipeline;
-    @Mock CurrentStatementHolder statementHolder;
+    @Mock PushbackServerPipeline factPipeline;
 
     @InjectMocks private PgSynchronizedQuery.FactRowCallbackHandler uut;
-
-    @BeforeEach
-    void setup() {
-      MockitoAnnotations.openMocks(this);
-    }
 
     @Test
     @SneakyThrows
@@ -192,31 +333,6 @@ class PgFactStreamTest {
 
     @Test
     @SneakyThrows
-    void swallowsExceptionAfterCancel() {
-      when(isConnectedSupplier.get()).thenReturn(true);
-      when(statementHolder.wasCanceled()).thenReturn(true);
-
-      // it should appear open,
-      when(rs.isClosed()).thenReturn(false);
-      // until
-      PSQLException mockException = new PSQLException(new ServerErrorMessage("och"));
-      when(rs.getString(anyString())).thenThrow(mockException);
-      uut.processRow(rs);
-      verifyNoMoreInteractions(factPipeline);
-    }
-
-    @Test
-    @SneakyThrows
-    void returnsIfCancelled() {
-      when(isConnectedSupplier.get()).thenReturn(true);
-      when(statementHolder.wasCanceled()).thenReturn(true);
-      when(rs.isClosed()).thenReturn(true);
-      uut.processRow(rs);
-      verifyNoMoreInteractions(factPipeline);
-    }
-
-    @Test
-    @SneakyThrows
     void notifiesErrorWhenNotCanceled() {
       when(isConnectedSupplier.get()).thenReturn(true);
 
@@ -224,7 +340,9 @@ class PgFactStreamTest {
       when(rs.isClosed()).thenReturn(false);
       // until
       PSQLException mockException =
-          mock(PSQLException.class, withSettings().strictness(Strictness.LENIENT));
+          mock(
+              PSQLException.class,
+              withSettings().strictness(org.mockito.quality.Strictness.LENIENT));
       when(rs.getString(anyString())).thenThrow(mockException);
 
       uut.processRow(rs);
@@ -233,7 +351,7 @@ class PgFactStreamTest {
 
     @Test
     @SneakyThrows
-    void notifiesErrorWhenCanceledButUnexpectedException() {
+    void notifiesErrorWhenUnexpectedException() {
       when(isConnectedSupplier.get()).thenReturn(true);
       // it should appear open,
       when(rs.isClosed()).thenReturn(false);
@@ -250,7 +368,7 @@ class PgFactStreamTest {
       when(isConnectedSupplier.get()).thenReturn(true);
       when(rs.isClosed()).thenReturn(true);
 
-      Assertions.assertThatThrownBy(() -> uut.processRow(rs))
+      org.assertj.core.api.Assertions.assertThatThrownBy(() -> uut.processRow(rs))
           .isInstanceOf(IllegalStateException.class);
 
       verifyNoInteractions(factPipeline, serial, request);
@@ -302,47 +420,319 @@ class PgFactStreamTest {
 
   @Nested
   class WhenCatchingUp {
+    @Mock SingleConnectionDataSource ds;
+    @Mock DataSource p1Ds;
+    @Mock Connection p1Connection;
+
     @BeforeEach
     void setup() {
-      MockitoAnnotations.openMocks(this);
+      lenient().when(reqTo.debugInfo()).thenReturn("test-debug-info");
+      lenient()
+          .doReturn(HighWaterMark.of(UUID.randomUUID(), 24))
+          .when(hwmFetcher)
+          .highWaterMark(any());
+      lenient().doReturn(ds).when(connectionSupplier).dataSource();
+      lenient().doReturn(mds).when(uut).createCatchupDataSource(ds, pipeline);
+      lenient().when(uut.isConnected()).thenReturn(true);
     }
 
+    @SneakyThrows
     @Test
     void ifDisconnected_doNothing() {
-      uut = spy(uut);
       when(uut.isConnected()).thenReturn(false);
 
-      uut.catchup();
+      uut.doCatchup();
 
       verifyNoInteractions(pgCatchupFactory);
     }
 
+    @SneakyThrows
     @Test
     void ifConnected_catchupTwice() {
-      uut = spy(uut);
+      when(uut.isConnected()).thenReturn(true);
+      doReturn(12L).when(uut).catchupPhaseOne(any());
+      doNothing().when(uut).catchupPhaseTwo(any(), same(12L));
+      doReturn(mds).when(uut).createCatchupDataSource(any(), any());
+      doReturn(HighWaterMark.of(UUID.randomUUID(), 24)).when(hwmFetcher).highWaterMark(any());
+      uut.doCatchup();
+
+      verify(uut).catchupPhaseOne(any());
+      verify(uut).catchupPhaseTwo(any(), same(12L));
+    }
+
+    @SneakyThrows
+    @Test
+    void usesPrimaryDataSourceForBothPhasesByDefault() {
       PgCatchup catchup1 = mock(PgCatchup.class);
       PgCatchup catchup2 = mock(PgCatchup.class);
       when(uut.isConnected()).thenReturn(true);
-      when(pgCatchupFactory.create(any(), any(), any(), any())).thenReturn(catchup1, catchup2);
+      when(pgCatchupFactory.create(any(), any(), any(), any(), any()))
+          .thenReturn(catchup1, catchup2);
+      uut.doCatchup();
 
-      uut.catchup();
+      AtomicLong serial = uut.serial();
+      verify(pgCatchupFactory)
+          .create(
+              same(reqTo),
+              same(pipeline),
+              same(serial),
+              same(mds),
+              eq(PgCatchupFactory.Phase.PHASE_1));
+      verify(pgCatchupFactory)
+          .create(
+              same(reqTo),
+              same(pipeline),
+              same(serial),
+              same(mds),
+              eq(PgCatchupFactory.Phase.PHASE_2));
 
-      verify(catchup1, times(1)).run();
-      verify(catchup2, times(1)).run();
+      // or equivalent:
+      verify(uut).catchupPhaseOne(mds);
+      verify(uut).catchupPhaseTwo(ArgumentMatchers.argThat(p -> p.get() == mds), same(24L));
+
+      verify(catchup2).fastForward(24L);
+    }
+
+    @SneakyThrows
+    @Test
+    void phase2UsesPrimaryDataSourceAndStartsFromPhase1Highwatermark() {
+      long phase1Hwm = 123L;
+
+      PgCatchup catchup2 = mock(PgCatchup.class);
+      when(pgCatchupFactory.create(any(), any(), any(), any(), eq(PgCatchupFactory.Phase.PHASE_2)))
+          .thenReturn(catchup2);
+
+      doReturn(phase1Hwm).when(uut).catchupPhaseOne(any());
+
+      uut.doCatchup();
+
+      verify(uut)
+          .catchupPhaseTwo(
+              ArgumentMatchers.argThat(supplier -> supplier.get() == mds), eq(phase1Hwm));
+    }
+
+    @SneakyThrows
+    @Test
+    void phaseTwoForwardsToPhase1HwmThenRunsThenFfwdToInitialHwm() {
+      long phase1Hwm = 100L;
+      HighWaterMark initialHwm = HighWaterMark.of(UUID.randomUUID(), 200L);
+      PgCatchup pgCatchup2 = mock(PgCatchup.class);
+
+      when(uut.isConnected()).thenReturn(true);
+      DataSource ds = mock(DataSource.class);
+      try {
+        when(ds.getConnection()).thenReturn(mock(Connection.class));
+      } catch (SQLException e) {
+        throw new RuntimeException(e);
+      }
+      when(connectionSupplier.dataSource()).thenReturn(ds);
+      doReturn(Collections.emptyList()).when(uut).catchupConnectionModifiers(any());
+      when(hwmFetcher.highWaterMark(any())).thenReturn(initialHwm);
+      when(pgCatchupFactory.create(any(), any(), any(), any(), eq(PgCatchupFactory.Phase.PHASE_2)))
+          .thenReturn(pgCatchup2);
+      doReturn(phase1Hwm).when(uut).catchupPhaseOne(any());
+
+      uut.doCatchup();
+
+      InOrder inOrder = inOrder(pgCatchup2, uut);
+      inOrder.verify(pgCatchup2).fastForward(phase1Hwm);
+      inOrder.verify(pgCatchup2).run();
+      inOrder.verify(uut).fastForward(initialHwm);
+    }
+
+    @Nested
+    class WhenCheckingOffload {
+      @Mock OffloadDataSource offloadDataSource;
+      @Mock PgConnectionSupplier connectionSupplier;
+      @Mock EventBus eventBus;
+      @Mock PgFactIdToSerialMapper idToSerMapper;
+      @Mock PgCatchupFactory pgCatchupFactory;
+      @Mock HighWaterMarkFetcher hwmFetcher;
+      @Mock PushbackServerPipeline pipeline;
+      @Mock PgStoreTelemetry telemetry;
+      @Mock StoreConfigurationProperties props;
+      @Mock SubscriptionRequestTO reqTo;
+      @Mock SingleConnectionDataSource ds;
+      @Mock CatchupDataSource mds;
+
+      @BeforeEach
+      void setup() {
+        lenient().when(connectionSupplier.dataSource()).thenReturn(ds);
+      }
+
+      @SneakyThrows
+      @Test
+      void phase1UsesPrimaryIfOffloadIsNull() {
+        PgFactStream uut =
+            spy(
+                new PgFactStream(
+                    connectionSupplier,
+                    null,
+                    eventBus,
+                    idToSerMapper,
+                    pgCatchupFactory,
+                    hwmFetcher,
+                    pipeline,
+                    telemetry,
+                    reqTo,
+                    logSuppression));
+        lenient().doReturn(true).when(uut).isConnected();
+        lenient().doReturn(mds).when(uut).createCatchupDataSource(any(DataSource.class), any());
+        lenient().when(hwmFetcher.highWaterMark(any())).thenReturn(HighWaterMark.empty());
+        lenient().doReturn(123L).when(uut).catchupPhaseOne(any());
+        lenient().doNothing().when(uut).catchupPhaseTwo(any(), anyLong());
+
+        uut.doCatchup();
+
+        verify(uut).catchupPhaseOne(mds);
+      }
+
+      @SneakyThrows
+      @Test
+      void phase1UsesOffloadIfProvided() {
+        PgFactStream uut =
+            spy(
+                new PgFactStream(
+                    connectionSupplier,
+                    offloadDataSource,
+                    eventBus,
+                    idToSerMapper,
+                    pgCatchupFactory,
+                    hwmFetcher,
+                    pipeline,
+                    telemetry,
+                    reqTo,
+                    logSuppression));
+        lenient().doReturn(true).when(uut).isConnected();
+        lenient().doReturn(mds).when(uut).createCatchupDataSource(any(DataSource.class), any());
+        lenient().when(hwmFetcher.highWaterMark(any())).thenReturn(HighWaterMark.empty());
+        lenient().doReturn(123L).when(uut).catchupPhaseOne(any());
+        lenient().doNothing().when(uut).catchupPhaseTwo(any(), anyLong());
+
+        uut.doCatchup();
+
+        verify(uut).catchupPhaseOne(mds);
+        // Verify that createCatchupDataSource was called with offloadDataSource
+        verify(uut).createCatchupDataSource(offloadDataSource, pipeline);
+      }
+    }
+
+    @SneakyThrows
+    @Test
+    void setsMdcDuringFromScratchCatchup() {
+      doReturn(ds).when(connectionSupplier).dataSource();
+      doReturn(mds).when(uut).createCatchupDataSource(ds, pipeline);
+
+      // serial is 0 by default → from scratch
+
+      PgCatchup catchup = mock(PgCatchup.class);
+      when(pgCatchupFactory.create(any(), any(), any(), any(), any())).thenReturn(catchup);
+      when(uut.isConnected()).thenReturn(true);
+      doNothing().when(uut).catchupPhaseTwo(any(), anyLong());
+
+      doAnswer(
+              invocation -> {
+                assertThat(MDC.get(DefaultLogSuppression.MDC_KEY)).isNotNull();
+                return null;
+              })
+          .when(catchup)
+          .run();
+
+      uut.doCatchup();
+
+      assertThat(MDC.get(DefaultLogSuppression.MDC_KEY)).isNull();
+    }
+
+    @SneakyThrows
+    @Test
+    void doesNotSetMdcWhenNotFromScratch() {
+      doReturn(ds).when(connectionSupplier).dataSource();
+      doReturn(mds).when(uut).createCatchupDataSource(ds, pipeline);
+
+      lenient().when(reqTo.startingAfter()).thenReturn(Optional.of(UUID.randomUUID()));
+      uut.serial().set(42L);
+      PgCatchup catchup = mock(PgCatchup.class);
+      when(uut.isConnected()).thenReturn(true);
+      when(pgCatchupFactory.create(any(), any(), any(), any(), any())).thenReturn(catchup, catchup);
+
+      doAnswer(
+              invocation -> {
+                assertThat(MDC.get(DefaultLogSuppression.MDC_KEY)).isNull();
+                return null;
+              })
+          .when(catchup)
+          .run();
+
+      uut.doCatchup();
+    }
+
+    @SneakyThrows
+    @Test
+    void doesNotSetMdcWhenNopSuppressionUsed() {
+      doReturn(ds).when(connectionSupplier).dataSource();
+
+      uut =
+          spy(
+              new PgFactStream(
+                  connectionSupplier,
+                  eventBus,
+                  id2ser,
+                  pgCatchupFactory,
+                  hwmFetcher,
+                  pipeline,
+                  telemetry,
+                  reqTo,
+                  new NopLogSuppression()));
+
+      doReturn(mds).when(uut).createCatchupDataSource(ds, pipeline);
+      // serial is 0 → from scratch, but property is null → no MDC marking
+
+      PgCatchup catchup = mock(PgCatchup.class);
+      when(uut.isConnected()).thenReturn(true);
+      when(pgCatchupFactory.create(any(), any(), any(), any(), any())).thenReturn(catchup, catchup);
+
+      doAnswer(
+              invocation -> {
+                assertThat(MDC.get(DefaultLogSuppression.MDC_KEY)).isNull();
+                return null;
+              })
+          .when(catchup)
+          .run();
+
+      uut.doCatchup();
+    }
+
+    @SneakyThrows
+    @Test
+    void clearsMdcEvenOnException() {
+      PgCatchup catchup = mock(PgCatchup.class);
+      when(uut.isConnected()).thenReturn(true);
+      when(pgCatchupFactory.create(any(), any(), any(), any(), any())).thenReturn(catchup);
+
+      doAnswer(
+              i -> {
+                assertThat(MDC.get(DefaultLogSuppression.MDC_KEY)).isNotNull();
+                throw new RuntimeException("boom");
+              })
+          .when(catchup)
+          .run();
+
+      Assertions.assertThatThrownBy(
+              () -> {
+                uut.doCatchup();
+              })
+          .isInstanceOf(CatchupException.class);
+
+      assertThat(MDC.get(DefaultLogSuppression.MDC_KEY)).isNull();
     }
   }
 
   @Nested
   class WhenInitializingSerialToStartAfter {
-    @BeforeEach
-    void setup() {
-      MockitoAnnotations.openMocks(this);
-    }
 
     @Test
     void fromScratch() {
       when(reqTo.startingAfter()).thenReturn(Optional.empty());
-      uut.request = reqTo;
       uut.initializeSerialToStartAfter();
       assertThat(uut.serial()).hasValue(0);
     }
@@ -352,7 +742,6 @@ class PgFactStreamTest {
       UUID id = UUID.randomUUID();
       when(reqTo.startingAfter()).thenReturn(Optional.of(id));
       when(id2ser.retrieve(id)).thenReturn(123L);
-      uut.request = reqTo;
       uut.initializeSerialToStartAfter();
       assertThat(uut.serial()).hasValue(123L);
     }
@@ -362,7 +751,6 @@ class PgFactStreamTest {
       UUID id = UUID.randomUUID();
       when(reqTo.startingAfter()).thenReturn(Optional.of(id));
       when(id2ser.retrieve(id)).thenReturn(0L);
-      uut.request = reqTo;
       uut.initializeSerialToStartAfter();
       assertThat(uut.serial()).hasValue(0);
     }

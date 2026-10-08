@@ -15,11 +15,12 @@
  */
 package org.factcast.store.internal.notification;
 
-import javax.annotation.Nullable;
-import lombok.*;
+import jakarta.annotation.Nullable;
+import lombok.EqualsAndHashCode;
+import lombok.NonNull;
+import lombok.Value;
 import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.store.internal.PgConstants;
 import org.postgresql.PGNotification;
 
 @Value
@@ -27,6 +28,10 @@ import org.postgresql.PGNotification;
 @NonFinal
 @Slf4j
 @SuppressWarnings("java:S1845")
+/**
+ * note that since 0.11.3 this is no longer notified by PG, but will be created in {@link
+ * org.factcast.store.internal.listen.NudgeNotificationHandler}
+ */
 public class FactInsertionNotification extends StoreNotification {
   @Nullable String ns;
   @Nullable String type;
@@ -41,12 +46,23 @@ public class FactInsertionNotification extends StoreNotification {
     };
   }
 
+  public static FactInsertionNotification internal(String ns, String type) {
+    return new FactInsertionNotification(ns, type, null) {
+      @Override
+      public boolean distributed() {
+        return false;
+      }
+    };
+  }
+
   @Override
   public String uniqueId() {
-    if (ser == null) return null; // no dedup wanted
-    else
+    if (ser == null) {
+      return null; // no dedup wanted
+    } else {
       // the ser is enough if it is not null
-      return PgConstants.CHANNEL_FACT_INSERT + "-" + ser;
+      return "fact_insert-" + ser;
+    }
   }
 
   @Override

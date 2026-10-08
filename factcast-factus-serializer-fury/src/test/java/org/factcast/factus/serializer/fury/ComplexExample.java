@@ -19,7 +19,8 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.google.common.collect.*;
 import java.math.BigDecimal;
 import java.util.*;
-import lombok.*;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import org.apache.fury.*;
 import org.factcast.core.util.FactCastJson;
 

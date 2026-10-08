@@ -25,7 +25,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 @Target({ElementType.TYPE, ElementType.METHOD})
 @ConditionalOnProperty(
     prefix = StoreConfigurationProperties.PROPERTIES_PREFIX,
-    name = "readOnlyModeEnabled",
+    name = "read-only-mode-enabled",
     matchIfMissing = true,
     havingValue = "false")
 public @interface IsReadAndWriteEnv {}

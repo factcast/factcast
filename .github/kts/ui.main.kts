@@ -1,19 +1,19 @@
 #!/usr/bin/env kotlin
 
-@file:DependsOn("io.github.typesafegithub:github-workflows-kt:3.5.0")
+@file:DependsOn("io.github.typesafegithub:github-workflows-kt:4.0.0")
 
 @file:Repository("https://repo.maven.apache.org/maven2/")
 @file:Repository("https://bindings.krzeminski.it")
 
-@file:DependsOn("actions:checkout:v5")
-@file:DependsOn("actions:cache:v4")
-@file:DependsOn("actions:setup-java:v5")
-
+@file:DependsOn("actions:checkout:v7")
+@file:DependsOn("actions:cache:v6")
+@file:DependsOn("actions:setup-java:v6")
 
 import io.github.typesafegithub.workflows.actions.actions.Cache
 import io.github.typesafegithub.workflows.actions.actions.Checkout
 import io.github.typesafegithub.workflows.actions.actions.SetupJava
 import io.github.typesafegithub.workflows.domain.RunnerType
+import io.github.typesafegithub.workflows.domain.actions.CustomAction
 import io.github.typesafegithub.workflows.domain.triggers.PullRequest
 import io.github.typesafegithub.workflows.domain.triggers.Push
 import io.github.typesafegithub.workflows.dsl.workflow
@@ -52,10 +52,10 @@ workflow(
             ),
         )
         uses(
-            name = "JDK 17",
+            name = "JDK 21",
             action = SetupJava(
                 distribution = SetupJava.Distribution.Corretto,
-                javaVersion = "17",
+                javaVersion = "21",
             ),
         )
 
@@ -66,7 +66,20 @@ workflow(
 
         run(
             name = "Test - UI",
-            command = "cd factcast-server-ui ; ../mvnw -B -Dui failsafe:integration-test failsafe:verify",
+            command = "cd factcast-server-ui ; ../mvnw -B -Dui verify",
+        )
+
+        uses(
+            name = "Commit vaadin changes",
+            action = CustomAction(
+                actionOwner = "stefanzweifel",
+                actionName = "git-auto-commit-action",
+                actionVersion = "778341af668090896ca464160c2def5d1d1a3eb0", // v6.0.1
+                inputs = mapOf(
+                    "commit_message" to "Update vaadin files",
+                    "file_pattern" to "factcast-server-ui/src/main/bundles/prod.bundle factcast-server-ui/package.json"
+                )
+            ),
         )
     }
 }

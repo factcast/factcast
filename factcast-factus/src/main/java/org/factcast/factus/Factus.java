@@ -45,7 +45,7 @@ public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
   Logger LOGGER = LoggerFactory.getLogger(Factus.class);
   Cache<UUID, Long> serialCache = CacheBuilder.newBuilder().maximumSize(1000).build();
 
-  //// Publishing
+  // Publishing
 
   /** publishes a single event immediately */
   @Override
@@ -124,8 +124,7 @@ public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
   /** optimistically 'locks' on an aggregate. shortcut to lock(Class,UUID) */
   @SuppressWarnings("unchecked")
   default <S extends SnapshotProjection> Locked<S> withLockOn(@NonNull S snapshotProjection) {
-    if (snapshotProjection instanceof Aggregate) {
-      Aggregate aggregate = (Aggregate) snapshotProjection;
+    if (snapshotProjection instanceof Aggregate aggregate) {
       return (Locked<S>) withLockOn(aggregate.getClass(), AggregateUtil.aggregateId(aggregate));
     } else {
       return (Locked<S>) withLockOn(snapshotProjection.getClass());
@@ -175,15 +174,14 @@ public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
                       .orElseThrow(
                           () ->
                               new IllegalArgumentException(
-                                  String.format(
-                                      "Fact with id %s not found. Make sure to publish before waiting for it.",
-                                      factId))));
+                                  "Fact with id %s not found. Make sure to publish before waiting for it."
+                                      .formatted(factId))));
       FactStreamPosition currentFsp = subscribedProjection.factStreamPosition();
       // until timeout is met or the factStreamPosition is greater than the serial
       for (int i = 1; currentFsp == null || currentFsp.serial() < serial; i++) {
         if (System.currentTimeMillis() - start > timeout.toMillis()) {
           throw new TimeoutException(
-              String.format("Timeout waiting for fact %s to be consumed.", factId));
+              "Timeout waiting for fact %s to be consumed.".formatted(factId));
         }
         Thread.sleep(retryBackoffMillis.applyAsLong(i));
         currentFsp = subscribedProjection.factStreamPosition();
@@ -217,10 +215,21 @@ public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
   /**
    * Internal API: subject to change - use at your own risk
    *
+   * <p>planned for removal, use factCast().store() instead.
+   *
    * @since 0.7.10
    */
   @NonNull
-  FactStore store();
+  @Deprecated
+  default FactStore store() {
+    return factCast().store();
+  }
+
+  /**
+   * @since 0.9.14
+   */
+  @NonNull
+  FactCast factCast();
 
   /**
    * @return Current time as Instant from the factstore.
@@ -230,6 +239,6 @@ public interface Factus extends SimplePublisher, ProjectionAccessor, Closeable {
    */
   @NonNull
   default Instant currentTime() {
-    return Instant.ofEpochMilli(store().currentTime());
+    return Instant.ofEpochMilli(factCast().store().currentTime());
   }
 }

@@ -6,15 +6,12 @@
   <parent>
     <groupId>org.factcast</groupId>
     <artifactId>factcast-examples</artifactId>
-    <version>0.9.10</version>
+    <version>0.12.5-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>factcast-example-client-dynamo</artifactId>
   <name>${project.groupId}:${project.artifactId}</name>
-  <properties>
-    <maven.compiler.source>1.8</maven.compiler.source>
-    <maven.compiler.target>1.8</maven.compiler.target>
-  </properties>
+  <properties></properties>
 
   <dependencyManagement>
     <dependencies>
@@ -56,7 +53,6 @@
     <dependency>
       <groupId>org.awaitility</groupId>
       <artifactId>awaitility</artifactId>
-      <version>4.3.0</version>
     </dependency>
   </dependencies>
   <build>
@@ -71,6 +67,13 @@
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
+        <dependencies>
+          <dependency>
+            <groupId>org.springframework.boot.experimental</groupId>
+            <artifactId>spring-boot-thin-layout</artifactId>
+            <version>${spring-boot-thin-layout.version}</version>
+          </dependency>
+        </dependencies>
         <executions>
           <execution>
             <goals>

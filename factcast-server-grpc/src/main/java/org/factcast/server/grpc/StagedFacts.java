@@ -16,15 +16,17 @@
 package org.factcast.server.grpc;
 
 import com.google.common.annotations.VisibleForTesting;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.Getter;
 import lombok.NonNull;
 import org.factcast.core.Fact;
 
 public class StagedFacts {
 
   private final int maxBytes;
-  private int currentBytes;
+  @Getter private int currentBytes;
   private final List<Fact> staged = new ArrayList<>(128);
 
   /**
@@ -50,8 +52,8 @@ public class StagedFacts {
 
   @VisibleForTesting
   int byteSizeOf(@NonNull Fact fact) {
-    return fact.jsonPayload().length()
-        + fact.jsonHeader().length()
+    return fact.jsonPayload().getBytes(StandardCharsets.UTF_8).length
+        + fact.jsonHeader().getBytes(StandardCharsets.UTF_8).length
         + 8; // to compensate for overhead of protobuf
   }
 

@@ -24,15 +24,15 @@ import java.util.concurrent.*;
 import javax.sql.DataSource;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.test.FactCastIntegrationTestExecutionListener.ProxiedEndpoint;
 import org.factcast.test.toxi.FactCastProxy;
 import org.factcast.test.toxi.PostgresqlProxy;
 import org.slf4j.LoggerFactory;
 import org.springframework.test.context.TestContext;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.containers.ToxiproxyContainer;
+import org.testcontainers.containers.*;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 
 @Slf4j
 public class BaseIntegrationTestExtension implements FactCastIntegrationTestExtension {
@@ -51,7 +51,19 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
   @Override
   @SneakyThrows
   public void wipeExternalDataStore(TestContext ctx) {
-    erasePostgres(ctx.getApplicationContext().getBean(DataSource.class));
+    final DataSource dataSource = ctx.getApplicationContext().getBean(DataSource.class);
+    // there are few ITs that work with MySQL/Oracle
+    if (isPostgres(dataSource)) {
+      erasePostgres(dataSource);
+    }
+  }
+
+  public boolean isPostgres(DataSource dataSource) {
+    try (Connection c = dataSource.getConnection()) {
+      return "PostgreSQL".equalsIgnoreCase(c.getMetaData().getDatabaseProductName());
+    } catch (Exception e) {
+      throw new IllegalStateException("Failed to inspect DataSource", e);
+    }
   }
 
   @Override
@@ -76,29 +88,32 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
             key -> {
               String dbName = "db" + config.hashCode();
 
-              PostgreSQLContainer<?> db =
-                  new PostgreSQLContainer<>("postgres:" + config.postgresVersion())
+              PostgreSQLContainer db =
+                  new PostgreSQLContainer("postgres:" + config.postgresVersion())
                       .withDatabaseName("fc")
                       .withUsername("fc")
-                      .withPassword(UUID.randomUUID().toString())
+                      // changed to static pwd, so that we could easily access the DB during
+                      // debugging
+                      .withPassword("fc")
                       .withNetworkAliases(dbName)
                       .withNetwork(FactCastIntegrationTestExecutionListener._docker_network);
               db.start();
-              ToxiproxyContainer.ContainerProxy pgProxy =
-                  FactCastIntegrationTestExecutionListener.createProxy(db, PG_PORT);
+              ProxiedEndpoint pgProxy =
+                  FactCastIntegrationTestExecutionListener.createProxy("postgres", db, PG_PORT);
 
               String jdbcUrl =
                   "jdbc:postgresql://"
-                      + FactCastIntegrationTestExecutionListener.TOXIPROXY_NETWORK_ALIAS
+                      + pgProxy.toxiProxyHost()
                       + ":"
-                      + pgProxy.getOriginalProxyPort()
+                      + pgProxy.toxiProxyPort()
                       + "/"
                       + db.getDatabaseName();
+              String fcName = "fc" + config.hashCode();
               GenericContainer<?> fc =
                   new GenericContainer<>("factcast/factcast:" + config.factcastVersion())
                       .withExposedPorts(FC_PORT)
                       .withFileSystemBind(config.configDir(), "/config/")
-                      .withEnv("grpc_server_port", String.valueOf(FC_PORT))
+                      .withEnv("spring_grpc_server_port", String.valueOf(FC_PORT))
                       .withEnv(
                           "factcast_security_enabled", String.valueOf(config.securityEnabled()))
                       .withEnv("factcast_grpc_bandwidth_disabled", "true")
@@ -106,16 +121,19 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
                       .withEnv("spring_datasource_url", jdbcUrl)
                       .withEnv("spring_datasource_username", db.getUsername())
                       .withEnv("spring_datasource_password", db.getPassword())
+                      .withEnv("logging.level.org.factcast", config.serverLogLevel().name())
                       .withNetwork(FactCastIntegrationTestExecutionListener._docker_network)
+                      .withNetworkAliases(fcName)
                       .dependsOn(db)
                       .withLogConsumer(
                           new Slf4jLogConsumer(
                               LoggerFactory.getLogger(AbstractFactCastIntegrationTest.class)))
                       .waitingFor(
                           new HostPortWaitStrategy().withStartupTimeout(Duration.ofSeconds(180)));
+
               fc.start();
-              ToxiproxyContainer.ContainerProxy fcProxy =
-                  FactCastIntegrationTestExecutionListener.createProxy(fc, FC_PORT);
+              ProxiedEndpoint fcProxy =
+                  FactCastIntegrationTestExecutionListener.createProxy("factcast", fc, FC_PORT);
 
               return new FactCastIntegrationTestExecutionListener.Containers(
                   db,
@@ -125,9 +143,9 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
                   jdbcUrl);
             });
 
-    ToxiproxyContainer.ContainerProxy fcProxy = containers.fcProxy().get();
-    String address = "static://" + fcProxy.getContainerIpAddress() + ":" + fcProxy.getProxyPort();
-    System.setProperty("grpc.client.factstore.address", address);
+    ProxiedEndpoint fcProxy = containers.fcProxy().get();
+    String address = "static://" + fcProxy.host() + ":" + fcProxy.port();
+    System.setProperty("spring.grpc.client.channel.factstore.target", address);
 
     System.setProperty("spring.datasource.url", containers.db().getJdbcUrl());
     System.setProperty("spring.datasource.username", containers.db().getUsername());
@@ -147,9 +165,10 @@ public class BaseIntegrationTestExtension implements FactCastIntegrationTestExte
               + "    FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = current_schema()"
               + " AND (NOT ((tablename like 'databasechangelog%') OR (tablename like 'qrtz%') OR"
               + " (tablename = 'schedlock')))) LOOP\n"
-              + "        EXECUTE 'TRUNCATE TABLE ' || quote_ident(r.tablename);\n"
+              + "        EXECUTE 'TRUNCATE TABLE ' || quote_ident(r.tablename) || ' cascade';\n"
               + "    END LOOP;\n"
               + "END $$;");
+      st.execute("NOTIFY factcast_cache_clear");
     }
   }
 

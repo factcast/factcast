@@ -28,8 +28,8 @@ public class LockedOperationAbortedException extends RuntimeException {
 
   public static LockedOperationAbortedException wrap(@NonNull Throwable e) {
 
-    if (e instanceof LockedOperationAbortedException) {
-      return (LockedOperationAbortedException) e;
+    if (e instanceof LockedOperationAbortedException exception) {
+      return exception;
     } else {
       return new LockedOperationAbortedException(e);
     }

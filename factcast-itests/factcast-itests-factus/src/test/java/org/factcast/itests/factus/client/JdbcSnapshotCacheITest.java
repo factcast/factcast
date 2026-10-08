@@ -27,7 +27,6 @@ import org.springframework.test.context.ContextConfiguration;
 @ContextConfiguration(classes = {TestFactusApplication.class, JdbcSnapshotCacheConfiguration.class})
 @DirtiesContext
 public class JdbcSnapshotCacheITest extends SnapshotCacheTest {
-
   @Autowired
   public JdbcSnapshotCacheITest(SnapshotCache repository) {
     super(repository);
