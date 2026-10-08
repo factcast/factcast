@@ -6,8 +6,7 @@
 == Authentication & Authorization
 
 In order to control access, the FactCast server supports a very basic way of defining which client is allowed to do what.
-The security feature is enabled by default, but can be disabled (for example, for integration tests) by
-setting `factcast.security.enabled` to `false`.
+The security feature is enabled by default, but can be disabled (for example, for integration tests) by setting `factcast.security.enabled` to `false`.
 
 In order to make use of the security features, a bean of type `FactCastAccessConfiguration` must be defined.
 This is done either by providing one in your FactCast server's application context, or by using the dead-simple approach of putting a
@@ -29,8 +28,8 @@ Do not store credentials in plaintext like this on production systems.
 Provide them via a layer of your Docker container, pull them from the AWS Parameter Store, etc.
 
 [NOTE]
-If FactCast misses a secret for a configured account on startup, it does not fail to start up but logs a warning.
-The same applies if a secret is defined for a non-existing account.
+If a configured account has no secret, FactCast logs an error at startup and continues running.
+This also applies if there is a secret defined for a non-existing account.
 
 === Example `factcast-access.json`
 
@@ -116,11 +115,10 @@ for an example.
 
 If you don't want to configure your passwords via properties, you can provide either a custom `FactCastSecretProperties`
 bean or an implementation of a `UserDetailsService`.
-That's a simple interface coming from Spring Security, which provides a mapping method from `username` to user. In our
-case, it has to return a `FactCastUser`.
+That's a simple interface coming from Spring Security, which provides a mapping method from `username` to user.
+In our case, it has to return a `FactCastUser`.
 
-If you want to externalize secret loading but keep the `factcast-access.json` file for managing authorization, an
-implementation of such a `UserDetailsService` could look like this:
+If you want to externalize secret loading but keep the `factcast-access.json` file for managing authorization, an implementation of such a `UserDetailsService` could look like this:
 
 [source,java]
 ----
