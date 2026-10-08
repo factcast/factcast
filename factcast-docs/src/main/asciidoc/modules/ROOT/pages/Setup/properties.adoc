@@ -74,6 +74,7 @@
 |factcast.store.offload.jndi-name |Same as any DataSource |---
 |factcast.store.offload.generate-unique-name |Same as any DataSource |---
 |factcast.store.offload.name |Same as any DataSource |---
+|factcast.store.state-query-backward-scan-window |Controls the range of recent serial positions searched backwards for the latest matching fact when creating a state token. If no match is found within this window, the query falls back to filtering via GIN indexes. This allows quick lookups for recent changes while limiting expensive backwards searches when matching facts are rare or absent. |20000
 |===
 
 ---

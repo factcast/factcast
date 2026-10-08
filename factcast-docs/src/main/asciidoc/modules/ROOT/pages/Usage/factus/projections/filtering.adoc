@@ -91,6 +91,13 @@ Note that you could also define a dot-separated path like 'references.recommende
 EventObject.
 The use of Array expressions is not allowed here.
 
+The path is matched against the fact's JSON payload on the server. On the client, it is validated against the
+properties serialized by Jackson for the handler's `EventObject` parameter when the aggregate is first fetched.
+An invalid path therefore fails early instead of silently matching no events.
+
+Combining `@FilterByAggIdProperty` with `@HandlerFor` throws an exception, because there is no `EventObject` against
+which the path can be validated. Use a typed `@Handler` for this filter.
+
 This filter is particularly useful, if you want to process events that reference your Aggregate, but only if your
 Aggregate has a particular role.
 
