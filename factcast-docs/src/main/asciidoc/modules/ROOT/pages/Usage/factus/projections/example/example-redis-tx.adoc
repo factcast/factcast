@@ -1,8 +1,6 @@
 = Redis Transactional Projection Example
 :icons: font
 
-
-
 An example for a projection that handles _UserCreated_ and _UserDeleted_ events.
 It solves the same problem as the xref:ROOT:Usage/factus/projections/example/example-spring-tx.adoc[Spring transactional projection example].
 However, it uses Redis as our data store and https://github.com/redisson/redisson[Redisson] as the access API.

@@ -1,8 +1,6 @@
 = Properties
 :icons: font
 
-
-
 == Schema Registry
 
 [cols="1,1,1", options="header"]
@@ -32,6 +30,7 @@
 ---
 
 [#performance-reliability]
+
 == Performance / Reliability
 
 [cols="1,1,1", options="header"]
@@ -82,6 +81,7 @@
 == Snapshots
 
 [#inmem-snapshots]
+
 === InMem-Snapshots
 
 [cols="1,1,1", options="header"]
@@ -91,6 +91,7 @@
 |===
 
 [#inmemanddisk-snapshots]
+
 === InMemAndDisk-Snapshots
 
 [cols="1,1,1", options="header"]
@@ -101,6 +102,7 @@
 |===
 
 [#redissnapshots]
+
 === RedisSnapshots
 
 [cols="1,1,1", options="header"]
@@ -110,6 +112,7 @@
 |===
 
 [#jdbc-snapshots]
+
 === JDBC-Snapshots
 
 [cols="1,1,1", options="header"]
@@ -121,6 +124,7 @@
 |===
 
 [#mongodb-snapshots]
+
 === MongoDB-Snapshots
 
 [cols="1,1,1", options="header"]
@@ -165,6 +169,7 @@ spring.grpc.client.channel.factstore.keepalive.without-calls=true
 Further details can be found here : `org.springframework.boot.grpc.client.autoconfigure.GrpcClientProperties`.
 
 [#factcast-client-specific]
+
 === FactCast Client Specific
 
 [cols="1,1,1,1", options="header"]
@@ -207,6 +212,7 @@ spring.grpc.server.keep-alive.permit-time=100
 ---
 
 [#blacklist]
+
 == Blacklist
 
 [cols="1,1,1,1", options="header"]

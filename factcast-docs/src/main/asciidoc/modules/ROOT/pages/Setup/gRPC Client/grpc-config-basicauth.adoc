@@ -2,7 +2,6 @@
 :icons: font
 :stable: grpc-config-basicauth
 
-
 === Using Basic Auth from a Client
 
 From a client's perspective, all you need to do is to provide credentials. Once the credentials are configured, they are

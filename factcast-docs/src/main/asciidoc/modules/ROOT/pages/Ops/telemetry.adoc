@@ -1,8 +1,6 @@
 = Telemetry
 :icons: font
 
-
-
 Starting from factcast version 0.7.9, you can extend your server implementation to listen for internal telemetry events.
 This can be useful for monitoring and debugging purposes.
 

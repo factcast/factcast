@@ -10,7 +10,6 @@ We suggest to check out the "Projections" section of the xref:ROOT:Usage/factus/
 before delving into this guide.
 ====
 
-
 == Problem Statement
 
 Factus and its projections follow the CQRS Pattern, which - next to plenty of other advantages - provides

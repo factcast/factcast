@@ -1,8 +1,6 @@
 = Postgres
 :icons: font
 
-
-
 == General Tips
 
 === Optimize GIN Indexes Updates

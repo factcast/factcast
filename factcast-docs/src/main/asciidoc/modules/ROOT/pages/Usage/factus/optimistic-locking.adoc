@@ -1,8 +1,6 @@
 = Optimistic Locking
 :icons: font
 
-
-
 To make business decisions, you need a model to base those decisions on. In most cases, it is important that this
 model is consistent with the facts published at the time of the decision and that the model is up-to-date.
 

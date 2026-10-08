@@ -1,8 +1,6 @@
 = Testing
 :icons: font
 
-
-
 Factcast comes with a module `factcast-test` that includes a Junit5 extension that you can use to wipe the postgres database clean between integration tests.
 The idea is, that in integration tests, you may want to start every test method with no preexisting events.
 Assuming you use the excellent TestContainers library in order to create & manage a postgres database in integration tests, the extension will find it and wipe it clean.

@@ -60,8 +60,6 @@ Migrate those by hand and make the string equal to what `String.valueOf(oldValue
 Finally, remove the OpenRewrite plugin configuration (or just the `activeRecipes` entry) from your `pom.xml` and run
 `mvn clean verify`.
 
-
-
 == Upgrading to 0.11.0
 
 === `Projection.postprocess` Now Takes a `Collection` Instead of a `List`

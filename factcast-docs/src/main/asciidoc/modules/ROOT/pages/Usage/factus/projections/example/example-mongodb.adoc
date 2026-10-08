@@ -1,7 +1,6 @@
 = MongoDB Projection Example
 :icons: font
 
-
 An example for a projection that handles _UserCreated_ and _UserDeleted_ events using MongoDB as datastore.
 Currently, for MongoDB no transactionally aware projection implementation is provided.
 

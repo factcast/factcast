@@ -1,8 +1,6 @@
 = Deployment Options
 :icons: font
 
-
-
 The FactCast Server-UI can be deployed in different ways:
 
 === Option 1: As Part of the FactCast Server

@@ -1,8 +1,6 @@
 = Motivation
 :icons: font
 
-
-
 == Event Sourcing
 
 is a great pattern in many ways for technical as well as business reasons. There are a bunch of exciting EventStores, CEP and CQRS Frameworks / Templates out there.

@@ -1,8 +1,6 @@
 = Contribution
 :icons: font
 
-
-
 Any Contribution, be it code, issues, docs etc. are more than welcome if they comply with ASL2. Please head over to
 https://github.com/factcast/factcast[GitHub] and help!
 

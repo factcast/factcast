@@ -1,8 +1,6 @@
 = Metrics
 :icons: font
 
-
-
 Like xref:ROOT:Ops/metrics.adoc[the FactCast server], also Factus makes use
 of https://micrometer.io/[micrometer.io] metrics.
 

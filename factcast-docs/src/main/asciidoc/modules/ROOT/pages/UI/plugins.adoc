@@ -1,8 +1,6 @@
 = Plugins
 :icons: font
 
-
-
 FactCast Server UI is extensible using Plugins. Those plugins can be handy for enriching the plain fact information you
 see.
 

@@ -633,6 +633,20 @@
               <configFile>dbeaver.properties</configFile>
             </dbeaver>
           </sql>
+          <asciidoc>
+            <includes>
+              <include>**/*.adoc</include>
+            </includes>
+            <excludes>
+              <exclude>**/target/**</exclude>
+            </excludes>
+            <!-- Use the native formatter because Prettier has no AsciiDoc parser. -->
+            <adocfmt>
+              <version>0.3.1</version>
+              <oneSentencePerLine>false</oneSentencePerLine>
+              <formatTables>false</formatTables>
+            </adocfmt>
+          </asciidoc>
           <formats>
             <format>
               <!-- <excludes> <exclude>**/documentation-docsy/**</exclude> <exclude>**/output/public/**</exclude>
@@ -654,22 +668,6 @@
               <trimTrailingWhitespace></trimTrailingWhitespace>
               <endWithNewline></endWithNewline>
             </format>
-
-            <format>
-              <includes>
-                <include>factcast-site/documentation-docsy/content/**/*.md</include>
-                <include>/*.md</include>
-                <include>factcast-server-ui/frontend/**/*</include>
-              </includes>
-              <excludes>
-                <exclude>factcast-server-ui/frontend/generated/**/*</exclude>
-              </excludes>
-              <prettier>
-                <config>
-                  <useTabs>true</useTabs>
-                </config>
-              </prettier>
-            </format>
           </formats>
 
         </configuration>
@@ -690,7 +688,6 @@
         </property>
       </activation>
       <modules>
-        <module>factcast-site</module>
         <module>factcast-docs</module>
         <module>factcast-docker</module>
         <module>factcast-docker-dep</module>

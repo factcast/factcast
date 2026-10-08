@@ -1,8 +1,6 @@
 = Introduction
 :icons: font
 
-
-
 === Motivation
 
 If Factus is optional, why does it exist in the first place, you might ask.
@@ -65,4 +63,3 @@ Factus ships with a default serializer for `EventObject`. It uses Jackson and bu
 If, for some reason, you want to redefine this, you can use/ provide your own EventSerializer.
 
 Refer to xref:ROOT:Usage/factus/setup.adoc[Factus Setup] to learn how you can integrate Factus with your project.
-

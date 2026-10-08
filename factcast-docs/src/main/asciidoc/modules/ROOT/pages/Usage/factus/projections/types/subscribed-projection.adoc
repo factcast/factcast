@@ -1,8 +1,6 @@
 = Subscribed Projection
 :icons: font
 
-
-
 image::ph_s.png[, align="center"]
 
 The `SnapshotProjection` and `ManagedProjection` have one thing in common:

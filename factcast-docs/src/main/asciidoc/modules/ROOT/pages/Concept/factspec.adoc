@@ -1,8 +1,6 @@
 = Fact Specification
 :icons: font
 
-
-
 When consumers subscribe to a Stream of Events, it has to express, which Events he wants to receive. The more precise this can be done, the less resources like bandwidth, CPU-Time etc. are wasted.
 
 As discussed xref:ROOT:Concept/factstreams.adoc[here], there is more than one way to do it. We decided to go for just-in-time filtering in FactCast. Here is why:
@@ -29,6 +27,7 @@ In order to match with a high selectivity, this query uses some (in parts option
 In many cases, this filtering is already sufficient to reduce the number of misses (facts that are sent to the consumer, but discarded there) to either zero or something very near.
 
 [#specification]
+
 === Specification
 
 In order to efficiently select matching facts from the Database, a consumer should provide precise information about which facts match, and which do not.

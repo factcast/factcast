@@ -1,8 +1,6 @@
 = Docker
 :icons: font
 
-
-
 == Building
 
 In order to build a standard docker container from source, enter the project **factcast-docker** and run:

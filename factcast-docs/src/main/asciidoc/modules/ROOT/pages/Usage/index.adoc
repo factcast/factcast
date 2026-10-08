@@ -1,8 +1,6 @@
 = API
 :icons: font
 
-
-
 == Choose Your Weapon: FactCast vs Factus
 
 One main design goal of FactCast is to be non-intrusive.

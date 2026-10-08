@@ -1,8 +1,6 @@
 = Report Storage
 :icons: font
 
-
-
 The FactCast-Server UI comes with a report page that saves the result of your query for future usage. Generated reports
 are only visible for the user that created them and can be downloaded and deleted at any time.
 

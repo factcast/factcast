@@ -1,8 +1,6 @@
 = Managed Projection
 :icons: font
 
-
-
 image::ph_m.png[, align="center"]
 
 As we have learnt, SnapshotProjections are created from scratch or from Snapshots, whenever you fetch them.
