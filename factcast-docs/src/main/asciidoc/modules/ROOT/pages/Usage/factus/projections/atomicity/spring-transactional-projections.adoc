@@ -1,8 +1,6 @@
 = Spring Transactional
 :icons: font
 
-
-
 == Broad Data-Store Support
 
 Spring comes with https://docs.spring.io/spring-framework/docs/current/reference/html/data-access.html#transaction[extensive support for transactions]

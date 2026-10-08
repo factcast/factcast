@@ -1,7 +1,6 @@
 = Fact Stream Design
 :icons: font
 
-
 If you are familiar with other products that store facts, you might be familiar with the concept of a fact stream. In
 most solutions, the consumer subscribes to particular stream of facts and then picks those of interest for him.
 

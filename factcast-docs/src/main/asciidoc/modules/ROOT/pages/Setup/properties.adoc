@@ -1,8 +1,6 @@
 = Properties
 :icons: font
 
-
-
 == Schema Registry
 
 [cols="1,1,1", options="header"]
@@ -32,6 +30,7 @@
 ---
 
 [#performance-reliability]
+
 == Performance / Reliability
 
 [cols="1,1,1", options="header"]
@@ -74,6 +73,7 @@
 |factcast.store.offload.jndi-name |Same as any DataSource |---
 |factcast.store.offload.generate-unique-name |Same as any DataSource |---
 |factcast.store.offload.name |Same as any DataSource |---
+|factcast.store.state-query-backward-scan-window |Controls the range of recent serial positions searched backwards for the latest matching fact when creating a state token. If no match is found within this window, the query falls back to filtering via GIN indexes. This allows quick lookups for recent changes while limiting expensive backwards searches when matching facts are rare or absent. |20000
 |===
 
 ---
@@ -81,6 +81,7 @@
 == Snapshots
 
 [#inmem-snapshots]
+
 === InMem-Snapshots
 
 [cols="1,1,1", options="header"]
@@ -90,6 +91,7 @@
 |===
 
 [#inmemanddisk-snapshots]
+
 === InMemAndDisk-Snapshots
 
 [cols="1,1,1", options="header"]
@@ -100,6 +102,7 @@
 |===
 
 [#redissnapshots]
+
 === RedisSnapshots
 
 [cols="1,1,1", options="header"]
@@ -109,6 +112,7 @@
 |===
 
 [#jdbc-snapshots]
+
 === JDBC-Snapshots
 
 [cols="1,1,1", options="header"]
@@ -120,6 +124,7 @@
 |===
 
 [#mongodb-snapshots]
+
 === MongoDB-Snapshots
 
 [cols="1,1,1", options="header"]
@@ -164,6 +169,7 @@ spring.grpc.client.channel.factstore.keepalive.without-calls=true
 Further details can be found here : `org.springframework.boot.grpc.client.autoconfigure.GrpcClientProperties`.
 
 [#factcast-client-specific]
+
 === FactCast Client Specific
 
 [cols="1,1,1,1", options="header"]
@@ -206,6 +212,7 @@ spring.grpc.server.keep-alive.permit-time=100
 ---
 
 [#blacklist]
+
 == Blacklist
 
 [cols="1,1,1,1", options="header"]

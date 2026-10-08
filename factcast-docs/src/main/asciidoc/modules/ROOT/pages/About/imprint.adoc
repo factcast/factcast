@@ -1,8 +1,6 @@
 = Legal Notice / Impressum (German)
 :icons: font
 
-
-
 == Angaben gemäß § 5 TMG
 
 [source,code]

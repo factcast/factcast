@@ -1,8 +1,6 @@
 = Tail Indexing
 :icons: font
 
-
-
 The _tail index_ is a performance optimization for FactCast which speeds up queries
 against the end (the _tail_) of the fact log.
 

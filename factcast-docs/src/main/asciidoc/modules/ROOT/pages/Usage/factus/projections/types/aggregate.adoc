@@ -1,8 +1,6 @@
 = Aggregate
 :icons: font
 
-
-
 image::ph_a.png[, align="center"]
 
 Another special flavor of a Snapshot Projection is an Aggregate. An Aggregate extends the notion on Snapshot Projection

@@ -80,14 +80,12 @@
 **** xref:Usage/factus/projections/callbacks.adoc[Callbacks]
 **** xref:Usage/factus/projections/filtering.adoc[Filtering]
 
-
 *** xref:Usage/factus/handler-parameters.adoc[Handler Parameters]
 *** xref:Usage/factus/optimistic-locking.adoc[Optimistic Locking]
 *** xref:Usage/factus/testing.adoc[Testing]
 *** xref:Usage/factus/metrics.adoc[Metrics]
 *** xref:Usage/factus/bootstrapping.adoc[Bootstrapping]
 *** xref:Usage/factus/tips.adoc[Tips]
-
 
 * xref:UI/index.adoc[UI]
 ** xref:UI/index.adoc[Overview]
@@ -96,7 +94,6 @@
 ** xref:UI/report_storage.adoc[Report Storage]
 ** xref:UI/security.adoc[Security]
 ** xref:UI/plugins.adoc[Plugins]
-
 
 * xref:Ops/index.adoc[Ops]
 ** xref:Ops/index.adoc[Overview]
@@ -111,4 +108,3 @@
 ** xref:Guides/read-after-write.adoc[Read After Write]
 ** xref:Guides/testing.adoc[Testing]
 ** xref:Guides/extend-projection-db-support.adoc[Extend Projection DB Support]
-

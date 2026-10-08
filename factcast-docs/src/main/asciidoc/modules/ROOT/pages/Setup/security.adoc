@@ -1,8 +1,6 @@
 = Security
 :icons: font
 
-
-
 == Authentication & Authorization
 
 In order to control access, the FactCast server supports a very basic way of defining which client is allowed to do what.

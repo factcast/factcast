@@ -1,8 +1,6 @@
 = Projection Bootstrapping
 :icons: font
 
-
-
 Imagine the following scenario:
 You have a projection with externalized state (e.g., in a relational database) that processes a large number
 of events and supports a user-facing frontend feature (e.g., a reporting table). If you now want to extend this projection
