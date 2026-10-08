@@ -30,8 +30,8 @@ The catch with this simple approach of course is, _that credentials are stored i
 but remember it is just a dead-simple approach to get you started. Nobody says, that you cannot provide this information
 with a layer of your docker container, pull it from the AWS Parameter Store etc...
 
-If FactCast misses a secret for a configured account on startup, it will stop immediately. On the other hand, if there
-is a secret defined for a non-existing account, this is just logged (WARNING-Level).
+If a configured account has no secret, FactCast logs an error at startup and continues running. Authentication for that
+account fails. A secret defined for an account that does not exist is logged as a warning.
 
 The contents of factcast-access.json might look like:
 
