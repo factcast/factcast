@@ -24,6 +24,7 @@ import java.sql.*;
 import java.time.Duration;
 import java.util.concurrent.atomic.*;
 import lombok.*;
+import org.factcast.core.subscription.FactStreamHorizon;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.*;
@@ -59,7 +60,15 @@ class PgChunkedWithHoldCursorCatchupTest {
     lenient().when(ds.getConnection()).thenReturn(connection);
     underTest =
         Mockito.spy(
-            new PgChunkedWithHoldCursorCatchup(props, metrics, req, pipeline, serial, ds, phase));
+            new PgChunkedWithHoldCursorCatchup(
+                props,
+                metrics,
+                req,
+                pipeline,
+                serial,
+                new FactStreamHorizon(null, Long.MAX_VALUE, 0),
+                ds,
+                phase));
   }
 
   @Nested
@@ -200,11 +209,13 @@ class PgChunkedWithHoldCursorCatchupTest {
     @SneakyThrows
     void testDeclare() {
       when(connection.prepareStatement(anyString())).thenReturn(ps);
-      when(queryBuilder.createStatementSetter(any())).thenReturn(pss);
+      when(queryBuilder.createBoundedStatementSetter(any(), anyLong())).thenReturn(pss);
 
       PgChunkedWithHoldCursorCatchup.Cursor cursor = underTest.new Cursor(1000);
-      cursor.declare(queryBuilder, new AtomicLong(0));
+      cursor.declare(queryBuilder, new AtomicLong(0), new FactStreamHorizon(null, 42, 0));
 
+      verify(queryBuilder).createBoundedSQL();
+      verify(queryBuilder).createBoundedStatementSetter(any(AtomicLong.class), eq(42L));
       verify(ps).execute();
       verify(pss).setValues(ps);
     }

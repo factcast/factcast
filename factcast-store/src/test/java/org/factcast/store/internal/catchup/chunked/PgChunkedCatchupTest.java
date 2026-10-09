@@ -63,10 +63,14 @@ class PgChunkedCatchupTest {
   @Mock SingleConnectionDataSource ds;
   @Mock PgCatchupFactory.Phase phase;
 
-  @Spy @InjectMocks PgChunkedCatchup underTest;
+  PgChunkedCatchup underTest;
+  private final FactStreamHorizon horizon = new FactStreamHorizon(null, Long.MAX_VALUE, 0);
 
   @BeforeEach
-  void setup() {}
+  void setup() {
+    underTest =
+        spy(new PgChunkedCatchup(props, metrics, req, pipeline, serial, horizon, ds, phase));
+  }
 
   @Nested
   class WhenRunning {
@@ -78,7 +82,14 @@ class PgChunkedCatchupTest {
       var uut =
           spy(
               new PgChunkedCatchup(
-                  props, metrics, req, pipeline, serial, ds, PgCatchupFactory.Phase.PHASE_1));
+                  props,
+                  metrics,
+                  req,
+                  pipeline,
+                  serial,
+                  horizon,
+                  ds,
+                  PgCatchupFactory.Phase.PHASE_1));
 
       doNothing().when(uut).fetch(any());
       uut.run();
@@ -91,7 +102,14 @@ class PgChunkedCatchupTest {
       var uut =
           spy(
               new PgChunkedCatchup(
-                  props, metrics, req, pipeline, serial, ds, PgCatchupFactory.Phase.PHASE_1));
+                  props,
+                  metrics,
+                  req,
+                  pipeline,
+                  serial,
+                  horizon,
+                  ds,
+                  PgCatchupFactory.Phase.PHASE_1));
 
       doNothing().when(uut).fetch(any());
 
@@ -186,7 +204,9 @@ class PgChunkedCatchupTest {
       verify(metrics).timer(StoreMetrics.OP.RESULT_STREAM_START, true);
       verify(metrics).startSample();
       verify(sample).stop(timer);
-      verify(jdbc).update(anyString(), any(PreparedStatementSetter.class));
+      ArgumentCaptor<String> sql = ArgumentCaptor.forClass(String.class);
+      verify(jdbc).update(sql.capture(), any(PreparedStatementSetter.class));
+      assertThat(sql.getValue()).contains("ser<=?");
     }
   }
 

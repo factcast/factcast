@@ -138,15 +138,17 @@ class QueryCancellationIntegrationTest {
             @NonNull SubscriptionRequestTO request,
             @NonNull PushbackServerPipeline pipeline,
             @NonNull AtomicLong serial,
+            @NonNull FactStreamHorizon horizon,
             @NonNull SingleConnectionDataSource ds,
             @NonNull Phase phase) {
-          return new PgCursorCatchup(props, metrics, request, pipeline, serial, ds, phase) {
+          return new PgCursorCatchup(
+              props, metrics, request, pipeline, serial, horizon, ds, phase) {
 
             @Override
             protected PgQueryBuilder createPgQueryBuilder(List<FactSpec> specs) {
               return new PgQueryBuilder(specs) {
-                public String createSQL() {
-                  var sql = super.createSQL();
+                public String createBoundedSQL() {
+                  var sql = super.createBoundedSQL();
 
                   // slow down the query
                   int insertionPoint = sql.indexOf("WHERE");

@@ -773,3 +773,43 @@ databaseChangeLog:
             relativeToChangelogFile: true
             splitStatements: false
             stripComments: true
+
+  - changeSet:
+      id: safe-horizon
+      author: uweschaefer
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue4976/create_factstream_horizon.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+  - changeSet:
+      id: append-only-notification-tw-index
+      author: uweschaefer
+      runInTransaction: false
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue4976/create_notification_tw_index.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+
+  - changeSet:
+      id: append-only-fact-notification-trigger
+      author: uweschaefer
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue4976/drop_notification_dedup_index.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue4976/append_only_fact_notification_trigger.sql
+            relativeToChangelogFile: true
+            splitStatements: false
+            stripComments: true

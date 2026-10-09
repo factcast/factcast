@@ -29,6 +29,8 @@ import org.factcast.store.registry.validation.schema.SchemaStore;
 @Slf4j
 public class HttpSchemaRegistry extends AbstractSchemaRegistry {
 
+  private final HttpStartupArchiveFetcher startupArchiveFetcher;
+
   public HttpSchemaRegistry(
       @NonNull URL baseUrl,
       @NonNull SchemaStore schemaStore,
@@ -39,11 +41,36 @@ public class HttpSchemaRegistry extends AbstractSchemaRegistry {
     this(
         schemaStore,
         transformationStore,
-        new HttpIndexFetcher(baseUrl, registryMetrics),
-        new HttpRegistryFileFetcher(baseUrl, registryMetrics),
+        baseUrl,
+        registryMetrics,
+        storeConfigurationProperties,
+        lockProvider,
+        storeConfigurationProperties.isSchemaRegistryZipEnabled()
+            ? new HttpStartupArchiveFetcher(baseUrl, registryMetrics)
+            : null);
+  }
+
+  private HttpSchemaRegistry(
+      SchemaStore schemaStore,
+      TransformationStore transformationStore,
+      URL baseUrl,
+      RegistryMetrics registryMetrics,
+      StoreConfigurationProperties storeConfigurationProperties,
+      LockProvider lockProvider,
+      HttpStartupArchiveFetcher startupArchiveFetcher) {
+    super(
+        startupArchiveFetcher == null
+            ? new HttpIndexFetcher(baseUrl, registryMetrics)
+            : startupArchiveFetcher,
+        startupArchiveFetcher == null
+            ? new HttpRegistryFileFetcher(baseUrl, registryMetrics)
+            : startupArchiveFetcher,
+        schemaStore,
+        transformationStore,
         registryMetrics,
         storeConfigurationProperties,
         lockProvider);
+    this.startupArchiveFetcher = startupArchiveFetcher;
   }
 
   @VisibleForTesting
@@ -63,5 +90,20 @@ public class HttpSchemaRegistry extends AbstractSchemaRegistry {
         registryMetrics,
         storeConfigurationProperties,
         lockProvider);
+    this.startupArchiveFetcher = null;
+  }
+
+  @Override
+  public void fetchInitial() {
+    if (startupArchiveFetcher == null) {
+      super.fetchInitial();
+    } else {
+      startupArchiveFetcher.beginInitialFetch();
+      try {
+        super.fetchInitial();
+      } finally {
+        startupArchiveFetcher.endInitialFetch();
+      }
+    }
   }
 }
