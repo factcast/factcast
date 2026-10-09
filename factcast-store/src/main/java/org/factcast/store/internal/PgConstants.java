@@ -70,6 +70,10 @@ public class PgConstants {
           + " = '"
           + IS_INVALID
           + "'";
+  public static final String HORIZON_COLUMN_FACT_SER = "fact_ser";
+  public static final String HORIZON_COLUMN_FACT_ID = "fact_id";
+  public static final String HORIZON_COLUMN_NOTIFICATION_SER = "notification_ser";
+  public static final String TABLE_HORIZON = "factstream_horizon";
 
   private static final String TABLE_TOKENSTORE = "tokenstore";
 
@@ -297,12 +301,12 @@ public class PgConstants {
 
   public static final String LAST_SERIAL_IN_LOG =
       "SELECT COALESCE(MAX(" + COLUMN_SER + "),0) FROM " + TABLE_FACT;
-  public static final String HIGHWATER_MARK =
+  public static final String LATEST_FACT =
       "SELECT ("
           + COLUMN_HEADER
           + "->>'"
           + ALIAS_ID
-          + "')::uuid AS targetId, ser AS targetSer FROM "
+          + "')::uuid AS fact_id, ser AS fact_ser FROM "
           + TABLE_FACT
           + " WHERE "
           + COLUMN_SER

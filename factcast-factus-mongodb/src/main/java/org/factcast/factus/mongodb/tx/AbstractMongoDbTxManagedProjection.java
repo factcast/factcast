@@ -15,8 +15,8 @@
  */
 package org.factcast.factus.mongodb.tx;
 
+import lombok.NonNull;
 import org.factcast.factus.projection.ManagedProjection;
-import org.jspecify.annotations.NonNull;
 import org.springframework.data.mongodb.MongoTransactionManager;
 import org.springframework.data.mongodb.core.MongoTemplate;
 

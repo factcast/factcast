@@ -17,15 +17,19 @@ package org.factcast.store.internal.listen;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.*;
+import jakarta.annotation.*;
 import java.sql.*;
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.StampedLock;
+import java.util.concurrent.locks.ReentrantLock;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.core.subscription.FactStreamHorizon;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.*;
+import org.factcast.store.internal.horizon.FactStreamHorizonProvider;
 import org.factcast.store.internal.notification.*;
 import org.springframework.beans.factory.*;
 import org.springframework.jdbc.core.*;
@@ -37,19 +41,22 @@ public class NudgeNotificationHandler implements DisposableBean {
   private final @NonNull JdbcTemplate jdbc;
   private final @NonNull StoreConfigurationProperties props;
   private final @NonNull PgMetrics metrics;
-  @VisibleForTesting protected final StampedLock lock = new StampedLock();
+  private final @NonNull FactStreamHorizonProvider horizonProvider;
   @VisibleForTesting protected final AtomicLong notificationSer = new AtomicLong(0);
   @VisibleForTesting protected final Timer timer = new Timer(true);
   // this we need in order to skip obsolete tasks
   @VisibleForTesting protected final AtomicLong timerVersion = new AtomicLong(0);
-  private io.micrometer.core.instrument.@NonNull Timer metricsTimer;
+  private final AtomicBoolean refreshRequested = new AtomicBoolean(false);
+  private final ReentrantLock refreshLock = new ReentrantLock();
+  private final io.micrometer.core.instrument.@NonNull Timer metricsTimer;
 
   public NudgeNotificationHandler(
       @NonNull EventBus bus,
       @NonNull JdbcTemplate jdbc,
       @NonNull StoreConfigurationProperties props,
-      @NonNull PgMetrics metrics) {
-    this(bus, jdbc, props, metrics, !props.isReadOnlyModeEnabled());
+      @NonNull PgMetrics metrics,
+      @NonNull FactStreamHorizonProvider horizonProvider) {
+    this(bus, jdbc, props, metrics, horizonProvider, !props.isReadOnlyModeEnabled());
   }
 
   @VisibleForTesting
@@ -58,11 +65,13 @@ public class NudgeNotificationHandler implements DisposableBean {
       @NonNull JdbcTemplate jdbc,
       @NonNull StoreConfigurationProperties props,
       @NonNull PgMetrics metrics,
+      @NonNull FactStreamHorizonProvider horizonProvider,
       boolean scheduleCleanupTask) {
     this.bus = bus;
     this.jdbc = jdbc;
     this.props = props;
     this.metrics = metrics;
+    this.horizonProvider = horizonProvider;
     bus.register(this);
     if (scheduleCleanupTask)
       timer.scheduleAtFixedRate(new ScheduledCleanup(), 0, Duration.ofMinutes(1).toMillis());
@@ -78,19 +87,7 @@ public class NudgeNotificationHandler implements DisposableBean {
   @Subscribe
   public void nudge(NudgeNotification nudgeNotification) {
     log.trace("Nudge received");
-    if (notificationSer.get() == 0
-        || Boolean.FALSE.equals(
-            jdbc.queryForObject(BASE_EXISTS_SQL, Boolean.class, notificationSer.get()))) {
-      // in both cases, we need all subscriptions to fetch
-      // and set the notificationSer to current max
-      Long max = jdbc.queryForObject("SELECT max(ser) FROM notification", Long.class);
-      if (max != null) notificationSer.set(max.longValue());
-
-      log.trace("No idea where to start, waking all subscribers");
-      bus.post(FactInsertionNotification.internal());
-    } else {
-      fetchPairsAndDispatch();
-    }
+    fetchPairsAndDispatch();
 
     // this makes all currently schedule tasks just return. unfortunately, we cannot cancel tasks on
     // a timer without also canceling the timer itself
@@ -137,31 +134,94 @@ public class NudgeNotificationHandler implements DisposableBean {
   }
 
   void fetchPairsAndDispatch() {
-    // we're trying to avoid query storms here, as well as raceconditions on notificationSer.set
-    // we're not using synchronized in order to not stack up useless queries.
-    long lockStamp = lock.tryWriteLock();
-    if (lockStamp != 0) {
+    refreshRequested.set(true);
+    drainRefreshRequests();
+  }
+
+  private void drainRefreshRequests() {
+    // EventBus dispatch can request another refresh on this thread. Let the current pass finish
+    // updating its cursor before processing that request.
+    if (refreshLock.isHeldByCurrentThread()) return;
+
+    RuntimeException exception = null;
+
+    // Keep the accumulated failures while picking up requests arriving during unlock.
+    while (refreshLock.tryLock()) {
       try {
-        final var timerSample = metrics.startSample();
-
-        List<FetchNotificationTuple> tuples =
-            jdbc.query(
-                "SELECT max(ser) as max,ns,type FROM notification WHERE notification.ser > ? GROUP BY DISTINCT(ns,type) ORDER BY max",
-                DataClassRowMapper.newInstance(FetchNotificationTuple.class),
-                notificationSer.get());
-
-        timerSample.stop(metricsTimer);
-        if (!tuples.isEmpty()) {
-          log.trace("Fetched {} notification{}", tuples.size(), tuples.size() > 1 ? "s" : "");
-          tuples.forEach(
-              t -> {
-                bus.post(t.toFactInsertionNotification());
-                notificationSer.set(t.max());
-              });
-        }
+        exception = processPendingRefreshRequests(exception);
       } finally {
-        lock.unlockWrite(lockStamp);
+        refreshLock.unlock();
       }
+
+      if (!refreshRequested.get()) break;
+    }
+
+    if (exception != null) throw exception;
+  }
+
+  private RuntimeException processPendingRefreshRequests(@Nullable RuntimeException exception) {
+    // The caller holds refreshLock. Clear before work so incoming requests trigger another pass.
+    while (refreshRequested.getAndSet(false)) {
+      try {
+        fetchPairsAndDispatchOnce();
+      } catch (RuntimeException e) {
+        exception = accumulateFailure(exception, e);
+      }
+    }
+    return exception;
+  }
+
+  private static RuntimeException accumulateFailure(
+      @Nullable RuntimeException firstFailure, @Nonnull RuntimeException nextFailure) {
+    if (firstFailure == null) return nextFailure;
+    if (firstFailure != nextFailure) firstFailure.addSuppressed(nextFailure);
+    return firstFailure;
+  }
+
+  private void fetchPairsAndDispatchOnce() {
+    long lowerSerial = notificationSer.get();
+    FactStreamHorizon horizon = horizonProvider.advance();
+    long horizonSerial = horizon.notificationSerial();
+    if (horizonSerial < lowerSerial) {
+      // The unlogged notification sequence has restarted. Wake every subscriber once before
+      // continuing from the rebased persisted horizon.
+      log.warn("Notification sequence restarted, waking all subscribers");
+      bus.post(FactInsertionNotification.internal());
+      notificationSer.set(horizonSerial);
+      return;
+    }
+    boolean baseLineMissing =
+        lowerSerial > 0
+            && Boolean.FALSE.equals(
+                jdbc.queryForObject(BASE_EXISTS_SQL, Boolean.class, lowerSerial));
+
+    if (baseLineMissing || lowerSerial == 0) {
+      log.trace("No reliable notification baseline, waking all subscribers");
+      bus.post(FactInsertionNotification.internal());
+      notificationSer.set(horizonSerial);
+      return;
+    }
+
+    if (horizonSerial <= lowerSerial) return;
+
+    final var timerSample = metrics.startSample();
+    try {
+      List<FetchNotificationTuple> tuples =
+          jdbc.query(
+              "SELECT max(ser) as max,ns,type FROM notification "
+                  + "WHERE notification.ser > ? AND notification.ser <= ? "
+                  + "GROUP BY DISTINCT(ns,type) ORDER BY max",
+              DataClassRowMapper.newInstance(FetchNotificationTuple.class),
+              lowerSerial,
+              horizonSerial);
+
+      if (!tuples.isEmpty()) {
+        log.trace("Fetched {} notification{}", tuples.size(), tuples.size() > 1 ? "s" : "");
+        tuples.forEach(t -> bus.post(t.toFactInsertionNotification()));
+      }
+      notificationSer.set(horizonSerial);
+    } finally {
+      timerSample.stop(metricsTimer);
     }
   }
 }
