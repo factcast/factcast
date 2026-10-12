@@ -10,25 +10,25 @@ to process events. These methods allow various parameters, also in combination, 
 
 [cols="1,1,1,1", options="header"]
 |===
-|Parameter Type & Annotation |Description |valid on @Handler |valid on @HandlerFor
-|`Fact` |Provides access to all xref:ROOT:Concept/fact.adoc[Fact] details including header (JSON) and payload (JSON) |yes |yes
-|`FactHeader` |the xref:ROOT:Concept/fact.adoc#the-header[Fact header]. Provides access to event namespace, type, version, meta entries and others |yes |yes
-|`UUID` |the xref:ROOT:Concept/fact.adoc#the-header[Fact ID of the Fact header] |yes |yes
-|`FactStreamPosition` |the FactStreamPosition that identifies the position of the given fact in the global fact stream |yes |yes
-|`@Nullable @Meta("foo") String` |if present, the value of the fact-header's meta object attribute "foo", otherwise null |yes |yes
-|`@Meta("foo") Optional<String> ` |if present, the value of the fact-header's meta object attribute "foo" wrapped in an Optional, otherwise Optional.empty |yes |yes
-|`? extends EventObject` |an instance of a concrete class xref:ROOT:Usage/factus/introduction.adoc#eventobjects[implementing `EventObject`]. |yes |no
+|Parameter Type & Annotation |Description |Valid on @Handler |Valid on @HandlerFor
+|`Fact` |Provides access to all xref:ROOT:Concept/fact.adoc[fact] details including header (JSON) and payload (JSON) |yes |yes
+|`FactHeader` |The xref:ROOT:Concept/fact.adoc#the-header[fact header]. Provides access to event namespace, type, version, meta entries and others |yes |yes
+|`UUID` |The xref:ROOT:Concept/fact.adoc#the-header[fact ID of the fact header] |yes |yes
+|`FactStreamPosition` |The FactStreamPosition that identifies the position of the given fact in the global fact stream |yes |yes
+|`@Nullable @Meta("foo") String` |If present, the value of the fact-header's meta object attribute "foo", otherwise null |yes |yes
+|`@Meta("foo") Optional<String> ` |If present, the value of the fact-header's meta object attribute "foo" wrapped in an Optional, otherwise Optional.empty |yes |yes
+|`? extends EventObject` |An instance of a concrete class xref:ROOT:Usage/factus/introduction.adoc#eventobjects[implementing `EventObject`]. |yes |no
 |===
 
-== Extras on Redis atomic Projections
+== Extras on Redis Atomic Projections
 
 Additional to these common parameters, Projections can add parameters to be used by handler methods.
 For instance handler methods on @RedisTransactional projections that should use:
 
 [cols="1,1,1,1", options="header"]
 |===
-|Parameter Type |Description |valid on @Handler |valid on @HandlerFor
-|`RTransaction` |needed in a xref:ROOT:Usage/factus/projections/atomicity/redis-transactional-projections.adoc[Redis transactional projection] |yes |yes
+|Parameter Type |Description |Valid on @Handler |Valid on @HandlerFor
+|`RTransaction` |Needed in a xref:ROOT:Usage/factus/projections/atomicity/redis-transactional-projections.adoc[Redis transactional projection] |yes |yes
 |===
 
 == Examples
@@ -75,7 +75,7 @@ The next section introduces a more direct alternative.
 
 === @HandlerFor
 
-The `@HandlerFor` annotation allows only direct access to the Fact data like header or payload without any deserialization.
+The `@HandlerFor` annotation allows only direct access to the fact data like header or payload without any deserialization.
 
 [source,java]
 ----

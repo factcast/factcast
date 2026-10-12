@@ -42,15 +42,8 @@ When setting up the S3 Bucket ensure the following permissions are granted to yo
       's3:DeleteObject'
     ],
     resources: [
-      `
-    arn: aws
-    :
-    s3:
-    :
-    :
-    <reportBucketName>
-    `
-  ],
+      `arn:aws:s3:::<reportBucketName>`
+    ],
   },
   {
     effect: Effect.ALLOW,
@@ -58,15 +51,8 @@ When setting up the S3 Bucket ensure the following permissions are granted to yo
       's3:ListBucket'
     ],
     resources: [
-      `
-    arn: aws
-    :
-    s3:
-    :
-    :
-    <reportBucketName>
-    `
-  ],
+      `arn:aws:s3:::<reportBucketName>`
+    ],
   }
 ]
 ----

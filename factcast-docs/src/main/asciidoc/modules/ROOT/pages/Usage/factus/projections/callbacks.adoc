@@ -8,14 +8,14 @@ When implementing the https://github.com/factcast/factcast/blob/main/factcast-fa
 [cols="1,1", options="header"]
 |===
 |Method Signature |Description
-|`List<FactSpec> postprocess(List<FactSpec> specsAsDiscovered)` |further filter the handled facts via their xref:ROOT:Concept/factspec.adoc#specification[fact specification] including aggregate ID and meta entries
-|`void onCatchup()` |invoked after all past facts of the streams were processed. This is a good point to signal that the projection is ready to serve data (e.g. via a health indicator).
-|`void onComplete()` |called when subscription closed without error
-|`void onError(Throwable exception)` |called when subscription closed after receiving an error. The default impl is to simply logs the error.
+|`List<FactSpec> postprocess(List<FactSpec> specsAsDiscovered)` |Further filter the handled facts via their xref:ROOT:Concept/factspec.adoc#specification[fact specification] including aggregate ID and meta entries
+|`void onCatchup()` |Invoked after all past facts of the streams were processed. This is a good point to signal that the projection is ready to serve data (e.g. via a health indicator).
+|`void onComplete()` |Called when subscription closed without error
+|`void onError(Throwable exception)` |Called when subscription closed after receiving an error. The default impl is to simply log the error.
 |===
 
 [#postprocess]
-=== postprocess
+== postprocess
 
 Annotating your handler methods gives you a convenient way of declaring a projection's interest into particular facts, filtered by `ns`,`type`,pojo to deserialize into, version etc.
 This kind of filtering should be sufficient for most of the use-cases. However, annotations have to have constant attributes, so what you cannot do this way is to filter on values that are only available at runtime:
@@ -58,7 +58,7 @@ public class MyProjection extends LocalManagedProjection {
 
 === onCatchup
 
-The Factus API will call the `onCatchup` method after an onCatchup signal was received from the server, indicating that the fact stream is now as near as possible to the end of the FactStream that is defined by the `FactSpecs` used to filter.
+The Factus API will call the `onCatchup` method after an onCatchup signal was received from the server, indicating that the fact stream is now as near as possible to the end of the fact stream that is defined by the `FactSpecs` used to filter.
 Depending on the type of projection, the subscription now went from `catchup` to `follow` mode (for follow subscriptions), or is completed right after (for catchup subscriptions, see `onComplete`).
 One popular use-case for implementing the `onCatchup` method is to signal the rest
 of the service that the projection is ready to be queried and serve (not too stale) data.

@@ -3,10 +3,10 @@
 
 
 
-As mentioned xref:ROOT:Concept/index.adoc#read-subscribe[before], there are three main Use-Cases for subscribing to a Fact-Stream:
+As mentioned xref:ROOT:Concept/index.adoc#read-subscribe[before], there are three main Use-Cases for subscribing to a fact stream:
 
-- Validation of Changes against a strictly consistent Model (Catchup)
-- Creating and maintaining a Read-Model (Follow)
+- Validation of changes against a strictly consistent model (Catchup)
+- Creating and maintaining a read-model (Follow)
 - Managing volatile cached data (Ephemeral)
 
 Here is some example code assuming you use the Spring GRPC Client:

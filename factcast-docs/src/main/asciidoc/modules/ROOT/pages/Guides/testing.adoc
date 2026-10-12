@@ -1,4 +1,4 @@
-= Hitchhiker's Guide To Testing
+= Hitchhiker's Guide to Testing
 :icons: font
 
 [NOTE]
@@ -40,7 +40,7 @@ they **usually perform significantly slower** than unit tests.
 
 ---
 
-== Testing FactCast (low-level)
+== Testing FactCast (Low-Level)
 
 This section introduces the `UserEmails` projection for which we will write
 
@@ -203,7 +203,7 @@ Before writing your first integration test
 
 This will make the client application connect to the server without using TLS.
 
-==== Writing The Integration Test
+==== Writing the Integration Test
 
 Our integration test builds upon the previous unit test example. This time however, we want to check if the
 `UserEmailsProjection` can also be updated by a real FactCast server:

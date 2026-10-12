@@ -8,7 +8,7 @@ This can be useful for monitoring and debugging purposes.
 
 The telemetry events are emitted using a dedicated internal https://github.com/google/guava/wiki/EventBusExplained[Guava EventBus].
 
-== Subscription lifecycle events
+== Subscription Lifecycle Events
 
 Currently, the factcast-store module emits an event on each phase of the subscription lifecycle (see
 `org.factcast.store.internal.telemetry.PgStoreTelemetry`):
@@ -21,7 +21,7 @@ Currently, the factcast-store module emits an event on each phase of the subscri
 
 Each emitted event contains a `request`, which holds the client's request details.
 
-== How to listen to telemetry events
+== How to Listen to Telemetry Events
 
 It boils down to implementing a listener that is able to consume telemetry events, through
 `com.google.common.eventbus.Subscribe` annotated methods, and registering it via the `PgStoreTelemetry` bean.

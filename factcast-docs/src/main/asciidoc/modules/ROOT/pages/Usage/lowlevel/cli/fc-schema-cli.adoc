@@ -3,13 +3,13 @@
 
 
 
-This CLI provides a convenient way to create a suitable Schema Registry for your FactCast installation.
+This CLI provides a convenient way to create a suitable schema registry for your FactCast installation.
 It will give you the ability to validate events against examples and to make sure that there's always an upcast and if
 necessary a downcast transformation.
 
 It produces a machine-readable output required by FactCast.
 
-== Build the example
+== Build the Example
 
 The example will be built during `mvn install`, but you can reach the same via
 
@@ -17,12 +17,9 @@ The example will be built during `mvn install`, but you can reach the same via
 
 `build` validates and builds the example.
 
-== About CI Pipelines and Artifacts
+== Usage
 
-Ensure to execute the build step within your CI pipeline to fail on wrong input/broken schema and make the generated
-files available to FactCast.
-
-== Available commands and options
+You can list available commands using the help `-h` flag:
 
 ----
 $ java -jar target/fc-schema-cli.jar -h
@@ -42,3 +39,20 @@ Commands:
   validate  Validate your current events
   build     Validates and builds your registry
 ----
+
+=== Validation
+```
+java -jar fc-schema-cli.jar validate [-p dir] [-w file] [-s]
+```
+
+=== Building
+```
+java -jar fc-schema-cli.jar build [-p dir] [-o dir] [-w file] [-s]
+```
+
+For further documentation refer to the https://github.com/factcast/factcast/blob/cf3901b15d6d7bcdbcf9963a3f528b8ad4b1e2fe/factcast-schema-registry-cli/README.md[README].
+
+== About CI Pipelines and Artifacts
+
+Ensure to execute the build step within your CI pipeline to fail on wrong input/broken schema and make the generated
+files available to FactCast.

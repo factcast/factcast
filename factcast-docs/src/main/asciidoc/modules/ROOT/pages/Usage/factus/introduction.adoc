@@ -17,13 +17,13 @@ We say **"good" practices** here, rather than _"best" practices_ for a reason. F
 Also, be aware that not every possible use case is covered by Factus so that you occasionally might want to fall back to "doing things yourself" with the low-level FactCast API.
 In case you encounter such a situation, please open a GitHub issue explaining your motivation. Maybe this is something Factus is currently lacking.
 
-=== Factus as a higher level of abstraction
+=== Factus as a Higher Level of Abstraction
 
-Factus replaces FactCast as a central interface. Rather than with _Facts_, Factus primarily deals with _EventObjects_ deserialized from Facts.
+Factus replaces FactCast as a central interface. Rather than with _facts_, Factus primarily deals with _EventObjects_ deserialized from facts.
 using an _EventSerializer_. Factus ships with a default one that uses Jackson, but you're free to use any library of your taste to accomplish this (like Gson, or whatever is popular with you).
 
 [#eventobjects]
-Concrete events will implement _EventObject_ in order to be able to contribute to Fact Headers when serialized, and they are expected to be annotated with `@Specification` in order to declare what the specifics of the `FactHeader` (namespace, type and version) are.
+Concrete events will implement `EventObject` in order to be able to contribute to fact headers when serialized, and they are expected to be annotated with `@Specification` in order to declare what the specifics of the `FactHeader` (namespace, type and version) are.
 
 [source,java]
 ----
@@ -59,10 +59,10 @@ class UserCreated implements EventObject {
 }
 ----
 
-Now the payload of a Fact created from your Events will be, as you'd expect, the json-serialized form of the Event which is created by the `EventSerializer`.
+Now the payload of a fact created from your events will be, as you'd expect, the json-serialized form of the event which is created by the `EventSerializer`.
 
-Factus ships with a default serializer for EventObjects. It uses Jackson and builds on a predefined ObjectMapper, if defined (otherwise just uses the internal FactCast-configured ObjectMapper).
+Factus ships with a default serializer for `EventObject`. It uses Jackson and builds on a predefined ObjectMapper, if defined (otherwise just uses the internal FactCast-configured ObjectMapper).
 If, for some reason, you want to redefine this, you can use/ provide your own EventSerializer.
 
-As Factus is optional, you'll first want to set up your project to use it. See
-xref:ROOT:Usage/factus/setup.adoc[Factus Setup].
+Refer to xref:ROOT:Usage/factus/setup.adoc[Factus Setup] to learn how you can integrate Factus with your project.
+

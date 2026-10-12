@@ -1,3 +1,7 @@
 = CLI
 :icons: font
 
+In order to help with quick testing or debugging, FactCast provides a very simple CLI that you can use to publish or subscribe facts.
+The schema registry CLI on the other hand can be used to generate a schema registry, required for validation.
+
+child-pages::[]

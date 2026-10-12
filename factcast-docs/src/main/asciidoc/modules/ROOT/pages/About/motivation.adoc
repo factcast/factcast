@@ -20,14 +20,14 @@ Amongst others in no particular order:
 
 All of these have a slightly different focus, but all of them deal with persisting, streaming and sometimes processing of Events.
 
-== The Problem at hand
+== The Problem at Hand
 
 In a micro-service world, **teams choose their own** tools of trade. This is a very important benefit of using Micro-services in the first place, and you do not want to mess with this principle.
 However, where Subsystems communicate with each other (most likely crossing those team borders) you need some common ground. Event Sourcing is a great pattern here (as well as within those subsystems) because of the decoupling effect of its use.
 
 ===== So, what is needed is some technical solution, that everyone can easily agree on, because it forces as little technical dependencies on the clients as possible.
 
-GRPC and similar technological choices provide this solution including streaming, secure transport in a language agnostic way.
+gRPC and similar technological choices provide this solution including streaming, secure transport in a language agnostic way.
 Oh and one thing: Whatever solution we choose to store and stream forward needs to be failure tolerant, somewhat scalable and should pose minimal operational complexity and overhead to an existing system.
 
 **This** is where some of the above solutions pose a possible problem:

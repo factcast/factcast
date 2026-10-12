@@ -1,4 +1,4 @@
-= Hitchhiker's Guide To Projection Selection
+= Hitchhiker's Guide to Projection Selection
 :icons: font
 
 [NOTE]
@@ -41,14 +41,14 @@ This requirement focuses on the ability of the chosen projection type to handle 
 workloads without compromising performance or functionality. Considerations include the horizontal scalability of the
 projection, the efficiency of data distribution, and the ability to handle concurrent updates and queries.
 
-=== Performance (split between latencies and costs?)
+=== Performance (Split Between Latencies and Costs?)
 
 Performance refers to the speed and responsiveness of the projection type in processing events and serving queries.
 It involves evaluating factors such as event ingestion rates, query response times, and the impact of increasing data
 volumes on overall system performance. Choosing a projection type that can meet the desired performance benchmarks is
 crucial for maintaining a high-performing and responsive system.
 
-=== Query flexibility
+=== Query Flexibility
 
 Query flexibility assesses the ability to express complex queries and retrieve relevant information efficiently. It
 involves evaluating the projection type's support for various query patterns, such as filtering, aggregations, joins,
@@ -62,7 +62,7 @@ projection type. It encompasses aspects such as the learning curve for developer
 projection, and the degree of operational complexity. It is important to assess whether the complexity aligns with the
 team's expertise and resources.
 
-=== Data consistency
+=== Data Consistency
 
 Data consistency focuses on ensuring that the derived views produced by the projection type accurately reflect the state
 of the event stream. It involves assessing how well the projection type handles events, updates, and concurrent
@@ -85,7 +85,7 @@ type concerning the identified requirements.
 
 === Snapshot Projection
 
-xref:ROOT:Usage/factus/projections/types/snapshot-projections.adoc[Snapshot Projection documentation]
+xref:ROOT:Usage/factus/projections/types/snapshot-projection.adoc[Snapshot Projection documentation]
 
 - **Scalability**: different modules can be used to configure the snapshot cache. Whenever scalability is a requirement,
   consider using snapshot cache modules that allow storing the snapshots in a shared database, like
@@ -115,7 +115,7 @@ xref:ROOT:Usage/factus/projections/types/snapshot-projections.adoc[Snapshot Proj
 
 === Aggregate
 
-xref:ROOT:Usage/factus/projections/types/aggregates.adoc[Aggregate documentation]
+xref:ROOT:Usage/factus/projections/types/aggregate.adoc[Aggregate documentation]
 
 - **Scalability**: same considerations made for the Snapshot Projection apply.
 

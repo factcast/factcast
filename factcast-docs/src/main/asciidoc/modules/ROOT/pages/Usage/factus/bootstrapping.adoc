@@ -6,7 +6,7 @@
 Imagine the following scenario:
 You have a projection with externalized state (e.g., in a relational database) that processes a large number
 of events and supports a user-facing frontend feature (e.g., a reporting table). If you now want to extend this projection
-or modify how the projection handles its Facts, it may become necessary to rebuild the projection from scratch, thus
+or modify how the projection handles its facts, it may become necessary to rebuild the projection from scratch, thus
 reconsume the entire event stream. This is typically triggered by increasing the projection’s revision.
 
 This situation can be addressed by implementing a mechanism to rebuild the read model asynchronously in the background,
@@ -22,34 +22,34 @@ Before diving into how to implement bootstrapping at the projection level, there
 - Since depending on your amount of data, and the scope of the projection, bootstrapping may take a significant
   amount of time.
 
-== High level concept
+== High-Level Concept
 
 We want to rebuild the projection asynchronously, while its predecessor is still being used.
 When the projection is caught up it can be tested, maybe compared to its predecessor and when validated,
 it can be used for querying. This in general can be elegantly controlled with a feature-flag, if you want to switch at
 runtime.
 
-== Single deployment approach
+== Single Deployment Approach
 
 In order to fulfill the above requirements, we could imaging to just add the new projection as a different class to
 our application, deploy, wait for it to catch up, flip a toggle and remove the old projection in the next deployment.
 
 There are some drawbacks with this approach, though:
 
-==== You may run out of good names
+==== You May Run Out of Good Names
 
 Renaming the projection is not necessarily what you're looking for. You just want it to be "the new version".
 In order to achieve this, you'd need to provide a non-default name to your new projection & increase the revision.
 This might not be obvious to everybody looking at the codebase.
 
-==== Other deployments may interrupt rebuild
+==== Other Deployments May Interrupt Rebuild
 
 Not a problem per se, but if someone else deploys the same application from a different branch, the rebuild is at least
 interrupted. Due to the nature of EventSourcing this is not a problem as rebuilding will pick up where it left off, once
 the new projection version is deployed again, but it may be confusing.
 As a consequence, this needs coordination and thus might block other people's work.
 
-== Separate deployment approach
+== Separate Deployment Approach
 
 Taking these considerations into account, we can implement bootstrapping in a way that isolates it from regular
 deployments and other projections. This is achieved by deploying a separate instance whose sole purpose is to update the

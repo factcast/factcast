@@ -1,11 +1,8 @@
-= nodeJS GRPC Producer
+= Node.js GRPC Producer
 :icons: font
 
-Producing Facts via Node.js is straightforward with the available gRPC NPM module. It generates a stub constructor
-called `RemoteFactStore` from the FactCast proto file.
-
-
-
+Producing facts via Node.js is straightforward with the available gRPC npm module.
+It generates a stub constructor called `RemoteFactStore` from the FactCast proto file.
 
 [source,javascript]
 ----
