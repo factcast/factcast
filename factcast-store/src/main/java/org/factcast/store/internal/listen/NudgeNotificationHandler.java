@@ -73,8 +73,15 @@ public class NudgeNotificationHandler implements DisposableBean {
     this.metrics = metrics;
     this.horizonProvider = horizonProvider;
     bus.register(this);
-    if (scheduleCleanupTask)
-      timer.scheduleAtFixedRate(new ScheduledCleanup(), 0, Duration.ofMinutes(1).toMillis());
+
+    if (scheduleCleanupTask) {
+      // even though a smaller notification table is better for overall performance, we keep up to 5
+      // mins old notifications in there because of a possible, but not very likely race condition,
+      // that is based on transactions taking >60sec to commit after inserting a fact.
+      int cleanupIntervalInMinutes = 5;
+      timer.scheduleAtFixedRate(
+          new ScheduledCleanup(), 0, Duration.ofMinutes(cleanupIntervalInMinutes).toMillis());
+    }
     metricsTimer = metrics.timer(StoreMetrics.OP.SELECT_DISTINCT_NOTIFICATIONS);
   }
 
