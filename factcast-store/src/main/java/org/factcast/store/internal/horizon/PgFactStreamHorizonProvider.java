@@ -15,6 +15,7 @@
  */
 package org.factcast.store.internal.horizon;
 
+import java.sql.Connection;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -25,7 +26,9 @@ import org.factcast.store.internal.PgConstants;
 import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.StoreMetrics;
 import org.factcast.store.internal.lock.FactTableWriteLock;
+import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.IllegalTransactionStateException;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -97,9 +100,11 @@ public class PgFactStreamHorizonProvider extends ReadOnlyPgFactStreamHorizonProv
     return metrics.time(
         StoreMetrics.OP.ADVANCE_FACT_STREAM_HORIZON,
         () -> {
-          if (factTableWriteLock.isExclusiveTXLockHeld()) {
-            // This transaction already owns the publication barrier. A new transaction
-            // would wait for that same lock until this one commits.
+          boolean callerTransaction = TransactionSynchronizationManager.isActualTransactionActive();
+          if (callerTransaction) validateCallerTransaction();
+          if (callerTransaction || factTableWriteLock.isExclusiveTXLockHeld()) {
+            // Reuse the caller's connection to avoid exhausting the pool with suspended
+            // transactions. The publication barrier stays held until the caller completes.
             FactStreamHorizon inTransaction = doAdvance();
             TransactionSynchronizationManager.registerSynchronization(
                 new TransactionSynchronization() {
@@ -115,6 +120,31 @@ public class PgFactStreamHorizonProvider extends ReadOnlyPgFactStreamHorizonProv
           updateCommittedHorizon(committed);
           return committed;
         });
+  }
+
+  private void validateCallerTransaction() {
+    if (TransactionSynchronizationManager.isCurrentTransactionReadOnly()) {
+      throw new IllegalTransactionStateException(
+          "Fact stream horizon advancement requires a writable transaction; "
+              + "call stateFor()/currentStateFor() outside the read-only transaction");
+    }
+    jdbcTemplate.execute(
+        (ConnectionCallback<Void>)
+            connection -> {
+              if (connection.isReadOnly()) {
+                throw new IllegalTransactionStateException(
+                    "Fact stream horizon advancement requires a writable connection; "
+                        + "call stateFor()/currentStateFor() outside the read-only transaction");
+              }
+              // Check the actual connection because the caller may use the database's default
+              // isolation. An older transaction snapshot cannot be refreshed by the barrier.
+              if (connection.getTransactionIsolation() != Connection.TRANSACTION_READ_COMMITTED) {
+                throw new IllegalTransactionStateException(
+                    "Fact stream horizon advancement requires READ_COMMITTED isolation; "
+                        + "call stateFor()/currentStateFor() outside this transaction");
+              }
+              return null;
+            });
   }
 
   private void updateCommittedHorizon(FactStreamHorizon horizon) {

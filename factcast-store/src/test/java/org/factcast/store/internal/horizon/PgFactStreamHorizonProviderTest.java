@@ -20,7 +20,9 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import java.sql.Connection;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.*;
@@ -38,6 +40,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.*;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.transaction.*;
@@ -308,16 +311,14 @@ final class PgFactStreamHorizonProviderTest {
   }
 
   @Test
-  void joinedTransactionRollbackPreservesCurrentHorizon() {
+  void joinedTransactionRollbackPreservesCurrentHorizon() throws SQLException {
     FactStreamHorizon previous = new FactStreamHorizon(UUID.randomUUID(), 21, 5);
     stubAdvance(previous);
     underTest.advance();
     clearInvocations(transactionManager);
     FactStreamHorizon uncommitted = new FactStreamHorizon(UUID.randomUUID(), 42, 10);
     stubAdvance(uncommitted);
-    when(factTableWriteLock.isExclusiveTXLockHeld()).thenReturn(true);
-
-    TransactionSynchronizationManager.initSynchronization();
+    startCallerTransaction();
     try {
       assertThat(underTest.advance()).isEqualTo(uncommitted);
       TransactionSynchronizationManager.getSynchronizations()
@@ -329,7 +330,94 @@ final class PgFactStreamHorizonProviderTest {
       verifyNoInteractions(transactionManager);
     } finally {
       TransactionSynchronizationManager.clearSynchronization();
+      TransactionSynchronizationManager.clear();
     }
+  }
+
+  @Test
+  void callerWithoutPublicationLockUsesItsConnectionAndDefersCacheUntilCommit()
+      throws SQLException {
+    FactStreamHorizon next = new FactStreamHorizon(UUID.randomUUID(), 42, 10);
+    stubAdvance(next);
+    startCallerTransaction();
+    try {
+      assertThat(underTest.advance()).isEqualTo(next);
+      assertThat(underTest.currentPrimary()).isEqualTo(FactStreamHorizon.empty());
+      verifyNoInteractions(transactionManager);
+      InOrder order = inOrder(jdbcTemplate, factTableWriteLock);
+      order.verify(jdbcTemplate).execute(any(ConnectionCallback.class));
+      order.verify(factTableWriteLock).acquireExclusiveTXLock();
+      order.verify(jdbcTemplate).query(eq(PgConstants.LATEST_FACT), any(RowMapper.class));
+
+      TransactionSynchronizationManager.getSynchronizations()
+          .forEach(TransactionSynchronization::afterCommit);
+      assertThat(underTest.currentPrimary()).isEqualTo(next);
+    } finally {
+      TransactionSynchronizationManager.clearSynchronization();
+      TransactionSynchronizationManager.clear();
+    }
+  }
+
+  @Test
+  void readOnlyCallerIsRejectedBeforeAccessingDatabase() {
+    TransactionSynchronizationManager.setActualTransactionActive(true);
+    TransactionSynchronizationManager.setCurrentTransactionReadOnly(true);
+    try {
+      assertThatThrownBy(underTest::advance)
+          .isInstanceOf(IllegalTransactionStateException.class)
+          .hasMessageContaining("outside the read-only transaction");
+      verifyNoInteractions(jdbcTemplate, transactionManager, factTableWriteLock);
+    } finally {
+      TransactionSynchronizationManager.clear();
+    }
+  }
+
+  @Test
+  void readOnlyConnectionIsRejectedBeforeAcquiringBarrier() throws SQLException {
+    Connection connection = startCallerTransaction();
+    when(connection.isReadOnly()).thenReturn(true);
+    try {
+      assertThatThrownBy(underTest::advance)
+          .isInstanceOf(IllegalTransactionStateException.class)
+          .hasMessageContaining("writable connection");
+      verifyNoInteractions(transactionManager, factTableWriteLock);
+      verify(jdbcTemplate, never())
+          .queryForObject(anyString(), any(RowMapper.class), any(Object[].class));
+    } finally {
+      TransactionSynchronizationManager.clearSynchronization();
+      TransactionSynchronizationManager.clear();
+    }
+  }
+
+  @ParameterizedTest
+  @ValueSource(ints = {Connection.TRANSACTION_REPEATABLE_READ, Connection.TRANSACTION_SERIALIZABLE})
+  void snapshotIsolationIsRejectedBeforeAcquiringBarrier(int isolation) throws SQLException {
+    Connection connection = startCallerTransaction();
+    when(connection.getTransactionIsolation()).thenReturn(isolation);
+    try {
+      assertThatThrownBy(underTest::advance)
+          .isInstanceOf(IllegalTransactionStateException.class)
+          .hasMessageContaining("READ_COMMITTED");
+      verifyNoInteractions(transactionManager, factTableWriteLock);
+    } finally {
+      TransactionSynchronizationManager.clearSynchronization();
+      TransactionSynchronizationManager.clear();
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  private Connection startCallerTransaction() throws SQLException {
+    Connection connection = mock(Connection.class);
+    lenient()
+        .when(connection.getTransactionIsolation())
+        .thenReturn(Connection.TRANSACTION_READ_COMMITTED);
+    when(jdbcTemplate.execute(any(ConnectionCallback.class)))
+        .thenAnswer(
+            invocation ->
+                ((ConnectionCallback<?>) invocation.getArgument(0)).doInConnection(connection));
+    TransactionSynchronizationManager.initSynchronization();
+    TransactionSynchronizationManager.setActualTransactionActive(true);
+    return connection;
   }
 
   @Test
