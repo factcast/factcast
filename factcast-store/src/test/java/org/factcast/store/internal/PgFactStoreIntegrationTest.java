@@ -64,11 +64,38 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
   @Autowired TokenStore tokenStore;
 
   @Autowired JdbcTemplate jdbcTemplate;
-  @Autowired private HighWaterMarkFetcher highWaterMarkFetcher;
 
   @Override
   protected FactStore createStoreToTest() {
     return new FactStoreWrapper(fs);
+  }
+
+  @Test
+  void batchPublishCreatesOneNotificationPerNamespaceAndType() {
+    var facts =
+        List.of(
+            Fact.builder().ns("batch-notification").type("same").buildWithoutPayload(),
+            Fact.builder().ns("batch-notification").type("same").buildWithoutPayload(),
+            Fact.builder().ns("batch-notification").type("different").buildWithoutPayload(),
+            Fact.builder().ns("batch-notification").type("same").buildWithoutPayload());
+
+    fs.publish(facts);
+
+    assertThat(jdbcTemplate.queryForObject("SELECT count(*) FROM fact", Long.class)).isEqualTo(4);
+    assertThat(
+            jdbcTemplate.queryForObject(
+                "SELECT count(*) FROM notification WHERE ns = ? AND type = ?",
+                Long.class,
+                "batch-notification",
+                "same"))
+        .isEqualTo(1);
+    assertThat(
+            jdbcTemplate.queryForObject(
+                "SELECT count(*) FROM notification WHERE ns = ? AND type = ?",
+                Long.class,
+                "batch-notification",
+                "different"))
+        .isEqualTo(1);
   }
 
   /**

@@ -52,19 +52,30 @@ public class PgQueryBuilder {
     factSpecs = specs;
   }
 
-  public PreparedStatementSetter createStatementSetter(@NonNull AtomicLong serial) {
-    return p -> setParameters(p, serial.get(), 0);
+  public PreparedStatementSetter createUnboundedStatementSetter(@NonNull AtomicLong serial) {
+    return p -> setParameters(p, serial.get(), 0, OptionalLong.empty());
   }
 
-  /** differs from createStatementSetter as it applies the parameters twice. */
+  public PreparedStatementSetter createBoundedStatementSetter(
+      @NonNull AtomicLong serial, long horizonSerial) {
+    return p -> setParameters(p, serial.get(), 0, OptionalLong.of(horizonSerial));
+  }
+
+  /** Applies the same predicates to both branches of the state query. */
   public PreparedStatementSetter createStateStatementSetter(long serial) {
+    return createStateStatementSetter(serial, OptionalLong.empty());
+  }
+
+  public PreparedStatementSetter createStateStatementSetter(
+      long serial, @NonNull OptionalLong horizonSerial) {
     return p -> {
-      int count = setParameters(p, serial, 0);
-      setParameters(p, serial, count);
+      int count = setParameters(p, serial, 0, horizonSerial);
+      setParameters(p, serial, count, horizonSerial);
     };
   }
 
-  private int setParameters(PreparedStatement p, long serial, int count) throws SQLException {
+  private int setParameters(PreparedStatement p, long serial, int count, OptionalLong horizonSerial)
+      throws SQLException {
     for (FactSpec spec : factSpecs) {
       count = setNs(p, count, spec);
       count = setType(p, count, spec);
@@ -75,6 +86,9 @@ public class PgQueryBuilder {
       count = setMetaKeyExists(p, count, spec);
     }
     p.setLong(++count, serial);
+    if (horizonSerial.isPresent()) {
+      p.setLong(++count, horizonSerial.getAsLong());
+    }
     return count;
   }
 
@@ -169,7 +183,7 @@ public class PgQueryBuilder {
   }
 
   @SuppressWarnings("java:S3776")
-  private String createWhereClause() {
+  private String createWhereClause(boolean bounded) {
     List<String> predicates = new LinkedList<>();
     factSpecs.forEach(
         spec -> {
@@ -222,10 +236,22 @@ public class PgQueryBuilder {
           predicates.add(sb.toString());
         });
     String predicatesAsString = String.join(OR, predicates);
-    return "( " + predicatesAsString + " ) " + AND + PgConstants.COLUMN_SER + ">?";
+    String where = "( " + predicatesAsString + " ) " + AND + PgConstants.COLUMN_SER + ">?";
+    if (bounded) {
+      where += AND + PgConstants.COLUMN_SER + "<=?";
+    }
+    return where;
   }
 
-  public String createSQL() {
+  public String createUnboundedSQL() {
+    return createUnboundedSQL(false);
+  }
+
+  public String createBoundedSQL() {
+    return createUnboundedSQL(true);
+  }
+
+  private String createUnboundedSQL(boolean bounded) {
 
     if (useTemporaryTable()) {
       return "INSERT INTO "
@@ -237,7 +263,7 @@ public class PgQueryBuilder {
           + FROM
           + PgConstants.TABLE_FACT
           + WHERE
-          + createWhereClause();
+          + createWhereClause(bounded);
       // we don't need the order by here, because it will be ordered when reading from the temp
       // table
 
@@ -247,7 +273,7 @@ public class PgQueryBuilder {
           + FROM
           + PgConstants.TABLE_FACT
           + WHERE
-          + createWhereClause()
+          + createWhereClause(bounded)
           + ORDER_BY
           + PgConstants.COLUMN_SER
           + " ASC";
@@ -262,13 +288,17 @@ public class PgQueryBuilder {
    * statement snapshot, and COALESCE skips the fallback when the recent probe succeeds.
    */
   public String createStateSQL(long backwardScanWindow) {
+    return createStateSQL(backwardScanWindow, false);
+  }
+
+  public String createStateSQL(long backwardScanWindow, boolean bounded) {
     String matchingSerials =
         "SELECT "
             + PgConstants.COLUMN_SER
             + FROM
             + PgConstants.TABLE_FACT
             + WHERE
-            + createWhereClause();
+            + createWhereClause(bounded);
     // sql query is not easy to grasp, but roughly does something like:
     // select COALESCE( <most recent quick lookup> , <most recent full GIN search>)
     //

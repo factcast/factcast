@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.*;
 import javax.sql.DataSource;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.core.subscription.FactStreamHorizon;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.*;
@@ -47,9 +48,10 @@ public class PgChunkedCatchup extends AbstractPgCatchup {
       @NonNull SubscriptionRequestTO req,
       @NonNull PushbackServerPipeline pipeline,
       @NonNull AtomicLong serial,
+      @NonNull FactStreamHorizon horizon,
       @NonNull SingleConnectionDataSource ds,
       PgCatchupFactory.@NonNull Phase phase) {
-    super(props, metrics, req, pipeline, serial, ds, phase);
+    super(props, metrics, req, pipeline, serial, horizon, ds, phase);
   }
 
   @SneakyThrows
@@ -143,7 +145,7 @@ public class PgChunkedCatchup extends AbstractPgCatchup {
     b.useTempTable(tempTableName);
 
     final var fromSerial = new AtomicLong(Math.max(serial.get(), fastForward));
-    final var catchupSQL = b.createSQL();
+    final var catchupSQL = b.createBoundedSQL();
     log.trace("{} catchup {} - facts starting with SER={}", req, phase, fromSerial.get());
     log.trace("{} catchup {} - preparing temp table {}", req, phase, tempTableName);
 
@@ -151,7 +153,11 @@ public class PgChunkedCatchup extends AbstractPgCatchup {
     final var timer = metrics.timer(StoreMetrics.OP.RESULT_STREAM_START, isFromScratch);
     Timer.Sample sample = metrics.startSample();
 
-    int matches = jdbc.update(catchupSQL, b.createStatementSetter(fromSerial));
+    int matches =
+        fromSerial.get() >= horizon.factSerial()
+            ? 0
+            : jdbc.update(
+                catchupSQL, b.createBoundedStatementSetter(fromSerial, horizon.factSerial()));
     log.trace("{} catchup {} - Temp table has {} matching serials", req, phase, matches);
     logIfAboveThreshold(Duration.ofNanos(sample.stop(timer)));
     return matches;
