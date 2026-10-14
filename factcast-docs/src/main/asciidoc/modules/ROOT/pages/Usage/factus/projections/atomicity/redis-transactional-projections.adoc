@@ -1,8 +1,6 @@
 = Redis Transactional
 :icons: font
 
-
-
 A _Redis transactional projection_ is a xref:ROOT:Usage/factus/projections/atomicity/index.adoc[transactional projection]
 based on https://www.javadoc.io/doc/org.redisson/redisson/latest/org/redisson/api/RTransaction.html[Redisson RTransaction].
 

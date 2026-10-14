@@ -1,8 +1,6 @@
 = Java GRPC Consumer
 :icons: font
 
-
-
 As mentioned xref:ROOT:Concept/index.adoc#read-subscribe[before], there are three main Use-Cases for subscribing to a fact stream:
 
 - Validation of changes against a strictly consistent model (Catchup)

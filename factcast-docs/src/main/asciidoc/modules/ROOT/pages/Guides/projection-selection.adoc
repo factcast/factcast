@@ -10,7 +10,6 @@ We suggest to check out the "Projections" section of the xref:ROOT:Usage/factus/
 before delving into this guide.
 ====
 
-
 == Introduction
 
 Projections, the derived views of our event-sourced data, serve as vital components in shaping our applications,

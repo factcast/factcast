@@ -1,8 +1,6 @@
 = gRPC KeepAlive
 :icons: font
 
-
-
 == Settings Recommendations
 
 Here are some good settings for an initial configuration of a SpringBoot FactCast client/server setup in case you ran

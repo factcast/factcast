@@ -1,8 +1,6 @@
 = Prerequisites
 :icons: font
 
-
-
 == Postgres
 
 In order to run the FactCast server, you have to provide a Postgres database at least in version 15.

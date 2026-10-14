@@ -1,8 +1,6 @@
 = Design
 :icons: font
 
-
-
 == Requirements
 
 .Some of the requirements that lead to the current design of FactStore are
