@@ -35,8 +35,6 @@ import com.google.common.eventbus.EventBus;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 import org.factcast.store.StoreConfigurationProperties;
@@ -252,8 +250,7 @@ class PgListenerTest {
   }
 
   @Test
-  void testNotifySchemaStoreChange() throws Exception {
-    CountDownLatch latch = new CountDownLatch(1);
+  void testNotifySchemaStoreChange() {
     PGNotification validNotification =
         new Notification(
             PgConstants.CHANNEL_SCHEMASTORE_CHANGE,
@@ -267,21 +264,12 @@ class PgListenerTest {
             1,
             "{\"ns\":\"namespace\",\"type\":\"theType\",\"version\":3,\"txId\":123}");
 
-    when(pgConnectionSupplier.getUnpooledConnection(any())).thenReturn(conn);
-    when(conn.prepareStatement(anyString())).thenReturn(ps);
-    when(conn.getNotifications(anyInt()))
-        .thenReturn(
-            new PGNotification[] {validNotification, invalidNotification, anotherValidNotification})
-        .thenAnswer(
-            i -> {
-              latch.countDown();
-              return null;
-            });
-
-    PgListener pgListener = spy(new PgListener(pgConnectionSupplier, eventBus, props, registry));
-    pgListener.listen();
-    latch.await(1, TimeUnit.MINUTES);
-    pgListener.destroy();
+    PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props, registry);
+    pgListener.informSubscribersAboutFreshConnection();
+    // Process directly so notification assertions cannot race with the polling thread's health
+    // check.
+    pgListener.processNotifications(
+        new PGNotification[] {validNotification, invalidNotification, anotherValidNotification});
 
     verify(eventBus, times(1))
         .post(
@@ -307,8 +295,7 @@ class PgListenerTest {
   }
 
   @Test
-  void testNotifyTransformationStoreChange() throws Exception {
-    CountDownLatch latch = new CountDownLatch(1);
+  void testNotifyTransformationStoreChange() {
     PGNotification validNotification =
         new Notification(
             PgConstants.CHANNEL_TRANSFORMATIONSTORE_CHANGE,
@@ -325,31 +312,19 @@ class PgListenerTest {
             1,
             "{\"ns\":\"namespace\",\"type\":\"theOtherType\",\"txId\":123}");
 
-    when(pgConnectionSupplier.getUnpooledConnection(any())).thenReturn(conn);
-    when(conn.prepareStatement(anyString())).thenReturn(ps);
-    when(conn.getNotifications(anyInt()))
-        .thenReturn(
-            new PGNotification[] {validNotification, invalidNotification, anotherValidNotification})
-        .thenAnswer(
-            i -> {
-              latch.countDown();
-              return null;
-            });
-
-    PgListener pgListener = spy(new PgListener(pgConnectionSupplier, eventBus, props, registry));
-    pgListener.listen();
-    latch.await(1, TimeUnit.MINUTES);
-    pgListener.destroy();
+    PgListener pgListener = new PgListener(pgConnectionSupplier, eventBus, props, registry);
+    pgListener.processNotifications(
+        new PGNotification[] {validNotification, invalidNotification, anotherValidNotification});
 
     verify(eventBus, times(2)).post(any(TransformationStoreChangeNotification.class));
-    verify(pgListener, times(1))
+    verify(eventBus, times(1))
         .post(
             ArgumentMatchers.argThat(
                 n ->
                     TransformationStoreChangeNotification.class.isInstance(n)
                         && "namespace".equals(((TransformationStoreChangeNotification) n).ns())
                         && "theType".equals(((TransformationStoreChangeNotification) n).type())));
-    verify(pgListener, times(1))
+    verify(eventBus, times(1))
         .post(
             ArgumentMatchers.argThat(
                 n ->
