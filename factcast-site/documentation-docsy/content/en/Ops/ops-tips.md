@@ -32,19 +32,14 @@ However, there can be certain disadvantages of `fastupdate` on GIN indexes
 - query performance can suffer significantly when looking through both, the main index and pending list
 - when reaching the size limits, in-query cleanups can block other queries
 
-This can cause queries to be a lot slower than usual which we have observed in production setups. In general, if this
-kind of behavior is observed, it might make sense to consider to:
+We decided, that as long as the pending list is cleaned frequently, the benefits of more efficient inserts and the
+decreased load through less frequent index updates outweigh the mentioned disadvantages. Therefor, `fastupdate` was
+re-enabled via [`src/main/resources/db/changelog/factcast/issue4847/enable_fast_update.sql`](https://github.com/factcast/factcast/blob/main/factcast-store/src/main/resources/db/changelog/factcast/issue4847/enable_fast_update.sql),
+and the default of the [`tail-indexing-fast-update-enabled`](../Setup/properties.md#performance--reliability) property
+is set to `true`. To ensure the pending list does not grow to large, the following is configured for the `fact` table:
 
-- reduce the `gin_pending_list_limit` -> more frequent, smaller flushes
-- increase the limit and do manual flushes outside of workload
-- turn off `fastupdate`
-- let autovacuum run more often or manually call the clean operation
-
-For now, we have decided to disable the `fastupdate` setting via [`src/main/resources/db/changelog/factcast/issue3755/disable_fast_update.sql`](https://github.com/factcast/factcast/blob/main/factcast-store/src/main/resources/db/changelog/factcast/issue3755/disable_fast_update.sql)
-
-Please note that flushing the pending list as part of disabling the `fastupdate` setting could in theory block any other
-query. This is why this change set is **not executed automatically** if the attached condition senses a larger setup
-(> 10 million events). In this case please execute the change set manually to disable the `fastupdate` setting.
+- `autovacuum_vacuum_insert_threshold = 1000`
+- `autovacuum_vacuum_insert_scale_factor = 0`
 
 ## Autoanalyse & Autovacuum settings
 
@@ -61,6 +56,8 @@ autovacuum_analyze_scale_factor:0
 # set thresholds based on approximate number of facts inserted
 autovacuum_vacuum_threshold:<number of new facts each month>
 autovacuum_analyze_threshold:<number of new facts each week>
+# when enabling fastupdate we recommend to set naptime to 10s to prevent the pending list from growing to big
+autovacuum_naptime:'10'
 ```
 
 ## AWS RDS Configuration
