@@ -41,6 +41,8 @@ import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.telemetry.PgStoreTelemetry;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.postgresql.util.*;
@@ -493,6 +495,60 @@ class PgFactStreamTest {
       verify(catchup2).fastForward(24L);
     }
 
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void interruptedPhaseOneDoesNotFastForwardOrFollow(boolean offloaded) throws Exception {
+      OffloadDataSource offload = offloaded ? mock(OffloadDataSource.class) : null;
+      PgFactStream stream =
+          spy(
+              new PgFactStream(
+                  connectionSupplier,
+                  offload,
+                  eventBus,
+                  id2ser,
+                  pgCatchupFactory,
+                  hwmFetcher,
+                  pipeline,
+                  telemetry,
+                  reqTo,
+                  logSuppression));
+      doReturn(mds).when(stream).createCatchupDataSource(any(DataSource.class), same(pipeline));
+      PgCatchup catchup = mock(PgCatchup.class);
+      when(pgCatchupFactory.create(any(), any(), any(), any(), eq(PgCatchupFactory.Phase.PHASE_1)))
+          .thenReturn(catchup);
+      lenient()
+          .when(
+              pgCatchupFactory.create(
+                  any(), any(), any(), any(), eq(PgCatchupFactory.Phase.PHASE_2)))
+          .thenReturn(mock(PgCatchup.class));
+      InterruptedException interruption = new InterruptedException("Consumer interrupted");
+      doAnswer(
+              invocation -> {
+                stream.serial().set(11);
+                Thread.currentThread().interrupt();
+                throw new SQLException("Interrupted while fetching catchup page", interruption);
+              })
+          .when(catchup)
+          .run();
+
+      try {
+        RuntimeException failure = assertThrows(RuntimeException.class, stream::connect);
+        assertThat(failure).hasRootCause(interruption);
+        assertTrue(Thread.currentThread().isInterrupted());
+        assertThat(stream.serial().get()).isEqualTo(11);
+        verify(stream, never()).catchupPhaseTwo(any(), anyLong());
+        verify(stream, never()).fastForward(any());
+        verify(stream, never()).follow(any(), any());
+        verify(telemetry, never()).onCatchup(any());
+        verify(pipeline, never()).process(any(Signal.CatchupSignal.class));
+        verify(mds).close();
+        if (offloaded) verify(stream, never()).createCatchupDataSource(ds, pipeline);
+      } finally {
+        // Clear only the test's interrupt so subsequent tests can use the same JUnit thread.
+        Thread.interrupted();
+      }
+    }
+
     @SneakyThrows
     @Test
     void phase2UsesPrimaryDataSourceAndStartsFromPhase1Highwatermark() {
@@ -614,6 +670,49 @@ class PgFactStreamTest {
         verify(uut).catchupPhaseOne(mds);
         // Verify that createCatchupDataSource was called with offloadDataSource
         verify(uut).createCatchupDataSource(offloadDataSource, pipeline);
+      }
+
+      @Test
+      void sqlFailureOnOffloadFallsBackFromLastProcessedSerial() throws Exception {
+        PgFactStream stream =
+            spy(
+                new PgFactStream(
+                    connectionSupplier,
+                    offloadDataSource,
+                    eventBus,
+                    idToSerMapper,
+                    pgCatchupFactory,
+                    hwmFetcher,
+                    pipeline,
+                    telemetry,
+                    reqTo,
+                    logSuppression));
+        doReturn(mds).when(stream).createCatchupDataSource(any(DataSource.class), same(pipeline));
+        when(hwmFetcher.highWaterMark(any())).thenReturn(HighWaterMark.of(UUID.randomUUID(), 24));
+        PgCatchup catchup1 = mock(PgCatchup.class);
+        PgCatchup catchup2 = mock(PgCatchup.class);
+        when(pgCatchupFactory.create(
+                any(), any(), any(), any(), eq(PgCatchupFactory.Phase.PHASE_1)))
+            .thenReturn(catchup1);
+        when(pgCatchupFactory.create(
+                any(), any(), any(), any(), eq(PgCatchupFactory.Phase.PHASE_2)))
+            .thenReturn(catchup2);
+        doAnswer(
+                invocation -> {
+                  stream.serial().set(11);
+                  throw new SQLException("Offload unavailable");
+                })
+            .when(catchup1)
+            .run();
+
+        stream.doCatchup();
+
+        verify(stream).createCatchupDataSource(offloadDataSource, pipeline);
+        verify(stream).createCatchupDataSource(ds, pipeline);
+        InOrder order = inOrder(catchup2, stream);
+        order.verify(catchup2).fastForward(11);
+        order.verify(catchup2).run();
+        order.verify(stream).fastForward(any());
       }
     }
 

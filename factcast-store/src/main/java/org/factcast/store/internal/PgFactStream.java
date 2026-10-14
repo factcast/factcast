@@ -293,8 +293,9 @@ public class PgFactStream {
         // temporary error with the offload datasource, that would make it reasonable to fall back
         // to the primary.
         //
-        // We decide to escalate if the pipeline was closed, so that the primary isn't tried
-        if (pipeline.isClosed()) throw new CatchupException(e);
+        // Escalate closure or interruption so cancellation cannot start another query on primary.
+        if (pipeline.isClosed() || Thread.currentThread().isInterrupted())
+          throw new CatchupException(e);
         else {
           log.error("Error during catchup phase 1 on offload data source. Skipping phase one.", e);
           return serial.get();
