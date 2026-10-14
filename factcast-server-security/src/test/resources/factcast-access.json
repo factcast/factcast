@@ -1,0 +1,7 @@
+{
+  "accounts": [
+    { "id": "configured-account", "roles": [] },
+    { "id": "account-without-secret", "roles": [] }
+  ],
+  "roles": []
+}
