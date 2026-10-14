@@ -11,7 +11,7 @@ Facts - as you remember - are just tuples of JSON-Strings (header & payload) tha
 
 However, that focus on freedom sometimes makes it hard for application programmers to know where to start, or how to implement good practices like for instance the different kinds of models, locking or even just generating facts from Java Objects.
 
-==== This is where Factus comes in.
+=== This is where Factus comes in.
 
 Factus is a higher-level API for java applications to work with factcast.
 Using Factus from java is entirely optional.

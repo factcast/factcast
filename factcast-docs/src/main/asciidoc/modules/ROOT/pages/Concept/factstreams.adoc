@@ -5,7 +5,7 @@
 If you are familiar with other products that store facts, you might be familiar with the concept of a fact stream. In
 most solutions, the consumer subscribes to particular stream of facts and then picks those of interest for him.
 
-=== Fact Stream per Aggregate
+== Fact Stream per Aggregate
 
 A simple example would be to have all facts regarding a particular Aggregate Root in one fact stream, identified by the
 Aggregate's id. Something along these lines:
@@ -21,7 +21,7 @@ User-1234
 While this kind of Stream design makes it trivial to find all the facts that have to be aggregated to reconstruct the
 state of User(id=1234), you are not done, yet.
 
-=== Facts That Are Not Picked by Aggregate ID
+== Facts That Are Not Picked by Aggregate ID
 
 Let's just say, we want to create a report on how many _UserPasswordReset_ facts there are per Month. Here we are facing
 the problem, that (well after publishing the fact), we need to pick only those _UserPasswordReset_ from the Store,
@@ -34,7 +34,7 @@ any fact there is, and filter on the consumer side.
 
 Here we are faced with the necessity of Store-Side filtering of fact streams.
 
-=== Facts That Have an Effect on Multiple Aggregates
+== Facts That Have an Effect on Multiple Aggregates
 
 What about facts, that have impact to more than one Aggregates?
 
@@ -46,7 +46,7 @@ User-1234
 
 Here the second fact obviously has impact on both the following, as well as the user being followed.
 
-==== Bad Practice: Splitting Facts
+=== Bad Practice: Splitting Facts
 
 While we have seen people split the semantically unique fact _UserFollowedUser_ into _UserFollowedUser_ and
 _UserWasFollowed_, **we don't believe in that approach**, as it creates lots of facts that are only loosely connected to
@@ -56,7 +56,7 @@ More formally: by doing that, the publisher has to know about the domain model i
 facts to the Aggregates. Not at all a good solution, as facts last forever, while Domain Models **do** change over time,
 if you want them to, or not.
 
-==== Include Facts in Different Streams
+=== Include Facts in Different Streams
 
 Certainly better is the idea of publishing one _UserFollowedUser_, and make both Aggregates (The user following and the
 one being followed) consume this fact. For that reason, some solutions (like FactStore, for instance) give you the
@@ -64,7 +64,7 @@ opportunity to pick that fact and place it into both fact streams, the originato
 In order to do that, you inject JavaScript Projection code into the FactStore, that builds a particular fact stream
 directed to the consumer.
 
-==== Possible Pitfalls
+=== Possible Pitfalls
 
 Consider an Aggregate User (pseudocode):
 

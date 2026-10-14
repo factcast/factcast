@@ -142,7 +142,7 @@
 
 Properties you can use to configure gRPC:
 
-==== gRPC Client
+=== gRPC Client
 
 [cols="1,1,1,1", options="header"]
 |===

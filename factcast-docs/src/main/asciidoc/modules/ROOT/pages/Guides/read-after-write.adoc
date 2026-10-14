@@ -36,7 +36,7 @@ somebody logs in, nobody will care.
 This latency, from the moment when a potentially interesting fact is published up to when a callback on the handler
 method of a projection is invoked, we call the **window of inconsistency**.
 
-==== Snapshot / Aggregate
+=== Snapshot / Aggregate
 
 The above argumentation probably gives away, that you would not want to use a SnapshotProjection in this case,
 as it would probably be
@@ -52,7 +52,7 @@ What the more applicable alternative is (Managed or Subscribed Projection), depe
 on your tolerance for the window of inconsistency and the level of control you'd like to have over
 updating your model.
 
-==== Managed Projection
+=== Managed Projection
 
 A managed projection is called managed because the application can decide how often & when to update it.
 For instance, you could decide that a window of inconsistency can be as large as 60 seconds, so that ideally
@@ -64,7 +64,7 @@ This would also be slightly more efficient than using a subscribed projection if
 relevant facts to be published within this interval, but less efficient if there was nothing
 published in between.
 
-==== Subscribed Projection
+=== Subscribed Projection
 
 A subscribed projection will have its handler method invoked, when a relevant fact arrived.
 This method is more convenient (as there is less on the application layer to do) and also
@@ -110,7 +110,7 @@ consistency.
 There are many ways of implementing this read-after-write consistency. We're discussing one example approach
 for managed and subscribed projections each:
 
-==== Managed Projections and Selective Update
+=== Managed Projections and Selective Update
 
 When using managed projections you can call `factus.update(myManagedUserCount);` whenever you want.
 If you have chosen to update it regularly, the first idea would be to add an additional update call,
@@ -121,7 +121,7 @@ This would also only work for externalized models and might be wasteful. Basical
 subscribed projection in a way (apply change as soon as it happened), but gives you the control necessary
 to make the user in question (the writer) wait for the model to be updated.
 
-==== Subscribed Projections and Additional Waiting
+=== Subscribed Projections and Additional Waiting
 
 When using subscribed projections you have no control over when the fact arrives at the model. So
 in order to make the data appear consistent to the user who just changed something, you'd need to
