@@ -26,11 +26,11 @@ import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.store.internal.PgTestConfiguration;
 import org.factcast.test.IntegrationTest;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
@@ -38,7 +38,8 @@ import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 @SpringJUnitConfig(classes = {PgTestConfiguration.class})
 @Sql(scripts = "/wipe.sql", config = @SqlConfig(separator = "#"))
 @IntegrationTest
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
+@TestPropertySource(properties = "factcast.blacklist.type=RESOURCE")
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 class ResourceBlacklistIntegrationTest {
 
   @Autowired FactStore fs;
@@ -48,11 +49,6 @@ class ResourceBlacklistIntegrationTest {
   private final Collection<FactSpec> spec = Collections.singletonList(FactSpec.ns("ns1"));
   final Set<UUID> receivedFactIds = new HashSet<>();
   final FactObserver obs = element -> receivedFactIds.add(element.id());
-
-  @BeforeAll
-  static void configureBlacklistType() {
-    System.setProperty("factcast.blacklist.type", "RESOURCE");
-  }
 
   @BeforeEach
   void setup() {
@@ -64,9 +60,11 @@ class ResourceBlacklistIntegrationTest {
   }
 
   @Test
-  void blacklistIsApplied() {
+  void blacklistIsApplied() throws Exception {
     SubscriptionRequest req = SubscriptionRequest.catchup(spec).fromScratch();
-    fs.subscribe(SubscriptionRequestTO.from(req), obs).awaitCatchup();
+    try (var subscription = fs.subscribe(SubscriptionRequestTO.from(req), obs)) {
+      subscription.awaitCatchup(5_000);
+    }
     assertThat(receivedFactIds).hasSize(1).containsExactly(factId);
   }
 }

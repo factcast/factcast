@@ -21,6 +21,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Optional;
+import javax.annotation.Nullable;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +29,6 @@ import net.javacrumbs.shedlock.core.*;
 import net.javacrumbs.shedlock.provider.mongo.MongoLockProvider;
 import org.bson.Document;
 import org.factcast.factus.projection.WriterToken;
-import org.jspecify.annotations.Nullable;
 
 @Slf4j
 @RequiredArgsConstructor

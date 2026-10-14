@@ -7,6 +7,11 @@ description: PostgreSQL specific tips
 
 # General Tips
 
+## reWriteBatchedInserts
+
+Writable instances benefit from pgJDBC's `reWriteBatchedInserts=true` on the primary datasource. For example,
+add `?reWriteBatchedInserts=true` to a PostgreSQL JDBC URL.
+
 ## Optimize GIN indexes updates
 
 While GIN Indexes make querying jsonb faster they are also expensive to update. Especially because a single change can
