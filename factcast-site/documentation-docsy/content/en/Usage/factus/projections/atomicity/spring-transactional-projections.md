@@ -60,4 +60,56 @@ Factus provides convenient abstract classes for managed and subscribed projectio
 
 {{% / alert %}}
 
+## Coordinating writers over JDBC
+
+[Write Tokens over JDBC]({{< ref "/Usage/factus/projections/jdbc-write-tokens.md" >}}) keeps both the write token and the
+fact-stream-position in the very same relational database your projection already writes to, so
+that no Redis or MongoDB is needed just for the write token. That page carries the required schema,
+the supported databases and the lease semantics; all of it applies here unchanged.
+
+What the Spring variant adds is **atomicity**: the position is written on the connection of the
+ongoing transaction, so it commits together with your projection's own updates. Extend one of
+
+- `AbstractSpringJdbcManagedProjection`
+- `AbstractSpringJdbcSubscribedProjection`
+
+instead of the `AbstractSpringTx*` classes above and pass a `JdbcTemplate` alongside the
+`PlatformTransactionManager`:
+
+```java
+@ProjectionMetaData(revision = 1)
+@SpringTransactional
+public class UserNames extends AbstractSpringJdbcManagedProjection {
+
+    private final JdbcTemplate jdbcTemplate;
+
+    public UserNames(
+            @NonNull PlatformTransactionManager platformTransactionManager,
+            @NonNull JdbcTemplate jdbcTemplate) {
+        super(platformTransactionManager, jdbcTemplate);
+        this.jdbcTemplate = jdbcTemplate;
+    }
+    ...
+```
+
+That is all: `acquireWriteToken`, `factStreamPosition()` and `factStreamPosition(...)` are inherited, so
+only your `@Handler` methods and your query methods are left to write.
+
+The lock itself deliberately does **not** join your transaction: it is taken on a connection of its
+own, so the lease is committed as it is taken and survives a rollback of the projection's
+transaction. That means a **second** connection while your projection's transaction holds one — a
+connection pool of size 1 deadlocks.
+
+`AbstractSpringJdbcSubscribedProjection` offers `hasLock()` to your subclass, to gate work that is
+triggered from outside the fact stream:
+
+```java
+@Scheduled(fixedRate = 60_000)
+public void pruneStaleRows() {
+    if (hasLock()) {
+        jdbcTemplate.update("DELETE FROM users WHERE ...");
+    }
+}
+```
+
 You can find blueprints of getting started in the [example section](/usage/factus/projections/example).
