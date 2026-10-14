@@ -5,7 +5,7 @@ When consumers subscribe to a Stream of Events, it has to express, which Events 
 
 As discussed xref:ROOT:Concept/factstreams.adoc[here], there is more than one way to do it. We decided to go for just-in-time filtering in FactCast. Here is why:
 
-=== The Problem with Fact Stream IDs
+== The Problem with Fact Stream IDs
 
 https://geteventstore.com[EventStore] – which is a wonderful product by the way - is a good example of _Filtering/Transforming/Meshing_ of Events ahead of time. You inject JavaScript Code as a so-called 'Projection' into the Server, that builds a new Stream of Events by picking, and maybe even transforming Events into a new Stream with a particular ID. A consumer then subscribes to that particular EventsStream, thus gets exactly what he expects.
 
