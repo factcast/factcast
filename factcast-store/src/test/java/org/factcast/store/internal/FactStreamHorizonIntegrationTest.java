@@ -23,10 +23,14 @@ import java.nio.charset.StandardCharsets;
 import java.sql.*;
 import java.time.Duration;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.sql.DataSource;
 import org.factcast.core.Fact;
+import org.factcast.core.lock.Attempt;
+import org.factcast.core.lock.WithOptimisticLock;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.store.State;
@@ -67,6 +71,85 @@ final class FactStreamHorizonIntegrationTest {
   @BeforeEach
   void refreshHorizonAfterDatabaseWipe() {
     horizonProvider.advance();
+  }
+
+  @Test
+  void tokenWithoutMatchesRetainsHorizonAndDetectsLaterChanges() {
+    Fact unrelated = Fact.builder().ns("unrelated").buildWithoutPayload();
+    store.publish(List.of(unrelated));
+    long horizonSerial = store.serialOf(unrelated.id()).orElseThrow();
+    List<FactSpec> specs = List.of(FactSpec.ns(NS));
+
+    StateToken unchangedToken = store.stateFor(specs);
+    StateToken changedToken = store.stateFor(specs);
+    State state = tokenStore.get(unchangedToken).orElseThrow();
+    assertThat(state.serialOfLastMatchingFact()).isEqualTo(horizonSerial);
+
+    store.publish(List.of(Fact.builder().ns("unrelated").buildWithoutPayload()));
+    assertThat(store.publishIfUnchanged(List.of(), Optional.of(unchangedToken))).isTrue();
+
+    store.publish(List.of(Fact.builder().ns(NS).buildWithoutPayload()));
+    assertThat(store.publishIfUnchanged(List.of(), Optional.of(changedToken))).isFalse();
+  }
+
+  @Test
+  void tokenCapturedAfterProjectionCatchupCannotDetectTheEarlierGap() {
+    List<FactSpec> specs = List.of(FactSpec.ns(NS));
+    store.publish(List.of(Fact.builder().ns(NS).buildWithoutPayload()));
+    List<Fact> projection = new CopyOnWriteArrayList<>();
+    store
+        .subscribe(
+            SubscriptionRequestTO.from(SubscriptionRequest.catchup(specs).fromScratch()),
+            projection::add)
+        .awaitComplete();
+    assertThat(projection).hasSize(1);
+
+    store.publish(
+        List.of(
+            Fact.builder().ns(NS).buildWithoutPayload(),
+            Fact.builder().ns(NS).buildWithoutPayload(),
+            Fact.builder().ns(NS).buildWithoutPayload()));
+    StateToken tooLate = store.currentStateFor(specs);
+    Fact staleDecision = Fact.builder().ns(NS).build("{\"observed\":" + projection.size() + "}");
+
+    // A token protects only changes after its capture, not the client's earlier projection read.
+    assertThat(store.publishIfUnchanged(List.of(staleDecision), Optional.of(tooLate))).isTrue();
+    assertThat(projection).hasSize(1);
+    assertThat(store.fetchById(staleDecision.id())).isPresent();
+  }
+
+  @Test
+  void optimisticAttemptRefreshesAgainAfterConflictBeforePublishingDecision() throws Exception {
+    List<FactSpec> specs = List.of(FactSpec.ns(NS));
+    store.publish(List.of(Fact.builder().ns(NS).buildWithoutPayload()));
+    AtomicInteger attempts = new AtomicInteger();
+    List<Fact> projection = new CopyOnWriteArrayList<>();
+
+    var result =
+        new WithOptimisticLock(store, specs)
+            .retry(2)
+            .attempt(
+                () -> {
+                  projection.clear();
+                  store
+                      .subscribe(
+                          SubscriptionRequestTO.from(
+                              SubscriptionRequest.catchup(specs).fromScratch()),
+                          projection::add)
+                      .awaitComplete();
+                  if (attempts.incrementAndGet() == 1) {
+                    assertThat(projection).hasSize(1);
+                    store.publish(List.of(Fact.builder().ns(NS).buildWithoutPayload()));
+                  }
+                  return Attempt.publish(
+                      Fact.builder().ns(NS).build("{\"observed\":" + projection.size() + "}"));
+                });
+
+    assertThat(attempts).hasValue(2);
+    assertThat(projection).hasSize(2);
+    assertThat(result.publishedFacts())
+        .singleElement()
+        .satisfies(fact -> assertThat(fact.jsonPayload()).isEqualTo("{\"observed\":2}"));
   }
 
   @Test
@@ -257,7 +340,9 @@ final class FactStreamHorizonIntegrationTest {
 
       StateToken token = tokenCreation.get(5, TimeUnit.SECONDS);
       State state = tokenStore.get(token).orElseThrow();
-      assertThat(state.serialOfLastMatchingFact()).isEqualTo(reservedLowerSerial);
+      assertThat(state.serialOfLastMatchingFact())
+          .isEqualTo(store.serialOf(higherNonMatching.id()).orElseThrow());
+      assertThat(store.publishIfUnchanged(List.of(), Optional.of(token))).isTrue();
     }
   }
 

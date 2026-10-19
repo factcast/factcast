@@ -302,8 +302,7 @@ public class PgFactStore extends AbstractFactStore {
   @Override
   @NonNull
   protected State getStateFor(@NonNull Collection<FactSpec> specs) {
-    FactStreamHorizon horizon = horizonProvider.advance();
-    return doGetState(specs, 0, Optional.of(horizon));
+    return getCurrentStateFor(specs);
   }
 
   @Override
