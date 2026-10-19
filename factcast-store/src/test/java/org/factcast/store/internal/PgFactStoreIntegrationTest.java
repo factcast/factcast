@@ -31,15 +31,20 @@ import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.*;
 import org.factcast.core.subscription.*;
 import org.factcast.core.subscription.observer.*;
+import org.factcast.store.StoreConfigurationProperties;
+import org.factcast.store.internal.query.PgQueryBuilder;
 import org.factcast.store.test.AbstractFactStoreTest;
 import org.factcast.test.IntegrationTest;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.jdbc.*;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
+import org.springframework.test.util.AopTestUtils;
 
 @SpringJUnitConfig(classes = {PgTestConfiguration.class})
 @Sql(scripts = "/wipe.sql", config = @SqlConfig(separator = "#"))
@@ -51,6 +56,8 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
       "select TRUNC(EXTRACT(EPOCH FROM now()::timestamptz(3)) * 1000);";
 
   @Autowired FactStore fs;
+
+  @Autowired StoreConfigurationProperties storeProperties;
 
   @Autowired PgMetrics metrics;
 
@@ -233,6 +240,177 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
     Optional<State> state = tokenStore.get(token);
     assertThat(state).isNotEmpty();
     assertThat(state.get()).extracting(State::serialOfLastMatchingFact).isEqualTo(0L);
+  }
+
+  @Test
+  void getStateForMatchingFactsReturnsMaxSerial() {
+    Fact fact1 = Fact.builder().ns("ns1").type("t1").buildWithoutPayload();
+    Fact fact2 = Fact.builder().ns("unrelated").type("t2").buildWithoutPayload();
+    Fact fact3 = Fact.builder().ns("ns1").type("t1").buildWithoutPayload();
+    Fact fact4 = Fact.builder().ns("unrelated").type("t2").buildWithoutPayload();
+
+    store.publish(Lists.newArrayList(fact1, fact2, fact3, fact4));
+
+    long ser1 = store.serialOf(fact1.id()).orElseThrow();
+    long ser3 = store.serialOf(fact3.id()).orElseThrow();
+
+    StateToken token = store.stateFor(Lists.newArrayList(FactSpec.ns("ns1").type("t1")));
+    assertThat(token).isNotNull();
+
+    Optional<State> state = tokenStore.get(token);
+    assertThat(state).isNotEmpty();
+    assertThat(state.get().serialOfLastMatchingFact()).isEqualTo(ser3);
+
+    // Verify doGetState with serial threshold
+    PgFactStore pgFactStore = AopTestUtils.getUltimateTargetObject(fs);
+    var specs = Lists.newArrayList(FactSpec.ns("ns1").type("t1"));
+
+    // If lastMatchingSerial is before ser1, latest matching serial is ser3
+    assertThat(pgFactStore.doGetState(specs, 0L).serialOfLastMatchingFact()).isEqualTo(ser3);
+    // If lastMatchingSerial is ser1, newer matching fact exists (ser3)
+    assertThat(pgFactStore.doGetState(specs, ser1).serialOfLastMatchingFact()).isEqualTo(ser3);
+    // If lastMatchingSerial is ser3, no newer matching facts exist -> returns 0L
+    assertThat(pgFactStore.doGetState(specs, ser3).serialOfLastMatchingFact()).isZero();
+    // If lastMatchingSerial is beyond ser3 -> returns 0L
+    assertThat(pgFactStore.doGetState(specs, ser3 + 10L).serialOfLastMatchingFact()).isZero();
+  }
+
+  @ParameterizedTest
+  @ValueSource(ints = {0, 1, 2, 512})
+  void hybridStateQueryRespectsBoundariesAndThresholds(int window) {
+    int previousWindow = storeProperties.getStateQueryBackwardScanWindow();
+    storeProperties.setStateQueryBackwardScanWindow(window);
+    try {
+      PgFactStore target = AopTestUtils.getUltimateTargetObject(fs);
+      var matching = List.of(FactSpec.ns("hybrid").type("match"));
+      assertThat(target.doGetState(matching, 0).serialOfLastMatchingFact()).isZero();
+
+      Fact older = Fact.builder().ns("hybrid").type("older").buildWithoutPayload();
+      Fact padding = Fact.builder().ns("unrelated").buildWithoutPayload();
+      Fact boundary = Fact.builder().ns("hybrid").type("boundary").buildWithoutPayload();
+      Fact recent = Fact.builder().ns("hybrid").type("match").buildWithoutPayload();
+      Fact newest = Fact.builder().ns("unrelated").buildWithoutPayload();
+      fs.publish(List.of(older, padding, boundary, recent, newest));
+
+      long olderSerial = fs.serialOf(older.id()).orElseThrow();
+      long boundarySerial = fs.serialOf(boundary.id()).orElseThrow();
+      long recentSerial = fs.serialOf(recent.id()).orElseThrow();
+      long highestSerial = fs.serialOf(newest.id()).orElseThrow();
+      // With a window of two, boundary belongs to the fallback and recent to the probe.
+      assertThat(boundarySerial).isEqualTo(highestSerial - 2);
+      assertThat(recentSerial).isEqualTo(highestSerial - 1);
+      assertThat(target.doGetState(matching, 0).serialOfLastMatchingFact()).isEqualTo(recentSerial);
+      assertThat(target.doGetState(matching, recentSerial).serialOfLastMatchingFact()).isZero();
+      assertThat(target.doGetState(matching, highestSerial + 10).serialOfLastMatchingFact())
+          .isZero();
+      assertThat(
+              target
+                  .doGetState(List.of(FactSpec.ns("hybrid").type("boundary")), olderSerial)
+                  .serialOfLastMatchingFact())
+          .isEqualTo(boundarySerial);
+      assertThat(
+              target
+                  .doGetState(List.of(FactSpec.ns("hybrid").type("older")), 0)
+                  .serialOfLastMatchingFact())
+          .isEqualTo(olderSerial);
+      assertThat(
+              target
+                  .doGetState(List.of(FactSpec.ns("hybrid").type("older")), olderSerial)
+                  .serialOfLastMatchingFact())
+          .isZero();
+      assertThat(target.doGetState(List.of(FactSpec.ns("absent")), 0).serialOfLastMatchingFact())
+          .isZero();
+      assertThat(
+              target
+                  .doGetState(
+                      List.of(
+                          FactSpec.ns("hybrid").type("older"), FactSpec.ns("hybrid").type("match")),
+                      0)
+                  .serialOfLastMatchingFact())
+          .isEqualTo(recentSerial);
+
+      // Removing a fact leaves a serial gap; the window still refers to serial positions.
+      jdbcTemplate.update("DELETE FROM fact WHERE ser = ?", recentSerial);
+      assertThat(target.doGetState(List.of(FactSpec.ns("hybrid")), 0).serialOfLastMatchingFact())
+          .isEqualTo(boundarySerial);
+    } finally {
+      storeProperties.setStateQueryBackwardScanWindow(previousWindow);
+    }
+  }
+
+  @Test
+  void hybridStateQueryDoesNotExecuteFallbackOnRecentHit() {
+    fs.publish(List.of(Fact.builder().ns("recent").buildWithoutPayload()));
+    var builder = new PgQueryBuilder(List.of(FactSpec.ns("recent")));
+    var plan =
+        jdbcTemplate.query(
+            "EXPLAIN (ANALYZE, BUFFERS) " + builder.createStateSQL(512),
+            builder.createStateStatementSetter(0),
+            (rs, row) -> rs.getString(1));
+    assertThat(plan)
+        .anySatisfy(line -> assertThat(line).contains("CTE Scan on subq", "never executed"));
+  }
+
+  @Test
+  void getStateForNonMatchingSpecsWithPopulatedFactsReturns0() {
+    Fact fact1 = Fact.builder().ns("ns1").type("t1").buildWithoutPayload();
+    Fact fact2 = Fact.builder().ns("ns2").type("t2").buildWithoutPayload();
+    store.publish(Lists.newArrayList(fact1, fact2));
+
+    StateToken token =
+        store.stateFor(Lists.newArrayList(FactSpec.ns("nonExistentNs").type("nonExistentType")));
+    assertThat(token).isNotNull();
+
+    Optional<State> state = tokenStore.get(token);
+    assertThat(state).isNotEmpty();
+    assertThat(state.get().serialOfLastMatchingFact()).isZero();
+  }
+
+  @Test
+  void getStateForMultipleFactSpecs() {
+    Fact fact1 = Fact.builder().ns("ns1").type("t1").buildWithoutPayload();
+    Fact fact2 = Fact.builder().ns("ns2").type("t2").buildWithoutPayload();
+    Fact fact3 = Fact.builder().ns("unrelated").type("t3").buildWithoutPayload();
+    store.publish(Lists.newArrayList(fact1, fact2, fact3));
+
+    long ser1 = store.serialOf(fact1.id()).orElseThrow();
+    long ser2 = store.serialOf(fact2.id()).orElseThrow();
+    assertThat(ser2).isGreaterThan(ser1);
+
+    StateToken token =
+        store.stateFor(
+            Lists.newArrayList(FactSpec.ns("ns1").type("t1"), FactSpec.ns("ns2").type("t2")));
+    assertThat(token).isNotNull();
+
+    Optional<State> state = tokenStore.get(token);
+    assertThat(state).isNotEmpty();
+    assertThat(state.get().serialOfLastMatchingFact()).isEqualTo(ser2);
+  }
+
+  @Test
+  void publishIfUnchangedValidatesStateCorrectly() {
+    Fact initialFact = Fact.builder().ns("counter").type("tick").buildWithoutPayload();
+    store.publish(Collections.singletonList(initialFact));
+
+    var specs = Collections.singletonList(FactSpec.ns("counter").type("tick"));
+    StateToken token = store.stateFor(specs);
+
+    // State is unchanged, conditional publish succeeds
+    Fact updateFact = Fact.builder().ns("counter").type("tick").buildWithoutPayload();
+    boolean published =
+        store.publishIfUnchanged(Collections.singletonList(updateFact), Optional.of(token));
+    assertThat(published).isTrue();
+
+    // Now obtain a state token, publish another matching fact to change the state, then attempt
+    // publish with old token
+    StateToken token2 = store.stateFor(specs);
+    Fact concurrentFact = Fact.builder().ns("counter").type("tick").buildWithoutPayload();
+    store.publish(Collections.singletonList(concurrentFact));
+
+    Fact conflictingFact = Fact.builder().ns("counter").type("tick").buildWithoutPayload();
+    boolean rejected =
+        store.publishIfUnchanged(Collections.singletonList(conflictingFact), Optional.of(token2));
+    assertThat(rejected).isFalse();
   }
 
   @SuppressWarnings("deprecation")

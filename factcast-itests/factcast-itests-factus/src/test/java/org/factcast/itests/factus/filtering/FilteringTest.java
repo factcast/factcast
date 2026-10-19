@@ -26,6 +26,7 @@ import org.factcast.factus.event.EventConverter;
 import org.factcast.itests.TestFactusApplication;
 import org.factcast.itests.factus.event.*;
 import org.factcast.itests.factus.proj.*;
+import org.factcast.spring.boot.autoconfigure.snap.InMemorySnapshotCacheAutoConfiguration;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +34,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
 
 @SpringBootTest
-@ContextConfiguration(classes = TestFactusApplication.class)
+@ContextConfiguration(
+    classes = {TestFactusApplication.class, InMemorySnapshotCacheAutoConfiguration.class})
 @Slf4j
 public class FilteringTest extends AbstractFactCastIntegrationTest {
   private static final long WAIT_TIME_FOR_ASYNC_FACT_DELIVERY = 1000;
@@ -152,6 +154,38 @@ public class FilteringTest extends AbstractFactCastIntegrationTest {
 
     assertThat(localUserNamesFilterByAggregateId.count()).isEqualTo(1);
     assertThat(localUserNamesFilterByAggregateId.contains("John")).isTrue();
+  }
+
+  @Test
+  public void filtersByAggregateIdProperty() {
+
+    UUID sackedId = randomUUID();
+    UUID sackerId = randomUUID();
+
+    // both ids end up as aggregate ids on the fact
+    factus.publish(new UserFired(sackedId, sackerId));
+
+    FiredUserAggregate sacked = factus.fetch(FiredUserAggregate.class, sackedId);
+    assertThat(sacked.fired()).isTrue();
+
+    // the sacker's aggregate must not consume the event, even though the fact carries its id.
+    // as no fact is applied at all, the aggregate does not even come into existence
+    assertThat(factus.find(FiredUserAggregate.class, sackerId)).isEmpty();
+  }
+
+  @Test
+  public void filtersByNestedAggregateIdProperty() {
+
+    UUID promotedId = randomUUID();
+    UUID promoterId = randomUUID();
+
+    // promotedId is nested three levels deep in the payload, promoterId sits at the top level
+    factus.publish(new UserPromoted(promotedId, promoterId));
+
+    PromotedUserAggregate promoted = factus.fetch(PromotedUserAggregate.class, promotedId);
+    assertThat(promoted.promoted()).isTrue();
+
+    assertThat(factus.find(PromotedUserAggregate.class, promoterId)).isEmpty();
   }
 
   @Test

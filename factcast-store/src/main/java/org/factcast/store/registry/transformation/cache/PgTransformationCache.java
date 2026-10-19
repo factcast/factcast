@@ -200,17 +200,28 @@ public class PgTransformationCache implements TransformationCache, AutoCloseable
 
   @Override
   public void invalidateTransformationFor(String ns, String type) {
+    invalidateTransformationFor(ns, type, null, null);
+  }
+
+  @Override
+  public void invalidateTransformationFor(String ns, String type, int fromVersion, int toVersion) {
+    invalidateTransformationFor(ns, type, Integer.valueOf(fromVersion), Integer.valueOf(toVersion));
+  }
+
+  private void invalidateTransformationFor(
+      String ns, String type, Integer fromVersion, Integer toVersion) {
     // we need to flush even if we're in read only mode in order to prevent a buffer overflow
     flush();
 
     if (!storeConfigurationProperties.isReadOnlyModeEnabled()) {
       // it is fine if flush worked in another transaction, it just has to be serialized
-      inTransactionWithLock(
-          () ->
-              jdbcTemplate.update(
-                  "DELETE FROM transformation_cache WHERE header ->> 'ns' = ? AND header ->> 'type' = ?",
-                  ns,
-                  type));
+      // The procedure collects keys before acquiring the lock that serializes cache writers.
+      jdbcTemplate.update(
+          "CALL invalidate_transformation_cache(?, ?, ?::int, ?::int)",
+          ns,
+          type,
+          fromVersion,
+          toVersion);
     }
   }
 

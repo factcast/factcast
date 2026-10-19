@@ -17,6 +17,8 @@ package org.factcast.factus.projector;
 
 import static java.util.Collections.emptySet;
 
+import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.introspect.*;
 import com.google.common.annotations.VisibleForTesting;
 import java.lang.reflect.*;
 import java.util.*;
@@ -27,12 +29,12 @@ import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.spec.*;
+import org.factcast.core.util.FactCastJson;
 import org.factcast.factus.*;
 import org.factcast.factus.event.EventObject;
 import org.factcast.factus.projection.*;
 import org.factcast.factus.projection.parameter.*;
 import org.factcast.factus.projection.tx.OpenTransactionAware;
-import org.springframework.util.StringUtils;
 
 @Slf4j
 @UtilityClass
@@ -188,8 +190,6 @@ public class ReflectionUtils {
     spec = filterByMetaDoesNotExist(m, spec);
     spec = filterByAggIds(m, spec);
     spec = filterByScript(m, spec);
-
-    checkFilterByAggIdProperty(m, spec);
     return spec;
   }
 
@@ -212,32 +212,33 @@ public class ReflectionUtils {
   }
 
   /**
-   * this will only check for applicability of the FilterByAggIdProperty annotation. The actual pair
-   * needs to be created from the instance, rather than statically, as the value (the aggregate id)
-   * is dynamic.
+   * Returns the payload path of a {@link FilterByAggIdProperty} annotation, or null if absent. The
+   * aggregate id to pair it with is only known per instance, so the FactSpec entry is created in
+   * {@link Dispatcher#specFor(UUID)} rather than here.
    */
   @VisibleForTesting
-  static void checkFilterByAggIdProperty(@NonNull Method m, @NonNull FactSpec spec) {
+  static String discoverAggIdPropertyPath(@NonNull Method m) {
     FilterByAggIdProperty annotation = m.getAnnotation(FilterByAggIdProperty.class);
-    if (annotation != null) {
-
-      if (!Aggregate.class.isAssignableFrom(m.getDeclaringClass())) {
-        throw new IllegalAnnotationForTargetClassException(
-            "FilterByAggIdProperty can only be used on classes extending Aggregate, but was found on "
-                + m.toString());
-      }
-
-      if (m.getAnnotation(HandlerFor.class) != null) {
-        log.warn(
-            "Using FilterByAggIdProperty on HandlerFor method "
-                + m.toString()
-                + " which means the property cannot be verified.");
-        return;
-      }
-
-      // check applicability if param is eventObject
-      verifyUuidPropertyExpressionAgainstClass(annotation.value(), findEventObjectParameterType(m));
+    if (annotation == null) {
+      return null;
     }
+
+    if (!Aggregate.class.isAssignableFrom(m.getDeclaringClass())) {
+      throw new IllegalAnnotationForTargetClassException(
+          "FilterByAggIdProperty can only be used on classes extending Aggregate, but was found on "
+              + m);
+    }
+
+    if (m.getAnnotation(HandlerFor.class) != null) {
+      throw new InvalidHandlerDefinition(
+          "FilterByAggIdProperty cannot be combined with HandlerFor on "
+              + m
+              + ", as there is no EventObject to verify the property path against. Use a typed"
+              + " @Handler instead.");
+    }
+
+    verifyUuidPropertyExpressionAgainstClass(annotation.value(), findEventObjectParameterType(m));
+    return annotation.value();
   }
 
   @VisibleForTesting
@@ -304,7 +305,8 @@ public class ReflectionUtils {
                             m,
                             HandlerParameterTransformer.forCalling(m, c),
                             callTarget.resolver(),
-                            fs);
+                            fs,
+                            ReflectionUtils.discoverAggIdPropertyPath(m));
                     Dispatcher before = map.put(key, dispatcher);
                     if (before != null) {
                       throw new InvalidHandlerDefinition(
@@ -390,38 +392,47 @@ public class ReflectionUtils {
    * resolves the path through the Object graph starting from the eventObjectType to make sure that
    * the path is valid and the resulting return type is UUID.
    *
-   * @param value the path in dot-notation, case-sensitive
+   * @param path the path in dot-notation, case-sensitive
    * @param eventObjectType the root pojo to resolve the path on
    * @throws IllegalAggregateIdPropertyPathException when path does not exist, or does not resolve
    *     to UUID type
    */
   @VisibleForTesting
   static void verifyUuidPropertyExpressionAgainstClass(
-      @NonNull String value, @NonNull Class<? extends EventObject> eventObjectType)
+      @NonNull String path, @NonNull Class<? extends EventObject> eventObjectType)
       throws IllegalAggregateIdPropertyPathException {
-    String[] path = value.split("\\.");
-    Class<?> type = eventObjectType;
-    for (int i = 0; i <= path.length - 1; i++) {
-      try {
-        // we're expecting JavaBeans-specification-type getters here
-        type = type.getMethod("get" + StringUtils.capitalize(path[i])).getReturnType();
-      } catch (NoSuchMethodException e) {
+
+    ObjectMapper mapper = FactCastJson.getObjectMapper();
+    JavaType type = mapper.constructType(eventObjectType);
+
+    for (String segment : path.split("\\.")) {
+      SerializationConfig config = mapper.getSerializationConfig();
+      BeanDescription bean = config.introspect(type);
+
+      BeanPropertyDefinition property =
+          bean.findProperties().stream()
+              .filter(p -> p.getName().equals(segment))
+              .filter(BeanPropertyDefinition::couldSerialize)
+              .findFirst()
+              .orElse(null);
+
+      if (property == null) {
         throw new IllegalAggregateIdPropertyPathException(
-            "Cannot resolve property "
-                + path[i]
-                + " on type "
-                + type
-                + " (full path='"
-                + value
-                + "' from "
-                + type
-                + ")");
+            "Missing property " + segment + " on type " + type);
       }
+
+      AnnotatedMember member = property.getAccessor();
+      if (member == null) {
+        throw new IllegalAggregateIdPropertyPathException(
+            "Missing accessor for " + segment + " on type " + type);
+      }
+
+      type = member.getType();
     }
 
-    if (!UUID.class.isAssignableFrom(type)) {
+    if (!UUID.class.isAssignableFrom(type.getRawClass())) {
       throw new IllegalAggregateIdPropertyPathException(
-          "Encountered non-UUID type at " + value + " on type " + type);
+          "Encountered non-UUID type at " + path + " on type " + type);
     }
   }
 

@@ -1,0 +1,77 @@
+<header class="header" role="banner">
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <a class="navbar-item" href="{{or site.url (or siteRootUrl siteRootPath)}}">
+        {{site.title}}
+      </a>
+
+      <button class="navbar-burger" data-target="topbar-nav">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+
+
+    <div id="topbar-nav" class="navbar-menu">
+     <div class="navbar-end">
+
+{{#with (resolvePage 'docs::About/index.adoc')}}
+<a class="navbar-item" href="{{{relativize ./url}}}">
+  About
+</a>
+{{/with}}
+
+{{#with (resolvePage 'docs::Concept/index.adoc')}}
+<a class="navbar-item" href="{{{relativize ./url}}}">
+  Concept
+</a>
+{{/with}}
+
+
+{{#with (resolvePage 'docs::Setup/index.adoc')}}
+<a class="navbar-item" href="{{{relativize ./url}}}">
+  Setup
+</a>
+{{/with}}
+
+
+
+{{#with (resolvePage 'docs::Usage/index.adoc')}}
+<a class="navbar-item" href="{{{relativize ./url}}}">
+  API
+</a>
+{{/with}}
+
+
+{{#with (resolvePage 'docs::UI/index.adoc')}}
+<a class="navbar-item" href="{{{relativize ./url}}}">
+  UI
+</a>
+{{/with}}
+
+{{#with (resolvePage 'docs::Ops/index.adoc')}}
+<a class="navbar-item" href="{{{relativize ./url}}}">
+  Ops
+</a>
+{{/with}}
+
+{{#with (resolvePage 'docs::Guides/index.adoc')}}
+<a class="navbar-item" href="{{{relativize ./url}}}">
+  Guides
+</a>
+{{/with}}
+
+
+
+<div class="navbar-item search">
+  <input id="search-input"
+         type="text"
+         placeholder="Search docs">
+</div>
+
+
+      </div>
+    </div>
+  </nav>
+</header>

@@ -16,10 +16,12 @@
 package org.factcast.store.internal;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.awaitility.Awaitility.waitAtMost;
 import static org.mockito.Mockito.*;
 
 import java.lang.reflect.*;
 import java.sql.*;
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.atomic.*;
 import javax.sql.DataSource;
@@ -188,6 +190,11 @@ class QueryCancellationIntegrationTest {
 
   @Autowired FactStore store;
 
+  @BeforeEach
+  void clearCapturedConnections() {
+    capturedConnections.clear();
+  }
+
   @Test
   void testTransformationExceptionCancelsServerPipeline() throws Exception {
     // Publish a fact of version 1
@@ -224,25 +231,23 @@ class QueryCancellationIntegrationTest {
     try (LogCaptor logCaptor = LogCaptor.forClass(CatchupDataSource.class)) {
       logCaptor.setLogLevelToDebug();
 
-      var subscription = store.subscribe(SubscriptionRequestTO.from(request), observer);
+      try (var subscription = store.subscribe(SubscriptionRequestTO.from(request), observer)) {
+        assertThatThrownBy(() -> subscription.awaitComplete(5000))
+            .isInstanceOf(TransformationException.class);
 
-      try {
-        subscription.awaitComplete(5000);
-      } catch (Exception expected) {
-        // expected error or closed exception
+        // awaitComplete can return before onError and the subsequent pipeline cancellation.
+        waitAtMost(Duration.ofSeconds(5))
+            .alias("transformation error delivery and query cancellation")
+            .untilAsserted(
+                () -> {
+                  assertThat(receivedError.get()).isInstanceOf(TransformationException.class);
+                  assertThat(receivedError.get().getMessage())
+                      .startsWith("Cannot reach any version in [42] from version 1");
+                  assertThat(logCaptor.getDebugLogs()).contains("Cancellation requested");
+                  assertThat(capturedConnections).hasSize(1);
+                  verify(capturedConnections.iterator().next(), times(1)).cancelQuery();
+                });
       }
-
-      // Verify that TransformationException was received by subscriber
-      assertThat(receivedError.get()).isInstanceOf(TransformationException.class);
-      assertThat(receivedError.get().getMessage())
-          .startsWith("Cannot reach any version in [42] from version 1");
-
-      // Verify that "Cancellation requested" is logged
-      assertThat(logCaptor.getDebugLogs()).contains("Cancellation requested");
-
-      // Verify that cancelQuery() was called on the database connection
-      assertThat(capturedConnections).hasSize(1);
-      verify(capturedConnections.iterator().next(), times(1)).cancelQuery();
     }
   }
 }
