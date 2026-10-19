@@ -16,7 +16,6 @@
 package org.factcast.store.internal;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import ch.qos.logback.classic.Level;
@@ -32,7 +31,6 @@ import org.factcast.core.*;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.FactStreamHorizon;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.core.subscription.observer.*;
 import org.factcast.store.*;
 import org.factcast.store.internal.catchup.*;
 import org.factcast.store.internal.horizon.FactStreamHorizonProvider;
@@ -646,7 +644,7 @@ class PgFactStreamTest {
         lenient().doReturn(true).when(uut).isConnected();
         lenient().doReturn(mds).when(uut).createCatchupDataSource(any(DataSource.class), any());
         lenient().when(horizonProvider.advance()).thenReturn(primaryHorizon);
-        lenient().when(horizonProvider.read(mds)).thenReturn(offloadHorizon);
+        lenient().when(horizonProvider.readFrom(mds)).thenReturn(offloadHorizon);
         lenient().doReturn(100L).when(uut).catchupPhaseOne(any(), same(offloadHorizon));
         lenient()
             .doNothing()
@@ -681,7 +679,7 @@ class PgFactStreamTest {
         lenient().doReturn(true).when(uut).isConnected();
         lenient().doReturn(mds).when(uut).createCatchupDataSource(any(DataSource.class), any());
         when(horizonProvider.advance()).thenReturn(primaryHorizon);
-        when(horizonProvider.read(mds)).thenReturn(horizon(200));
+        when(horizonProvider.readFrom(mds)).thenReturn(horizon(200));
         doReturn(123L).when(uut).catchupPhaseOne(same(mds), same(primaryHorizon));
         doNothing().when(uut).catchupPhaseTwo(any(), anyLong(), any(FactStreamHorizon.class));
 
@@ -711,7 +709,7 @@ class PgFactStreamTest {
         lenient().doReturn(true).when(uut).isConnected();
         lenient().doReturn(mds).when(uut).createCatchupDataSource(any(DataSource.class), any());
         when(horizonProvider.advance()).thenReturn(primaryHorizon);
-        when(horizonProvider.read(mds))
+        when(horizonProvider.readFrom(mds))
             .thenThrow(new DataAccessResourceFailureException("offload unavailable"));
         doNothing().when(uut).catchupPhaseTwo(any(), anyLong(), any(FactStreamHorizon.class));
 

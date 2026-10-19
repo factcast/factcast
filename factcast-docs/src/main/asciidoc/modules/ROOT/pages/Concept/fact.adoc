@@ -1,8 +1,6 @@
 = The Anatomy of a Fact
 :icons: font
 
-
-
 == Facts
 
 FactCast is centered around _facts_. We say facts instead of events, because Event has become a blurry term that could mean any number of things from a simple `onWhatNot() ` call handled by an Event-Loop to a `LegalContractCreated` with any flavor of semantics.
@@ -14,6 +12,7 @@ Obviously, a fact is history and cannot be changed, after it happened. This is o
 Facts consist of two JSON documents: Header and Payload.
 
 [#the-header]
+
 === The Header
 
 consists of:

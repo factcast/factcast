@@ -1,8 +1,6 @@
 = Managed (Local) Projection
 :icons: font
 
-
-
 image::ph_lm.png[, align="center"]
 
 As a specialization of ManagedProjection, a LocalManagedProjection lives within the application

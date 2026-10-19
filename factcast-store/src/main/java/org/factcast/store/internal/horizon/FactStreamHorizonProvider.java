@@ -37,5 +37,5 @@ public interface FactStreamHorizonProvider {
 
   /** Reads the persisted horizon through a specific data source without advancing it. */
   @NonNull
-  FactStreamHorizon read(@NonNull DataSource dataSource);
+  FactStreamHorizon readFrom(@NonNull DataSource dataSource);
 }

@@ -24,6 +24,7 @@ import java.util.function.*;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.factcast.core.subscription.FactStreamHorizon;
 import org.factcast.store.internal.horizon.FactStreamHorizonProvider;
 import org.factcast.store.internal.listen.*;
 import org.factcast.store.internal.pipeline.*;
@@ -49,7 +50,7 @@ class PgSynchronizedQuery {
 
   @NonNull final String sql;
 
-  @NonNull final LongFunction<PreparedStatementSetter> setterFactory;
+  @NonNull final Function<FactStreamHorizon, PreparedStatementSetter> setterFactory;
 
   @NonNull final RowCallbackHandler rowHandler;
 
@@ -66,7 +67,7 @@ class PgSynchronizedQuery {
       @NonNull PushbackServerPipeline pipe,
       @NonNull PgConnectionSupplier connectionSupplier,
       @NonNull String sql,
-      @NonNull LongFunction<PreparedStatementSetter> setterFactory,
+      @NonNull Function<FactStreamHorizon, PreparedStatementSetter> setterFactory,
       @NonNull Supplier<Boolean> isConnected,
       @NonNull AtomicLong serialToContinueFrom,
       @NonNull FactStreamHorizonProvider horizonProvider) {
@@ -85,7 +86,8 @@ class PgSynchronizedQuery {
   // the synchronized here is crucial!
   @SuppressWarnings({"SameReturnValue", "java:S1181"})
   public synchronized void run(boolean useIndex) throws PipelineAlreadyClosedException {
-    long horizonSerial = horizonProvider.currentPrimary().factSerial();
+    FactStreamHorizon horizon = horizonProvider.currentPrimary();
+    long horizonSerial = horizon.factSerial();
     boolean queryCompleted = false;
     List<ConnectionModifier> filters =
         Lists.newArrayList(ConnectionModifier.withApplicationName(debugInfo));
@@ -103,7 +105,7 @@ class PgSynchronizedQuery {
       if (serialToContinueFrom.get() < horizonSerial) {
         try (SingleConnectionDataSource ds =
             connectionSupplier.getPooledAsSingleDataSource(filters)) {
-          new JdbcTemplate(ds).query(sql, setterFactory.apply(horizonSerial), rowHandler);
+          new JdbcTemplate(ds).query(sql, setterFactory.apply(horizon), rowHandler);
         }
       }
       queryCompleted = true;

@@ -17,11 +17,13 @@ package org.factcast.store.internal.listen;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.*;
+import jakarta.annotation.*;
 import java.sql.*;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReentrantLock;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.subscription.FactStreamHorizon;
@@ -44,10 +46,9 @@ public class NudgeNotificationHandler implements DisposableBean {
   @VisibleForTesting protected final Timer timer = new Timer(true);
   // this we need in order to skip obsolete tasks
   @VisibleForTesting protected final AtomicLong timerVersion = new AtomicLong(0);
-  @VisibleForTesting protected final AtomicLong requestedRefresh = new AtomicLong(0);
-  @VisibleForTesting protected final AtomicLong completedRefresh = new AtomicLong(0);
-  private final AtomicBoolean refreshInProgress = new AtomicBoolean(false);
-  private io.micrometer.core.instrument.@NonNull Timer metricsTimer;
+  private final AtomicBoolean refreshRequested = new AtomicBoolean(false);
+  private final ReentrantLock refreshLock = new ReentrantLock();
+  private final io.micrometer.core.instrument.@NonNull Timer metricsTimer;
 
   public NudgeNotificationHandler(
       @NonNull EventBus bus,
@@ -72,8 +73,15 @@ public class NudgeNotificationHandler implements DisposableBean {
     this.metrics = metrics;
     this.horizonProvider = horizonProvider;
     bus.register(this);
-    if (scheduleCleanupTask)
-      timer.scheduleAtFixedRate(new ScheduledCleanup(), 0, Duration.ofMinutes(1).toMillis());
+
+    if (scheduleCleanupTask) {
+      // even though a smaller notification table is better for overall performance, we keep up to 5
+      // mins old notifications in there because of a possible, but not very likely race condition,
+      // that is based on transactions taking >60sec to commit after inserting a fact.
+      int cleanupIntervalInMinutes = 5;
+      timer.scheduleAtFixedRate(
+          new ScheduledCleanup(), 0, Duration.ofMinutes(cleanupIntervalInMinutes).toMillis());
+    }
     metricsTimer = metrics.timer(StoreMetrics.OP.SELECT_DISTINCT_NOTIFICATIONS);
   }
 
@@ -133,50 +141,69 @@ public class NudgeNotificationHandler implements DisposableBean {
   }
 
   void fetchPairsAndDispatch() {
-    requestedRefresh.incrementAndGet();
+    refreshRequested.set(true);
     drainRefreshRequests();
   }
 
   private void drainRefreshRequests() {
-    RuntimeException firstFailure = null;
-    while (refreshInProgress.compareAndSet(false, true)) {
+    // EventBus dispatch can request another refresh on this thread. Let the current pass finish
+    // updating its cursor before processing that request.
+    if (refreshLock.isHeldByCurrentThread()) return;
+
+    RuntimeException exception = null;
+
+    // Keep the accumulated failures while picking up requests arriving during unlock.
+    while (refreshLock.tryLock()) {
       try {
-        long generation;
-        do {
-          generation = requestedRefresh.get();
-          try {
-            fetchPairsAndDispatchOnce();
-          } catch (RuntimeException e) {
-            if (firstFailure == null) firstFailure = e;
-          } finally {
-            completedRefresh.set(generation);
-          }
-        } while (requestedRefresh.get() != generation);
+        exception = processPendingRefreshRequests(exception);
       } finally {
-        refreshInProgress.set(false);
+        refreshLock.unlock();
       }
 
-      // A request can arrive between the last generation check and releasing the single-flight
-      // flag. In that case this thread picks it up unless the requesting thread already did.
-      if (completedRefresh.get() == requestedRefresh.get()) {
-        if (firstFailure != null) throw firstFailure;
-        return;
+      if (!refreshRequested.get()) break;
+    }
+
+    if (exception != null) throw exception;
+  }
+
+  private RuntimeException processPendingRefreshRequests(@Nullable RuntimeException exception) {
+    // The caller holds refreshLock. Clear before work so incoming requests trigger another pass.
+    while (refreshRequested.getAndSet(false)) {
+      try {
+        fetchPairsAndDispatchOnce();
+      } catch (RuntimeException e) {
+        exception = accumulateFailure(exception, e);
       }
     }
+    return exception;
+  }
+
+  private static RuntimeException accumulateFailure(
+      @Nullable RuntimeException firstFailure, @Nonnull RuntimeException nextFailure) {
+    if (firstFailure == null) return nextFailure;
+    if (firstFailure != nextFailure) firstFailure.addSuppressed(nextFailure);
+    return firstFailure;
   }
 
   private void fetchPairsAndDispatchOnce() {
-    FactStreamHorizon horizon = horizonProvider.advance();
     long lowerSerial = notificationSer.get();
+    FactStreamHorizon horizon = horizonProvider.advance();
     long horizonSerial = horizon.notificationSerial();
-
-    boolean cursorMissing =
+    if (horizonSerial < lowerSerial) {
+      // The unlogged notification sequence has restarted. Wake every subscriber once before
+      // continuing from the rebased persisted horizon.
+      log.warn("Notification sequence restarted, waking all subscribers");
+      bus.post(FactInsertionNotification.internal());
+      notificationSer.set(horizonSerial);
+      return;
+    }
+    boolean baseLineMissing =
         lowerSerial > 0
             && Boolean.FALSE.equals(
                 jdbc.queryForObject(BASE_EXISTS_SQL, Boolean.class, lowerSerial));
 
-    if (cursorMissing) {
-      log.trace("No reliable notification cursor, waking all subscribers");
+    if (baseLineMissing || lowerSerial == 0) {
+      log.trace("No reliable notification baseline, waking all subscribers");
       bus.post(FactInsertionNotification.internal());
       notificationSer.set(horizonSerial);
       return;
@@ -184,28 +211,24 @@ public class NudgeNotificationHandler implements DisposableBean {
 
     if (horizonSerial <= lowerSerial) return;
 
-    if (lowerSerial == 0) {
-      log.trace("No reliable notification cursor, waking all subscribers");
-      bus.post(FactInsertionNotification.internal());
-      notificationSer.set(horizonSerial);
-      return;
-    }
-
     final var timerSample = metrics.startSample();
-    List<FetchNotificationTuple> tuples =
-        jdbc.query(
-            "SELECT max(ser) as max,ns,type FROM notification "
-                + "WHERE notification.ser > ? AND notification.ser <= ? "
-                + "GROUP BY DISTINCT(ns,type) ORDER BY max",
-            DataClassRowMapper.newInstance(FetchNotificationTuple.class),
-            lowerSerial,
-            horizonSerial);
+    try {
+      List<FetchNotificationTuple> tuples =
+          jdbc.query(
+              "SELECT max(ser) as max,ns,type FROM notification "
+                  + "WHERE notification.ser > ? AND notification.ser <= ? "
+                  + "GROUP BY DISTINCT(ns,type) ORDER BY max",
+              DataClassRowMapper.newInstance(FetchNotificationTuple.class),
+              lowerSerial,
+              horizonSerial);
 
-    timerSample.stop(metricsTimer);
-    if (!tuples.isEmpty()) {
-      log.trace("Fetched {} notification{}", tuples.size(), tuples.size() > 1 ? "s" : "");
-      tuples.forEach(t -> bus.post(t.toFactInsertionNotification()));
+      if (!tuples.isEmpty()) {
+        log.trace("Fetched {} notification{}", tuples.size(), tuples.size() > 1 ? "s" : "");
+        tuples.forEach(t -> bus.post(t.toFactInsertionNotification()));
+      }
+      notificationSer.set(horizonSerial);
+    } finally {
+      timerSample.stop(metricsTimer);
     }
-    notificationSer.set(horizonSerial);
   }
 }

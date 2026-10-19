@@ -2,10 +2,6 @@
 :icons: font
 :page-role: landing
 
-
-
-
-
 pass:[<div class="mx-auto"><p class="lead mt-2 py-5"><b>A 'good enough' Event-store based on PostgreSQL.</b></p></div>]
 
 image:https://github.com/factcast/factcast/actions/workflows/maven.yaml/badge.svg?branch=main[Actions Status, link="https://github.com/factcast/factcast/actions"]

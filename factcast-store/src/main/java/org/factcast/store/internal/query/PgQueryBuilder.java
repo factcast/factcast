@@ -21,10 +21,12 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
+import javax.annotation.*;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.spec.FactSpec;
+import org.factcast.core.subscription.FactStreamHorizon;
 import org.factcast.store.internal.PgConstants;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 
@@ -35,6 +37,7 @@ import org.springframework.jdbc.core.PreparedStatementSetter;
  * @author uwe.schaefer@prisma-capacity.eu
  */
 @Slf4j
+@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 public class PgQueryBuilder {
 
   private static final String ORDER_BY = " ORDER BY ";
@@ -57,21 +60,25 @@ public class PgQueryBuilder {
   }
 
   public PreparedStatementSetter createBoundedStatementSetter(
-      @NonNull AtomicLong serial, long horizonSerial) {
-    return p -> setParameters(p, serial.get(), 0, OptionalLong.of(horizonSerial));
-  }
-
-  /** Applies the same predicates to both branches of the state query. */
-  public PreparedStatementSetter createStateStatementSetter(long serial) {
-    return createStateStatementSetter(serial, OptionalLong.empty());
+      @NonNull AtomicLong serial, @Nonnull FactStreamHorizon horizon) {
+    return p -> setParameters(p, serial.get(), 0, OptionalLong.of(horizon.factSerial()));
   }
 
   public PreparedStatementSetter createStateStatementSetter(
-      long serial, @NonNull OptionalLong horizonSerial) {
+      long serial, @NonNull Optional<FactStreamHorizon> horizon) {
     return p -> {
+      OptionalLong horizonSerial = toOptionalLong(horizon.map(FactStreamHorizon::factSerial));
       int count = setParameters(p, serial, 0, horizonSerial);
       setParameters(p, serial, count, horizonSerial);
     };
+  }
+
+  public PreparedStatementSetter createStateStatementSetter(long serial) {
+    return createStateStatementSetter(serial, Optional.empty());
+  }
+
+  private static OptionalLong toOptionalLong(Optional<Long> value) {
+    return value.map(OptionalLong::of).orElseGet(OptionalLong::empty);
   }
 
   private int setParameters(PreparedStatement p, long serial, int count, OptionalLong horizonSerial)
@@ -244,14 +251,14 @@ public class PgQueryBuilder {
   }
 
   public String createUnboundedSQL() {
-    return createUnboundedSQL(false);
+    return createSQL(false);
   }
 
   public String createBoundedSQL() {
-    return createUnboundedSQL(true);
+    return createSQL(true);
   }
 
-  private String createUnboundedSQL(boolean bounded) {
+  private String createSQL(boolean bounded) {
 
     if (useTemporaryTable()) {
       return "INSERT INTO "

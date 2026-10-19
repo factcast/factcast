@@ -1,8 +1,6 @@
 = JavaScript
 :icons: font
 
-
-
 This section will walk you through how to use FactCast with JavaScript from an application programmers perspective.
 
 Please note, that this is a **low-level** API.

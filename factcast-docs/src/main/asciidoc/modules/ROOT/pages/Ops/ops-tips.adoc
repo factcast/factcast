@@ -1,8 +1,6 @@
 = General Operations Tips
 :icons: font
 
-
-
 == Conditional Execution date2serial Migration
 
 In FactCast v0.7.1, a new UI feature was introduced to allow filtering of events based on their publishing date. For

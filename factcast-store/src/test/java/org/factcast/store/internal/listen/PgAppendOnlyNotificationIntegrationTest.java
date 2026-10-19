@@ -32,6 +32,8 @@ import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.*;
 import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.store.StoreConfigurationProperties;
+import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.PgTestConfiguration;
 import org.factcast.store.internal.horizon.FactStreamHorizonProvider;
 import org.factcast.store.internal.notification.FactInsertionNotification;
@@ -58,6 +60,50 @@ class PgAppendOnlyNotificationIntegrationTest {
   @Autowired EventBus eventBus;
   @Autowired NudgeNotificationHandler handler;
   @Autowired FactStreamHorizonProvider horizonProvider;
+  @Autowired StoreConfigurationProperties props;
+  @Autowired PgMetrics metrics;
+
+  @Test
+  void sequenceResetRebasesHorizonAndRestoresSelectiveDispatch() throws Exception {
+    EventBus bus = new EventBus();
+    NotificationCollector collector = new NotificationCollector();
+    bus.register(collector);
+    NudgeNotificationHandler isolatedHandler =
+        new NudgeNotificationHandler(bus, jdbc, props, metrics, horizonProvider, false);
+    try {
+      for (int i = 0; i < 3; i++) {
+        store.publish(facts(1));
+      }
+      long oldSerial = horizonProvider.advance().notificationSerial();
+      assertThat(oldSerial).isGreaterThan(1);
+      isolatedHandler.fetchPairsAndDispatch();
+      assertThat(isolatedHandler.notificationSer).hasValue(oldSerial);
+      assertThat(collector.global).hasValue(1);
+
+      jdbc.execute("TRUNCATE notification");
+      assertThat(horizonProvider.advance().notificationSerial()).isEqualTo(oldSerial);
+
+      jdbc.execute("TRUNCATE notification RESTART IDENTITY");
+      assertThat(horizonProvider.advance().notificationSerial()).isZero();
+      assertThat(horizonProvider.currentPrimary().notificationSerial()).isZero();
+      store.publish(facts(1));
+      assertThat(horizonProvider.advance().notificationSerial()).isEqualTo(1);
+      isolatedHandler.fetchPairsAndDispatch();
+      assertThat(isolatedHandler.notificationSer).hasValue(1);
+      assertThat(collector.global).hasValue(2);
+      isolatedHandler.fetchPairsAndDispatch();
+      assertThat(collector.global).hasValue(2);
+
+      store.publish(facts(1));
+      assertThat(horizonProvider.advance().notificationSerial()).isEqualTo(2);
+      isolatedHandler.fetchPairsAndDispatch();
+      assertThat(isolatedHandler.notificationSer).hasValue(2);
+      assertThat(collector.global).hasValue(2);
+      assertThat(collector.selective).hasValue(1);
+    } finally {
+      isolatedHandler.destroy();
+    }
+  }
 
   @Test
   void preservesEverySerialAndDispatchesSelectivelyAfterBootstrap() {

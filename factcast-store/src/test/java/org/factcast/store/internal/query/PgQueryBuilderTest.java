@@ -19,15 +19,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 import java.sql.PreparedStatement;
-import java.util.List;
-import java.util.OptionalLong;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import org.assertj.core.util.Lists;
 import org.factcast.core.spec.FactSpec;
+import org.factcast.core.subscription.FactStreamHorizon;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -116,14 +115,15 @@ class PgQueryBuilderTest {
       var underTest = new PgQueryBuilder(Lists.newArrayList(FactSpec.ns("*")));
       var ps = mock(PreparedStatement.class);
 
-      underTest.createBoundedStatementSetter(serial, 42L).setValues(ps);
+      FactStreamHorizon horizon = new FactStreamHorizon(null, 42L, 7L);
+      underTest.createBoundedStatementSetter(serial, horizon).setValues(ps);
 
       verify(ps).setLong(1, 12L);
       verify(ps).setLong(2, 42L);
       verifyNoMoreInteractions(ps);
 
       var stateStatement = mock(PreparedStatement.class);
-      underTest.createStateStatementSetter(12L, OptionalLong.of(42L)).setValues(stateStatement);
+      underTest.createStateStatementSetter(12L, Optional.of(horizon)).setValues(stateStatement);
       verify(stateStatement).setLong(1, 12L);
       verify(stateStatement).setLong(2, 42L);
       verify(stateStatement).setLong(3, 12L);
