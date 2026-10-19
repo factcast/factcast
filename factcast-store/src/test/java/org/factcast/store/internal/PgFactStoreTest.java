@@ -532,8 +532,8 @@ class PgFactStoreTest {
 
       PreparedStatement ps = mock(PreparedStatement.class);
       setterCaptor.getValue().setValues(ps);
-      verify(ps).setLong(3, 16L);
-      verify(ps).setLong(6, 16L);
+      verify(ps).setLong(2, 16L);
+      verify(ps).setLong(4, 16L);
 
       ResultSet rs = mock(ResultSet.class);
       when(rs.next()).thenReturn(false);
@@ -586,8 +586,8 @@ class PgFactStoreTest {
 
       PreparedStatement ps = mock(PreparedStatement.class);
       captor.getValue().setValues(ps);
-      verify(ps).setLong(3, LAST_MATCHING_SERIAL);
-      verify(ps).setLong(6, LAST_MATCHING_SERIAL);
+      verify(ps).setLong(2, LAST_MATCHING_SERIAL);
+      verify(ps).setLong(4, LAST_MATCHING_SERIAL);
     }
   }
 
