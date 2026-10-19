@@ -1,8 +1,6 @@
 = Projection
 :icons: font
 
-
-
 image::ph_p.png[, align="center"]
 
 Before we can look at processing events, we first have to talk about another abstraction that does not exist in
@@ -50,14 +48,14 @@ or any other via:
 ++++
 <div style="text-align: center;">
 <img src="../../../_images/logos/redis-logo.png" width="100px" height="100px"/>
-<img src="../../../_images/logos/valkey-logo.png" width="100px" height="100px"/> 
+<img src="../../../_images/logos/valkey-logo.png" width="100px" height="100px"/>
 </div>
 ++++
 
 - AWS DynamoDB
 ++++
 <div style="text-align: center;">
-<img src="../../../_images/logos/dynamo-logo.svg" width="100px" height="100px"/> 
+<img src="../../../_images/logos/dynamo-logo.svg" width="100px" height="100px"/>
 </div>
 ++++
 
@@ -65,12 +63,13 @@ or any other via:
 ++++
 <div style="text-align: center;">
 <img src="../../../_images/logos/mongodb-logo.svg" width="100px" height="100px" style="padding-right: 15px;"/>
-<img src="../../../_images/logos/documentdb-logo.svg" width="100px" height="100px"/> 
+<img src="../../../_images/logos/documentdb-logo.svg" width="100px" height="100px"/>
 </div>
 ++++
 with more to come.
 
 [#projections-in-general]
+
 == Projections in General
 
 What projections have in common is that they handle events (or facts). In order to express that, a projection can have

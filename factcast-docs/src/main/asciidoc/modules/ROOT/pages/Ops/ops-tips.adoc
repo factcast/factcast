@@ -1,8 +1,6 @@
 = General Operations Tips
 :icons: font
 
-
-
 == Conditional Execution date2serial Migration
 
 In FactCast v0.7.1, a new UI feature was introduced to allow filtering of events based on their publishing date. For
@@ -42,7 +40,6 @@ property is set to `true`. To keep the pending list small, the following setting
 Please note that flushing the pending list as part of disabling the `fastupdate` setting could in theory block any other
 query. This is why this change set is **not executed automatically** if the attached condition senses a larger setup
 (> 10 million events). In this case please execute the change set manually to disable the `fastupdate` setting.
-
 
 == Autoanalyse & Autovacuum Settings
 

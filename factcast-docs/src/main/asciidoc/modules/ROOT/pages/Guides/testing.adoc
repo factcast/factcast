@@ -11,7 +11,6 @@ The examples below may use Spring Boot or Lombok. None of those frameworks are n
 extension is framework-agnostic.
 ====
 
-
 == Introduction
 
 An event-sourced application usually performs xref:ROOT:Concept/index.adoc[two kinds of interactions] with the FactCast
@@ -61,7 +60,6 @@ The user `UserAdded` fact contains a user ID and the email address. `UserRemoved
 only carries the user ID to remove.
 
 Here is a possible projection using the FactCast low-level API:
-
 
 [source,java]
 ----
@@ -119,7 +117,6 @@ public class UserEmailsProjection {
 
 ----
 
-
 The method `apply` acts as an entry point for the projection and dispatches the received `Fact` to the appropriate
 handling behavior. There, the `Fact` object's JSON payload is parsed using the Jackson library and the projection's data
 (the `userEmails` map), is updated accordingly.
@@ -136,7 +133,6 @@ Unit testing this projection is much easier, as there are no external dependenci
 check the customized view of the internal map.
 
 Let's look at an example for the `UserAdded` fact:
-
 
 [source,java]
 ----
@@ -164,7 +160,6 @@ void whenHandlingUserAddedFactEmailIsAdded() {
 
 ----
 
-
 Note the use of the convenient builder the `Fact` class is providing.
 
 Since the focus of this unit test is on `handleUserAdded`, we execute the method directly.
@@ -188,7 +183,6 @@ Before writing your first integration test
 - make sure Docker is installed and running on your machine
 - add the `factcast-test` module to your `pom.xml`:
 
-
 [source,xml]
 ----
 <dependency>
@@ -200,14 +194,12 @@ Before writing your first integration test
 
 ----
 
-
 This will make the client application connect to the server without using TLS.
 
 ==== Writing the Integration Test
 
 Our integration test builds upon the previous unit test example. This time however, we want to check if the
 `UserEmailsProjection` can also be updated by a real FactCast server:
-
 
 [source,java]
 ----
@@ -256,7 +248,6 @@ class UserEmailsProjectionITest {
 
 ----
 
-
 The previously mentioned `FactCastExtension` starts the FactCast server and the Postgres database _once_ before the
 first test is executed. Between the tests, the extension wipes all old facts from the FactCast server so that you are
 guaranteed to always start from scratch.
@@ -285,7 +276,6 @@ ID.
 
 To get an idea of how the events are defined, let's have a look inside `UserAdded`:
 
-
 [source,java]
 ----
 @Getter
@@ -313,7 +303,6 @@ public class UserAdded implements EventObject {
 
 ----
 
-
 We create a Factus compatible event by implementing the `EventObject` interface and supplying the fact details via
 the `@Specification` annotation. The event itself contains the properties `userId` and `email` which are simply fields
 of the `UserAdded` class. The `protected` no-args constructor is used by Jackson when deserializing from JSON back to a
@@ -325,7 +314,6 @@ xref:ROOT:Usage/factus/introduction.adoc[here].
 === The User Emails Projection
 
 Now that we know which events to handle, we can process them in the Factus based `UserEmailsProjection`:
-
 
 [source,java]
 ----
@@ -350,7 +338,6 @@ public class UserEmailsProjection extends LocalManagedProjection {
 
 ----
 
-
 You will instantly notice how short this implementation is compared to the `UserEmailsProjection` class of
 the low-level API example before. No dispatching or explicit JSON parsing is needed.
 Instead, the event handler methods each receive their event as plain Java POJO which is ready to use.
@@ -363,7 +350,6 @@ detailed reading on the various Factus supported projection types.
 
 The unit test for this projection tests each handler method individually. As an example, here is the test for
 the `UserAdded` event handler:
-
 
 [source,java]
 ----
@@ -380,7 +366,6 @@ void whenHandlingUserAddedEventEmailIsAdded() {
 
 ----
 
-
 First we create a `userAddedEvent` which we then `apply` to the responsible handler method of the `UserEmailsProjection`
 class. To check the result, we fetch the `Set` of emails and, as last part, examine the content.
 
@@ -390,7 +375,6 @@ After we have covered each handler method with detailed tests on unit level, we 
 against a real FactCast server.
 
 Here is an example:
-
 
 [source,java]
 ----
@@ -414,7 +398,6 @@ public class UserEmailsProjectionITest {
     //...
 
 ----
-
 
 The annotations of the test class are identical to the integration test shown for the low-level API. Hence, we only
 introduce them quickly here:
