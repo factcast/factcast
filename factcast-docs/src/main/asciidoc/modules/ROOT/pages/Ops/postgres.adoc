@@ -25,14 +25,10 @@ If this kind of behavior is observed it might make sense to consider to:
 - reduce the `gin_pending_list_limit` -> more frequent, smaller flushes
 - increase the limit and do manual flushes outside of workload
 - turn off `fastupdate`
-- let autovacuum run more often or manually call the clean operation
+- let autovacuum_analyze run more often or manually call the flush operation
 
 FactCast enables `fastupdate` on `idx_fact_header` with a `65536` KiB (64 MiB) pending-list limit.
-The `fact` table uses `autovacuum_vacuum_insert_threshold = 1000` and `autovacuum_vacuum_insert_scale_factor = 0`
-to make it eligible for vacuuming based on insert count regardless of table size.
-Operators should separately configure the cluster-wide `autovacuum_naptime` to `10s`, for example via an AWS RDS
-parameter group, so autovacuum can flush pending entries promptly. Liquibase does not change this cluster-wide setting.
-The insert threshold does not guarantee immediate vacuuming; scheduling and worker availability still affect when it runs.
+The `fact` table makes sure to flush the pending list frequently.
 See xref:Ops/ops-tips.adoc#_optimize_gin_indexes_updates[General Operations Tips] for the administrative SQL and tuning guidance.
 
 === Autoanalyse & Autovacuum Settings

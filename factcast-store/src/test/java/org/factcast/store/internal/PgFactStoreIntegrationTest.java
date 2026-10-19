@@ -85,8 +85,7 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
             jdbcTemplate.queryForList(
                 "SELECT unnest(reloptions) FROM pg_class WHERE oid = 'fact'::regclass",
                 String.class))
-        .contains(
-            "autovacuum_vacuum_insert_threshold=1000", "autovacuum_vacuum_insert_scale_factor=0");
+        .contains("autovacuum_analyze_threshold=1000", "autovacuum_analyze_scale_factor=0");
   }
 
   @Test
