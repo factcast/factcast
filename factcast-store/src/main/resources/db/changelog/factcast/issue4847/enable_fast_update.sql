@@ -1,13 +1,12 @@
--- This change is shipped together with the recommendation to reduce the autovacuum_naptime. Update the docs
--- accordingly when changing this behavior in the future
+-- Batch GIN updates with a 64 MiB pending list to reduce insert I/O.
 ALTER INDEX idx_fact_header SET (
-    fastupdate = true,
-    -- 64 MB
+    fastupdate = on,
     gin_pending_list_limit = 65536
-);
+    );
 
+-- Trigger automatic ANALYZE after ~1,000 changed rows
 ALTER TABLE fact SET (
-    -- run after 1k inserts
-    autovacuum_vacuum_insert_threshold = 1000,
-    autovacuum_vacuum_insert_scale_factor = 0
-);
+    autovacuum_analyze_threshold = 1000,
+    autovacuum_analyze_scale_factor = 0
+    );
+

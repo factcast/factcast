@@ -34,11 +34,14 @@ re-enabled via [`src/main/resources/db/changelog/factcast/issue4847/enable_fast_
 and the default of the [`tail-indexing-fast-update-enabled`](../Setup/properties.md#performance--reliability) property
 is set to `true`. To ensure the pending list does not grow too large, the following is configured for the `fact` table:
 
-TODO
+[source,properties]
+----
+autovacuum_analyze_threshold = 1000,
+autovacuum_analyze_scale_factor = 0
+----
 
-Please note that flushing the pending list as part of disabling the `fastupdate` setting could in theory block any other
-query. This is why this change set is **not executed automatically** if the attached condition senses a larger setup
-(> 10 million events). In this case please execute the change set manually to disable the `fastupdate` setting.
+Liquibase only applies the index and table settings. The cluster-wide setting affects all databases and is left to
+operators. Monitor autovacuum activity, pending-list size, and insert latency under your workload when tuning these settings.
 
 == Autoanalyse & Autovacuum Settings
 
