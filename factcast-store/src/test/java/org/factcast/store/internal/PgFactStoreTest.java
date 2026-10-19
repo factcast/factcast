@@ -544,30 +544,16 @@ class PgFactStoreTest {
       assertThat(extractorCaptor.getValue().extractData(rs)).isEqualTo(42L);
     }
 
-    @SneakyThrows
     @Test
-    void tokenCreationUsesBoundedQueryAtHorizon() {
-      FactSpec spec = FactSpec.ns("ns1").type("type1");
-      List<FactSpec> specs = Lists.newArrayList(spec);
+    void tokenCreationStoresHorizonWithoutQueryingMatchingFacts() {
+      List<FactSpec> specs = List.of(FactSpec.ns("ns1").type("type1"));
       when(horizonProvider.advance()).thenReturn(new FactStreamHorizon(UUID.randomUUID(), 42, 42));
 
-      PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs);
-      String stateSQL =
-          pgQueryBuilder.createStateSQL(
-              storeConfigurationProperties.getStateQueryBackwardScanWindow(), true);
-      ArgumentCaptor<PreparedStatementSetter> captor =
-          ArgumentCaptor.forClass(PreparedStatementSetter.class);
-      when(jdbcTemplate.query(eq(stateSQL), captor.capture(), any(ResultSetExtractor.class)))
-          .thenReturn(32L);
+      State state = underTest.getStateFor(specs);
 
-      assertThat(underTest.getStateFor(specs).serialOfLastMatchingFact()).isEqualTo(32L);
-
-      PreparedStatement ps = mock(PreparedStatement.class);
-      captor.getValue().setValues(ps);
-      verify(ps).setLong(3, 0L);
-      verify(ps).setLong(4, 42L);
-      verify(ps).setLong(7, 0L);
-      verify(ps).setLong(8, 42L);
+      assertThat(state.serialOfLastMatchingFact()).isEqualTo(42L);
+      assertThat(state.specs()).isEqualTo(specs);
+      verifyNoInteractions(jdbcTemplate);
     }
   }
 

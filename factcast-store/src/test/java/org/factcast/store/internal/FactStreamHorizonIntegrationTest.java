@@ -23,6 +23,7 @@ import java.nio.charset.StandardCharsets;
 import java.sql.*;
 import java.time.Duration;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.*;
 import javax.sql.DataSource;
@@ -67,6 +68,25 @@ final class FactStreamHorizonIntegrationTest {
   @BeforeEach
   void refreshHorizonAfterDatabaseWipe() {
     horizonProvider.advance();
+  }
+
+  @Test
+  void tokenWithoutMatchesRetainsHorizonAndDetectsLaterChanges() {
+    Fact unrelated = Fact.builder().ns("unrelated").buildWithoutPayload();
+    store.publish(List.of(unrelated));
+    long horizonSerial = store.serialOf(unrelated.id()).orElseThrow();
+    List<FactSpec> specs = List.of(FactSpec.ns(NS));
+
+    StateToken unchangedToken = store.stateFor(specs);
+    StateToken changedToken = store.stateFor(specs);
+    State state = tokenStore.get(unchangedToken).orElseThrow();
+    assertThat(state.serialOfLastMatchingFact()).isEqualTo(horizonSerial);
+
+    store.publish(List.of(Fact.builder().ns("unrelated").buildWithoutPayload()));
+    assertThat(store.publishIfUnchanged(List.of(), Optional.of(unchangedToken))).isTrue();
+
+    store.publish(List.of(Fact.builder().ns(NS).buildWithoutPayload()));
+    assertThat(store.publishIfUnchanged(List.of(), Optional.of(changedToken))).isFalse();
   }
 
   @Test
@@ -257,7 +277,9 @@ final class FactStreamHorizonIntegrationTest {
 
       StateToken token = tokenCreation.get(5, TimeUnit.SECONDS);
       State state = tokenStore.get(token).orElseThrow();
-      assertThat(state.serialOfLastMatchingFact()).isEqualTo(reservedLowerSerial);
+      assertThat(state.serialOfLastMatchingFact())
+          .isEqualTo(store.serialOf(higherNonMatching.id()).orElseThrow());
+      assertThat(store.publishIfUnchanged(List.of(), Optional.of(token))).isTrue();
     }
   }
 

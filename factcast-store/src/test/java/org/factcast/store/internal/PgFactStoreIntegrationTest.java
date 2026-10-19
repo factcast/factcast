@@ -270,7 +270,7 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
   }
 
   @Test
-  void getStateForMatchingFactsReturnsMaxSerial() {
+  void getStateForMatchingFactsReturnsHorizon() {
     Fact fact1 = Fact.builder().ns("ns1").type("t1").buildWithoutPayload();
     Fact fact2 = Fact.builder().ns("unrelated").type("t2").buildWithoutPayload();
     Fact fact3 = Fact.builder().ns("ns1").type("t1").buildWithoutPayload();
@@ -286,7 +286,8 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
 
     Optional<State> state = tokenStore.get(token);
     assertThat(state).isNotEmpty();
-    assertThat(state.get().serialOfLastMatchingFact()).isEqualTo(ser3);
+    assertThat(state.get().serialOfLastMatchingFact())
+        .isEqualTo(store.serialOf(fact4.id()).orElseThrow());
 
     // Verify doGetState with serial threshold
     PgFactStore pgFactStore = AopTestUtils.getUltimateTargetObject(fs);
@@ -379,7 +380,7 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
   }
 
   @Test
-  void getStateForNonMatchingSpecsWithPopulatedFactsReturns0() {
+  void getStateForNonMatchingSpecsWithPopulatedFactsReturnsHorizon() {
     Fact fact1 = Fact.builder().ns("ns1").type("t1").buildWithoutPayload();
     Fact fact2 = Fact.builder().ns("ns2").type("t2").buildWithoutPayload();
     store.publish(Lists.newArrayList(fact1, fact2));
@@ -390,7 +391,8 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
 
     Optional<State> state = tokenStore.get(token);
     assertThat(state).isNotEmpty();
-    assertThat(state.get().serialOfLastMatchingFact()).isZero();
+    assertThat(state.get().serialOfLastMatchingFact())
+        .isEqualTo(store.serialOf(fact2.id()).orElseThrow());
   }
 
   @Test
@@ -411,7 +413,8 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
 
     Optional<State> state = tokenStore.get(token);
     assertThat(state).isNotEmpty();
-    assertThat(state.get().serialOfLastMatchingFact()).isEqualTo(ser2);
+    assertThat(state.get().serialOfLastMatchingFact())
+        .isEqualTo(store.serialOf(fact3.id()).orElseThrow());
   }
 
   @Test
