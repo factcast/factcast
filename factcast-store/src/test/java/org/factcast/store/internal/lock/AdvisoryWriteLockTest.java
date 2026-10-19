@@ -15,8 +15,11 @@
  */
 package org.factcast.store.internal.lock;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,6 +27,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @ExtendWith(MockitoExtension.class)
 class AdvisoryWriteLockTest {
@@ -38,6 +42,16 @@ class AdvisoryWriteLockTest {
 
   @InjectMocks private AdvisoryWriteLock underTest;
 
+  @BeforeEach
+  void startTransactionSynchronization() {
+    TransactionSynchronizationManager.initSynchronization();
+  }
+
+  @AfterEach
+  void stopTransactionSynchronization() {
+    TransactionSynchronizationManager.clearSynchronization();
+  }
+
   @Nested
   class AcquireSharedTXLock {
 
@@ -46,6 +60,7 @@ class AdvisoryWriteLockTest {
       underTest.acquireSharedTXLock();
 
       verify(tpl).execute(LOCK_SHARED_SQL);
+      assertThat(underTest.isExclusiveTXLockHeld()).isFalse();
     }
   }
 
@@ -57,6 +72,7 @@ class AdvisoryWriteLockTest {
       underTest.acquireExclusiveTXLock();
 
       verify(tpl).execute(LOCK_EXCLUSIVE_SQL);
+      assertThat(underTest.isExclusiveTXLockHeld()).isTrue();
     }
   }
 }
