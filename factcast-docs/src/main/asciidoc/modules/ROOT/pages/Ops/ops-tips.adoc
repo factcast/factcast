@@ -36,11 +36,24 @@ kind of behavior is observed, it might make sense to consider to:
 - turn off `fastupdate`
 - let autovacuum run more often or manually call the clean operation
 
-For now, we have decided to disable the `fastupdate` setting via https://github.com/factcast/factcast/blob/main/factcast-store/src/main/resources/db/changelog/factcast/issue3755/disable_fast_update.sql[`src/main/resources/db/changelog/factcast/issue3755/disable_fast_update.sql`]
+FactCast enables `fastupdate` on the main GIN index `idx_fact_header` with a `gin_pending_list_limit` of `65536` KiB
+(64 MiB). The Liquibase migration for https://github.com/factcast/factcast/issues/4847[issue #4847] supersedes the earlier
+migration that disabled fast updates. It also sets `autovacuum_vacuum_insert_threshold = 1000` and
+`autovacuum_vacuum_insert_scale_factor = 0` on `fact`, so insert-based vacuuming does not depend on table size.
+These settings aim to let autovacuum flush the pending list before an insert has to do it.
 
-Please note that flushing the pending list as part of disabling the `fastupdate` setting could in theory block any other
-query. This is why this change set is **not executed automatically** if the attached condition senses a larger setup
-(> 10 million events). In this case please execute the change set manually to disable the `fastupdate` setting.
+The threshold makes the table eligible for autovacuum; it does not guarantee vacuuming after exactly 1000 inserts.
+Configure the cluster-wide `autovacuum_naptime` to `10s` separately, for example via an AWS RDS parameter group.
+On a self-managed PostgreSQL cluster, an administrator can run:
+
+[source,sql]
+----
+ALTER SYSTEM SET autovacuum_naptime = '10s';
+SELECT pg_reload_conf();
+----
+
+Liquibase only applies the index and table settings. The cluster-wide setting affects all databases and is left to
+operators. Monitor autovacuum activity, pending-list size, and insert latency under your workload when tuning these settings.
 
 == Autoanalyse & Autovacuum Settings
 

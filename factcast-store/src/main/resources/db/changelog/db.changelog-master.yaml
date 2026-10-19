@@ -824,3 +824,22 @@ databaseChangeLog:
             relativeToChangelogFile: true
             splitStatements: false
             stripComments: true
+
+  - changeSet:
+      id: issue4847_enable_conservative_fast_update
+      author: uweschaefer
+      comment: Enable batched GIN updates together with insert-based autovacuum to flush pending entries.
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: factcast/issue4847/enable_conservative_fast_update.sql
+            relativeToChangelogFile: true
+            splitStatements: true
+            stripComments: true
+      rollback:
+        - sql:
+            splitStatements: true
+            sql: |
+              ALTER INDEX idx_fact_header SET (fastupdate = false);
+              ALTER INDEX idx_fact_header RESET (gin_pending_list_limit);
+              ALTER TABLE fact RESET (autovacuum_vacuum_insert_threshold, autovacuum_vacuum_insert_scale_factor);
