@@ -1,8 +1,6 @@
 = Projection Bootstrapping
 :icons: font
 
-
-
 Imagine the following scenario:
 You have a projection with externalized state (e.g., in a relational database) that processes a large number
 of events and supports a user-facing frontend feature (e.g., a reporting table). If you now want to extend this projection
@@ -36,13 +34,13 @@ our application, deploy, wait for it to catch up, flip a toggle and remove the o
 
 There are some drawbacks with this approach, though:
 
-==== You May Run Out of Good Names
+=== You May Run Out of Good Names
 
 Renaming the projection is not necessarily what you're looking for. You just want it to be "the new version".
 In order to achieve this, you'd need to provide a non-default name to your new projection & increase the revision.
 This might not be obvious to everybody looking at the codebase.
 
-==== Other Deployments May Interrupt Rebuild
+=== Other Deployments May Interrupt Rebuild
 
 Not a problem per se, but if someone else deploys the same application from a different branch, the rebuild is at least
 interrupted. Due to the nature of EventSourcing this is not a problem as rebuilding will pick up where it left off, once

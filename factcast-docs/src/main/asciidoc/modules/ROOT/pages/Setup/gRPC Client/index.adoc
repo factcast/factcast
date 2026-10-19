@@ -1,7 +1,6 @@
 = gRPC Client
 :icons: font
 
-
 In order to talk to a remote factstore (which is the usual setup for non-test applications), gRPC is the
 communication protocol used.
 

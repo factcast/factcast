@@ -10,7 +10,6 @@ We suggest to check out the "Projections" section of the xref:ROOT:Usage/factus/
 before delving into this guide.
 ====
 
-
 == Introduction
 
 When projections consume a lot of events or are complex to calculate it usually makes sense to persist their state into

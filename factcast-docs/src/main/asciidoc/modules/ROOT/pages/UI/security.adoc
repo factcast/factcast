@@ -1,8 +1,6 @@
 = Security
 :icons: font
 
-
-
 == Authentication & Authorization
 
 By default, the FactCast-Server UI supports the same authentication/authorization approach as the gRPC server

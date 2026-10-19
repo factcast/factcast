@@ -1,8 +1,6 @@
 = Callbacks
 :icons: font
 
-
-
 When implementing the https://github.com/factcast/factcast/blob/main/factcast-factus/src/main/java/org/factcast/factus/projection/Projection.java[Projection interface], the user can choose to override these default hook methods for more fine-grained control:
 
 [cols="1,1", options="header"]
@@ -15,6 +13,7 @@ When implementing the https://github.com/factcast/factcast/blob/main/factcast-fa
 |===
 
 [#postprocess]
+
 == postprocess
 
 Annotating your handler methods gives you a convenient way of declaring a projection's interest into particular facts, filtered by `ns`,`type`,pojo to deserialize into, version etc.

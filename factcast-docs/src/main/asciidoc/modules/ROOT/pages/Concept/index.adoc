@@ -13,6 +13,7 @@ With optimistic locking you can use conditional publishing, which is based upon 
 lifecycle of the lock (see xref:ROOT:Usage/lowlevel/java/optimistic_locking.adoc[optimistic locking]).
 
 [#read-subscribe]
+
 == Read (Subscribe)
 
 In order to receive `Facts` you have to subscribe to `FactCast` with a subscription request. This is where `FactCast`
