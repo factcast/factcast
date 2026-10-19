@@ -74,7 +74,7 @@
 |factcast.store.offload.generate-unique-name |Same as any DataSource |---
 |factcast.store.offload.name |Same as any DataSource |---
 |factcast.store.state-query-backward-scan-window |Controls the range of recent serial positions searched backwards for the latest matching fact when creating a state token. If no match is found within this window, the query falls back to filtering via GIN indexes. This allows quick lookups for recent changes while limiting expensive backwards searches when matching facts are rare or absent. |20000
-|factcast.store.use-internal-exclusion  |Enable only after finishing the blacklist migration described [here]({{< ref "migration.md#upgrading-to-0130">}}). Disables the blacklist entirely and instead enables filtering via exclusion column on the database level.     |false
+|factcast.store.use-internal-exclusion  |Enable only after finishing the blacklist migration described xref:About/migration.adoc#_upgrading_to_0_13_0[here]. Disables the blacklist entirely and instead enables filtering via exclusion column on the database level.     |false
 |===
 
 ---
