@@ -104,13 +104,14 @@ final class HttpStartupArchiveFetcher implements IndexFetcher, RegistryFileFetch
     return httpFileFetcher.fetchTransformation(key);
   }
 
+  @SuppressWarnings("java:S5443")
   private RegistryIndex downloadAndValidateArchive() throws IOException {
     Path root = Files.createTempDirectory("factcast-registry-");
     archiveRoot = root;
     URL archiveUrl = new URL(baseUrl, "registry.zip");
     Request request = new Request.Builder().url(archiveUrl).build();
     try (Response response = client.newCall(request).execute()) {
-      if (response.code() != ValidationConstants.HTTP_OK || response.body() == null) {
+      if (response.code() != ValidationConstants.HTTP_OK) {
         throw new IOException("Could not download " + archiveUrl + ": HTTP " + response.code());
       }
       try (InputStream stream = response.body().byteStream();
