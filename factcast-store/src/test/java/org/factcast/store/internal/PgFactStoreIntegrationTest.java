@@ -71,6 +71,24 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
   }
 
   @Test
+  void mainGinIndexUsesFastUpdatesWithBoundedPendingList() {
+    assertThat(
+            jdbcTemplate.queryForList(
+                "SELECT unnest(reloptions) FROM pg_class WHERE oid = 'idx_fact_header'::regclass",
+                String.class))
+        .contains("fastupdate=on", "gin_pending_list_limit=65536");
+  }
+
+  @Test
+  void factTableVacuumsBasedOnInsertCountRegardlessOfTableSize() {
+    assertThat(
+            jdbcTemplate.queryForList(
+                "SELECT unnest(reloptions) FROM pg_class WHERE oid = 'fact'::regclass",
+                String.class))
+        .contains("autovacuum_analyze_threshold=1000", "autovacuum_analyze_scale_factor=0");
+  }
+
+  @Test
   void batchPublishCreatesOneNotificationPerNamespaceAndType() {
     var facts =
         List.of(

@@ -25,7 +25,11 @@ If this kind of behavior is observed it might make sense to consider to:
 - reduce the `gin_pending_list_limit` -> more frequent, smaller flushes
 - increase the limit and do manual flushes outside of workload
 - turn off `fastupdate`
-- let autovacuum run more often or manually call the clean operation
+- let autovacuum_analyze run more often or manually call the flush operation
+
+FactCast enables `fastupdate` on `idx_fact_header` with a `65536` KiB (64 MiB) pending-list limit.
+The `fact` table makes sure to flush the pending list frequently.
+See xref:Ops/ops-tips.adoc#_optimize_gin_indexes_updates[General Operations Tips] for the administrative SQL and tuning guidance.
 
 === Autoanalyse & Autovacuum Settings
 
@@ -66,4 +70,6 @@ log_min_duration_statement:500
 default_statistics_target:100
 # allows to deploy major version updates via blue/green deployments, significantly reducing downtime
 rds.logical_replication:'1'
+# when enabling fastupdate, set naptime to 10s to keep the pending list small
+autovacuum_naptime:'10'
 ----
