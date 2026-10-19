@@ -93,6 +93,7 @@ public class PgFactStreamHorizonProvider extends ReadOnlyPgFactStreamHorizonProv
   }
 
   @Override
+  @SuppressWarnings("java:S3551")
   public @NonNull FactStreamHorizon advance() {
     return metrics.time(
         StoreMetrics.OP.ADVANCE_FACT_STREAM_HORIZON,

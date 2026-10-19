@@ -15,6 +15,7 @@
  */
 package org.factcast.store.registry.http;
 
+import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -54,6 +55,8 @@ final class HttpStartupArchiveFetcher implements IndexFetcher, RegistryFileFetch
     this(baseUrl, ValidationConstants.OK_HTTP, metrics);
   }
 
+  @VisibleForTesting
+  @SuppressWarnings("java:S5803")
   HttpStartupArchiveFetcher(
       @NonNull URL baseUrl, @NonNull OkHttpClient client, @NonNull RegistryMetrics metrics) {
     this.baseUrl = baseUrl;

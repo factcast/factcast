@@ -18,12 +18,14 @@ package org.factcast.store.internal.jdbc;
 import java.sql.Connection;
 import java.sql.SQLException;
 import javax.sql.DataSource;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.postgresql.core.QueryExecutor;
 import org.postgresql.jdbc.PgConnection;
 
 /** Ensures the writable store's JDBC batches are rewritten into multi-row INSERT statements. */
 @Slf4j
+@RequiredArgsConstructor
 public final class PgBatchInsertRewriteVerifier {
 
   public PgBatchInsertRewriteVerifier(DataSource dataSource) {
