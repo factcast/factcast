@@ -1,8 +1,6 @@
 = Blacklisting
 :icons: font
 
-
-
 In rare occasions it can happen that one or more facts were emitted that are broken in a way that makes it necessary to
 remove them from the fact stream altogether. Events including or referencing malware might be an example.
 
@@ -22,7 +20,7 @@ If nevertheless you need to blacklist facts, there are two options:
 
 == The Postgres Blacklist _(Default)_
 
-Blocked fact IDs can be added to a table named "blacklist" within the postgresDB. Inserting a new factId into the table  
+Blocked fact IDs can be added to a table named "blacklist" within the postgresDB. Inserting a new factId into the table
 triggers a notification that is sent to the FactCast and updates the internal representations of the running Factcast
 Servers to make sure that changes take immediate effect.
 
@@ -37,5 +35,5 @@ filesystem. Consult the xref:ROOT:Setup/properties.adoc#blacklist[properties pag
 [NOTE]
 ====
 Keep in mind that this feature has very limited use-cases and in both implementations, the list of IDs is kept in memory for
-performance reasons, so please keep it very, very short.  
+performance reasons, so please keep it very, very short.
 ====

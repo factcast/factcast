@@ -1,8 +1,6 @@
 = Fat Jar
 :icons: font
 
-
-
 == Building
 
 First of all, build FactCast completely if not yet done by running

@@ -1,8 +1,6 @@
 = Publication
 :icons: font
 
-
-
 The publishing side is easy and should be intuitive to use. Factus offers a few methods to publish either events (or facts if you happen to have handcrafted ones) to FactCast.
 
 [source,java]

@@ -1,8 +1,6 @@
 = gRPC Resilience
 :icons: font
 
-
-
 == Resilience Approach
 
 In order to make it easier for clients to deal with errors, we try to mitigate connection or network errors,

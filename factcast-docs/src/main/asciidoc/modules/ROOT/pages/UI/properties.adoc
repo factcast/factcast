@@ -1,8 +1,6 @@
 = Properties
 :icons: font
 
-
-
 == UI
 
 This setting should be set in every instance that factcast-server-ui is part of.

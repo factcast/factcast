@@ -24,7 +24,8 @@ import java.util.function.*;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.core.subscription.observer.HighWaterMarkFetcher;
+import org.factcast.core.subscription.FactStreamHorizon;
+import org.factcast.store.internal.horizon.FactStreamHorizonProvider;
 import org.factcast.store.internal.listen.*;
 import org.factcast.store.internal.pipeline.*;
 import org.springframework.jdbc.core.*;
@@ -49,7 +50,7 @@ class PgSynchronizedQuery {
 
   @NonNull final String sql;
 
-  @NonNull final PreparedStatementSetter setter;
+  @NonNull final Function<FactStreamHorizon, PreparedStatementSetter> setterFactory;
 
   @NonNull final RowCallbackHandler rowHandler;
 
@@ -57,7 +58,7 @@ class PgSynchronizedQuery {
   @NonNull final PushbackServerPipeline pipe;
   @NonNull final AtomicLong serialToContinueFrom;
 
-  @NonNull final HighWaterMarkFetcher hwmFetcher;
+  @NonNull final FactStreamHorizonProvider horizonProvider;
 
   private final @NonNull PgConnectionSupplier connectionSupplier;
 
@@ -66,17 +67,17 @@ class PgSynchronizedQuery {
       @NonNull PushbackServerPipeline pipe,
       @NonNull PgConnectionSupplier connectionSupplier,
       @NonNull String sql,
-      @NonNull PreparedStatementSetter setter,
+      @NonNull Function<FactStreamHorizon, PreparedStatementSetter> setterFactory,
       @NonNull Supplier<Boolean> isConnected,
       @NonNull AtomicLong serialToContinueFrom,
-      @NonNull HighWaterMarkFetcher hwmFetcher) {
+      @NonNull FactStreamHorizonProvider horizonProvider) {
     this.debugInfo = debugInfo;
     this.pipe = pipe;
     this.serialToContinueFrom = serialToContinueFrom;
-    this.hwmFetcher = hwmFetcher;
+    this.horizonProvider = horizonProvider;
     this.connectionSupplier = connectionSupplier;
     this.sql = sql;
-    this.setter = setter;
+    this.setterFactory = setterFactory;
 
     rowHandler =
         new PgSynchronizedQuery.FactRowCallbackHandler(pipe, isConnected, serialToContinueFrom);
@@ -85,6 +86,9 @@ class PgSynchronizedQuery {
   // the synchronized here is crucial!
   @SuppressWarnings({"SameReturnValue", "java:S1181"})
   public synchronized void run(boolean useIndex) throws PipelineAlreadyClosedException {
+    FactStreamHorizon horizon = horizonProvider.currentPrimary();
+    long horizonSerial = horizon.factSerial();
+    boolean queryCompleted = false;
     List<ConnectionModifier> filters =
         Lists.newArrayList(ConnectionModifier.withApplicationName(debugInfo));
     if (!useIndex) {
@@ -96,18 +100,22 @@ class PgSynchronizedQuery {
     }
 
     // it does not make much sense to track the statement here, as we expect this to be executed
-    // quickly, as we're in  afloow scenarion
-    try (SingleConnectionDataSource ds = connectionSupplier.getPooledAsSingleDataSource(filters)) {
-      long latest = hwmFetcher.highWaterMark(ds).targetSer();
-      new JdbcTemplate(ds).query(sql, setter, rowHandler);
-
-      // shift to max(retrievedLatestSer, and ser as updated in
-      // rowHandler)
-      serialToContinueFrom.set(Math.max(latest, serialToContinueFrom.get()));
+    // quickly, as we're in a follow scenario
+    try {
+      if (serialToContinueFrom.get() < horizonSerial) {
+        try (SingleConnectionDataSource ds =
+            connectionSupplier.getPooledAsSingleDataSource(filters)) {
+          new JdbcTemplate(ds).query(sql, setterFactory.apply(horizon), rowHandler);
+        }
+      }
+      queryCompleted = true;
     } finally {
       try {
         // involves transformation & IO, so can throw exception
         pipe.process(Signal.flush());
+        if (queryCompleted) {
+          serialToContinueFrom.accumulateAndGet(horizonSerial, Math::max);
+        }
       } catch (Throwable e) {
         // this is necessary to end this subscription, so that the client can resubscribe using the
         // FSP it received.
