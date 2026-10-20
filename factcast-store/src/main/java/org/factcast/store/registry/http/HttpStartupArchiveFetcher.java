@@ -18,7 +18,7 @@ package org.factcast.store.registry.http;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
+import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -108,7 +108,7 @@ final class HttpStartupArchiveFetcher implements IndexFetcher, RegistryFileFetch
   private RegistryIndex downloadAndValidateArchive() throws IOException {
     Path root = Files.createTempDirectory("factcast-registry-");
     archiveRoot = root;
-    URL archiveUrl = new URL(baseUrl, "registry.zip");
+    URL archiveUrl = createArchiveUrl(baseUrl);
     Request request = new Request.Builder().url(archiveUrl).build();
     try (Response response = client.newCall(request).execute()) {
       if (response.code() != ValidationConstants.HTTP_OK) {
@@ -173,5 +173,10 @@ final class HttpStartupArchiveFetcher implements IndexFetcher, RegistryFileFetch
         log.warn("Could not remove extracted schema registry archive at {}", root, e);
       }
     }
+  }
+
+  private URL createArchiveUrl(URL base) throws MalformedURLException {
+    String spec = base + "/registry.zip";
+    return new URL(spec.replaceAll("//", "/"));
   }
 }

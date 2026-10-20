@@ -98,11 +98,13 @@ public class HttpSchemaRegistry extends AbstractSchemaRegistry {
     if (startupArchiveFetcher == null) {
       super.fetchInitial();
     } else {
-      startupArchiveFetcher.beginInitialFetch();
-      try {
-        super.fetchInitial();
-      } finally {
-        startupArchiveFetcher.endInitialFetch();
+      synchronized (mutex) {
+        startupArchiveFetcher.beginInitialFetch();
+        try {
+          super.fetchInitial();
+        } finally {
+          startupArchiveFetcher.endInitialFetch();
+        }
       }
     }
   }
