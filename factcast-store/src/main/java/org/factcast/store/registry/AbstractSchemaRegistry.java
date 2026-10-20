@@ -185,10 +185,14 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
                   try {
                     if (!schemaStore.contains(source)) {
                       schemaStore.register(source, schema);
+                      invalidateNearCache(source.toKey());
                     }
                   } catch (SchemaConflictException e) {
                     if (storeConfigurationProperties.isAllowSchemaReplace()) {
                       schemaStore.register(source, schema);
+                      // In-memory stores do not emit the database notification that clears this
+                      // cache.
+                      invalidateNearCache(source.toKey());
                     } else {
                       throw e;
                     }
