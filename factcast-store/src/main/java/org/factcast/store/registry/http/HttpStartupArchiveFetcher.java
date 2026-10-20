@@ -177,6 +177,6 @@ final class HttpStartupArchiveFetcher implements IndexFetcher, RegistryFileFetch
 
   private URL createArchiveUrl(URL base) throws MalformedURLException {
     String spec = base + "/registry.zip";
-    return new URL(spec.replaceAll("//", "/"));
+    return new URL(spec.replace("//", "/"));
   }
 }
