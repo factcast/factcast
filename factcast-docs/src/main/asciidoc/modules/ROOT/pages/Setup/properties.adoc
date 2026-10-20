@@ -7,6 +7,7 @@
 |===
 |Property |Description |Default
 |factcast.store.schema-registry-url |If defined, FactCast goes into validating mode. The only protocols allowed here are "http", "https", "classpath" and "file". Note that http(s) and file always require two slashes after the colon, e.g. "https://someserver/..." or "file:///root/folder/...". |---
+|factcast.store.schema-registry-zip-enabled |For an HTTP(S) registry, download `registry.zip` from the registry URL at startup. If the ZIP is missing or invalid, FactCast falls back to fetching the index and files separately. Scheduled refreshes continue to use the index and individual files.                                 |false
 |factcast.store.validation-enabled |Can be used for disabling fact validation if `factcast.store.schema-registry-url` is defined. Useful for mass data ingestion. |true
 |factcast.store.persistent-registry |If fetched Schema and Transformation Documents are persisted into Postgres |false
 |factcast.store.allow-unvalidated-publish |If validation is enabled, this controls if publishing facts, that are not validatable (due to missing meta-data or due to missing schema in the registry) are allowed to be published or should be rejected. |false
