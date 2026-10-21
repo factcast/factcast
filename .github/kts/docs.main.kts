@@ -51,7 +51,7 @@ workflow(
             name = "Set up Java",
             action = SetupJava(
                 distribution = SetupJava.Distribution.Temurin,
-                javaVersion = "21",
+                javaVersion = "25",
             ),
         )
 
