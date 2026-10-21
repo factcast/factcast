@@ -43,4 +43,4 @@ jobs:
         path: 'factcast-docs/target/site'
     - id: 'step-5'
       name: 'Deploy Pages'
-      uses: 'actions/deploy-pages@v4'
+      uses: 'actions/deploy-pages@v5'

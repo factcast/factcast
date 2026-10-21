@@ -8,7 +8,7 @@
 @file:DependsOn("actions:setup-java:v6")
 @file:DependsOn("actions:configure-pages:v5")
 @file:DependsOn("actions:upload-pages-artifact:v4")
-@file:DependsOn("actions:deploy-pages:v4")
+@file:DependsOn("actions:deploy-pages:v5")
 
 import io.github.typesafegithub.workflows.actions.actions.*
 import io.github.typesafegithub.workflows.domain.Environment
