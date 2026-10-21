@@ -38,7 +38,7 @@ jobs:
       uses: 'actions/configure-pages@v5'
     - id: 'step-4'
       name: 'Upload Maven site'
-      uses: 'actions/upload-pages-artifact@v4'
+      uses: 'actions/upload-pages-artifact@v5'
       with:
         path: 'factcast-docs/target/site'
     - id: 'step-5'
