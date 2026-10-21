@@ -15,6 +15,7 @@
  */
 package org.factcast.store.internal.query;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.*;
@@ -27,6 +28,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.subscription.FactStreamHorizon;
+import org.factcast.core.util.FactCastJson;
 import org.factcast.store.internal.PgConstants;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 
@@ -84,10 +86,11 @@ public class PgQueryBuilder {
   private int setParameters(PreparedStatement p, long serial, int count, OptionalLong horizonSerial)
       throws SQLException {
     for (FactSpec spec : factSpecs) {
-      count = setNs(p, count, spec);
-      count = setType(p, count, spec);
+      ObjectNode headerCriteria = createHeaderCriteria(spec);
+      if (!headerCriteria.isEmpty()) {
+        p.setString(++count, FactCastJson.writeValueAsString(headerCriteria));
+      }
       // version is intentionally not used here
-      count = setAggIds(p, count, spec);
       count = setAggProperties(p, count, spec);
       count = setMeta(p, count, spec);
       count = setMetaKeyExists(p, count, spec);
@@ -158,35 +161,25 @@ public class PgQueryBuilder {
     return count;
   }
 
-  private int setAggIds(PreparedStatement p, int count, FactSpec spec) throws SQLException {
-    if (filterByAggregateIds(spec)) {
-      String a =
-          spec.aggIds().stream()
-              .map(UUID::toString)
-              .collect(Collectors.joining("\",\"", "\"", "\""));
-      p.setString(++count, "{\"aggIds\": [" + a + "]}");
+  private ObjectNode createHeaderCriteria(FactSpec spec) {
+    // Combine compatible header constraints so PostgreSQL needs only one containment check per
+    // spec.
+    ObjectNode criteria = FactCastJson.newObjectNode();
+    if (!"*".equals(spec.ns())) {
+      criteria.put("ns", spec.ns());
     }
-    return count;
+    if (spec.type() != null && !"*".equals(spec.type())) {
+      criteria.put("type", spec.type());
+    }
+    if (filterByAggregateIds(spec)) {
+      var aggregateIds = criteria.putArray("aggIds");
+      spec.aggIds().forEach(id -> aggregateIds.add(id.toString()));
+    }
+    return criteria;
   }
 
   private static boolean filterByAggregateIds(FactSpec specs) {
     return specs.aggIds() != null && !specs.aggIds().isEmpty();
-  }
-
-  private int setType(PreparedStatement p, int count, FactSpec spec) throws SQLException {
-    String type = spec.type();
-    if (type != null && !"*".equals(type)) {
-      p.setString(++count, "{\"type\": \"" + type + "\"}");
-    }
-    return count;
-  }
-
-  private int setNs(PreparedStatement p, int count, FactSpec spec) throws SQLException {
-    String ns = spec.ns();
-    if (!"*".equals(ns)) {
-      p.setString(++count, "{\"ns\": \"" + spec.ns() + "\"}");
-    }
-    return count;
   }
 
   @SuppressWarnings("java:S3776")
@@ -197,18 +190,7 @@ public class PgQueryBuilder {
           StringBuilder sb = new StringBuilder();
           sb.append("(true ");
 
-          String ns = spec.ns();
-
-          if (!"*".equals(ns)) {
-            sb.append(AND).append(PgConstants.COLUMN_HEADER).append(CONTAINS_JSONB);
-          }
-
-          String type = spec.type();
-          if (type != null && !"*".equals(type)) {
-            sb.append(AND).append(PgConstants.COLUMN_HEADER).append(CONTAINS_JSONB);
-          }
-
-          if (filterByAggregateIds(spec)) {
+          if (!createHeaderCriteria(spec).isEmpty()) {
             sb.append(AND).append(PgConstants.COLUMN_HEADER).append(CONTAINS_JSONB);
           }
 
