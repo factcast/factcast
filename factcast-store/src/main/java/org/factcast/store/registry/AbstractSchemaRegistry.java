@@ -212,30 +212,29 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
           "TransformationStore will be updated, {} {} to fetch.",
           count,
           count == 1 ? "transformation" : "transformations");
-      toFetch.stream()
-          .forEach(
-              source -> {
-                try {
-                  String transformationCode = null;
-                  if (!source.isSynthetic()) {
-                    transformationCode = registryFileFetcher.fetchTransformation(source);
-                  }
-                  try {
-                    if (!transformationStore.contains(source)) {
-                      transformationStore.store(source, transformationCode);
-                    }
-                  } catch (TransformationConflictException conflict) {
-                    if (storeConfigurationProperties.isAllowSchemaReplace()) {
-                      transformationStore.store(source, transformationCode);
-                    } else {
-                      throw conflict;
-                    }
-                  }
-
-                } catch (IOException e) {
-                  throw new SchemaRegistryUnavailableException(e);
+      toFetch.forEach(
+          source -> {
+            try {
+              String transformationCode = null;
+              if (!source.isSynthetic()) {
+                transformationCode = registryFileFetcher.fetchTransformation(source);
+              }
+              try {
+                if (!transformationStore.contains(source)) {
+                  transformationStore.store(source, transformationCode);
                 }
-              });
+              } catch (TransformationConflictException conflict) {
+                if (storeConfigurationProperties.isAllowSchemaReplace()) {
+                  transformationStore.store(source, transformationCode);
+                } else {
+                  throw conflict;
+                }
+              }
+
+            } catch (IOException e) {
+              throw new SchemaRegistryUnavailableException(e);
+            }
+          });
     }
   }
 
