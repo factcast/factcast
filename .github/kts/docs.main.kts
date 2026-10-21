@@ -11,26 +11,22 @@
 @file:DependsOn("actions:deploy-pages:v5")
 
 import io.github.typesafegithub.workflows.actions.actions.*
-import io.github.typesafegithub.workflows.domain.Concurrency
 import io.github.typesafegithub.workflows.domain.Environment
 import io.github.typesafegithub.workflows.domain.Mode
 import io.github.typesafegithub.workflows.domain.Permission
 import io.github.typesafegithub.workflows.domain.RunnerType.UbuntuLatest
 import io.github.typesafegithub.workflows.domain.triggers.Release
-import io.github.typesafegithub.workflows.domain.triggers.WorkflowDispatch
 import io.github.typesafegithub.workflows.dsl.expressions.expr
 import io.github.typesafegithub.workflows.dsl.workflow
 import io.github.typesafegithub.workflows.yaml.ConsistencyCheckJobConfig
 
 workflow(
-    name = "Publish Documentation",
+    name = "Publish Maven Site",
     on = listOf(
-        Release(types = listOf(Release.EventType.Published)),
-        WorkflowDispatch(),
+        Release(types = listOf(Release.EventType.Published))
     ),
     sourceFile = __FILE__,
     consistencyCheckJobConfig = ConsistencyCheckJobConfig.Disabled,
-    concurrency = Concurrency(group = "documentation-pages", cancelInProgress = false),
     permissions = mapOf(
         Permission.Contents to Mode.Read,
         Permission.Pages to Mode.Write,
@@ -41,14 +37,13 @@ workflow(
     job(
         id = "deploy",
         runsOn = UbuntuLatest,
-        condition = expr("github.event_name == 'workflow_dispatch' || !github.event.release.prerelease"),
+        condition = expr("!github.event.release.prerelease"),
         environment = Environment(name = "github-pages"),
     ) {
         uses(
-            name = "Checkout documentation builder and release tags",
+            name = "Checkout release",
             action = Checkout(
-                ref = expr("github.event.repository.default_branch"),
-                fetchDepth = Checkout.FetchDepth.Value(0),
+                ref = expr("github.event.release.tag_name"),
             ),
         )
 
@@ -60,9 +55,9 @@ workflow(
             ),
         )
 
-          run(
+        run(
             name = "Generate Docs",
-            command = "./mvnw --full -B -pl factcast-docs -Dantora.playbook=antora-playbook-release.yml clean package",
+            command = "./mvnw -B -pl factcast-docs clean package",
         )
 
         uses(

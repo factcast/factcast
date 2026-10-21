@@ -1,5 +1,5 @@
 name: docs
 title: FactCast Documentation
-version: true
+version: latest
 nav:
   - modules/ROOT/nav.adoc

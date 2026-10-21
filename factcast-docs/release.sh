@@ -1,8 +1,6 @@
 #!/bin/bash
-set -euo pipefail
 
-cd -- "$(dirname -- "${BASH_SOURCE[0]}")"
-mvn-lite -B -Dantora.playbook=antora-playbook-release.yml clean package
+CI=true mvn clean install
 
 # overwrite landing page
 cp src/main/resources/index.html target/site/index.html
