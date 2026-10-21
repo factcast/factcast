@@ -6,9 +6,9 @@
 @file:Repository("https://bindings.krzeminski.it")
 @file:DependsOn("actions:checkout:v7")
 @file:DependsOn("actions:setup-java:v6")
-@file:DependsOn("actions:configure-pages:v5")
-@file:DependsOn("actions:upload-pages-artifact:v4")
-@file:DependsOn("actions:deploy-pages:v4")
+@file:DependsOn("actions:configure-pages:v6")
+@file:DependsOn("actions:upload-pages-artifact:v5")
+@file:DependsOn("actions:deploy-pages:v5")
 
 import io.github.typesafegithub.workflows.actions.actions.*
 import io.github.typesafegithub.workflows.domain.Environment
