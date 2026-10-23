@@ -2,28 +2,33 @@
 # If you want to modify the workflow, please change the Kotlin file and regenerate this YAML file.
 # Generated with https://github.com/typesafegithub/github-workflows-kt
 
-name: 'Publish Maven Site'
+name: 'Publish Documentation'
 on:
   release:
     types:
     - 'published'
+  workflow_dispatch: {}
 permissions:
   contents: 'read'
   pages: 'write'
   id-token: 'write'
   actions: 'read'
+concurrency:
+  group: 'documentation-pages'
+  cancel-in-progress: false
 jobs:
   deploy:
     runs-on: 'ubuntu-latest'
-    if: '${{ !github.event.release.prerelease }}'
+    if: '${{ github.event_name == ''workflow_dispatch'' || !github.event.release.prerelease }}'
     environment:
       name: 'github-pages'
     steps:
     - id: 'step-0'
-      name: 'Checkout release'
+      name: 'Checkout documentation builder and release tags'
       uses: 'actions/checkout@v7'
       with:
-        ref: '${{ github.event.release.tag_name }}'
+        ref: '${{ github.event.repository.default_branch }}'
+        fetch-depth: '0'
     - id: 'step-1'
       name: 'Set up Java'
       uses: 'actions/setup-java@v6'
@@ -32,7 +37,7 @@ jobs:
         distribution: 'temurin'
     - id: 'step-2'
       name: 'Generate Docs'
-      run: './mvnw -B -pl factcast-docs clean package'
+      run: './mvnw --full -B -pl factcast-docs -Dantora.playbook=antora-playbook-release.yml clean package'
     - id: 'step-3'
       name: 'Configure Pages'
       uses: 'actions/configure-pages@v6'
