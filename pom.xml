@@ -92,12 +92,12 @@
     <maven-source-plugin.version>3.4.0</maven-source-plugin.version>
     <maven-gpg-plugin.version>3.2.8</maven-gpg-plugin.version>
     <maven-jar-plugin.version>3.5.1</maven-jar-plugin.version>
-    <maven-surefire-plugin.version>3.6.0</maven-surefire-plugin.version>
+    <maven-surefire-plugin.version>3.6.1</maven-surefire-plugin.version>
     <maven-resources-plugin.version>3.5.0</maven-resources-plugin.version>
     <maven-failsafe-plugin.version>3.5.6</maven-failsafe-plugin.version>
     <nexus-staging-maven-plugin.version>1.6.8</nexus-staging-maven-plugin.version>
     <directory-maven-plugin.version>0.3.1</directory-maven-plugin.version>
-    <jacoco-maven-plugin.version>0.8.15</jacoco-maven-plugin.version>
+    <jacoco-maven-plugin.version>0.8.16</jacoco-maven-plugin.version>
     <maven.version>3.10.0</maven.version>
     <!-- defaults to 11, client modules will be compiled with/to 8 -->
     <maven.compiler.source>21</maven.compiler.source>
@@ -114,10 +114,10 @@
     <slf4j-api.version>2.0.20</slf4j-api.version>
     <!--suppress UnresolvedMavenProperty -->
     <etc>${session.executionRootDirectory}/src/etc</etc>
-    <spring-boot.version>4.1.1</spring-boot.version>
+    <spring-boot.version>4.1.2</spring-boot.version>
     <spring-boot-thin-layout.version>1.0.31.RELEASE</spring-boot-thin-layout.version>
     <!-- whenever updating spring-grpc make sure to align grpc.version accordingly. -->
-    <spring-grpc.version>1.1.1</spring-grpc.version>
+    <spring-grpc.version>1.1.2</spring-grpc.version>
     <grpc.version>1.81.0</grpc.version>
     <!-- lter versions seem to break toxi -->
     <!-- 2.0.3 refers to unpublished artifacts, so that it is not usable right
@@ -130,10 +130,10 @@
     <mockk.version>1.14.11</mockk.version>
     <graaljs.version>25.4.4.1.1</graaljs.version>
     <redisson.version>4.8.0</redisson.version>
-    <aws-sdk.version>2.57.1</aws-sdk.version>
+    <aws-sdk.version>2.57.4</aws-sdk.version>
     <mongodb-driver.version>5.13.0</mongodb-driver.version>
     <shedlock.version>7.10.1</shedlock.version>
-    <byte-buddy.version>1.18.15-jdk5</byte-buddy.version>
+    <byte-buddy.version>1.18.16-jdk5</byte-buddy.version>
     <rewrite-java.version>8.90.4</rewrite-java.version>
     <skipUnitTests>false</skipUnitTests>
     <postgres.version>15</postgres.version>

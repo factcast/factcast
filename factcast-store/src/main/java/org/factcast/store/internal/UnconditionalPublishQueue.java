@@ -53,15 +53,16 @@ class UnconditionalPublishQueue {
       // flush(ser) based on the ser
       serial.set(ordinalCounter.incrementAndGet());
       queue.add(new Publication(serial.get(), toPublish, completion));
+      // Submit in queue order so earlier publications can start flushing first.
+      flushingExecutor.submit(
+          () -> {
+            try {
+              flush(serial.get());
+            } catch (Exception e) {
+              log.error(e.getMessage(), e);
+            }
+          });
     }
-    flushingExecutor.submit(
-        () -> {
-          try {
-            flush(serial.get());
-          } catch (Exception e) {
-            log.error(e.getMessage(), e);
-          }
-        });
     return completion;
   }
 

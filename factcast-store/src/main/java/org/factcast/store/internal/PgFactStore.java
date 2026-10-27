@@ -95,7 +95,7 @@ public class PgFactStore extends AbstractFactStore {
     this.props = props;
 
     this.tx = new TransactionTemplate(platformTransactionManager);
-    this.queue = new UnconditionalPublishQueue(this, props.getPublishBatch().getMaxBatchSize());
+    this.queue = new UnconditionalPublishQueue(this, props.getPublishBatched().getMaxBatchSize());
   }
 
   @Override
@@ -153,7 +153,7 @@ public class PgFactStore extends AbstractFactStore {
     }
     var defensiveCopy = new ArrayList<>(factsToPublish);
 
-    if (props.getPublishBatch().isEnabled()) publishBatchable(defensiveCopy);
+    if (props.getPublishBatched().isEnabled()) publishBatchable(defensiveCopy);
     else publishDirectly(defensiveCopy);
   }
 
@@ -291,6 +291,8 @@ public class PgFactStore extends AbstractFactStore {
       return metrics.time(
           StoreMetrics.OP.PUBLISH_IF_UNCHANGED,
           () -> {
+            // The exclusive lock waits for shared-lock holders and protects validation through
+            // commit. Queued publications may follow because their publish calls have not returned.
             lock.acquireExclusiveTXLock();
             boolean successful = PgFactStore.super.publishIfUnchanged(defensiveCopy, optionalToken);
             if (!successful)
