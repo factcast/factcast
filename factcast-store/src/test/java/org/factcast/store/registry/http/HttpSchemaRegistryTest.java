@@ -27,6 +27,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import net.javacrumbs.shedlock.core.LockProvider;
 import net.javacrumbs.shedlock.core.SimpleLock;
+import org.factcast.core.Fact;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.registry.NOPRegistryMetrics;
 import org.factcast.store.registry.RegistryIndex;
@@ -36,6 +37,8 @@ import org.factcast.store.registry.transformation.TransformationKey;
 import org.factcast.store.registry.transformation.TransformationSource;
 import org.factcast.store.registry.transformation.TransformationStore;
 import org.factcast.store.registry.transformation.store.InMemTransformationStoreImpl;
+import org.factcast.store.registry.validation.FactValidationError;
+import org.factcast.store.registry.validation.FactValidator;
 import org.factcast.store.registry.validation.schema.SchemaConflictException;
 import org.factcast.store.registry.validation.schema.SchemaKey;
 import org.factcast.store.registry.validation.schema.SchemaSource;
@@ -172,12 +175,19 @@ public class HttpSchemaRegistryTest {
   }
 
   @Test
-  public void testAllowReplaceTrueForSchemes()
-      throws InterruptedException, ExecutionException, IOException {
+  public void testReplacementIsUsedForValidationAfterCacheWasWarmed() throws IOException {
     var testSource = new SchemaSource("http://foo/1", "123", "ns", "type", 1);
     index.schemes(Lists.newArrayList(testSource));
 
-    when(fileFetcher.fetchSchema(any())).thenReturn("{}").thenReturn("{\"foo\":\"bar\"}");
+    String oldSchema = "{\"type\":\"object\",\"required\":[\"jobId\"]}";
+    String newSchema = "{\"type\":\"object\",\"required\":[\"jobRunId\"]}";
+    when(fileFetcher.fetchSchema(any())).thenReturn(oldSchema, newSchema);
+
+    var properties =
+        new StoreConfigurationProperties()
+            .setSchemaRegistryUrl("http://foo")
+            .setPersistentRegistry(false)
+            .setAllowSchemaReplace(true);
 
     HttpSchemaRegistry uut =
         new HttpSchemaRegistry(
@@ -186,16 +196,54 @@ public class HttpSchemaRegistryTest {
             indexFetcher,
             fileFetcher,
             registryMetrics,
-            new StoreConfigurationProperties().setAllowSchemaReplace(true),
+            properties,
             lockProvider);
+    var validator = new FactValidator(properties, uut, registryMetrics);
+    Fact oldFact = Fact.builder().ns("ns").type("type").version(1).build("{\"jobId\":\"123\"}");
+    Fact newFact = Fact.builder().ns("ns").type("type").version(1).build("{\"jobRunId\":\"123\"}");
     uut.fetchInitial();
 
-    assertThat(schemaStore.get(testSource.toKey())).isPresent().hasValue("{}");
+    // Validate before refresh so replacement must also update a previously cached schema.
+    assertThat(validator.validate(oldFact)).isEmpty();
+    assertThat(validator.validate(newFact))
+        .extracting(FactValidationError::message)
+        .containsExactly("#: required key [jobId] not found");
 
     index.schemes(Lists.newArrayList(testSource.hash("changed")));
     uut.refresh();
 
-    assertThat(schemaStore.get(testSource.toKey())).isPresent().hasValue("{\"foo\":\"bar\"}");
+    assertThat(schemaStore.get(testSource.toKey())).hasValue(newSchema);
+    assertThat(validator.validate(newFact)).isEmpty();
+    assertThat(validator.validate(oldFact))
+        .extracting(FactValidationError::message)
+        .containsExactly("#: required key [jobRunId] not found");
+  }
+
+  @Test
+  public void testNewSchemaIsUsedForValidationAfterCachedMiss() {
+    var properties =
+        new StoreConfigurationProperties()
+            .setSchemaRegistryUrl("http://foo")
+            .setPersistentRegistry(false);
+    HttpSchemaRegistry uut =
+        new HttpSchemaRegistry(
+            schemaStore,
+            transformationStore,
+            indexFetcher,
+            fileFetcher,
+            registryMetrics,
+            properties,
+            lockProvider);
+    var validator = new FactValidator(properties, uut, registryMetrics);
+    Fact fact = Fact.builder().ns("ns").type("type").version(1).build("{}");
+
+    // A missing schema is cached too; registering it must allow the next validation to find it.
+    assertThat(validator.validate(fact)).hasSize(1);
+    assertThat(uut.get(source1.toKey())).isEmpty();
+
+    uut.refresh();
+
+    assertThat(validator.validate(fact)).isEmpty();
   }
 
   @Test
