@@ -27,14 +27,14 @@ From the repository root:
 ```bash
 mkdir -p /tmp/agents
 python3 -m venv /tmp/agents/factcast-publish-venv
-/tmp/agents/factcast-publish-venv/bin/python -m pip install -r benchmarks/concurrent-publish/requirements.txt
-/tmp/agents/factcast-publish-venv/bin/python -B benchmarks/concurrent-publish/run.py
+/tmp/agents/factcast-publish-venv/bin/python -m pip install -r factcast-store-benchmark/concurrent-publish/requirements.txt
+/tmp/agents/factcast-publish-venv/bin/python -B factcast-store-benchmark/concurrent-publish/run.py
 ```
 
 For a short check of both releases before the full comparison:
 
 ```bash
-/tmp/agents/factcast-publish-venv/bin/python -B benchmarks/concurrent-publish/run.py --smoke
+/tmp/agents/factcast-publish-venv/bin/python -B factcast-store-benchmark/concurrent-publish/run.py --smoke
 ```
 
 Smoke mode caps the workload at eight publishers, two seconds of warmup, and four
@@ -44,7 +44,7 @@ use these results to verify the harness rather than draw performance conclusions
 To compare **256**, **1,024**, and **16,384** publishers in one run:
 
 ```bash
-/tmp/agents/factcast-publish-venv/bin/python -B benchmarks/concurrent-publish/run.py \
+/tmp/agents/factcast-publish-venv/bin/python -B factcast-store-benchmark/concurrent-publish/run.py \
   --publishers 256 1024 16384 --postgres-image postgres:15 \
   --warmup-seconds 60 --measurement-seconds 120 --repetitions 1
 ```
@@ -60,7 +60,7 @@ order, and reports compare median throughput across passes.
 To compare `0.11.2` against `0.12.5` for one event per operation:
 
 ```bash
-/tmp/agents/factcast-publish-venv/bin/python -B benchmarks/concurrent-publish/run.py \
+/tmp/agents/factcast-publish-venv/bin/python -B factcast-store-benchmark/concurrent-publish/run.py \
   --versions 0.11.2 0.12.5
 ```
 
@@ -79,7 +79,7 @@ fixed one event per publication.
 To compare the synchronous store with concurrent publication batching disabled:
 
 ```bash
-/tmp/agents/factcast-publish-venv/bin/python -B benchmarks/concurrent-publish/run.py \
+/tmp/agents/factcast-publish-venv/bin/python -B factcast-store-benchmark/concurrent-publish/run.py \
   --versions 0.12.5 --publishers 1024 --no-publish-batching
 ```
 
@@ -90,7 +90,7 @@ Use `--versions current` to benchmark an isolated snapshot of the current branch
 including uncommitted changes and non-ignored new files:
 
 ```bash
-/tmp/agents/factcast-publish-venv/bin/python -B benchmarks/concurrent-publish/run.py \
+/tmp/agents/factcast-publish-venv/bin/python -B factcast-store-benchmark/concurrent-publish/run.py \
   --versions current --publishers 1024 --publish-max-batch-size 99999
 ```
 
@@ -156,7 +156,7 @@ with multi-event batches can still be rendered. To regenerate the
 table and charts from an existing successful comparison:
 
 ```bash
-/tmp/agents/factcast-publish-venv/bin/python -B benchmarks/concurrent-publish/report.py \
+/tmp/agents/factcast-publish-venv/bin/python -B factcast-store-benchmark/concurrent-publish/report.py \
   /tmp/agents/factcast-publish-EXAMPLE
 ```
 
@@ -165,9 +165,13 @@ table and charts from an existing successful comparison:
 Run the report and runner tests through Maven:
 
 ```bash
-mvn-lite -f benchmarks/concurrent-publish/pom.xml test \
-  -Dbenchmark.python=/tmp/agents/factcast-publish-venv/bin/python
+mvn-lite -pl factcast-store-benchmark test
 ```
+
+Maven creates an isolated virtual environment under `/tmp/agents` and installs
+`requirements.txt` before running the tests. Use `-Dbenchmark.python=/path/to/python`
+to select the Python interpreter used to create that environment.
+Expected argument-validation errors are buffered and shown only if a test fails.
 
 `BenchmarkFactsTest` also verifies unique event IDs across 256 publishers and both
 batch sizes. It is a normal unit test in `factcast-store`; run it through

@@ -689,6 +689,7 @@
         </property>
       </activation>
       <modules>
+        <module>factcast-store-benchmark</module>
         <module>factcast-docs</module>
         <module>factcast-docker</module>
         <module>factcast-docker-dep</module>

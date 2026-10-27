@@ -234,7 +234,7 @@ final class BenchmarkDatabase implements AutoCloseable {
     String value = System.getProperty(name);
     require(
         value != null && !value.isBlank(),
-        "Run through benchmarks/concurrent-publish/run.py; missing " + name);
+        "Run through factcast-store-benchmark/concurrent-publish/run.py; missing " + name);
     return value;
   }
 
