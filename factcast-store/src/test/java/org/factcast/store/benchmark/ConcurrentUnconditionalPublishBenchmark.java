@@ -36,7 +36,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 public class ConcurrentUnconditionalPublishBenchmark {
   @State(Scope.Benchmark)
   public static class StoreState {
-    @Param({"1", "100"})
+    @Param({"1"})
     public int batchSize;
 
     private final LongAdder acknowledgedEvents = new LongAdder();

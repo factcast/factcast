@@ -11,7 +11,8 @@ import sys
 sys.dont_write_bytecode = True
 BENCHMARK = 'org.factcast.store.benchmark.ConcurrentUnconditionalPublishBenchmark.publish'
 VERSIONS = ('0.9.15', '0.12.5')
-SUPPORTED_VERSIONS = ('0.9.15', '0.11.2', '0.12.5')
+SUPPORTED_VERSIONS = ('0.9.15', '0.11.2', '0.12.5', 'current')
+BATCHING_VERSIONS = ('0.12.5', 'current')
 
 
 def require(condition, message):
@@ -27,24 +28,36 @@ def seconds(value):
 
 def release_versions(manifest):
     versions = tuple(manifest['versions'])
-    require(len(versions) >= 2 and all(version in SUPPORTED_VERSIONS for version in versions),
-            'Select at least two supported releases in baseline-first order')
+    require(versions and all(version in SUPPORTED_VERSIONS for version in versions),
+            'Select supported releases in baseline-first order')
     return versions
+
+
+def publisher_counts(manifest):
+    counts = manifest['settings']['publishers']
+    # Original reports recorded one integer; retain support for regenerating those artifacts.
+    counts = [counts] if isinstance(counts, int) else counts
+    require(counts and all(isinstance(count, int) and count > 0 for count in counts)
+            and len(set(counts)) == len(counts), 'Publisher counts must be positive and distinct')
+    return counts
 
 
 def summarize(directory, manifest):
     settings = manifest['settings']
     versions = release_versions(manifest)
+    counts = publisher_counts(manifest)
     require(manifest['smoke'] or settings['measurementSeconds'] >= 120,
             'A performance comparison requires at least 120 measured seconds per case')
-    expected = {(version, batch, repetition)
+    expected = {(version, batch, publishers, repetition)
                 for version in versions for batch in settings['batchSizes']
+                for publishers in counts
                 for repetition in range(1, settings['repetitions'] + 1)}
     observed = set()
     measurements = {}
     database_version = None
     for case in manifest['cases']:
-        key = (case['version'], case['batchSize'], case['repetition'])
+        publishers = case.get('publishers', counts[0] if len(counts) == 1 else None)
+        key = (case['version'], case['batchSize'], publishers, case['repetition'])
         require(case['status'] == 'passed' and key in expected and key not in observed,
                 f'Failed, unexpected, or duplicated case: {key}')
         observed.add(key)
@@ -55,7 +68,7 @@ def summarize(directory, manifest):
         result = results[0]
         metadata = json.loads((folder / 'metadata.json').read_text())
         require(result['benchmark'] == BENCHMARK and result['params']['batchSize'] == str(key[1])
-                and result['threads'] == settings['publishers'], f'Wrong workload for {key}')
+                and result['threads'] == publishers, f'Wrong workload for {key}')
         require(result['measurementIterations'] == settings['measurementIterations']
                 and math.isclose(seconds(result['measurementTime']) * result['measurementIterations'],
                                  settings['measurementSeconds'])
@@ -63,12 +76,16 @@ def summarize(directory, manifest):
                 and math.isclose(seconds(result['warmupTime']), settings['warmupSeconds']),
                 f'Wrong measurement or warmup duration for {key}')
         require(metadata['version'] == key[0] and metadata['commit'] == manifest['versions'][key[0]]
-                and metadata['batchSize'] == key[1] and metadata['publishers'] == settings['publishers'],
+                and metadata['batchSize'] == key[1] and metadata['publishers'] == publishers,
                 f'Wrong release metadata for {key}')
         require(metadata['validationEnabled'] is False
                 and metadata['schemaRegistryConfigured'] is False
-                and metadata['batchingEnabled'] == (key[0] == '0.12.5'),
+                and metadata['batchingEnabled'] == (key[0] in BATCHING_VERSIONS
+                                                    and settings.get('publishBatching', True)),
                 f'Wrong validation or publish batching configuration for {key}')
+        if metadata['batchingEnabled']:
+            require(metadata.get('publishMaxBatchSize', 500) == settings.get('publishMaxBatchSize', 500),
+                    f'Concurrent publication batch limit differs for {key}')
         require(metadata['poolSize'] == 64 and metadata['reWriteBatchedInserts'] is True
                 and metadata['payloadBytes'] == 256, f'Inconsistent JDBC configuration or payload for {key}')
         require(metadata['verboseStoreLogging'] is False, f'Verbose store logging was enabled for {key}')
@@ -87,14 +104,14 @@ def summarize(directory, manifest):
         rate = float(metric['score'])
         require(metric['scoreUnit'] == 'ops/s' and math.isfinite(rate) and rate > 0,
                 f'Invalid throughput for {key}')
-        measurements.setdefault(key[:2], []).append(rate)
-    require(observed == expected, 'Comparison is incomplete; all versions, batches and repetitions are required')
+        measurements.setdefault(key[:3], []).append(rate)
+    require(observed == expected, 'Comparison is incomplete; all versions, workloads and repetitions are required')
     rows = []
-    for batch in settings['batchSizes']:
-        baseline = statistics.median(measurements[(versions[0], batch)])
+    for batch, publishers in [(batch, count) for batch in settings['batchSizes'] for count in counts]:
+        baseline = statistics.median(measurements[(versions[0], batch, publishers)])
         for version in versions:
-            rate = statistics.median(measurements[(version, batch)])
-            row = {'batch_size': batch, 'version': version,
+            rate = statistics.median(measurements[(version, batch, publishers)])
+            row = {'publishers': publishers, 'batch_size': batch, 'version': version,
                    'publications_per_second': rate, 'events_per_second': rate * batch,
                    'baseline_version': versions[0], 'ratio_to_baseline': rate / baseline,
                    'repetitions': settings['repetitions'], 'postgres_version': database_version}
@@ -114,13 +131,16 @@ def create_chart(rows, manifest):
     from matplotlib.ticker import FuncFormatter
 
     batches = manifest['settings']['batchSizes']
+    counts = publisher_counts(manifest)
+    workloads = [(batch, count) for batch in batches for count in counts]
     versions = release_versions(manifest)
-    single = len(batches) == 1
-    figure, axes = plt.subplots(1, len(batches),
-                               figsize=(9, 6.3) if single else (5.5 * len(batches), 5.8), squeeze=False)
+    single = len(workloads) == 1
+    figure, axes = plt.subplots(1, len(workloads),
+                               figsize=(9, 6.3) if single else (5.5 * len(workloads), 5.8), squeeze=False)
     figure.set_facecolor('#f4f7fa')
-    for axis, batch in zip(axes[0], batches):
-        selected = [next(row for row in rows if row['batch_size'] == batch and row['version'] == version)
+    for axis, (batch, publishers) in zip(axes[0], workloads):
+        selected = [next(row for row in rows if row['batch_size'] == batch
+                         and row['publishers'] == publishers and row['version'] == version)
                     for version in versions]
         values = [row['events_per_second'] for row in selected]
         colors = ['#8b9db5', '#008f83'] if len(versions) == 2 else ['#8b9db5', '#337fa5', '#008f83']
@@ -129,9 +149,14 @@ def create_chart(rows, manifest):
                        fontsize=12, fontweight='bold', color='#182c43')
         # A three-release comparison needs room for two ratio lines above the bar labels.
         axis.set_ylim(0, max(values) * (1.45 if len(versions) > 2 else 1.28))
-        axis.set_title(f'{batch} event{"s" if batch != 1 else ""} per operation',
+        title = (f'{publishers:,} publishers' if len(counts) > 1 else
+                 f'{batch} event{"s" if batch != 1 else ""} per operation')
+        if len(counts) > 1 and len(batches) > 1:
+            title += f' · {batch} events per operation'
+        axis.set_title(title,
                        loc='left', fontsize=14, fontweight='bold', pad=22, color='#182c43')
-        gain = (f'{selected[1]["ratio_to_baseline"]:.2f}× throughput' if len(versions) == 2 else
+        gain = ('' if len(versions) == 1 else
+                f'{selected[1]["ratio_to_baseline"]:.2f}× throughput' if len(versions) == 2 else
                 '\n'.join(f'{row["version"]}: {row["ratio_to_baseline"]:.2f}× baseline'
                           for row in selected[1:]))
         axis.text(.98, .95, gain,
@@ -146,10 +171,16 @@ def create_chart(rows, manifest):
     figure.suptitle(f'{smoke}Concurrent unconditional publication', x=.06, ha='left',
                    fontsize=19, fontweight='bold', color='#182c43')
     settings = manifest['settings']
-    batching = ('0.12.5 concurrent batching enabled' if '0.12.5' in versions
-                else 'Concurrent publish batching unavailable in these releases')
+    batching_versions = ', '.join(version for version in versions if version in BATCHING_VERSIONS)
+    if batching_versions:
+        batching = (f'{batching_versions} concurrent batching enabled (max {settings.get("publishMaxBatchSize", 500):,})'
+                    if settings.get('publishBatching', True) else f'{batching_versions} concurrent batching disabled')
+    else:
+        batching = 'Concurrent publish batching unavailable in these releases'
     scales = '' if single else ' · separate linear scales'
-    caption = (f'{settings["publishers"]} concurrent publishers · {settings["measurementSeconds"]}s measured · '
+    workload = (f'{counts[0]:,} concurrent publishers' if len(counts) == 1 else
+                '1 event per publication' if batches == [1] else 'Publisher concurrency comparison')
+    caption = (f'{workload} · {settings["measurementSeconds"]}s measured · '
                f'{settings["warmupSeconds"]}s warmup\n'
                f'PostgreSQL {rows[0]["postgres_version"].split()[0]} · validation disabled · durable writes{scales}\n'
                f'{batching} · baseline {versions[0]}\n'
@@ -171,14 +202,14 @@ def write_report(directory, manifest):
         writer.writerows(rows)
     title = 'SMOKE ONLY — harness verification' if manifest['smoke'] else 'Concurrent unconditional publication'
     lines = [f'# {title}', '',
-             f'| Events / publish | Version | Publications / s | Events / s | Relative to {baseline} |',
-             '| ---: | --- | ---: | ---: | ---: |']
+             f'| Publishers | Events / publish | Version | Publications / s | Events / s | Relative to {baseline} |',
+             '| ---: | ---: | --- | ---: | ---: | ---: |']
     for row in rows:
-        lines.append(f'| {row["batch_size"]} | {row["version"]} | '
+        lines.append(f'| {row["publishers"]} | {row["batch_size"]} | {row["version"]} | '
                      f'{row["publications_per_second"]:,.2f} | {row["events_per_second"]:,.2f} | '
                      f'{row["ratio_to_baseline"]:.2f}× |')
     lines += ['', '![Throughput comparison](comparison.png)', '',
-              'Rates are medians across repetitions. Ratios compare matching application batch sizes.',
+              'Rates are medians across repetitions. Ratios compare matching publisher counts and application batch sizes.',
               'Raw JMH measurements and verified database metadata are retained beside this report.', '',
               '```json', json.dumps(manifest['settings'], indent=2), '```', '']
     (directory / 'comparison.md').write_text('\n'.join(lines))

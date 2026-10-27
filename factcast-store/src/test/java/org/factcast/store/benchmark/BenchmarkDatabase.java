@@ -48,6 +48,8 @@ final class BenchmarkDatabase implements AutoCloseable {
   private final int publishers;
   private final String version = requiredProperty("benchmark.version");
   private final boolean batching = Boolean.parseBoolean(requiredProperty("benchmark.batching"));
+  private final int publishMaxBatchSize =
+      Integer.parseInt(System.getProperty("benchmark.publish-max-batch-size", "500"));
   private final String image = requiredProperty("benchmark.postgres-image");
   private PostgreSQLContainer postgres;
   private DataSource dataSource;
@@ -117,7 +119,7 @@ final class BenchmarkDatabase implements AutoCloseable {
                       "factcast.store.publish-batch.enabled",
                       batching,
                       "factcast.store.publish-batch.max-batch-size",
-                      500)));
+                      publishMaxBatchSize)));
       context.registerBean("dataSource", DataSource.class, () -> dataSource);
       context.registerBean("jdbcTemplate", JdbcTemplate.class, () -> jdbc);
       context.registerBean(
@@ -145,11 +147,18 @@ final class BenchmarkDatabase implements AutoCloseable {
       require(
           context.getBeanNamesForType(FactValidationAspect.class).length == 0,
           "Validation advice must not be installed");
+      if (batching || version.equals("0.12.5") || version.equals("current")) {
+        require(
+            Boolean.valueOf(batching)
+                .equals(new BeanWrapperImpl(properties).getPropertyValue("publishBatch.enabled")),
+            "Concurrent publish batching must match the requested setting");
+      }
       if (batching) {
         require(
-            Boolean.TRUE.equals(
-                new BeanWrapperImpl(properties).getPropertyValue("publishBatch.enabled")),
-            "Concurrent publish batching must be enabled");
+            Integer.valueOf(publishMaxBatchSize)
+                .equals(
+                    new BeanWrapperImpl(properties).getPropertyValue("publishBatch.maxBatchSize")),
+            "Concurrent publish batch limit must match the requested value");
       }
       FactStore store = context.getBean(FactStore.class);
       require(AopUtils.isAopProxy(store), "The store must retain Spring transaction advice");
@@ -183,6 +192,7 @@ final class BenchmarkDatabase implements AutoCloseable {
     metadata.put("batchSize", batchSize);
     metadata.put("publishers", publishers);
     metadata.put("batchingEnabled", batching);
+    metadata.put("publishMaxBatchSize", batching ? publishMaxBatchSize : null);
     metadata.put("validationEnabled", false);
     metadata.put("schemaRegistryConfigured", false);
     metadata.put("poolSize", POOL_SIZE);
