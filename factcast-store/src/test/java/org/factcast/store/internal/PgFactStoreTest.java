@@ -413,6 +413,70 @@ class PgFactStoreTest {
     }
 
     @Test
+    void rejectsTokenInvalidatedByPendingPublication() {
+      AtomicLong lastSerial = new AtomicLong();
+      when(state.specs()).thenReturn(List.of(FactSpec.ns("hubba")));
+      when(state.serialOfLastMatchingFact()).thenReturn(10L);
+      when(tokenStore.get(optionalToken)).thenReturn(Optional.of(state));
+      when(jdbcTemplate.query(
+              anyString(), any(PreparedStatementSetter.class), any(ResultSetExtractor.class)))
+          .thenAnswer(invocation -> lastSerial.get());
+
+      try (MockedConstruction<UnconditionalPublishQueue> queues =
+          mockConstruction(
+              UnconditionalPublishQueue.class,
+              (queue, context) ->
+                  doAnswer(
+                          invocation -> {
+                            lastSerial.set(32L);
+                            return null;
+                          })
+                      .when(queue)
+                      .flush())) {
+        PgFactStore store = newStore();
+
+        assertThat(store.publishIfUnchanged(List.of(fact), Optional.of(optionalToken))).isFalse();
+
+        InOrder order = inOrder(queues.constructed().get(0), lock, tokenStore);
+        order.verify(queues.constructed().get(0)).flush();
+        order.verify(lock).acquireExclusiveTXLock();
+        order.verify(tokenStore).get(optionalToken);
+        verify(tokenStore).invalidate(optionalToken);
+        verify(counter).increment();
+        verify(jdbcTemplate, never()).batchUpdate(anyString(), any(), anyInt(), any());
+      }
+    }
+
+    @Test
+    void doesNotWaitForQueuedWritersWhenCallerAlreadyHoldsExclusiveLock() {
+      when(lock.isExclusiveTXLockHeld()).thenReturn(true);
+
+      try (MockedConstruction<UnconditionalPublishQueue> queues =
+          mockConstruction(UnconditionalPublishQueue.class)) {
+        assertThat(newStore().publishIfUnchanged(List.of(fact), Optional.of(optionalToken)))
+            .isFalse();
+
+        verify(queues.constructed().get(0), never()).flush();
+        verify(tokenStore).get(optionalToken);
+      }
+    }
+
+    private PgFactStore newStore() {
+      return new PgFactStore(
+          jdbcTemplate,
+          subscriptionFactory,
+          tokenStore,
+          schemaRegistry,
+          lock,
+          factTransformerService,
+          pgFactIdToSerialMapper,
+          metrics,
+          horizonProvider,
+          storeConfigurationProperties,
+          platformTransactionManager);
+    }
+
+    @Test
     void doesNotExclusivelyLockWithoutToken() {
 
       underTest = spy(underTest);

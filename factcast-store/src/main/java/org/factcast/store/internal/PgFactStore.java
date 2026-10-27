@@ -291,6 +291,9 @@ public class PgFactStore extends AbstractFactStore {
       return metrics.time(
           StoreMetrics.OP.PUBLISH_IF_UNCHANGED,
           () -> {
+            // Queued writers must commit before validation unless this transaction already holds
+            // the exclusive lock, which would prevent those writers from making progress.
+            if (!lock.isExclusiveTXLockHeld()) queue.flush();
             lock.acquireExclusiveTXLock();
             boolean successful = PgFactStore.super.publishIfUnchanged(defensiveCopy, optionalToken);
             if (!successful)

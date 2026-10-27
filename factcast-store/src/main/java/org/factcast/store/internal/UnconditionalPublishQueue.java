@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.*;
+import org.factcast.core.util.ExceptionHelper;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -53,16 +54,34 @@ class UnconditionalPublishQueue {
       // flush(ser) based on the ser
       serial.set(ordinalCounter.incrementAndGet());
       queue.add(new Publication(serial.get(), toPublish, completion));
+      // Submit while holding the queue lock so a flush barrier cannot overtake this publication.
+      flushingExecutor.submit(
+          () -> {
+            try {
+              flush(serial.get());
+            } catch (Exception e) {
+              log.error(e.getMessage(), e);
+            }
+          });
     }
-    flushingExecutor.submit(
-        () -> {
-          try {
-            flush(serial.get());
-          } catch (Exception e) {
-            log.error(e.getMessage(), e);
-          }
-        });
     return completion;
+  }
+
+  void flush() {
+    Future<?> completion;
+    synchronized (queue) {
+      // The single-thread executor finishes all earlier batches, including in-flight writes,
+      // before this barrier completes. An empty queue alone cannot guarantee committed writes.
+      completion = flushingExecutor.submit(() -> {});
+    }
+    try {
+      completion.get();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new RuntimeException(e);
+    } catch (ExecutionException e) {
+      throw ExceptionHelper.toRuntime(e.getCause());
+    }
   }
 
   /**

@@ -58,6 +58,77 @@ class UnconditionalPublishQueueTest {
   }
 
   @Test
+  void flush_waits_for_in_flight_and_pending_batches() throws Exception {
+    UnconditionalPublishQueue queue = new UnconditionalPublishQueue(pgFactStore, 1);
+    CountDownLatch publishing = new CountDownLatch(1);
+    CountDownLatch release = new CountDownLatch(1);
+    doAnswer(
+            invocation -> {
+              publishing.countDown();
+              assertTrue(release.await(5, TimeUnit.SECONDS));
+              return null;
+            })
+        .when(pgFactStore)
+        .batchPublish(anyList());
+
+    try {
+      Future<Void> first = queue.addAndFlush(List.of(fact));
+      assertTrue(publishing.await(5, TimeUnit.SECONDS));
+      Future<Void> second = queue.addAndFlush(List.of(mock(Fact.class)));
+      Future<Void> third = queue.addAndFlush(List.of(mock(Fact.class)));
+
+      CompletableFuture<Void> flushed = CompletableFuture.runAsync(queue::flush);
+      assertThrows(TimeoutException.class, () -> flushed.get(100, TimeUnit.MILLISECONDS));
+
+      release.countDown();
+      flushed.get(5, TimeUnit.SECONDS);
+
+      assertThat(first).isDone();
+      assertThat(second).isDone();
+      assertThat(third).isDone();
+      verify(pgFactStore, times(3)).batchPublish(anyList());
+    } finally {
+      release.countDown();
+    }
+  }
+
+  @Test
+  void flush_does_not_publish_when_empty() {
+    underTest.flush();
+
+    verifyNoInteractions(pgFactStore);
+  }
+
+  @Test
+  void flush_preserves_interrupt_status() throws Exception {
+    CountDownLatch publishing = new CountDownLatch(1);
+    CountDownLatch release = new CountDownLatch(1);
+    doAnswer(
+            invocation -> {
+              publishing.countDown();
+              assertTrue(release.await(5, TimeUnit.SECONDS));
+              return null;
+            })
+        .when(pgFactStore)
+        .batchPublish(anyList());
+
+    Future<Void> publication = underTest.addAndFlush(List.of(fact));
+    try {
+      assertTrue(publishing.await(5, TimeUnit.SECONDS));
+      Thread.currentThread().interrupt();
+
+      Assertions.assertThatThrownBy(underTest::flush)
+          .isInstanceOf(RuntimeException.class)
+          .hasCauseInstanceOf(InterruptedException.class);
+      assertThat(Thread.currentThread().isInterrupted()).isTrue();
+    } finally {
+      Thread.interrupted();
+      release.countDown();
+    }
+    publication.get(5, TimeUnit.SECONDS);
+  }
+
+  @Test
   void addAndFlush_should_retry_individually_when_batchPublish_fails() throws Exception {
     // Arrange
     Fact fact1 = mock(Fact.class);
