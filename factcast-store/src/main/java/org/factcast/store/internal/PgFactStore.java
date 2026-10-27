@@ -291,6 +291,8 @@ public class PgFactStore extends AbstractFactStore {
       return metrics.time(
           StoreMetrics.OP.PUBLISH_IF_UNCHANGED,
           () -> {
+            // The exclusive lock waits for shared-lock holders and protects validation through
+            // commit. Queued publications may follow because their publish calls have not returned.
             lock.acquireExclusiveTXLock();
             boolean successful = PgFactStore.super.publishIfUnchanged(defensiveCopy, optionalToken);
             if (!successful)
