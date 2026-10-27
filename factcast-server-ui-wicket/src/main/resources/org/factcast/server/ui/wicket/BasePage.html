@@ -1,0 +1,19 @@
+<!doctype html>
+<html xmlns:wicket="http://wicket.apache.org" lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>FactCast Server UI</title></head>
+<body>
+<div class="shell">
+  <aside class="drawer" id="navigation"><div class="brand">FactCast Server UI</div>
+    <nav aria-label="Main navigation">
+      <a wicket:id="query"><span aria-hidden="true">◎</span> Query</a>
+      <a wicket:id="id"><span aria-hidden="true">▤</span> Query by Fact-ID</a>
+      <a wicket:id="reports"><span aria-hidden="true">▧</span> Report Generation</a>
+      <form wicket:id="logout" method="post"><input type="hidden" wicket:id="csrf"><button class="nav-button" type="submit"><span aria-hidden="true">↪</span> Logout</button></form>
+    </nav>
+    <div class="drawer-footer">Apache Wicket</div>
+  </aside>
+  <div class="workspace"><header class="topbar"><button type="button" class="menu-toggle" aria-label="Toggle navigation" aria-controls="navigation" aria-expanded="true">☰</button><h1 wicket:id="title"></h1></header>
+    <main><div wicket:id="feedback" role="status"></div><wicket:child/></main>
+  </div>
+</div>
+</body></html>

@@ -58,6 +58,8 @@
     <module>factcast-factus-mongodb</module>
     <module>factcast-server-grpc</module>
     <module>factcast-server-security</module>
+    <module>factcast-server-ui-common</module>
+    <module>factcast-server-ui-wicket</module>
     <module>factcast-server-ui</module>
     <module>factcast-server-ui-s3-reportstore</module>
     <module>factcast-grpc-api</module>

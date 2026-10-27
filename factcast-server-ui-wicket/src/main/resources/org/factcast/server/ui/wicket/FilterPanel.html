@@ -1,0 +1,15 @@
+<wicket:panel xmlns:wicket="http://wicket.apache.org">
+<details class="conditions" open><summary>Conditions</summary>
+  <div wicket:id="conditions" class="condition">
+    <div class="field-grid"><label>Namespace<select aria-label="Namespace" wicket:id="namespace"></select></label><label>Types<select aria-label="Types" wicket:id="types" multiple size="3"></select></label><label>Aggregate ID<input wicket:id="aggregateId" placeholder="UUID"></label></div>
+    <div wicket:id="metadata" class="metadata-row"><label>Metadata key<input wicket:id="key"></label><label>Value<input wicket:id="value"></label><button wicket:id="removeMeta" type="submit">Remove metadata</button></div>
+    <div class="actions"><button wicket:id="addMeta" type="submit">Add metadata</button><button wicket:id="remove" type="submit">Remove condition</button></div>
+  </div>
+  <button wicket:id="add" type="submit">Add condition</button>
+</details>
+<div class="serial-grid">
+  <div><label>Starting Serial<input wicket:id="from" inputmode="numeric"></label><details class="helpers"><summary>Select start serial</summary><label>First Serial of Day<input type="text" wicket:id="since" placeholder="yyyy-mm-dd"></label><button wicket:id="startDate" type="submit">Use date</button><button wicket:id="latest" type="submit">Latest serial</button><button wicket:id="scratch" type="submit">From scratch</button></details></div>
+  <div><label>End serial<input wicket:id="to" inputmode="numeric"></label><details class="helpers"><summary>Select last serial</summary><label>Last Serial of Day<input type="text" wicket:id="until" placeholder="yyyy-mm-dd"></label><button wicket:id="endDate" type="submit">Use date</button><button wicket:id="clearEnd" type="submit">Remove last serial</button></details></div>
+  <div wicket:id="paging" class="paging"><label>Limit<input wicket:id="limit" placeholder="50" inputmode="numeric"></label><label>Offset<input wicket:id="offset" placeholder="0" inputmode="numeric"></label></div>
+</div>
+</wicket:panel>

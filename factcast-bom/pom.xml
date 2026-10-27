@@ -20,6 +20,16 @@
     <dependencies>
       <dependency>
         <groupId>org.factcast</groupId>
+        <artifactId>factcast-server-ui-common</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.factcast</groupId>
+        <artifactId>factcast-server-ui-wicket</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.factcast</groupId>
         <artifactId>factcast-client-grpc</artifactId>
         <version>${project.version}</version>
       </dependency>

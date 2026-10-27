@@ -42,7 +42,17 @@
       <artifactId>spring-boot-configuration-processor</artifactId>
       <optional>true</optional>
     </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
     <!-- Optional dependencies -->
+    <dependency>
+      <groupId>org.factcast</groupId>
+      <artifactId>factcast-server-ui-wicket</artifactId>
+      <optional>true</optional>
+    </dependency>
     <dependency>
       <groupId>org.factcast</groupId>
       <artifactId>factcast-client-grpc</artifactId>

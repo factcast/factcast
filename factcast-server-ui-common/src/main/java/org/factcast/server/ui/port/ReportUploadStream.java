@@ -26,7 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.factcast.server.ui.report.ReportFilterBean;
 
 @Slf4j
-public abstract class ReportUploadStream {
+public abstract class ReportUploadStream implements AutoCloseable {
   @NonNull private final JsonGenerator jsonGenerator;
 
   @SneakyThrows

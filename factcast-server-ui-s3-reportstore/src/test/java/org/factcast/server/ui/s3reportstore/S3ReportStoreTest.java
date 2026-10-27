@@ -160,6 +160,30 @@ class S3ReportStoreTest {
         ArgumentCaptor.forClass(ListObjectsV2Request.class);
 
     @Test
+    void keepsAccountsWithSharedNamePrefixesSeparate() {
+      var now = java.time.Instant.now();
+      var objects =
+          List.of(
+              S3Object.builder().key("user/mine.json").lastModified(now).build(),
+              S3Object.builder().key("user2/private.json").lastModified(now).build());
+      when(s3Client.listObjectsV2(any(ListObjectsV2Request.class)))
+          .thenAnswer(
+              invocation -> {
+                String prefix = invocation.<ListObjectsV2Request>getArgument(0).prefix();
+                return CompletableFuture.completedFuture(
+                    ListObjectsV2Response.builder()
+                        .contents(
+                            objects.stream()
+                                .filter(object -> object.key().startsWith(prefix))
+                                .toList())
+                        .build());
+              });
+      assertThat(uut.listAllForUser("user"))
+          .extracting(org.factcast.server.ui.report.ReportEntry::name)
+          .containsExactly("mine.json");
+    }
+
+    @Test
     @SneakyThrows
     void happyPath() {
       // given
@@ -187,7 +211,7 @@ class S3ReportStoreTest {
       verify(s3Client).listObjectsV2(captor.capture());
       final var actualRequest = captor.getValue();
       assertThat(actualRequest.bucket()).isEqualTo(BUCKET_NAME);
-      assertThat(actualRequest.prefix()).isEqualTo("user");
+      assertThat(actualRequest.prefix()).isEqualTo("user/");
     }
 
     @Test
@@ -207,7 +231,7 @@ class S3ReportStoreTest {
       verify(s3Client).listObjectsV2(captor.capture());
       final var actualRequest = captor.getValue();
       assertThat(actualRequest.bucket()).isEqualTo(BUCKET_NAME);
-      assertThat(actualRequest.prefix()).isEqualTo("user");
+      assertThat(actualRequest.prefix()).isEqualTo("user/");
     }
 
     @Test

@@ -21,7 +21,7 @@ import lombok.experimental.Accessors;
 
 @Data
 @Accessors(fluent = false, chain = false)
-public class MetaTuple {
+public class MetaTuple implements java.io.Serializable {
   @NotNull String key;
   @NotNull String value;
 

@@ -17,8 +17,6 @@ package org.factcast.server.ui.adapter;
 
 import com.fasterxml.jackson.core.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.vaadin.flow.server.*;
-import jakarta.servlet.http.HttpServletRequest;
 import java.io.*;
 import java.net.*;
 import java.nio.file.Files;
@@ -33,6 +31,7 @@ import org.factcast.core.util.ExceptionHelper;
 import org.factcast.server.ui.port.FileReportUploadStream;
 import org.factcast.server.ui.port.ReportStore;
 import org.factcast.server.ui.report.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @Slf4j
 public class FileSystemReportStore implements ReportStore {
@@ -72,8 +71,12 @@ public class FileSystemReportStore implements ReportStore {
   @Override
   public @NonNull URL getReportDownload(@NonNull String userName, @NonNull String reportName) {
     log.info("Constructing download link to redirect to download of {}", reportName);
-    String downloadLink = "files/" + reportName;
-    return URI.create(getApplicationBaseUrl() + downloadLink).toURL();
+    return ServletUriComponentsBuilder.fromCurrentContextPath()
+        .pathSegment("files", reportName)
+        .build()
+        .encode()
+        .toUri()
+        .toURL();
   }
 
   @Override
@@ -118,16 +121,6 @@ public class FileSystemReportStore implements ReportStore {
       throw new IllegalArgumentException(
           "No report exists with name %s for user %s".formatted(reportName, userName));
     }
-  }
-
-  private static @NonNull String getApplicationBaseUrl() {
-    VaadinRequest vaadinRequest = VaadinService.getCurrentRequest();
-    HttpServletRequest httpServletRequest =
-        ((VaadinServletRequest) vaadinRequest).getHttpServletRequest();
-    final var baseUrl = httpServletRequest.getRequestURL().toString();
-    log.info("Application base url is: {} ", baseUrl);
-
-    return baseUrl;
   }
 
   private static long getUsableSpaceInMb(@NonNull String pathInPartition) {

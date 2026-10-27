@@ -24,5 +24,8 @@ import org.springframework.context.annotation.Import;
 @AutoConfiguration
 @Import({S3ReportStoreConfiguration.class})
 @ConditionalOnClass(S3ReportStoreConfiguration.class)
-@AutoConfigureBefore(FactCastServerUIAutoConfiguration.class)
+@AutoConfigureBefore({
+  FactCastServerUIAutoConfiguration.class,
+  FactCastServerWicketUIAutoConfiguration.class
+})
 public class FactCastServerUIS3ReportStoreAutoConfiguration {}

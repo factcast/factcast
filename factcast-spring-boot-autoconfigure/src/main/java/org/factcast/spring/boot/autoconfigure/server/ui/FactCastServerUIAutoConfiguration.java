@@ -18,9 +18,11 @@ package org.factcast.spring.boot.autoconfigure.server.ui;
 import org.factcast.server.ui.config.UIConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingClass;
 import org.springframework.context.annotation.Import;
 
 @AutoConfiguration
 @Import({UIConfiguration.class})
 @ConditionalOnClass(UIConfiguration.class)
+@ConditionalOnMissingClass("org.factcast.server.ui.wicket.WicketUIConfiguration")
 public class FactCastServerUIAutoConfiguration {}

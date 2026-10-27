@@ -89,7 +89,7 @@ public class S3ReportStore implements ReportStore {
   public List<ReportEntry> listAllForUser(@NonNull String userName) {
     // list all objects in the aws s3 bucket under the prefix userName.
     ListObjectsV2Request listObjectsV2Request =
-        ListObjectsV2Request.builder().bucket(bucketName).prefix(userName).build();
+        ListObjectsV2Request.builder().bucket(bucketName).prefix(userName + "/").build();
 
     try {
       final var reportEntries =

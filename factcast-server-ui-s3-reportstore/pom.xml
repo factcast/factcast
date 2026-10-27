@@ -30,7 +30,7 @@
   <dependencies>
     <dependency>
       <groupId>org.factcast</groupId>
-      <artifactId>factcast-server-ui</artifactId>
+      <artifactId>factcast-server-ui-common</artifactId>
     </dependency>
     <dependency>
       <groupId>org.projectlombok</groupId>

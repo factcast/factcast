@@ -55,6 +55,15 @@ public class FactRepositoryImplTest {
   final List<FactSpec> nameSpaces = List.of(fs1, fs2, fsa);
   final List<FactSpec> nameSpacesAfterFiltering = List.of(fs1, fs2);
 
+  @Test
+  void doesNotSubscribeWhenNoNamespaceIsReadable() {
+    var bean = mock(FullFilterBean.class);
+    when(bean.createFactSpecs()).thenReturn(nameSpaces);
+    when(securityService.filterReadable(nameSpaces)).thenReturn(Set.of());
+    assertThat(underTest.fetchChunk(bean)).isEmpty();
+    verify(fs, never()).subscribe(any(), any());
+  }
+
   @Nested
   class WhenFindingBy {
 

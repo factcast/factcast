@@ -133,6 +133,9 @@ public class FactRepositoryImpl implements FactRepository {
   @SneakyThrows
   private void fetch(FilterBean bean, AbstractListObserver obs) {
     Set<FactSpec> specs = securityService.filterReadable(bean.createFactSpecs());
+    if (specs.isEmpty()) {
+      return;
+    }
 
     SpecBuilder sr = SubscriptionRequest.catchup(specs);
     long ser = bean.resolveFromOrZero();
