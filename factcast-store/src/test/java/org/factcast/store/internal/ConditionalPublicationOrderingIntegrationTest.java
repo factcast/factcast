@@ -52,7 +52,7 @@ class ConditionalPublicationOrderingIntegrationTest {
 
   @BeforeEach
   void batchingIsEnabled() {
-    assertThat(properties.getPublishBatch().isEnabled()).isTrue();
+    assertThat(properties.getPublishBatched().isEnabled()).isTrue();
   }
 
   @Test
