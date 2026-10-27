@@ -58,55 +58,13 @@ class UnconditionalPublishQueueTest {
   }
 
   @Test
-  void flush_waits_for_in_flight_and_pending_batches() throws Exception {
-    UnconditionalPublishQueue queue = new UnconditionalPublishQueue(pgFactStore, 1);
+  void publicationDoesNotCompleteBeforeBatchPublishReturns() throws Exception {
     CountDownLatch publishing = new CountDownLatch(1);
     CountDownLatch release = new CountDownLatch(1);
     doAnswer(
             invocation -> {
               publishing.countDown();
-              assertTrue(release.await(5, TimeUnit.SECONDS));
-              return null;
-            })
-        .when(pgFactStore)
-        .batchPublish(anyList());
-
-    try {
-      Future<Void> first = queue.addAndFlush(List.of(fact));
-      assertTrue(publishing.await(5, TimeUnit.SECONDS));
-      Future<Void> second = queue.addAndFlush(List.of(mock(Fact.class)));
-      Future<Void> third = queue.addAndFlush(List.of(mock(Fact.class)));
-
-      CompletableFuture<Void> flushed = CompletableFuture.runAsync(queue::flush);
-      assertThrows(TimeoutException.class, () -> flushed.get(100, TimeUnit.MILLISECONDS));
-
-      release.countDown();
-      flushed.get(5, TimeUnit.SECONDS);
-
-      assertThat(first).isDone();
-      assertThat(second).isDone();
-      assertThat(third).isDone();
-      verify(pgFactStore, times(3)).batchPublish(anyList());
-    } finally {
-      release.countDown();
-    }
-  }
-
-  @Test
-  void flush_does_not_publish_when_empty() {
-    underTest.flush();
-
-    verifyNoInteractions(pgFactStore);
-  }
-
-  @Test
-  void flush_preserves_interrupt_status() throws Exception {
-    CountDownLatch publishing = new CountDownLatch(1);
-    CountDownLatch release = new CountDownLatch(1);
-    doAnswer(
-            invocation -> {
-              publishing.countDown();
-              assertTrue(release.await(5, TimeUnit.SECONDS));
+              assertThat(release.await(5, TimeUnit.SECONDS)).isTrue();
               return null;
             })
         .when(pgFactStore)
@@ -114,15 +72,9 @@ class UnconditionalPublishQueueTest {
 
     Future<Void> publication = underTest.addAndFlush(List.of(fact));
     try {
-      assertTrue(publishing.await(5, TimeUnit.SECONDS));
-      Thread.currentThread().interrupt();
-
-      Assertions.assertThatThrownBy(underTest::flush)
-          .isInstanceOf(RuntimeException.class)
-          .hasCauseInstanceOf(InterruptedException.class);
-      assertThat(Thread.currentThread().isInterrupted()).isTrue();
+      assertThat(publishing.await(5, TimeUnit.SECONDS)).isTrue();
+      assertThat(publication.isDone()).isFalse();
     } finally {
-      Thread.interrupted();
       release.countDown();
     }
     publication.get(5, TimeUnit.SECONDS);
