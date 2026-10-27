@@ -95,7 +95,7 @@ public class PgFactStore extends AbstractFactStore {
     this.props = props;
 
     this.tx = new TransactionTemplate(platformTransactionManager);
-    this.queue = new UnconditionalPublishQueue(this, props.getPublishBatch().getMaxBatchSize());
+    this.queue = new UnconditionalPublishQueue(this, props.getPublishBatched().getMaxBatchSize());
   }
 
   @Override
@@ -153,7 +153,7 @@ public class PgFactStore extends AbstractFactStore {
     }
     var defensiveCopy = new ArrayList<>(factsToPublish);
 
-    if (props.getPublishBatch().isEnabled()) publishBatchable(defensiveCopy);
+    if (props.getPublishBatched().isEnabled()) publishBatchable(defensiveCopy);
     else publishDirectly(defensiveCopy);
   }
 
