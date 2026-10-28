@@ -32,6 +32,7 @@ import static org.mockito.Mockito.when;
 import java.sql.SQLTransientConnectionException;
 import java.time.Duration;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -283,6 +284,36 @@ class JdbcWriterTokenTest {
 
       keepaliveTask.run();
       uut.close();
+
+      verify(extended).unlock();
+      verify(lock, never()).unlock();
+    }
+
+    @Test
+    void waitsForAnExtensionInFlightAndReleasesTheLeaseItReturned() throws Exception {
+      SimpleLock extended = mock(SimpleLock.class);
+      CountDownLatch extending = new CountDownLatch(1);
+      CountDownLatch extensionMayReturn = new CountDownLatch(1);
+      when(lock.extend(LEASE, Duration.ZERO))
+          .thenAnswer(
+              invocation -> {
+                extending.countDown();
+                assertThat(extensionMayReturn.await(5, TimeUnit.SECONDS)).isTrue();
+                return Optional.of(extended);
+              });
+      JdbcWriterToken uut = tokenFor(lock);
+      Thread keepaliveThread = new Thread(keepaliveTask);
+      keepaliveThread.start();
+      assertThat(extending.await(5, TimeUnit.SECONDS)).isTrue();
+
+      Thread closer = new Thread(uut::close);
+      closer.start();
+      closer.join(200);
+      assertThat(closer.isAlive()).isTrue();
+
+      extensionMayReturn.countDown();
+      closer.join(5_000);
+      keepaliveThread.join(5_000);
 
       verify(extended).unlock();
       verify(lock, never()).unlock();
