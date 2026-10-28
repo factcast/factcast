@@ -24,7 +24,7 @@ This is made possible by changing three major things:
 * Eventstore decides which subscriber is (potentially) interested
 * Wakes subscriber and makes them run a query for the new data
 
-*Replacement*
+*Improvement*
 
 * All inserts create rows in an unlogged notification table
 * Max one “Nudge” notification is sent per 100ms
@@ -40,15 +40,13 @@ This is made possible by changing three major things:
 * I/O load and queries on the fact table stay roughly the same
 * Additional load by querying the notification table (is reduced regularly)
 
-'''
-
 == 2. Batched concurrent publication
 
 *Baseline*
 
 * Every publish creates its own database transaction
 
-*Replacement*
+*Improvement*
 
 * Every publish adds to a buffer and returns only when and if its respective entry was flushed
 
@@ -57,15 +55,13 @@ This is made possible by changing three major things:
 * Burst publications are joined into chunks per transaction, so that the TPS possible are not exceeded easily (max 500 by default, up to 10000).
 * We do never wait with flushing, so if publication frequency is low, it still will be one transaction per publication, and very little (as in almost unmeasurable) additional latency overhead.
 
-'''
-
 == 3. Lock free publication / Horizon
 
 *Baseline*
 
 * Full serialization by every publication using the same exclusive lock
 
-*Replacement*
+*Improvement*
 
 * Unconditional publication uses a shared lock instead, so that concurrent ones don’t block each other
 
