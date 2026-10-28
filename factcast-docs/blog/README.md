@@ -2,7 +2,7 @@
 
 The blog is an unversioned Antora component (`name: blog`, `version: ~`) within
 `factcast-docs`. The documentation build includes its pages, RSS feed, top-level
-menu link and search entries. All included posts are samples.
+menu link and search entries.
 
 ## Write a post
 
@@ -26,6 +26,21 @@ Use single-line plain text for the title and metadata; reserve AsciiDoc formatti
 macros and includes for the body. Metadata is escaped for HTML and RSS.
 Use URL-safe filenames with letters, digits, dots, hyphens and underscores.
 Subdirectories under `posts/` may use letters, digits, hyphens and underscores.
+
+Store blog images in `factcast-docs/blog/modules/ROOT/images/`, rather than beside
+the post in `pages/posts/`. Reference an image by its path relative to `images/`:
+
+```adoc
+image::concurrent-unconditional-publishing-benchmark.png[Concurrent publishing benchmark]
+```
+
+For example, `images/benchmarks/publishing.png` is referenced as
+`image::benchmarks/publishing.png[]`. Antora resolves the image from the module's
+image catalog, independently of the post's directory.
+
+Article images automatically open in a lightbox. The close button or Escape
+returns readers to their original position. Images with an explicit link retain
+that link; use `[.no-lightbox]` before an image macro to opt out.
 
 `page-blog-author`, `page-blog-tags` and `page-blog-draft` are optional. Tags are
 comma-separated, case-sensitive categories; whitespace and duplicates are removed.

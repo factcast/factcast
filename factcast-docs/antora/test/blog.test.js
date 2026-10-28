@@ -8,7 +8,6 @@ const { spawnSync } = require('node:child_process')
 const { runInNewContext } = require('node:vm')
 
 const docsDir = path.resolve(__dirname, '../..')
-const blogDir = path.join(docsDir, 'blog')
 mkdirSync('/tmp/agents', { recursive: true })
 const fixtureDir = mkdtempSync('/tmp/agents/factcast-blog-test-')
 process.on('exit', () => rmSync(fixtureDir, { recursive: true, force: true }))
@@ -78,10 +77,31 @@ function verifyLocalLinks(output) {
 }
 
 test('standalone samples build with ordering, links, metadata, RSS, search and no drafts', () => {
-  const sampleFiles = ['2026-10-28-example.adoc', '2026-10-21-announcement.adoc', '2026-10-14-release.adoc', '2026-10-29-draft.adoc']
-  const samples = Object.fromEntries(sampleFiles.map((name) => [name,
-    readFileSync(path.join(blogDir, 'modules/ROOT/pages/posts', name), 'utf8'),
-  ]))
+  // Keep fixtures independent of articles that contributors edit, rename or mark as drafts.
+  const samples = {
+    '2026-10-28-example.adoc': `= Sample: Writing a technical article
+:page-blog-date: 2026-10-28
+:page-blog-author: FactCast contributors
+:page-blog-tags: Technical, Samples
+:page-blog-summary: A sample technical article.
+
+Sample content.
+`,
+    '2026-10-21-announcement.adoc': `= Sample: A short announcement
+:page-blog-date: 2026-10-21
+:page-blog-summary: A sample announcement.
+
+Sample content.
+`,
+    '2026-10-14-release.adoc': `= Sample: Release news
+:page-blog-date: 2026-10-14
+:page-blog-tags: Releases, Samples
+:page-blog-summary: A sample release article.
+
+Sample content.
+`,
+    '2026-10-29-draft.adoc': '= Unpublished draft\n:page-blog-draft: true\n\nDraft content.\n',
+  }
   const site = build('samples', samples)
   requireSuccess(site)
   const index = site.read('blog/index.html')
@@ -197,8 +217,6 @@ test('the documentation playbook builds docs and blog with shared navigation and
   assert.match(blog, /href="[^\"]*docs\/latest\/About\/index.html">\s*About\s*<\/a>/)
   const search = read('search-index.js')
   assert.match(search, /About\/index/)
-  assert.match(search, /2026-10-28-example/)
-  assert.doesNotMatch(search, /2026-10-29-draft|Unpublished draft/)
   const lunr = require(path.join(output, '_/js/vendor/lunr.js'))
   let searchData
   runInNewContext(search, {
@@ -206,18 +224,11 @@ test('the documentation playbook builds docs and blog with shared navigation and
     antoraSearch: { initSearch: (_, data) => { searchData = data } },
   })
   const searchIndex = lunr.Index.load(searchData.index)
-  const publishedPosts = [
-    '/blog/posts/2026-10-28-example.html',
-    '/blog/posts/2026-10-21-announcement.html',
-    '/blog/posts/2026-10-14-release.html',
-  ]
+  const feed = parseFeed(read('blog/feed.xml'))
+  const publishedPosts = feed.items.map((item) => new URL(item.link).pathname).sort()
   // Query the emitted index: stored URLs alone do not prove that posts are searchable.
-  for (const query of ['sample', 'blog']) {
-    const urls = searchIndex.search(query).map(({ ref }) =>
-      searchData.store.documents[ref.split('-')[0]].url)
-    for (const url of publishedPosts) assert.ok(urls.includes(url), `${query}: missing ${url}`)
-    assert.ok(!urls.some((url) => url.includes('2026-10-29-draft')))
-  }
-  assert.ok(!existsSync(path.join(output, 'blog/posts/2026-10-29-draft.html')))
-  assert.equal(parseFeed(read('blog/feed.xml')).link, 'https://docs.factcast.org/blog/index.html')
+  const indexedPosts = searchIndex.search('component:blog').map(({ ref }) =>
+    searchData.store.documents[ref.split('-')[0]].url).filter((url) => url.startsWith('/blog/posts/'))
+  assert.deepEqual([...new Set(indexedPosts)].sort(), publishedPosts)
+  assert.equal(feed.link, 'https://docs.factcast.org/blog/index.html')
 })

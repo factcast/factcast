@@ -3,8 +3,9 @@
 :page-blog-author: FactCast contributors
 :page-blog-tags: Technical, Samples
 :page-blog-summary: A sample technical article demonstrating AsciiDoc blog authoring.
+:page-blog-draft: true
 
-NOTE: This is sample content, not a FactCast announcement.
+NOTE: This is sample content
 
 == Start with the problem
 

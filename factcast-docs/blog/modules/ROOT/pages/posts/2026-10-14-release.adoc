@@ -1,8 +1,0 @@
-= Sample: Release news
-:page-blog-date: 2026-10-14
-:page-blog-tags: Releases, Samples
-:page-blog-summary: A sample release article showing how tags group related posts.
-
-NOTE: This is sample content, not an actual release notice.
-
-Use a release article to describe changes and point readers to relevant documentation.

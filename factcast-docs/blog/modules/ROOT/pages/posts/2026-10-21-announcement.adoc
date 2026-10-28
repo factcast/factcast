@@ -1,8 +1,0 @@
-= Sample: A short announcement
-:page-blog-date: 2026-10-21
-:page-blog-summary: A sample announcement with only the required metadata.
-
-NOTE: This is sample content, not a FactCast announcement.
-
-A short announcement can omit the author and tags.
-The date and summary still appear on the article and landing page.

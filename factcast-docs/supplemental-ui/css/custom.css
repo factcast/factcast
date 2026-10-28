@@ -19,6 +19,20 @@
     vertical-align: middle;
 }
 
+.image-lightbox {
+    cursor: zoom-in;
+}
+
+.image-lightbox:focus-visible {
+    outline: 2px solid #174d8c;
+    outline-offset: 4px;
+}
+
+/* The upstream navigation button styles otherwise override the single-image hidden state. */
+.glightbox-container .glightbox-button-hidden {
+    display: none;
+}
+
 /* Keep the footer visible while scrolling, reserving space so the final content stays readable. */
 :root {
     --footer-height: 2.5rem;
@@ -215,4 +229,104 @@ body.landing .doc h1.page {
 
 .doc .admonitionblock td.content {
     display: table-cell !important;
+}
+
+/* Give documentation and blog matches room to read without interleaving their results. */
+.navbar .search-result-dropdown-menu {
+    width: min(72rem, calc(100vw - 2rem));
+    min-width: 0;
+    max-width: none;
+}
+
+.navbar .search-result-columns {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    gap: 1rem;
+    padding: .5rem;
+    max-height: none;
+    overflow: hidden;
+}
+
+.search-result-group {
+    min-width: 0;
+    max-height: calc(100dvh - 7rem);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 0 .5rem;
+}
+
+.search-result-group:only-child {
+    grid-column: 1 / -1;
+}
+
+.search-result-group h2 {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    margin: 0;
+    padding: .5rem 0;
+    border-bottom: 1px solid #ddd;
+    background: #fff;
+    color: #1e1e1e;
+    font-size: .95rem;
+}
+
+.search-result-group .search-result-item {
+    display: block;
+    margin: 0;
+    padding: .65rem 0;
+    border-bottom: 1px solid #eee;
+}
+
+.search-result-group .search-result-document-title {
+    width: auto;
+    padding: 0;
+    border: none;
+    text-align: left;
+    font-weight: 600;
+}
+
+.search-result-group .search-result-document-title > a {
+    color: #174d8c;
+    overflow-wrap: anywhere;
+}
+
+.search-result-group .search-result-document-title > a:hover,
+.search-result-group .search-result-document-title > a:focus-visible {
+    text-decoration: underline;
+}
+
+.search-result-group .search-result-document-hit > a {
+    padding: .35rem 0;
+    overflow-wrap: anywhere;
+}
+
+@media screen and (max-width: 1023.5px) {
+    /* Keep search at the top of the collapsed menu and results inside its scrollable area. */
+    .navbar-end {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .navbar-item.search {
+        order: -1;
+    }
+
+    .navbar .search #search-input {
+        width: 100%;
+    }
+
+    .navbar .search-result-dropdown-menu {
+        position: static;
+        width: 100%;
+    }
+
+    .navbar .search-result-columns {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .search-result-group {
+        max-height: 22rem;
+    }
 }
