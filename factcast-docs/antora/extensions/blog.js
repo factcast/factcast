@@ -206,13 +206,17 @@ function link(from, url, label) {
   return `<a href="${escape(relativeUrl(from, url))}">${escape(label)}</a>`
 }
 
-function metadata(post, from) {
+function metadata(post, from, { overview = false } = {}) {
   const author = post.author ? ` <span>By ${escape(post.author)}</span>` : ''
   const tags = post.tags.length
-    ? `<p>Tags: ${post.tags.map((tag) => link(from, `/blog/tags/${tagSlug(tag)}/index.html`, tag)).join(', ')}</p>`
+    ? `Tags: ${post.tags.map((tag) => link(from, `/blog/tags/${tagSlug(tag)}/index.html`, tag)).join(', ')}`
     : ''
-  return `<div class="blog-metadata"><p><time datetime="${post.date}">${post.date}</time>${author}</p>` +
-    `<p>${escape(post.summary)}</p>${tags}</div>\n`
+  const date = `<time datetime="${post.date}">${post.date}</time>`
+  const summary = `<p>${escape(post.summary)}</p>`
+  if (overview) {
+    return `<div class="blog-metadata">${summary}<p>${date}${tags ? ` | ${tags}` : ''}${author}</p></div>\n`
+  }
+  return `<div class="blog-metadata"><p>${date}${author}</p>${summary}${tags ? `<p>${tags}</p>` : ''}</div>\n`
 }
 
 function createListing(catalog, posts, relative, title, tags, pageSize, source, existing) {
@@ -236,13 +240,14 @@ function createListing(catalog, posts, relative, title, tags, pageSize, source, 
         ...tags.map((tag) => link(page, `/blog/tags/${tagSlug(tag)}/index.html`, tag))].join(' | ') + '</nav>' : ''
     const articles = posts.slice(number * pageSize, (number + 1) * pageSize).map((post) =>
       `<section class="blog-post"><h2>${link(page, post.page.pub.url, post.title)}</h2>` +
-      metadata(post, page) + `${link(page, post.page.pub.url, 'Read article')}</section>`
+      metadata(post, page, { overview: true }) + '</section>'
     ).join('\n') || '<p>No published posts yet.</p>'
     const pagination = pageCount > 1 ? '<nav aria-label="Blog pagination">' + pages.map((target, i) =>
       i === number ? `<span aria-current="page">${i + 1}</span>` : link(page, target.pub.url, `Page ${i + 1}`)
     ).join(' | ') + '</nav>' : ''
     const heading = relative.startsWith('tags/') ? `<h2>${escape(title)}</h2>` : ''
-    const listing = `${heading}\n${categories}\n${articles}\n${pagination}\n<p>${link(page, '/blog/feed.xml', 'RSS feed')}</p>`
+    const footer = `<hr>\n<footer class="blog-footer"><p>${link(page, '/blog/feed.xml', 'RSS feed')}</p></footer>`
+    const listing = `${heading}\n${categories}\n${articles}\n${pagination}\n${footer}`
     const source = page.contents.toString()
     if (!/^blog-index::\[\][ \t]*$/m.test(source)) {
       throw new Error(`${page.src.relative}: missing blog-index::[] placeholder`)

@@ -1,6 +1,5 @@
 = FactCast Blog
 
-Technical articles, announcements and release news.
-The initial articles are sample content for demonstrating the blog infrastructure.
+Technical articles, announcements, experiences and other noteworthy bits and pieces.
 
 blog-index::[]

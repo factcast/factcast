@@ -330,3 +330,7 @@ body.landing .doc h1.page {
         max-height: 22rem;
     }
 }
+
+.blog-footer {
+    text-align: right;
+}
