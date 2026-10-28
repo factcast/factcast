@@ -3,3 +3,4 @@ title: FactCast Documentation
 version: latest
 nav:
   - modules/ROOT/nav.adoc
+  - modules/blog/nav.adoc

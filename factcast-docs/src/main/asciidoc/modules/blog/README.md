@@ -1,12 +1,12 @@
 # FactCast blog contributor guide
 
-The blog is an unversioned Antora component (`name: blog`, `version: ~`) within
-`factcast-docs`. The documentation build includes its pages, RSS feed, top-level
-menu link and search entries.
+The blog is the `blog` module of the `docs` Antora component, alongside the
+`ROOT` documentation module. It shares the documentation navigation and build.
+Its published pages, images and RSS keep their existing unversioned `/blog/` URLs.
 
 ## Write a post
 
-Create `factcast-docs/blog/modules/ROOT/pages/posts/YYYY-MM-DD-short-title.adoc`:
+Create `factcast-docs/src/main/asciidoc/modules/blog/pages/posts/YYYY-MM-DD-short-title.adoc`:
 
 ```adoc
 = A useful article title
@@ -27,7 +27,7 @@ macros and includes for the body. Metadata is escaped for HTML and RSS.
 Use URL-safe filenames with letters, digits, dots, hyphens and underscores.
 Subdirectories under `posts/` may use letters, digits, hyphens and underscores.
 
-Store blog images in `factcast-docs/blog/modules/ROOT/images/`, rather than beside
+Store blog images in `factcast-docs/src/main/asciidoc/modules/blog/images/`, rather than beside
 the post in `pages/posts/`. Reference an image by its path relative to `images/`:
 
 ```adoc
@@ -72,7 +72,7 @@ python3 -m http.server 8080 --directory factcast-docs/target/site
 Open <http://localhost:8080/> for the documentation or
 <http://localhost:8080/blog/index.html> for the blog. RSS is at
 <http://localhost:8080/blog/feed.xml>. The shared search box indexes documentation
-and published articles. The Blog menu entry is available from both components.
+and published articles. The Blog menu entry is available from documentation and blog pages.
 The output is generated during `generate-resources`, so `package`, `verify` and
 `install` all build the whole site; `antora` builds just the site without packaging.
 No separate blog Maven module is needed.
@@ -122,7 +122,7 @@ The opt-in profile uses Node's built-in test runner and the Node.js runtime alre
 provisioned by the Antora Maven plugin. Python's XML parser validates RSS without
 adding npm test dependencies. The seven checks cover real Antora builds for
 samples, pagination, categories, optional metadata, drafts, an empty blog and
-invalid metadata, plus the combined site's menu, feed and search index.
+invalid metadata, plus the shared component, navigation, stable URLs, feed and search index.
 Fixtures, test output and the standalone playbook's Antora cache live under
 `/tmp/agents`; fixtures are removed when the test process exits.
 
@@ -135,12 +135,19 @@ RSS 2.0 through the site catalog. AsciiDoc bodies and HTML layout remain Antora'
 job. The module pins Antora 3.2.1 and reuses the existing Maven plugin, default UI
 bundle and supplemental UI. The UI bundle follows the existing moving upstream URL.
 
-The main playbook has separate content sources for versioned documentation and
-`factcast-docs/blog`. The blog extension runs before the shared Lunr extension;
-published posts join the same search index while drafts are excluded. The menu
-resolves `blog::index.adoc` from either component. Blog dates and URLs are independent
-of FactCast release versions. GitHub Actions workflows are unchanged; their existing
-documentation build will now generate the combined site on its next run.
+The main playbook uses one content source, `factcast-docs/src/main/asciidoc`, and
+one component descriptor. That descriptor registers both `ROOT/nav.adoc` and
+`blog/nav.adoc`. Reference the blog landing page as `docs:blog:index.adoc`, or link
+to an article with `xref:docs:blog:posts/YYYY-MM-DD-short-title.adoc[Article title]`.
+
+Antora identifies blog resources within the documentation component version.
+The blog extension adjusts their publication paths before conversion so pages,
+images, attachments and aliases continue to publish under `/blog/`. RSS uses
+those resolved URLs, and the existing `sitemap-blog.xml` and `sitemap-docs.xml`
+partitioning is preserved. The extension adds a `blog` search keyword to module pages;
+search results remain grouped into Documentation and Blog by their public paths.
+The blog-only playbook uses `blog_only: true` to select this module from the same
+source tree. GitHub Actions workflows are unchanged.
 
 References: [Antora generator events](https://docs.antora.org/antora/latest/extend/generator-events-reference/),
 [RSS 2.0 specification](https://www.rssboard.org/rss-specification).

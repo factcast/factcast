@@ -12,12 +12,40 @@ module.exports.register = function ({ config }) {
   let index
   let baseUrl
 
+  this.once('contextStarted', () => {
+    const { mapSite } = this.getFunctions()
+    this.replaceFunctions({
+      mapSite(playbook, pages) {
+        // Preserve the existing sitemap files without creating a second content component.
+        return mapSite(playbook, pages.map((page) =>
+          page.src.component === 'docs' && page.src.module === 'blog'
+            ? { ...page, src: { ...page.src, component: 'blog', version: '' } }
+            : page))
+      },
+    })
+  })
+
+  if (config.blogOnly) {
+    this.once('contentAggregated', ({ contentAggregate }) => {
+      for (const component of contentAggregate) {
+        if (component.name !== 'docs') continue
+        component.files = component.files.filter((file) => file.path.startsWith('modules/blog/'))
+        component.nav = ['modules/blog/nav.adoc']
+        component.startPage = 'blog:index.adoc'
+      }
+    })
+  }
+
   this.once('contentClassified', ({ contentCatalog, playbook }) => {
-    const component = contentCatalog.getComponentVersion('blog', '')
+    const component = contentCatalog.getComponent('docs')
     if (!component) return
+    const moduleId = { component: 'docs', version: component.latest.version, module: 'blog' }
+    const files = contentCatalog.findBy(moduleId)
+    if (!files.length) return
+    files.forEach(publishAtBlogRoot)
     baseUrl = publishingUrl(playbook.site.url)
     const { loadAsciiDoc } = this.getFunctions()
-    const pages = contentCatalog.findBy({ component: 'blog', version: '', module: 'ROOT', family: 'page' })
+    const pages = contentCatalog.findBy({ ...moduleId, family: 'page' })
     for (const page of pages) {
       if (!page.out || !page.src.relative.startsWith('posts/')) continue
       const document = loadAsciiDoc(page, contentCatalog, { headerOnly: true })
@@ -35,18 +63,30 @@ module.exports.register = function ({ config }) {
     posts.sort((a, b) => b.date.localeCompare(a.date) || a.page.src.relative.localeCompare(b.page.src.relative))
     const tags = [...new Set(posts.flatMap((post) => post.tags))].sort()
     index = contentCatalog.getById({
-      component: 'blog', version: '', module: 'ROOT', family: 'page', relative: 'index.adoc',
+      ...moduleId, family: 'page', relative: 'index.adoc',
     })
-    if (!index) throw new Error('Blog requires modules/ROOT/pages/index.adoc')
-    createListing(contentCatalog, posts, 'index.adoc', 'FactCast Blog', tags, pageSize, index)
+    if (!index) throw new Error('Blog requires modules/blog/pages/index.adoc')
+    createListing(contentCatalog, posts, 'index.adoc', 'FactCast Blog', tags, pageSize, index.src, index)
     for (const tag of tags) {
       createListing(contentCatalog, posts.filter((post) => post.tags.includes(tag)),
-        `tags/${tagSlug(tag)}/index.adoc`, `Tag: ${tag}`, tags, pageSize)
+        `tags/${tagSlug(tag)}/index.adoc`, `Tag: ${tag}`, tags, pageSize, index.src)
+    }
+    if (config.blogOnly) {
+      contentCatalog.registerComponentVersionStartPage('docs', moduleId.version, 'blog:index.adoc')
     }
   })
 
-  this.once('documentsConverted', ({ siteCatalog }) => {
+  this.once('documentsConverted', ({ contentCatalog, siteCatalog }) => {
     if (!index) return
+    const { component, version, module } = index.src
+    for (const file of contentCatalog.findBy({ component, version, module })) {
+      // Conversion can add page aliases; keep their routes alongside the original article.
+      publishAtBlogRoot(file)
+      if (file.asciidoc) {
+        const attributes = file.asciidoc.attributes
+        attributes.keywords = ['blog', attributes.keywords].filter(Boolean).join(', ')
+      }
+    }
     for (const post of posts) {
       post.page.contents = Buffer.concat([Buffer.from(metadata(post, post.page)), post.page.contents])
     }
@@ -56,6 +96,29 @@ module.exports.register = function ({ config }) {
       out: { path: 'blog/feed.xml' },
     })
   })
+}
+
+function publishAtBlogRoot(file) {
+  if (!file.out) {
+    if (file.src.family === 'nav' && file.pub) file.pub.url = '/blog/'
+    return
+  }
+  // Keep the public blog URLs stable while resources belong to the docs:blog module.
+  const moduleRoot = path.join(file.out.dirname, file.out.moduleRootPath)
+  const outputPath = path.join('blog', path.relative(moduleRoot, file.out.path))
+  const dirname = path.dirname(outputPath)
+  Object.assign(file.out, {
+    path: outputPath, dirname,
+    rootPath: path.relative(dirname, '.') || '.',
+    moduleRootPath: path.relative(dirname, 'blog') || '.',
+  })
+  if (file.pub) {
+    Object.assign(file.pub, {
+      url: '/blog' + file.pub.url.slice(moduleRoot.length + 1),
+      rootPath: file.out.rootPath,
+      moduleRootPath: file.out.moduleRootPath,
+    })
+  }
 }
 
 function readPost(page, document) {
@@ -129,18 +192,20 @@ function metadata(post, from) {
     `<p>${escape(post.summary)}</p>${tags}</div>\n`
 }
 
-function createListing(catalog, posts, relative, title, tags, pageSize, existing) {
+function createListing(catalog, posts, relative, title, tags, pageSize, source, existing) {
   const pageCount = Math.max(1, Math.ceil(posts.length / pageSize))
   const directory = path.dirname(relative)
   const pages = Array.from({ length: pageCount }, (_, i) => {
     if (i === 0 && existing) return existing
-    return catalog.addFile({
+    const page = catalog.addFile({
       src: {
-        component: 'blog', version: '', module: 'ROOT', family: 'page',
+        component: source.component, version: source.version, module: source.module, family: 'page',
         relative: i === 0 ? relative : path.join(directory, 'page', `${i + 1}.adoc`),
       },
       contents: Buffer.from(`= FactCast Blog\n:page-pagination: false\n\nblog-index::[]\n`),
     })
+    publishAtBlogRoot(page)
+    return page
   })
   pages.forEach((page, number) => {
     const categories = tags.length ? '<nav aria-label="Blog categories">Categories: ' +

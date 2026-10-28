@@ -15,8 +15,8 @@ process.on('exit', () => rmSync(fixtureDir, { recursive: true, force: true }))
 function build(name, posts, options = {}) {
   const output = path.join(fixtureDir, name)
   const playbook = {
-    site: { title: 'FactCast Blog', url: 'https://example.org/preview/', start_page: 'blog::index.adoc' },
-    content: { sources: [{ url: path.resolve(docsDir, '..'), branches: 'HEAD', start_path: 'factcast-docs/blog' }] },
+    site: { title: 'FactCast Blog', url: 'https://example.org/preview/', start_page: 'docs:blog:index.adoc' },
+    content: { sources: [{ url: path.resolve(docsDir, '..'), branches: 'HEAD', start_path: 'factcast-docs/src/main/asciidoc' }] },
     ui: {
       bundle: {
         url: 'https://gitlab.com/antora/antora-ui-default/-/jobs/artifacts/HEAD/raw/build/ui-bundle.zip?job=bundle-stable',
@@ -28,7 +28,7 @@ function build(name, posts, options = {}) {
       ...(posts === undefined ? [] : [{ require: path.join(__dirname, 'fixtures.js'),
         posts: Object.entries(posts).map(([filename, contents]) => ({ filename, contents })),
       }]),
-      { require: path.resolve(__dirname, '../extensions/blog.js'), page_size: 2, ...options },
+      { require: path.resolve(__dirname, '../extensions/blog.js'), page_size: 2, blog_only: true, ...options },
       { require: '@antora/lunr-extension' },
     ] },
     runtime: { cache_dir: '/tmp/agents/factcast-blog-antora-cache', log: { failure_level: 'warn' } },
@@ -211,6 +211,10 @@ test('the documentation playbook builds docs and blog with shared navigation and
   assert.ok(existsSync(path.join(output, 'docs/latest/About/index.html')))
   assert.ok(existsSync(path.join(output, 'blog/index.html')))
   const read = (file) => readFileSync(path.join(output, file), 'utf8')
+  assert.match(read('sitemap.xml'), /sitemap-blog\.xml/)
+  assert.match(read('sitemap.xml'), /sitemap-docs\.xml/)
+  assert.doesNotMatch(read('sitemap-blog.xml'), /\/docs\/latest\//)
+  assert.doesNotMatch(read('sitemap-docs.xml'), /https:\/\/docs.factcast.org\/blog\//)
   const docs = read('docs/latest/About/index.html')
   const blog = read('blog/index.html')
   assert.match(docs, /href="[^\"]*blog\/index.html">\s*Blog\s*<\/a>/)
@@ -223,11 +227,15 @@ test('the documentation playbook builds docs and blog with shared navigation and
     lunr,
     antoraSearch: { initSearch: (_, data) => { searchData = data } },
   })
+  assert.deepEqual(Object.keys(searchData.store.componentVersions), ['docs/latest'])
+  const blogPages = Object.values(searchData.store.documents).filter((doc) => doc.url.startsWith('/blog/'))
+  assert.ok(blogPages.length > 0)
+  assert.ok(blogPages.every((doc) => doc.component === 'docs' && doc.version === 'latest'))
   const searchIndex = lunr.Index.load(searchData.index)
   const feed = parseFeed(read('blog/feed.xml'))
   const publishedPosts = feed.items.map((item) => new URL(item.link).pathname).sort()
   // Query the emitted index: stored URLs alone do not prove that posts are searchable.
-  const indexedPosts = searchIndex.search('component:blog').map(({ ref }) =>
+  const indexedPosts = searchIndex.search('keyword:blog').map(({ ref }) =>
     searchData.store.documents[ref.split('-')[0]].url).filter((url) => url.startsWith('/blog/posts/'))
   assert.deepEqual([...new Set(indexedPosts)].sort(), publishedPosts)
   assert.equal(feed.link, 'https://docs.factcast.org/blog/index.html')

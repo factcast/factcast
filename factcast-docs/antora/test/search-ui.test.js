@@ -163,7 +163,7 @@ test('shared UI provides grouped search and image lightboxes', { timeout: 60000 
     assert.ok(desktop[0].urls.length > 0 && desktop[0].urls.every(url => url.startsWith('/preview/docs/')))
     assert.ok(desktop[1].urls.length > 0 && desktop[1].urls.every(url => url.startsWith('/preview/blog/')))
     for (const group of desktop) {
-      const expected = expectedMatches.filter((doc) => doc.component === group.kind).map((doc) => '/preview' + doc.url)
+      const expected = expectedMatches.filter((doc) => doc.url.startsWith(`/${group.kind}/`)).map((doc) => '/preview' + doc.url)
       assert.deepEqual(group.urls, expected, `${group.kind}: all matches retain relevance order`)
     }
     assert.equal(await evaluate("document.querySelectorAll('.search-result-group .search-result-highlight').length > 0"), true)
@@ -176,7 +176,7 @@ test('shared UI provides grouped search and image lightboxes', { timeout: 60000 
     await screenshot('factcast-search-columns-desktop.png')
     await assertPropertyBreadcrumbs()
     await screenshot('factcast-search-paths-desktop.png')
-    await searchFor('component:blog')
+    await searchFor('keyword:blog')
     assert.deepEqual((await groups()).map(group => group.kind), ['blog'])
     await searchFor('zzzznotafactcasttermzzzz')
     assert.deepEqual(await groups(), [])

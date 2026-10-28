@@ -13,7 +13,7 @@ Open <http://localhost:8080/> for the documentation and
 `mvn-lite antora` builds the site without packaging or installing the module.
 For local absolute URLs, append `-Dantora.additionalOptions=url=http://localhost:8080/`.
 
-See the [blog contributor guide](blog/README.md) for authoring, drafts, pagination,
+See the [blog contributor guide](src/main/asciidoc/modules/blog/README.md) for authoring, drafts, pagination,
 RSS, a blog-only preview and validation with `mvn-lite -Ptest-blog verify`.
 
 Search results show documentation and blog matches in separate columns, stacked
