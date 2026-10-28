@@ -5,7 +5,8 @@
 
 == Overview
 
-NOTE: “FactCast is build for publishing business decisions, not high speed trading or gambling”
+[quote]
+“FactCast is build for publishing business decisions, not high speed trading or gambling”
 
 That being said, with an ever-growing number of producers that could publish mass data, we came back to the limited ingestion throughput that is caused by (mainly) full serialization of publications and the number of transactions per second that can usually be achieved on PostgreSQL (rule of thumb is ~500 on commodity hardware).
 
