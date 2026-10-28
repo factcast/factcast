@@ -3,6 +3,8 @@
 The blog is the `blog` module of the `docs` Antora component, alongside the
 `ROOT` documentation module. It shares the documentation navigation and build.
 Its published pages, images and RSS keep their existing unversioned `/blog/` URLs.
+Every documentation version links to this same current blog. Release snapshots of
+the blog are discarded during generation, including their drafts and assets.
 
 ## Write a post
 
@@ -120,9 +122,10 @@ mvn-lite -f factcast-docs/pom.xml -Ptest-blog verify
 
 The opt-in profile uses Node's built-in test runner and the Node.js runtime already
 provisioned by the Antora Maven plugin. Python's XML parser validates RSS without
-adding npm test dependencies. The seven checks cover real Antora builds for
+adding npm test dependencies. The checks cover real Antora builds for
 samples, pagination, categories, optional metadata, drafts, an empty blog and
-invalid metadata, plus the shared component, navigation, stable URLs, feed and search index.
+invalid metadata, plus the shared component, navigation, stable URLs, feed, search
+index and multiple documentation releases sharing one current blog.
 Fixtures, test output and the standalone playbook's Antora cache live under
 `/tmp/agents`; fixtures are removed when the test process exits.
 
@@ -139,6 +142,18 @@ The main playbook uses one content source, `factcast-docs/src/main/asciidoc`, an
 one component descriptor. That descriptor registers both `ROOT/nav.adoc` and
 `blog/nav.adoc`. Reference the blog landing page as `docs:blog:index.adoc`, or link
 to an article with `xref:docs:blog:posts/YYYY-MM-DD-short-title.adoc[Article title]`.
+Use the explicit `docs` component and omit the version coordinate so references
+from older documentation resolve to the current blog.
+
+For a multi-release site, keep the current branch source (`branches: HEAD` in the
+local playbook) alongside the release sources. The extension takes the blog only
+from Antora's latest `docs` component version (`latest` in the current descriptor).
+It removes all older blog modules before conversion and adds a shared Blog
+navigation link to every documentation version, including releases from before
+the blog existed. Published articles, RSS, images and search entries occur once.
+Adding a post requires rebuilding the combined site; release tags need no changes.
+If the latest documentation source lacks the blog while older versions contain
+one, the build fails with a diagnostic instead of publishing a stale snapshot.
 
 Antora identifies blog resources within the documentation component version.
 The blog extension adjusts their publication paths before conversion so pages,

@@ -39,9 +39,27 @@ module.exports.register = function ({ config }) {
   this.once('contentClassified', ({ contentCatalog, playbook }) => {
     const component = contentCatalog.getComponent('docs')
     if (!component) return
+    const blogFiles = contentCatalog.findBy({ component: 'docs', module: 'blog' })
+    if (!blogFiles.length) return
     const moduleId = { component: 'docs', version: component.latest.version, module: 'blog' }
-    const files = contentCatalog.findBy(moduleId)
-    if (!files.length) return
+    const files = blogFiles.filter(({ src }) => src.version === moduleId.version)
+    if (!files.length) {
+      throw new Error('The latest docs source must include modules/blog. Keep the current branch in the playbook alongside release sources.')
+    }
+    // Release snapshots must not publish stale articles, drafts, aliases or assets.
+    for (const file of blogFiles) {
+      if (file.src.version !== moduleId.version) contentCatalog.removeFile(file)
+    }
+    for (const { version } of component.versions) {
+      if (version === moduleId.version) continue
+      const navFiles = contentCatalog.findBy({ component: 'docs', version, family: 'nav' })
+      contentCatalog.addFile({
+        src: { component: 'docs', version, module: 'blog', family: 'nav', relative: 'nav.adoc' },
+        // An explicit component without a version resolves to the latest docs source.
+        contents: '* xref:docs:blog:index.adoc[Blog]\n',
+        nav: { index: Math.max(-1, ...navFiles.map((file) => file.nav.index)) + 1 },
+      })
+    }
     files.forEach(publishAtBlogRoot)
     baseUrl = publishingUrl(playbook.site.url)
     const { loadAsciiDoc } = this.getFunctions()

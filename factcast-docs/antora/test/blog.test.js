@@ -12,7 +12,7 @@ mkdirSync('/tmp/agents', { recursive: true })
 const fixtureDir = mkdtempSync('/tmp/agents/factcast-blog-test-')
 process.on('exit', () => rmSync(fixtureDir, { recursive: true, force: true }))
 
-function build(name, posts, options = {}) {
+function build(name, posts, options = {}, versions = []) {
   const output = path.join(fixtureDir, name)
   const playbook = {
     site: { title: 'FactCast Blog', url: 'https://example.org/preview/', start_page: 'docs:blog:index.adoc' },
@@ -27,6 +27,7 @@ function build(name, posts, options = {}) {
     antora: { extensions: [
       ...(posts === undefined ? [] : [{ require: path.join(__dirname, 'fixtures.js'),
         posts: Object.entries(posts).map(([filename, contents]) => ({ filename, contents })),
+        versions,
       }]),
       { require: path.resolve(__dirname, '../extensions/blog.js'), page_size: 2, blog_only: true, ...options },
       { require: '@antora/lunr-extension' },
@@ -171,6 +172,35 @@ test('an empty blog builds with an empty index and a valid empty feed', () => {
   assert.match(site.read('blog/index.html'), /No published posts yet/)
   assert.deepEqual(parseFeed(site.read('blog/feed.xml')).items, [])
   assert.ok(!existsSync(path.join(site.output, 'blog/page/2.html')))
+  verifyLocalLinks(site.output)
+})
+
+test('all documentation versions share only the latest blog, including releases without a blog module', () => {
+  const site = build('multi-release', {
+    'current.adoc': '= Current article\n:page-blog-date: 2026-10-28\n:page-blog-summary: Current blog content.\n\nimage::concurrent-unconditional-publishing-benchmark.png[Benchmark]\n',
+    'draft.adoc': '= Secret draft\n:page-blog-draft: true\n:page-aliases: secret.adoc\n\nUnpublished body.\n',
+  }, { blog_only: false }, [{ version: '0.12.6' }, { version: '0.11.0', without_blog: true }])
+  requireSuccess(site)
+  for (const version of ['latest', '0.12.6', '0.11.0']) {
+    const page = site.read(`docs/${version}/About/index.html`)
+    assert.match(page, /href="(?:\.\.\/){3}blog\/index.html">\s*Blog\s*<\/a>/)
+    assert.match(page, /href="(?:\.\.\/){3}blog\/posts\/current.html"[^>]*>Current blog article<\/a>/)
+    assert.equal((page.match(/class="nav-link"[^>]*>Blog<\/a>/g) || []).length, 1)
+    assert.ok(!existsSync(path.join(site.output, `docs/${version}/blog`)))
+  }
+  const feed = parseFeed(site.read('blog/feed.xml'))
+  assert.deepEqual(feed.items.map(({ title }) => title), ['Current article'])
+  const search = site.read('search-index.js')
+  assert.doesNotMatch(search, /Stale release|Secret draft|Unpublished body|docs\/(?:0.12.6|0.11.0)\/blog/)
+  const lunr = require(path.join(site.output, '_/js/vendor/lunr.js'))
+  let searchData
+  runInNewContext(search, { lunr, antoraSearch: { initSearch: (_, data) => { searchData = data } } })
+  const searchIndex = lunr.Index.load(searchData.index)
+  const results = searchIndex.search('keyword:blog').map(({ ref }) => searchData.store.documents[ref.split('-')[0]].url)
+  assert.deepEqual([...new Set(results.filter((url) => url.includes('/posts/')))], ['/blog/posts/current.html'])
+  assert.doesNotMatch(site.read('sitemap-docs.xml'), /\/blog\//)
+  assert.doesNotMatch(site.read('sitemap-blog.xml'), /Stale|draft|secret|\/docs\//)
+  assert.ok(existsSync(path.join(site.output, 'blog/_images/concurrent-unconditional-publishing-benchmark.png')))
   verifyLocalLinks(site.output)
 })
 

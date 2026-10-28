@@ -9,6 +9,9 @@ python3 -m http.server 8080 --directory target/site
 
 Open <http://localhost:8080/> for the documentation and
 <http://localhost:8080/blog/index.html> for the blog.
+Multi-release builds share one current blog at `/blog/`. Keep the current branch
+source alongside release sources; historical blog snapshots are excluded, and
+every documentation version links to the current blog.
 
 `mvn-lite antora` builds the site without packaging or installing the module.
 For local absolute URLs, append `-Dantora.additionalOptions=url=http://localhost:8080/`.
