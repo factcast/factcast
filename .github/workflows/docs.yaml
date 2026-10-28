@@ -7,6 +7,11 @@ on:
   release:
     types:
     - 'published'
+  push:
+    branches:
+    - 'main'
+    paths:
+    - 'factcast-docs/src/main/asciidoc/modules/blog/pages/**'
 permissions:
   contents: 'read'
   pages: 'write'
@@ -15,15 +20,15 @@ permissions:
 jobs:
   deploy:
     runs-on: 'ubuntu-latest'
-    if: '${{ !github.event.release.prerelease }}'
+    if: '${{ github.event_name == ''push'' || !github.event.release.prerelease }}'
     environment:
       name: 'github-pages'
     steps:
     - id: 'step-0'
-      name: 'Checkout release'
+      name: 'Checkout documentation source'
       uses: 'actions/checkout@v7'
       with:
-        ref: '${{ github.event.release.tag_name }}'
+        ref: '${{ github.event.release.tag_name || github.sha }}'
     - id: 'step-1'
       name: 'Set up Java'
       uses: 'actions/setup-java@v6'

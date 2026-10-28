@@ -165,7 +165,9 @@ The blog overview, category listings under `tags/` and their pagination use
 `noindex` to stay out of the search index. Only articles appear in blog search
 results; overview and category navigation remain available.
 The blog-only playbook uses `blog_only: true` to select this module from the same
-source tree. GitHub Actions workflows are unchanged.
+source tree. The documentation deployment workflow runs when a non-prerelease
+GitHub release is published and when changes under
+`factcast-docs/src/main/asciidoc/modules/blog/pages/**` reach `main`.
 
 References: [Antora generator events](https://docs.antora.org/antora/latest/extend/generator-events-reference/),
 [RSS 2.0 specification](https://www.rssboard.org/rss-specification).
