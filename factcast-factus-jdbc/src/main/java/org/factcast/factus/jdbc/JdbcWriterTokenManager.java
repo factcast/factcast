@@ -19,12 +19,14 @@ import com.google.common.annotations.VisibleForTesting;
 import jakarta.annotation.Nullable;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.sql.SQLException;
 import java.sql.SQLNonTransientConnectionException;
 import java.sql.SQLRecoverableException;
 import java.sql.SQLTransientException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -64,6 +66,10 @@ public class JdbcWriterTokenManager {
   /** Database products shedlock 7.10.0 has db-time lock statements for. */
   private static final String SUPPORTED_DATABASES =
       "PostgreSQL, CockroachDB, MySQL, MariaDB, Oracle, MS SQL Server, DB2, H2 and HSQLDB";
+
+  /** PostgreSQL's SQLStates for a server that is shutting down, crashed or is still starting up. */
+  private static final Set<String> SERVER_UNAVAILABLE_SQL_STATES =
+      Set.of("57P01", "57P02", "57P03");
 
   private static final long INITIAL_RETRY_INTERVAL_MILLIS = 500;
   private static final long MAX_RETRY_INTERVAL_MILLIS = Duration.ofSeconds(30).toMillis();
@@ -268,7 +274,16 @@ public class JdbcWriterTokenManager {
   private static boolean isRetryable(@Nullable Throwable cause) {
     return cause instanceof SQLTransientException
         || cause instanceof SQLRecoverableException
-        || cause instanceof SQLNonTransientConnectionException;
+        || cause instanceof SQLNonTransientConnectionException
+        || (cause instanceof SQLException sqlException
+            && isConnectionFailure(sqlException.getSQLState()));
+  }
+
+  private static boolean isConnectionFailure(@Nullable String sqlState) {
+    // drivers like PostgreSQL's throw a plain SQLException for a lost connection; its SQLState
+    // class 08 is the SQL standard's connection exception
+    return sqlState != null
+        && (sqlState.startsWith("08") || SERVER_UNAVAILABLE_SQL_STATES.contains(sqlState));
   }
 
   private static String hostname() {

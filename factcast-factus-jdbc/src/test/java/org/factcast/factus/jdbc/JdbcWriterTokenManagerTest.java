@@ -196,6 +196,31 @@ class JdbcWriterTokenManagerTest {
     }
 
     @Test
+    void retriesWhenTheDriverReportsALostConnectionOnlyThroughItsSqlState() {
+      when(lockProvider.lock(any(LockConfiguration.class)))
+          .thenThrow(lockFailure(new SQLException("An I/O error occurred", "08006")))
+          .thenThrow(lockFailure(new SQLException("terminating connection", "57P01")))
+          .thenThrow(lockFailure(new SQLException("connection attempt failed", "08001")))
+          .thenThrow(lockFailure(new SQLException("the database is starting up", "57P03")));
+
+      assertThat(uut.acquireWriteToken(Duration.ofSeconds(2))).isNull();
+
+      verify(lockProvider, times(4)).lock(any(LockConfiguration.class));
+    }
+
+    @Test
+    void doesNotRetryAStatementTheDatabaseRejected() {
+      when(lockProvider.lock(any(LockConfiguration.class)))
+          .thenThrow(lockFailure(new SQLException("relation does not exist", "42P01")));
+
+      assertThatThrownBy(() -> uut.acquireWriteToken(Duration.ofMinutes(10)))
+          .isInstanceOf(LockException.class);
+
+      verify(lockProvider).lock(any(LockConfiguration.class));
+      assertThat(timing.sleeps).isEmpty();
+    }
+
+    @Test
     void namesTheUnsupportedDatabaseWhenDbTimeIsUnavailable() {
       when(lockProvider.lock(any(LockConfiguration.class)))
           .thenThrow(
