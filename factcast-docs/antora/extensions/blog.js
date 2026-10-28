@@ -102,6 +102,11 @@ module.exports.register = function ({ config }) {
       publishAtBlogRoot(file)
       if (file.asciidoc) {
         const attributes = file.asciidoc.attributes
+        const relative = file.src.relative
+        if (relative === 'index.adoc' || relative.startsWith('page/') || relative.startsWith('tags/')) {
+          // Overview and category listings repeat articles; keep them navigable without indexing them.
+          attributes.noindex = ''
+        }
         attributes.keywords = ['blog', attributes.keywords].filter(Boolean).join(', ')
       }
     }

@@ -157,6 +157,13 @@ test('pagination and category pages escape metadata and keep distinct category n
   assert.equal(categories.length, 2)
   const categoryPages = categories.map((name) => site.read(`blog/tags/${name}/index.html`))
   assert.ok(categoryPages.some((html) => html.includes('page/2.html')))
+  const search = site.read('search-index.js')
+  const lunr = require(path.join(site.output, '_/js/vendor/lunr.js'))
+  let searchData
+  runInNewContext(search, { lunr, antoraSearch: { initSearch: (_, data) => { searchData = data } } })
+  const indexedUrls = Object.values(searchData.store.documents).map((doc) => doc.url).sort()
+  assert.deepEqual(indexedUrls, ['a', 'b', 'c', 'z'].map((name) => `/blog/posts/${name}.html`),
+    'only published articles belong in search; overview, categories and pagination stay excluded')
   const feed = parseFeed(site.read('blog/feed.xml'))
   assert.deepEqual(feed.items.map((item) => item.title), ['Newest & <example>', 'Middle', 'Second oldest', 'Old'])
   assert.equal(feed.items[0].description, 'Literal &lt;script&gt;alert(1)&lt;/script&gt; &amp; xref:missing.adoc[]')
@@ -261,6 +268,7 @@ test('the documentation playbook builds docs and blog with shared navigation and
   const blogPages = Object.values(searchData.store.documents).filter((doc) => doc.url.startsWith('/blog/'))
   assert.ok(blogPages.length > 0)
   assert.ok(blogPages.every((doc) => doc.component === 'docs' && doc.version === 'latest'))
+  assert.ok(blogPages.every((doc) => doc.url.startsWith('/blog/posts/')), 'only blog articles should be indexed')
   const searchIndex = lunr.Index.load(searchData.index)
   const feed = parseFeed(read('blog/feed.xml'))
   const publishedPosts = feed.items.map((item) => new URL(item.link).pathname).sort()

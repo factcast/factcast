@@ -161,6 +161,9 @@ images, attachments and aliases continue to publish under `/blog/`. RSS uses
 those resolved URLs, and the existing `sitemap-blog.xml` and `sitemap-docs.xml`
 partitioning is preserved. The extension adds a `blog` search keyword to module pages;
 search results remain grouped into Documentation and Blog by their public paths.
+The blog overview, category listings under `tags/` and their pagination use
+`noindex` to stay out of the search index. Only articles appear in blog search
+results; overview and category navigation remain available.
 The blog-only playbook uses `blog_only: true` to select this module from the same
 source tree. GitHub Actions workflows are unchanged.
 
