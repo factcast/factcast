@@ -41,7 +41,7 @@ import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
       PgTestConfiguration.class,
       ConditionalPublicationOrderingIntegrationTest.LockConfiguration.class
     })
-@TestPropertySource(properties = "factcast.store.publish-batch.enabled=true")
+@TestPropertySource(properties = "factcast.store.publish-batched.enabled=true")
 @Sql(scripts = "/wipe.sql", config = @SqlConfig(separator = "#"))
 @IntegrationTest
 class ConditionalPublicationOrderingIntegrationTest {
