@@ -15,6 +15,7 @@
     <sonar.skip>true</sonar.skip>
     <maven.deploy.skip>true</maven.deploy.skip>
     <antora-maven-plugin.version>1.0.0-alpha.5</antora-maven-plugin.version>
+    <antora.output>target/site</antora.output>
   </properties>
   <build>
     <plugins>
@@ -24,6 +25,10 @@
         <version>${antora-maven-plugin.version}</version>
         <extensions>true</extensions>
         <configuration>
+          <version>3.2.1</version>
+          <options>
+            <option>to-dir=${antora.output}</option>
+          </options>
           <packages>
             <package>@sntke/antora-mermaid-extension</package>
             <package>@antora/lunr-extension</package>
@@ -42,4 +47,34 @@
       </plugin>
     </plugins>
   </build>
+  <profiles>
+    <profile>
+      <id>test-blog</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <version>3.6.3</version>
+            <executions>
+              <execution>
+                <id>test-blog</id>
+                <goals>
+                  <goal>exec</goal>
+                </goals>
+                <phase>test</phase>
+                <configuration>
+                  <executable>${project.build.directory}/node/node</executable>
+                  <arguments>
+                    <argument>--test</argument>
+                    <argument>antora/test/blog.test.js</argument>
+                  </arguments>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>

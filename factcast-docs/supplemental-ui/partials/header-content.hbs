@@ -62,6 +62,12 @@
 </a>
 {{/with}}
 
+{{#with (resolvePage 'blog::index.adoc')}}
+<a class="navbar-item" href="{{{relativize ./url}}}">
+  Blog
+</a>
+{{/with}}
+
 
 
 <div class="navbar-item search">

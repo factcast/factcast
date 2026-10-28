@@ -1,0 +1,26 @@
+site:
+  title: FactCast Blog
+  url: http://localhost:8080
+  start_page: blog::index.adoc
+content:
+  sources:
+    - url: ..
+      branches: HEAD
+      start_path: factcast-docs/blog
+ui:
+  bundle:
+    url: https://gitlab.com/antora/antora-ui-default/-/jobs/artifacts/HEAD/raw/build/ui-bundle.zip?job=bundle-stable
+    snapshot: true
+  supplemental_files: ./supplemental-ui
+antora:
+  extensions:
+    - require: ./antora/extensions/blog.js
+      page_size: 10
+    - require: '@antora/lunr-extension'
+output:
+  dir: ./target/blog-site
+  clean: true
+runtime:
+  cache_dir: /tmp/agents/factcast-blog-antora-cache
+  log:
+    failure_level: warn
