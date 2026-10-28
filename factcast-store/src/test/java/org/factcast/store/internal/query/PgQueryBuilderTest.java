@@ -19,17 +19,21 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 import java.sql.PreparedStatement;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Stream;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import org.assertj.core.util.Lists;
 import org.factcast.core.spec.FactSpec;
+import org.factcast.core.subscription.FactStreamHorizon;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -42,10 +46,55 @@ class PgQueryBuilderTest {
     @Mock private @NonNull AtomicLong serial;
 
     @SneakyThrows
-    @Test
-    void happyPath() {
+    @ParameterizedTest
+    @MethodSource("headerCriteria")
+    void bindsOneContainmentParameterForHeaderCriteria(FactSpec spec, String expectedJson) {
+      var underTest = new PgQueryBuilder(List.of(spec));
+      var ps = mock(PreparedStatement.class);
+
+      var expectedPredicate = expectedJson == null ? "(true)" : "(true AND header @> ?::jsonb)";
+      assertThat(normalized(underTest.createUnboundedSQL()))
+          .contains("WHERE (" + expectedPredicate + ") AND ser > ?");
+      underTest.createUnboundedStatementSetter(new AtomicLong(42)).setValues(ps);
+
+      int index = 0;
+      if (expectedJson != null) {
+        verify(ps).setString(++index, expectedJson);
+      }
+      verify(ps).setLong(++index, 42L);
+      verifyNoMoreInteractions(ps);
+    }
+
+    static Stream<Arguments> headerCriteria() {
+      return Stream.of(
+          Arguments.of(FactSpec.ns("ns"), "{\"ns\":\"ns\"}"),
+          Arguments.of(FactSpec.ns("ns").type("*"), "{\"ns\":\"ns\"}"),
+          Arguments.of(FactSpec.ns("*").type("type"), "{\"type\":\"type\"}"),
+          Arguments.of(FactSpec.ns("*"), null),
+          Arguments.of(FactSpec.ns("*").type("*"), null),
+          Arguments.of(FactSpec.ns("*").version(7), null),
+          Arguments.of(
+              FactSpec.ns("ns").type("type").version(7).aggId(new UUID(0, 1), new UUID(0, 2)),
+              "{\"ns\":\"ns\",\"type\":\"type\",\"aggIds\":[\"00000000-0000-0000-0000-000000000001\",\"00000000-0000-0000-0000-000000000002\"]}"),
+          Arguments.of(
+              FactSpec.ns("*").aggId(new UUID(0, 1)),
+              "{\"aggIds\":[\"00000000-0000-0000-0000-000000000001\"]}"),
+          Arguments.of(
+              FactSpec.ns("ns\"quoted").type("type\\slash"),
+              "{\"ns\":\"ns\\\"quoted\",\"type\":\"type\\\\slash\"}"));
+    }
+
+    @SneakyThrows
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void happyPath(boolean bounded) {
       when(serial.get()).thenReturn(120L);
-      var spec1 = FactSpec.ns("ns1").type("t1").meta("foo", "bar").aggId(new UUID(0, 1));
+      var spec1 =
+          FactSpec.ns("ns1")
+              .type("t1")
+              .meta("foo", "bar")
+              .aggIdProperty("myId", new UUID(0, 1))
+              .version(1);
       var spec2 =
           FactSpec.ns("ns2").type("t2").meta("foo", "bar").metaExists("e").metaDoesNotExist("!e");
       var spec3 = FactSpec.ns("ns3");
@@ -53,48 +102,59 @@ class PgQueryBuilderTest {
       var spec5 = FactSpec.ns("*").type("t3");
       var specs = Lists.newArrayList(spec1, spec2, spec3, spec4, spec5);
       var underTest = new PgQueryBuilder(specs);
-      var setter = underTest.createStatementSetter(serial);
+      var horizon = new FactStreamHorizon(null, 150L, 7L);
+      var setter =
+          bounded
+              ? underTest.createBoundedStatementSetter(serial, horizon)
+              : underTest.createUnboundedStatementSetter(serial);
       var ps = mock(PreparedStatement.class);
 
       setter.setValues(ps);
 
       int index = 0;
       // first spec
-      verify(ps).setString(++index, "{\"ns\": \"ns1\"}");
-      verify(ps).setString(++index, "{\"type\": \"t1\"}");
-      verify(ps).setString(++index, "{\"aggIds\": [\"00000000-0000-0000-0000-000000000001\"]}");
+      verify(ps)
+          .setString(
+              ++index,
+              "{\"ns\":\"ns1\",\"type\":\"t1\",\"aggIds\":[\"00000000-0000-0000-0000-000000000001\"]}");
+      verify(ps).setInt(++index, 1);
+      verify(ps).setObject(++index, new UUID(0, 1));
       verify(ps).setString(++index, "{\"meta\":{\"foo\":\"bar\"}}");
       verify(ps).setString(++index, "{\"meta\":{\"foo\":[\"bar\"]}}");
 
       // 2nd spec
-      verify(ps).setString(++index, "{\"ns\": \"ns2\"}");
-      verify(ps).setString(++index, "{\"type\": \"t2\"}");
+      verify(ps).setString(++index, "{\"ns\":\"ns2\",\"type\":\"t2\"}");
       verify(ps).setString(++index, "{\"meta\":{\"foo\":\"bar\"}}");
       verify(ps).setString(++index, "{\"meta\":{\"foo\":[\"bar\"]}}");
       verify(ps).setString(++index, "$.\"meta\".\"e\"");
       verify(ps).setString(++index, "$.\"meta\".\"!e\""); // NOT is added in WHERE clause
       // before
       // 3rd spec
-      verify(ps).setString(++index, "{\"ns\": \"ns3\"}");
+      verify(ps).setString(++index, "{\"ns\":\"ns3\"}");
 
       // 4th spec
-      verify(ps).setString(++index, "{\"ns\": \"ns4\"}");
       verify(ps)
           .setString(
               ++index,
-              "{\"aggIds\": [\"00000000-0000-0000-0000-000000000001\",\"00000000-0000-0000-0000-000000000002\"]}");
+              "{\"ns\":\"ns4\",\"aggIds\":[\"00000000-0000-0000-0000-000000000001\",\"00000000-0000-0000-0000-000000000002\"]}");
 
       // 5th spec - wildcard ns
-      verify(ps).setString(++index, "{\"type\": \"t3\"}");
+      verify(ps).setString(++index, "{\"type\":\"t3\"}");
 
       // ser>?
       verify(ps).setLong(++index, serial.get());
+      if (bounded) {
+        verify(ps).setLong(++index, horizon.factSerial());
+      }
       verifyNoMoreInteractions(ps);
 
       // Every branch must bind the full set of predicates in the same order, including the
       // threshold. Compare against the subscription setter to cover all optional parameters.
       var stateStatement = mock(PreparedStatement.class);
-      underTest.createStateStatementSetter(serial.get()).setValues(stateStatement);
+      underTest
+          .createStateStatementSetter(
+              serial.get(), bounded ? Optional.of(horizon) : Optional.empty())
+          .setValues(stateStatement);
       var expected = mockingDetails(ps).getInvocations().stream().toList();
       var actual = mockingDetails(stateStatement).getInvocations().stream().toList();
       assertThat(actual).hasSize(expected.size() * 2);
@@ -106,10 +166,63 @@ class PgQueryBuilderTest {
             .isEqualTo(reference.getArgument(1, Object.class));
       }
     }
+
+    @SneakyThrows
+    @Test
+    void boundedSetterAppendsImmutableHorizonSerial() {
+      when(serial.get()).thenReturn(12L);
+      var underTest = new PgQueryBuilder(Lists.newArrayList(FactSpec.ns("*")));
+      var ps = mock(PreparedStatement.class);
+
+      FactStreamHorizon horizon = new FactStreamHorizon(null, 42L, 7L);
+      underTest.createBoundedStatementSetter(serial, horizon).setValues(ps);
+
+      verify(ps).setLong(1, 12L);
+      verify(ps).setLong(2, 42L);
+      verifyNoMoreInteractions(ps);
+
+      var stateStatement = mock(PreparedStatement.class);
+      underTest.createStateStatementSetter(12L, Optional.of(horizon)).setValues(stateStatement);
+      verify(stateStatement).setLong(1, 12L);
+      verify(stateStatement).setLong(2, 42L);
+      verify(stateStatement).setLong(3, 12L);
+      verify(stateStatement).setLong(4, 42L);
+      verifyNoMoreInteractions(stateStatement);
+    }
   }
 
   @Nested
   class WhenCreatingSQL {
+
+    @SneakyThrows
+    @Test
+    void combinesHeaderCriteriaForEachSpec() {
+      var underTest =
+          new PgQueryBuilder(List.of(FactSpec.ns("x").type("y"), FactSpec.ns("a").type("b")));
+      var ps = mock(PreparedStatement.class);
+
+      assertThat(normalized(underTest.createUnboundedSQL()))
+          .contains("WHERE ((true AND header @> ?::jsonb) OR (true AND header @> ?::jsonb))");
+      underTest.createUnboundedStatementSetter(new AtomicLong(42)).setValues(ps);
+
+      verify(ps).setString(1, "{\"ns\":\"x\",\"type\":\"y\"}");
+      verify(ps).setString(2, "{\"ns\":\"a\",\"type\":\"b\"}");
+      verify(ps).setLong(3, 42L);
+      verifyNoMoreInteractions(ps);
+    }
+
+    @SneakyThrows
+    @Test
+    void boundedQueryIncludesInclusiveHorizonSerial() {
+      var underTest = new PgQueryBuilder(Lists.newArrayList(FactSpec.ns("*")));
+
+      assertThat(normalized(underTest.createBoundedSQL()))
+          .isEqualTo(
+              normalized(
+                  "SELECT "
+                      + org.factcast.store.internal.PgConstants.PROJECTION_FACT
+                      + " FROM fact WHERE ((true)) AND ser>? AND ser<=? ORDER BY ser ASC"));
+    }
 
     @SneakyThrows
     @Test
@@ -118,7 +231,7 @@ class PgQueryBuilderTest {
       var spec2 = FactSpec.ns("ns2").type("t2").meta("foo", "bar");
       var specs = Lists.newArrayList(spec1, spec2);
       var underTest = new PgQueryBuilder(specs);
-      var sql = normalized(underTest.createSQL());
+      var sql = normalized(underTest.createUnboundedSQL());
 
       var expected =
           """
@@ -128,8 +241,8 @@ SELECT ser, header, payload,
   header->>'version' AS version
   FROM fact
   WHERE (
-  (true AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)) OR
-  (true AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)))
+  (true AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)) OR
+  (true AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)))
   AND ser>?
   ORDER BY ser ASC
 """;
@@ -148,7 +261,7 @@ SELECT ser, header, payload,
               .version(1);
       var specs = Lists.newArrayList(spec1);
       var underTest = new PgQueryBuilder(specs);
-      var sql = underTest.createSQL();
+      var sql = underTest.createUnboundedSQL();
 
       var expected =
           """
@@ -161,8 +274,6 @@ SELECT ser, header, payload,
 FROM fact
 WHERE (
     (true
-    AND header @> ?::jsonb
-    AND header @> ?::jsonb
     AND header @> ?::jsonb
     AND ((header ->> 'version')::int != ? OR (true AND ((payload ->> 'myId')::UUID = ?)))
     AND (header @> ?::jsonb OR header @> ?::jsonb)
@@ -187,7 +298,7 @@ WHERE (
               .aggIdProperty("schnick.schnack.schnuck.orgId", id2);
       var specs = Lists.newArrayList(spec1);
       var underTest = new PgQueryBuilder(specs);
-      var sql = underTest.createSQL();
+      var sql = underTest.createUnboundedSQL();
 
       // note that filtering cannot be done in the database, as the version is not defined.
       var expected =
@@ -207,8 +318,6 @@ WHERE
   (
     (
       true
-      AND header @> ? :: jsonb
-      AND header @> ? :: jsonb
       AND header @> ? :: jsonb
       AND (
         header @> ? :: jsonb
@@ -238,7 +347,7 @@ ORDER BY
               .aggIdProperty("schnick.schnack.schnuck.orgId", id2);
       var specs = Lists.newArrayList(spec1);
       var underTest = new PgQueryBuilder(specs);
-      var sql = underTest.createSQL();
+      var sql = underTest.createUnboundedSQL();
 
       var expected =
           """
@@ -257,8 +366,6 @@ WHERE
   (
     (
       true
-      AND header @> ? :: jsonb
-      AND header @> ? :: jsonb
       AND header @> ? :: jsonb
       AND (
         (header ->> 'version'):: int != ?
@@ -299,7 +406,7 @@ ORDER BY
       var spec2 = FactSpec.ns("ns2").type("t2").meta("foo", "bar");
       var specs = Lists.newArrayList(spec1, spec2);
       var underTest = new PgQueryBuilder(specs);
-      var sql = underTest.createSQL();
+      var sql = underTest.createUnboundedSQL();
       var expected =
           """
 SELECT ser, header, payload,
@@ -310,8 +417,8 @@ SELECT ser, header, payload,
  header->>'version' AS version
  FROM fact
  WHERE (
- (true AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb) AND jsonb_path_exists(header, ?::jsonpath) AND NOT jsonb_path_exists(header, ?::jsonpath)) OR
- (true AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)) )
+ (true AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb) AND jsonb_path_exists(header, ?::jsonpath) AND NOT jsonb_path_exists(header, ?::jsonpath)) OR
+ (true AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)) )
  AND ser>?
  ORDER BY ser ASC
 """;
@@ -326,7 +433,7 @@ SELECT ser, header, payload,
       var spec3 = FactSpec.ns("*").type("*");
       var specs = Lists.newArrayList(spec1, spec2, spec3);
       var underTest = new PgQueryBuilder(specs);
-      var sql = underTest.createSQL();
+      var sql = underTest.createUnboundedSQL();
       var expected =
           """
 SELECT ser, header, payload,
@@ -337,7 +444,7 @@ SELECT ser, header, payload,
  header->>'version' AS version
  FROM fact
  WHERE (
- (true AND header @> ?::jsonb AND header @> ?::jsonb) OR
+ (true AND header @> ?::jsonb) OR
  (true AND header @> ?::jsonb) OR
  (true) )
  AND ser>?
@@ -364,9 +471,9 @@ SELECT ser, header, payload,
           """
   SELECT ser FROM fact
   WHERE (
-  (true AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)) OR
-  (true AND header @> ?::jsonb AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)) OR
-  (true AND header @> ?::jsonb AND header @> ?::jsonb AND header @> ?::jsonb))
+  (true AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)) OR
+  (true AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)) OR
+  (true AND header @> ?::jsonb))
   AND ser > ?
 """;
 
@@ -395,16 +502,35 @@ SELECT COALESCE(
 WITH boundary AS MATERIALIZED (SELECT MAX(ser) - %d AS cutoff FROM fact)
 SELECT COALESCE(
   (SELECT ser FROM fact
-   WHERE ((true AND header @> ?::jsonb AND header @> ?::jsonb)) AND ser > ?
+   WHERE ((true AND header @> ?::jsonb)) AND ser > ?
    AND ser > (SELECT cutoff FROM boundary) ORDER BY ser DESC LIMIT 1),
   (WITH subq AS MATERIALIZED (
      SELECT ser FROM fact
-     WHERE ((true AND header @> ?::jsonb AND header @> ?::jsonb)) AND ser > ?
+     WHERE ((true AND header @> ?::jsonb)) AND ser > ?
    ) SELECT MAX(ser) FROM subq),
   0)
 """
               .formatted(backwardScanWindow);
       assertThat(normalized(sql)).isEqualTo(normalized(expected));
+    }
+
+    @SneakyThrows
+    @Test
+    void boundedStateSqlIncludesHorizon() {
+      var underTest = new PgQueryBuilder(List.of(FactSpec.ns("ns1").type("t1")));
+
+      var sql = underTest.createStateSQL(512, true);
+
+      assertThat(normalized(sql))
+          .isEqualTo(
+              normalized(
+                  "WITH boundary AS MATERIALIZED (SELECT MAX(ser) - 512 AS cutoff FROM fact) "
+                      + "SELECT COALESCE((SELECT ser FROM fact WHERE ((true AND header @> ?::jsonb)) "
+                      + "AND ser > ? AND ser <= ? "
+                      + "AND ser > (SELECT cutoff FROM boundary) ORDER BY ser DESC LIMIT 1), "
+                      + "(WITH subq AS MATERIALIZED (SELECT ser FROM fact WHERE "
+                      + "((true AND header @> ?::jsonb)) "
+                      + "AND ser > ? AND ser <= ?) SELECT MAX(ser) FROM subq), 0)"));
     }
   }
 

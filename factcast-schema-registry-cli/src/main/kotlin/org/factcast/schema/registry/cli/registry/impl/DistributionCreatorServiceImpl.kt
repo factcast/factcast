@@ -19,8 +19,12 @@ import org.factcast.schema.registry.cli.domain.Project
 import org.factcast.schema.registry.cli.registry.DistributionCreatorService
 import org.factcast.schema.registry.cli.registry.FactcastIndexCreator
 import org.springframework.stereotype.Component
+import java.io.File
+import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
 
 @Component
 class DistributionCreatorServiceImpl(
@@ -29,5 +33,18 @@ class DistributionCreatorServiceImpl(
     override fun createDistributable(outputPath: Path, project: Project, removedSchemaProps: Set<String>) {
         val indexPath = outputPath.resolve(Paths.get("static", "registry"))
         factcastIndexCreator.createFactcastIndex(indexPath, project, removedSchemaProps)
+        val archivePath = indexPath.resolve("registry.zip")
+        ZipOutputStream(Files.newOutputStream(archivePath)).use { archive ->
+            Files.walk(indexPath).use { files ->
+                files.filter { Files.isRegularFile(it) && it != archivePath }
+                    .sorted()
+                    .forEach { file ->
+                        val entryName = indexPath.relativize(file).toString().replace(File.separatorChar, '/')
+                        archive.putNextEntry(ZipEntry(entryName))
+                        Files.copy(file, archive)
+                        archive.closeEntry()
+                    }
+            }
+        }
     }
 }

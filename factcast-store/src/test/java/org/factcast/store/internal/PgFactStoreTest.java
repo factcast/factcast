@@ -25,7 +25,6 @@ import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.*;
 import java.util.function.*;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -37,10 +36,12 @@ import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.State;
 import org.factcast.core.store.StateToken;
 import org.factcast.core.store.TokenStore;
+import org.factcast.core.subscription.FactStreamHorizon;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.store.StoreConfigurationProperties;
+import org.factcast.store.internal.horizon.FactStreamHorizonProvider;
 import org.factcast.store.internal.lock.FactTableWriteLock;
 import org.factcast.store.internal.query.PgFactIdToSerialMapper;
 import org.factcast.store.internal.query.PgQueryBuilder;
@@ -79,6 +80,8 @@ class PgFactStoreTest {
   PgMetrics metrics;
 
   @Mock @NonNull TokenStore tokenStore;
+
+  @Mock @NonNull FactStreamHorizonProvider horizonProvider;
 
   @Spy
   StoreConfigurationProperties storeConfigurationProperties = new StoreConfigurationProperties();
@@ -528,8 +531,8 @@ class PgFactStoreTest {
 
       PreparedStatement ps = mock(PreparedStatement.class);
       setterCaptor.getValue().setValues(ps);
-      verify(ps).setLong(3, 16L);
-      verify(ps).setLong(6, 16L);
+      verify(ps).setLong(2, 16L);
+      verify(ps).setLong(4, 16L);
 
       ResultSet rs = mock(ResultSet.class);
       when(rs.next()).thenReturn(false);
@@ -538,6 +541,18 @@ class PgFactStoreTest {
       when(rs.next()).thenReturn(true);
       when(rs.getLong(1)).thenReturn(42L);
       assertThat(extractorCaptor.getValue().extractData(rs)).isEqualTo(42L);
+    }
+
+    @Test
+    void tokenCreationStoresHorizonWithoutQueryingMatchingFacts() {
+      List<FactSpec> specs = List.of(FactSpec.ns("ns1").type("type1"));
+      when(horizonProvider.advance()).thenReturn(new FactStreamHorizon(UUID.randomUUID(), 42, 42));
+
+      State state = underTest.getStateFor(specs);
+
+      assertThat(state.serialOfLastMatchingFact()).isEqualTo(42L);
+      assertThat(state.specs()).isEqualTo(specs);
+      verifyNoInteractions(jdbcTemplate);
     }
   }
 
@@ -570,7 +585,8 @@ class PgFactStoreTest {
 
       PreparedStatement ps = mock(PreparedStatement.class);
       captor.getValue().setValues(ps);
-      verify(ps).setLong(3, LAST_MATCHING_SERIAL);
+      verify(ps).setLong(2, LAST_MATCHING_SERIAL);
+      verify(ps).setLong(4, LAST_MATCHING_SERIAL);
     }
   }
 
@@ -585,16 +601,14 @@ class PgFactStoreTest {
 
     @SneakyThrows
     @Test
-    void name() {
+    void usesHorizonInsteadOfRawFactMaximum() {
       FactSpec spec1 = FactSpec.ns("ns1").type("type1");
       List<FactSpec> specs = Lists.newArrayList(spec1);
 
-      PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs);
-      String stateSQL =
-          pgQueryBuilder.createStateSQL(
-              storeConfigurationProperties.getStateQueryBackwardScanWindow());
-      when(jdbcTemplate.queryForObject(PgConstants.LAST_SERIAL_IN_LOG, Long.class)).thenReturn(32L);
+      when(horizonProvider.advance()).thenReturn(new FactStreamHorizon(UUID.randomUUID(), 32, 32));
+
       assertThat(underTest.getCurrentStateFor(specs).serialOfLastMatchingFact()).isEqualTo(32L);
+      verifyNoInteractions(jdbcTemplate);
     }
   }
 

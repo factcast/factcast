@@ -30,6 +30,7 @@ import org.factcast.core.subscription.*;
 import org.factcast.core.subscription.observer.*;
 import org.factcast.core.util.ExceptionHelper;
 import org.factcast.store.StoreConfigurationProperties;
+import org.factcast.store.internal.horizon.FactStreamHorizonProvider;
 import org.factcast.store.internal.lock.FactTableWriteLock;
 import org.factcast.store.internal.query.*;
 import org.factcast.store.internal.transformation.*;
@@ -39,6 +40,7 @@ import org.springframework.dao.*;
 import org.springframework.jdbc.core.*;
 import org.springframework.transaction.*;
 import org.springframework.transaction.annotation.*;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
@@ -61,6 +63,8 @@ public class PgFactStore extends AbstractFactStore {
 
   @NonNull private final PgMetrics metrics;
 
+  @NonNull private final FactStreamHorizonProvider horizonProvider;
+
   @NonNull private final StoreConfigurationProperties props;
 
   private final @NonNull UnconditionalPublishQueue queue;
@@ -75,6 +79,7 @@ public class PgFactStore extends AbstractFactStore {
       @NonNull FactTransformerService factTransformerService,
       @NonNull PgFactIdToSerialMapper pgFactIdToSerialMapper,
       @NonNull PgMetrics metrics,
+      @NonNull FactStreamHorizonProvider horizonProvider,
       @NonNull StoreConfigurationProperties props,
       @NonNull PlatformTransactionManager platformTransactionManager) {
     super(tokenStore);
@@ -85,11 +90,12 @@ public class PgFactStore extends AbstractFactStore {
     this.lock = lock;
     this.pgFactIdToSerialMapper = pgFactIdToSerialMapper;
     this.metrics = metrics;
+    this.horizonProvider = horizonProvider;
     this.factTransformerService = factTransformerService;
     this.props = props;
 
     this.tx = new TransactionTemplate(platformTransactionManager);
-    this.queue = new UnconditionalPublishQueue(this, props.getPublishBatch().getMaxBatchSize());
+    this.queue = new UnconditionalPublishQueue(this, props.getPublishBatched().getMaxBatchSize());
   }
 
   @Override
@@ -122,6 +128,10 @@ public class PgFactStore extends AbstractFactStore {
     if (props.isReadOnlyModeEnabled()) {
       throw new UnsupportedOperationException("Publishing is not allowed in read-only mode");
     }
+    if (TransactionSynchronizationManager.isActualTransactionActive()) {
+      publishDirectly(factsToPublish);
+      return;
+    }
     metrics.time(
         StoreMetrics.OP.PUBLISH,
         () -> {
@@ -143,7 +153,7 @@ public class PgFactStore extends AbstractFactStore {
     }
     var defensiveCopy = new ArrayList<>(factsToPublish);
 
-    if (props.getPublishBatch().isEnabled()) publishBatchable(defensiveCopy);
+    if (props.getPublishBatched().isEnabled()) publishBatchable(defensiveCopy);
     else publishDirectly(defensiveCopy);
   }
 
@@ -281,6 +291,8 @@ public class PgFactStore extends AbstractFactStore {
       return metrics.time(
           StoreMetrics.OP.PUBLISH_IF_UNCHANGED,
           () -> {
+            // The exclusive lock waits for shared-lock holders and protects validation through
+            // commit. Queued publications may follow because their publish calls have not returned.
             lock.acquireExclusiveTXLock();
             boolean successful = PgFactStore.super.publishIfUnchanged(defensiveCopy, optionalToken);
             if (!successful)
@@ -292,7 +304,7 @@ public class PgFactStore extends AbstractFactStore {
   @Override
   @NonNull
   protected State getStateFor(@NonNull Collection<FactSpec> specs) {
-    return doGetState(specs, 0);
+    return getCurrentStateFor(specs);
   }
 
   @Override
@@ -303,15 +315,22 @@ public class PgFactStore extends AbstractFactStore {
 
   @VisibleForTesting
   State doGetState(@NotNull Collection<FactSpec> specs, long lastMatchingSerial) {
+    return doGetState(specs, lastMatchingSerial, Optional.empty());
+  }
+
+  @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+  private State doGetState(
+      @NotNull Collection<FactSpec> specs,
+      long lastMatchingSerial,
+      @NonNull Optional<FactStreamHorizon> horizon) {
     return metrics.time(
         StoreMetrics.OP.GET_STATE_FOR,
         () -> {
           PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs);
           int backwardScanWindow = props.getStateQueryBackwardScanWindow();
-
-          String stateSQL = pgQueryBuilder.createStateSQL(backwardScanWindow);
+          String stateSQL = pgQueryBuilder.createStateSQL(backwardScanWindow, horizon.isPresent());
           PreparedStatementSetter statementSetter =
-              pgQueryBuilder.createStateStatementSetter(lastMatchingSerial);
+              pgQueryBuilder.createStateStatementSetter(lastMatchingSerial, horizon);
 
           ResultSetExtractor<Long> rch =
               resultSet -> {
@@ -331,12 +350,7 @@ public class PgFactStore extends AbstractFactStore {
   protected State getCurrentStateFor(Collection<FactSpec> specs) {
     return metrics.time(
         StoreMetrics.OP.GET_STATE_FOR,
-        () -> {
-          long max =
-              Objects.requireNonNull(
-                  jdbcTemplate.queryForObject(PgConstants.LAST_SERIAL_IN_LOG, Long.class));
-          return State.of(specs, max);
-        });
+        () -> State.of(specs, horizonProvider.advance().factSerial()));
   }
 
   @SuppressWarnings("DataFlowIssue")
@@ -407,10 +421,11 @@ public class PgFactStore extends AbstractFactStore {
   void batchPublish(List<? extends Fact> facts) {
     int numberOfFactsToPublish = facts.size();
     log.trace("Inserting {} fact(s)", numberOfFactsToPublish);
+    boolean callerTransaction = TransactionSynchronizationManager.isActualTransactionActive();
     try {
       tx.execute(
           ts -> {
-            batchPublishInTransaction(facts);
+            batchPublishInTransaction(facts, callerTransaction);
 
             return null;
           });
@@ -420,8 +435,13 @@ public class PgFactStore extends AbstractFactStore {
   }
 
   void batchPublishInTransaction(List<? extends Fact> facts) {
+    batchPublishInTransaction(facts, false);
+  }
+
+  private void batchPublishInTransaction(List<? extends Fact> facts, boolean callerTransaction) {
     try {
-      lock.acquireSharedTXLock();
+      if (callerTransaction) lock.acquireExclusiveTXLock();
+      else lock.acquireSharedTXLock();
       jdbcTemplate.batchUpdate(
           PgConstants.INSERT_FACT,
           facts,

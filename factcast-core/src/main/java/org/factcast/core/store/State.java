@@ -21,9 +21,10 @@ import org.factcast.core.spec.FactSpec;
 
 @Data
 public class State {
-  Collection<FactSpec> specs;
+  private Collection<FactSpec> specs;
 
-  long serialOfLastMatchingFact;
+  // Tokens store the safe horizon here; keep the existing name for token compatibility.
+  private long serialOfLastMatchingFact;
 
   public static State of(Collection<FactSpec> specs, long lastSerial) {
     return new State().serialOfLastMatchingFact(lastSerial).specs(specs);

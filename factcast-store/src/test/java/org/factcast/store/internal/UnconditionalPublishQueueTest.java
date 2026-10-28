@@ -58,6 +58,29 @@ class UnconditionalPublishQueueTest {
   }
 
   @Test
+  void publicationDoesNotCompleteBeforeBatchPublishReturns() throws Exception {
+    CountDownLatch publishing = new CountDownLatch(1);
+    CountDownLatch release = new CountDownLatch(1);
+    doAnswer(
+            invocation -> {
+              publishing.countDown();
+              assertThat(release.await(5, TimeUnit.SECONDS)).isTrue();
+              return null;
+            })
+        .when(pgFactStore)
+        .batchPublish(anyList());
+
+    Future<Void> publication = underTest.addAndFlush(List.of(fact));
+    try {
+      assertThat(publishing.await(5, TimeUnit.SECONDS)).isTrue();
+      assertThat(publication.isDone()).isFalse();
+    } finally {
+      release.countDown();
+    }
+    publication.get(5, TimeUnit.SECONDS);
+  }
+
+  @Test
   void addAndFlush_should_retry_individually_when_batchPublish_fails() throws Exception {
     // Arrange
     Fact fact1 = mock(Fact.class);

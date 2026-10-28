@@ -73,6 +73,12 @@ public class StoreConfigurationProperties implements InitializingBean {
   String schemaRegistryUrl;
 
   /**
+   * Load an HTTP schema registry from registry.zip during startup, falling back to individual
+   * files.
+   */
+  boolean schemaRegistryZipEnabled;
+
+  /**
    * If a schemaRegistryUrl is set, you can still decide to enable or disable validation based on
    * the definitions there. This is mostly useful for batch insertions during a bigger migration for
    * example where your facts are already validated, and you want to reduce load on the FactCast
@@ -150,7 +156,7 @@ public class StoreConfigurationProperties implements InitializingBean {
   boolean tailIndexingEnabled = true;
 
   /** defines, if tail indexes should enable the fastUpdate feature */
-  boolean tailIndexingFastUpdateEnabled;
+  boolean tailIndexingFastUpdateEnabled = true;
 
   /** parameter will only be used, if fastUpdate is enabled */
   int tailIndexingPendingListLimit = 4096;
@@ -247,7 +253,7 @@ public class StoreConfigurationProperties implements InitializingBean {
     int maxBatchSize = 500;
   }
 
-  @Valid public PublishBatch publishBatch = new PublishBatch();
+  @Valid public PublishBatch publishBatched = new PublishBatch();
 
   /**
    * When catching up, if production of a full notification of facts takes longer than this (10

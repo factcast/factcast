@@ -1,0 +1,46 @@
+# This file was generated using Kotlin DSL (.github/kts/docs.main.kts).
+# If you want to modify the workflow, please change the Kotlin file and regenerate this YAML file.
+# Generated with https://github.com/typesafegithub/github-workflows-kt
+
+name: 'Publish Maven Site'
+on:
+  release:
+    types:
+    - 'published'
+permissions:
+  contents: 'read'
+  pages: 'write'
+  id-token: 'write'
+  actions: 'read'
+jobs:
+  deploy:
+    runs-on: 'ubuntu-latest'
+    if: '${{ !github.event.release.prerelease }}'
+    environment:
+      name: 'github-pages'
+    steps:
+    - id: 'step-0'
+      name: 'Checkout release'
+      uses: 'actions/checkout@v7'
+      with:
+        ref: '${{ github.event.release.tag_name }}'
+    - id: 'step-1'
+      name: 'Set up Java'
+      uses: 'actions/setup-java@v6'
+      with:
+        java-version: '25'
+        distribution: 'temurin'
+    - id: 'step-2'
+      name: 'Generate Docs'
+      run: './mvnw -B -pl factcast-docs clean package'
+    - id: 'step-3'
+      name: 'Configure Pages'
+      uses: 'actions/configure-pages@v6'
+    - id: 'step-4'
+      name: 'Upload Maven site'
+      uses: 'actions/upload-pages-artifact@v5'
+      with:
+        path: 'factcast-docs/target/site'
+    - id: 'step-5'
+      name: 'Deploy Pages'
+      uses: 'actions/deploy-pages@v5'
