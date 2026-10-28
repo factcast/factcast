@@ -1,0 +1,43 @@
+site:
+  title: FactCast Documentation
+  url: https://docs.factcast.org/
+  start_page: docs:ROOT:/About/index.adoc
+output:
+  # A release build must not retain development pages from an earlier local preview.
+  clean: true
+content:
+  sources:
+    - url: ..
+      branches: ~
+      # Only stable release tags from the first Antora release onward have this content layout.
+      tags:
+        - '+({0..9}).+({0..9}).+({0..9})'
+        - '!0.{0..11}.*'
+        - '!0.12.{0..4}'
+      start_path: factcast-docs/src/main/asciidoc
+      edit_url: false
+    # Only the blog module from the builder checkout is retained during aggregation.
+    - url: ..
+      branches: HEAD
+      tags: ~
+      start_path: factcast-docs/src/main/asciidoc
+      edit_url: 'https://github.com/factcast/factcast/edit/{refname}/{path}'
+ui:
+  bundle:
+    url: https://gitlab.com/antora/antora-ui-default/-/jobs/artifacts/HEAD/raw/build/ui-bundle.zip?job=bundle-stable
+    snapshot: true
+  supplemental_files: ./supplemental-ui
+asciidoc:
+  attributes:
+    experimental: ''
+antora:
+  extensions:
+    - require: './antora/extensions/release-versions.js'
+      current_blog: true
+    - require: '@sntke/antora-mermaid-extension'
+    - require: './antora/extensions/blog.js'
+      page_size: 10
+    - require: '@antora/lunr-extension'
+    - require: './antora/extensions/stable-doc-ids.js'
+    - require: './antora/extensions/child-pages.js'
+    - require: './antora/extensions/latest-redirects.js'

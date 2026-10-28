@@ -1,6 +1,9 @@
 name: docs
 title: FactCast Documentation
-version: latest
+# Stable tags keep their numeric version; branch previews keep the existing URLs.
+version:
+  '+({0..9}).+({0..9}).+({0..9})': '$&'
+  '*': latest
 nav:
   - modules/ROOT/nav.adoc
   - modules/blog/nav.adoc
