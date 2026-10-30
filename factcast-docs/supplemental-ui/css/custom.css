@@ -46,9 +46,13 @@
         background: #191919;
     }
 
-    /* Leave the mobile navigation's version selector above the fixed footer. */
+}
+
+@media screen and (max-width: 1023.5px) {
+    /* Antora sets an inline height when opening navigation. Override it so the
+       expanded version selector stays above the fixed footer on mobile. */
     .nav {
-        height: calc(100vh - 6rem - var(--footer-height));
+        height: calc(100vh - 6rem - var(--footer-height)) !important;
     }
 }
 
@@ -94,7 +98,7 @@ footer.footer .footer-github svg {
 /* Recreate the full-screen cover used by the former Docsy landing page. */
 body.landing {
     background-image: linear-gradient(rgb(0 0 0 / 30%), rgb(0 0 0 / 30%)),
-    url("../../docs/latest/_images/featured-background.jpg");
+    url("../img/featured-background.jpg");
     background-position: center top;
     background-repeat: no-repeat;
     background-size: cover;
