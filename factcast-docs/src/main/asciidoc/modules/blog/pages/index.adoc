@@ -1,0 +1,5 @@
+= FactCast Blog
+
+Technical articles, announcements, experiences and other noteworthy bits and pieces.
+
+blog-index::[]

@@ -20,7 +20,10 @@ asciidoc:
 antora:
   extensions:
     - require: '@sntke/antora-mermaid-extension'
+    - require: './antora/extensions/blog.js'
+      page_size: 10
     - require: '@antora/lunr-extension'
     - require: './antora/extensions/stable-doc-ids.js'
     - require: './antora/extensions/child-pages.js'
-    
+output:
+  clean: true

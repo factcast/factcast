@@ -16,20 +16,20 @@
     <div id="topbar-nav" class="navbar-menu">
      <div class="navbar-end">
 
-{{#with (resolvePage 'docs::About/index.adoc')}}
+{{#with (resolvePage 'ROOT:About/index.adoc' component='docs')}}
 <a class="navbar-item" href="{{{relativize ./url}}}">
   About
 </a>
 {{/with}}
 
-{{#with (resolvePage 'docs::Concept/index.adoc')}}
+{{#with (resolvePage 'ROOT:Concept/index.adoc' component='docs')}}
 <a class="navbar-item" href="{{{relativize ./url}}}">
   Concept
 </a>
 {{/with}}
 
 
-{{#with (resolvePage 'docs::Setup/index.adoc')}}
+{{#with (resolvePage 'ROOT:Setup/index.adoc' component='docs')}}
 <a class="navbar-item" href="{{{relativize ./url}}}">
   Setup
 </a>
@@ -37,28 +37,34 @@
 
 
 
-{{#with (resolvePage 'docs::Usage/index.adoc')}}
+{{#with (resolvePage 'ROOT:Usage/index.adoc' component='docs')}}
 <a class="navbar-item" href="{{{relativize ./url}}}">
   API
 </a>
 {{/with}}
 
 
-{{#with (resolvePage 'docs::UI/index.adoc')}}
+{{#with (resolvePage 'ROOT:UI/index.adoc' component='docs')}}
 <a class="navbar-item" href="{{{relativize ./url}}}">
   UI
 </a>
 {{/with}}
 
-{{#with (resolvePage 'docs::Ops/index.adoc')}}
+{{#with (resolvePage 'ROOT:Ops/index.adoc' component='docs')}}
 <a class="navbar-item" href="{{{relativize ./url}}}">
   Ops
 </a>
 {{/with}}
 
-{{#with (resolvePage 'docs::Guides/index.adoc')}}
+{{#with (resolvePage 'ROOT:Guides/index.adoc' component='docs')}}
 <a class="navbar-item" href="{{{relativize ./url}}}">
   Guides
+</a>
+{{/with}}
+
+{{#with (resolvePage 'docs:blog:index.adoc')}}
+<a class="navbar-item" href="{{{relativize ./url}}}">
+  Blog
 </a>
 {{/with}}
 
