@@ -31,6 +31,7 @@ import org.factcast.core.FactStreamPosition;
 import org.factcast.factus.Factus;
 import org.factcast.factus.Handler;
 import org.factcast.factus.event.EventObject;
+import org.factcast.factus.jdbc.JdbcWriterTokenManager;
 import org.factcast.factus.projection.WriterToken;
 import org.factcast.factus.projection.tx.TransactionException;
 import org.factcast.factus.serializer.ProjectionMetaData;
@@ -354,6 +355,18 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
   }
 
   private void createTables() {
+    jdbcTemplate.execute("DROP TABLE IF EXISTS factcast_projection_locks;");
+    jdbcTemplate.execute(
+        """
+        CREATE TABLE factcast_projection_locks (
+
+            name       varchar(255) NOT NULL PRIMARY KEY,
+            lock_until timestamp    NOT NULL,
+            locked_at  timestamp    NOT NULL,
+            locked_by  varchar(255) NOT NULL
+        );\
+        """);
+
     jdbcTemplate.execute("DROP TABLE IF EXISTS managed_projection;");
     jdbcTemplate.execute(
         """
@@ -382,6 +395,7 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
   @Slf4j
   abstract static class AbstractTrackingUserProjection extends AbstractSpringTxManagedProjection {
     private final JdbcTemplate jdbcTemplate;
+    private final JdbcWriterTokenManager writerTokenManager;
     @Getter private int factStreamPositionModifications;
 
     @Getter private final Set<String> txSeen = new HashSet<>();
@@ -390,6 +404,8 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
         @NonNull PlatformTransactionManager platformTransactionManager, JdbcTemplate jdbcTemplate) {
       super(platformTransactionManager);
       this.jdbcTemplate = jdbcTemplate;
+      this.writerTokenManager =
+          JdbcWriterTokenManager.create(jdbcTemplate.getDataSource(), getScopedName().asString());
     }
 
     @Override
@@ -436,7 +452,7 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
 
     @Override
     public WriterToken acquireWriteToken(@NonNull Duration maxWait) {
-      return () -> {};
+      return writerTokenManager.acquireWriteToken(maxWait);
     }
   }
 
@@ -444,6 +460,7 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
   abstract static class AbstractTrackingUserSubscribedProjection
       extends AbstractSpringTxSubscribedProjection {
     private final JdbcTemplate jdbcTemplate;
+    private final JdbcWriterTokenManager writerTokenManager;
     @Getter private int factStreamPositionModifications;
 
     @Getter private final Set<String> txSeen = new HashSet<>();
@@ -452,6 +469,8 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
         @NonNull PlatformTransactionManager platformTransactionManager, JdbcTemplate jdbcTemplate) {
       super(platformTransactionManager);
       this.jdbcTemplate = jdbcTemplate;
+      this.writerTokenManager =
+          JdbcWriterTokenManager.create(jdbcTemplate.getDataSource(), getScopedName().asString());
     }
 
     @Override
@@ -500,7 +519,7 @@ public class SpringTransactionalITest extends AbstractFactCastIntegrationTest {
 
     @Override
     public WriterToken acquireWriteToken(@NonNull Duration maxWait) {
-      return () -> {};
+      return writerTokenManager.acquireWriteToken(maxWait);
     }
   }
 }
