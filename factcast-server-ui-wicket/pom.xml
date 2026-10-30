@@ -10,6 +10,9 @@
   </parent>
   <artifactId>factcast-server-ui-wicket</artifactId>
   <name>${project.groupId}:${project.artifactId}</name>
+  <properties>
+    <wicket.version>10.11.0</wicket.version>
+  </properties>
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -21,9 +24,6 @@
       </dependency>
     </dependencies>
   </dependencyManagement>
-  <properties>
-    <wicket.version>10.11.0</wicket.version>
-  </properties>
   <dependencies>
     <dependency>
       <groupId>org.factcast</groupId>
