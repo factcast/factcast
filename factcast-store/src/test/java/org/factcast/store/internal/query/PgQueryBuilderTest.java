@@ -246,7 +246,7 @@ SELECT ser, header, payload,
   WHERE (
   (true AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)) OR
   (true AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)))
-  %sAND ser>?
+  AND ser>?%s
   ORDER BY ser ASC
 """,
               addExclusionStatement(internalExclusionEnabled));
@@ -285,7 +285,7 @@ WHERE (
     AND (header @> ?::jsonb OR header @> ?::jsonb)
     )
   )
-  %sAND ser>? ORDER BY ser ASC
+  AND ser>?%s ORDER BY ser ASC
 """,
               addExclusionStatement(internalExclusionEnabled));
 
@@ -334,7 +334,7 @@ WHERE
       )
     )
   )
-  %sAND ser>?
+  AND ser>?%s
 ORDER BY
   ser ASC
 
@@ -399,7 +399,7 @@ WHERE
       )
     )
   )
-  %sAND ser>?
+  AND ser>?%s
 ORDER BY
   ser ASC
                     """,
@@ -434,7 +434,7 @@ SELECT ser, header, payload,
  WHERE (
  (true AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb) AND jsonb_path_exists(header, ?::jsonpath) AND NOT jsonb_path_exists(header, ?::jsonpath)) OR
  (true AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)) )
- %sAND ser>?
+ AND ser>?%s
  ORDER BY ser ASC
 """,
               addExclusionStatement(internalExclusionEnabled));
@@ -465,7 +465,7 @@ SELECT ser, header, payload,
  (true AND header @> ?::jsonb) OR
  (true AND header @> ?::jsonb) OR
  (true) )
- %sAND ser>?
+ AND ser>?%s
  ORDER BY ser ASC
 """,
               addExclusionStatement(internalExclusionEnabled));
@@ -494,7 +494,7 @@ SELECT ser, header, payload,
   (true AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)) OR
   (true AND header @> ?::jsonb AND (header @> ?::jsonb OR header @> ?::jsonb)) OR
   (true AND header @> ?::jsonb))
-  %sAND ser > ?
+  AND ser > ?%s
 """,
               addExclusionStatement(internalExclusionEnabled));
 
