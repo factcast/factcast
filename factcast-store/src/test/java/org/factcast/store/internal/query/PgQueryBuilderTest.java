@@ -44,13 +44,12 @@ class PgQueryBuilderTest {
   @Nested
   class WhenCreatingStatementSetter {
     @Mock private @NonNull AtomicLong serial;
-    private final boolean internalExclusionEnabled = false;
 
     @SneakyThrows
     @ParameterizedTest
     @MethodSource("headerCriteria")
     void bindsOneContainmentParameterForHeaderCriteria(FactSpec spec, String expectedJson) {
-      var underTest = new PgQueryBuilder(List.of(spec));
+      var underTest = new PgQueryBuilder(List.of(spec), false);
       var ps = mock(PreparedStatement.class);
 
       var expectedPredicate = expectedJson == null ? "(true)" : "(true AND header @> ?::jsonb)";
@@ -102,7 +101,7 @@ class PgQueryBuilderTest {
       var spec4 = FactSpec.ns("ns4").aggId(new UUID(0, 1), new UUID(0, 2));
       var spec5 = FactSpec.ns("*").type("t3");
       var specs = Lists.newArrayList(spec1, spec2, spec3, spec4, spec5);
-      var underTest = new PgQueryBuilder(specs, internalExclusionEnabled);
+      var underTest = new PgQueryBuilder(specs, false);
       var horizon = new FactStreamHorizon(null, 150L, 7L);
       var setter =
           bounded
@@ -172,7 +171,7 @@ class PgQueryBuilderTest {
     @Test
     void boundedSetterAppendsImmutableHorizonSerial() {
       when(serial.get()).thenReturn(12L);
-      var underTest = new PgQueryBuilder(Lists.newArrayList(FactSpec.ns("*")));
+      var underTest = new PgQueryBuilder(Lists.newArrayList(FactSpec.ns("*")), false);
       var ps = mock(PreparedStatement.class);
 
       FactStreamHorizon horizon = new FactStreamHorizon(null, 42L, 7L);
@@ -199,7 +198,8 @@ class PgQueryBuilderTest {
     @Test
     void combinesHeaderCriteriaForEachSpec() {
       var underTest =
-          new PgQueryBuilder(List.of(FactSpec.ns("x").type("y"), FactSpec.ns("a").type("b")));
+          new PgQueryBuilder(
+              List.of(FactSpec.ns("x").type("y"), FactSpec.ns("a").type("b")), false);
       var ps = mock(PreparedStatement.class);
 
       assertThat(normalized(underTest.createUnboundedSQL()))
@@ -215,7 +215,7 @@ class PgQueryBuilderTest {
     @SneakyThrows
     @Test
     void boundedQueryIncludesInclusiveHorizonSerial() {
-      var underTest = new PgQueryBuilder(Lists.newArrayList(FactSpec.ns("*")));
+      var underTest = new PgQueryBuilder(Lists.newArrayList(FactSpec.ns("*")), false);
 
       assertThat(normalized(underTest.createBoundedSQL()))
           .isEqualTo(
@@ -476,7 +476,6 @@ SELECT ser, header, payload,
 
   @Nested
   class WhenCreatingStateSQL {
-
     @SneakyThrows
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
@@ -517,7 +516,7 @@ SELECT COALESCE(
     @ValueSource(longs = {0, 512, 2147483648L})
     void singleSpec(long backwardScanWindow) {
       var spec1 = FactSpec.ns("ns1").type("t1");
-      var underTest = new PgQueryBuilder(Lists.newArrayList(spec1));
+      var underTest = new PgQueryBuilder(Lists.newArrayList(spec1), false);
       var sql = underTest.createStateSQL(backwardScanWindow);
       var expected =
           """
@@ -539,7 +538,7 @@ SELECT COALESCE(
     @SneakyThrows
     @Test
     void boundedStateSqlIncludesHorizon() {
-      var underTest = new PgQueryBuilder(List.of(FactSpec.ns("ns1").type("t1")));
+      var underTest = new PgQueryBuilder(List.of(FactSpec.ns("ns1").type("t1")), false);
 
       var sql = underTest.createStateSQL(512, true);
 
