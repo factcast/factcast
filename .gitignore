@@ -26,6 +26,6 @@ package-lock.json
 
 **/AGENTS.md
 **/.junie/**
+**/.codex/**
 **/.agent-logs
 .agent-logs
-**/.codex/**

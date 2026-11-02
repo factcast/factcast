@@ -17,9 +17,36 @@ package org.factcast.store;
 
 import static org.assertj.core.api.Assertions.*;
 
+import java.util.Map;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.context.properties.bind.Binder;
+import org.springframework.boot.context.properties.source.MapConfigurationPropertySource;
 
 class StoreConfigurationPropertiesTest {
+
+  @Test
+  void bindsDocumentedPublishBatchedProperties() {
+    Binder binder =
+        new Binder(
+            new MapConfigurationPropertySource(
+                Map.of(
+                    "factcast.store.publish-batched.enabled", "true",
+                    "factcast.store.publish-batched.max-batch-size", "1000")));
+
+    StoreConfigurationProperties props =
+        binder.bindOrCreate("factcast.store", StoreConfigurationProperties.class);
+
+    assertThat(props.getPublishBatched().isEnabled()).isTrue();
+    assertThat(props.getPublishBatched().getMaxBatchSize()).isEqualTo(1000);
+  }
+
+  @Test
+  void publishBatchedDefaultsToDisabledWithMaxBatchSizeOf500() {
+    StoreConfigurationProperties props = new StoreConfigurationProperties();
+
+    assertThat(props.getPublishBatched().isEnabled()).isFalse();
+    assertThat(props.getPublishBatched().getMaxBatchSize()).isEqualTo(500);
+  }
 
   @Test
   void testAfterPropertiesSet() throws Exception {

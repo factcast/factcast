@@ -20,10 +20,12 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import io.micrometer.core.instrument.Timer;
 import java.sql.*;
 import java.time.Duration;
 import java.util.concurrent.atomic.*;
 import lombok.*;
+import org.factcast.core.subscription.FactStreamHorizon;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.*;
@@ -59,7 +61,15 @@ class PgChunkedWithHoldCursorCatchupTest {
     lenient().when(ds.getConnection()).thenReturn(connection);
     underTest =
         Mockito.spy(
-            new PgChunkedWithHoldCursorCatchup(props, metrics, req, pipeline, serial, ds, phase));
+            new PgChunkedWithHoldCursorCatchup(
+                props,
+                metrics,
+                req,
+                pipeline,
+                serial,
+                new FactStreamHorizon(null, Long.MAX_VALUE, 0),
+                ds,
+                phase));
   }
 
   @Nested
@@ -200,11 +210,14 @@ class PgChunkedWithHoldCursorCatchupTest {
     @SneakyThrows
     void testDeclare() {
       when(connection.prepareStatement(anyString())).thenReturn(ps);
-      when(queryBuilder.createStatementSetter(any())).thenReturn(pss);
+      FactStreamHorizon horizon = new FactStreamHorizon(null, 42, 0);
+      when(queryBuilder.createBoundedStatementSetter(any(), same(horizon))).thenReturn(pss);
 
       PgChunkedWithHoldCursorCatchup.Cursor cursor = underTest.new Cursor(1000);
-      cursor.declare(queryBuilder, new AtomicLong(0));
+      cursor.declare(queryBuilder, new AtomicLong(0), horizon);
 
+      verify(queryBuilder).createBoundedSQL();
+      verify(queryBuilder).createBoundedStatementSetter(any(AtomicLong.class), same(horizon));
       verify(ps).execute();
       verify(pss).setValues(ps);
     }
@@ -355,6 +368,27 @@ class PgChunkedWithHoldCursorCatchupTest {
 
   @Nested
   class DeclareAndFetchFirstTest {
+    @Test
+    @SneakyThrows
+    void stopsTimerWhenCursorDeclarationFails() {
+      PgQueryBuilder queryBuilder = mock(PgQueryBuilder.class);
+      PgFactExtractor extractor = mock(PgFactExtractor.class);
+      Timer timer = mock(Timer.class);
+      Timer.Sample sample = mock(Timer.Sample.class);
+      RuntimeException failure = new IllegalStateException("declaration failed");
+      when(metrics.timer(StoreMetrics.OP.RESULT_STREAM_START, true)).thenReturn(timer);
+      when(metrics.startSample()).thenReturn(sample);
+      doThrow(failure).when(cursor).declare(any(), any(), any());
+
+      assertThatThrownBy(
+              () ->
+                  underTest.declareAndFetchFirst(
+                      cursor, queryBuilder, new AtomicLong(0), extractor))
+          .isSameAs(failure);
+
+      verify(sample).stop(timer);
+    }
+
     @Test
     @SneakyThrows
     void testDeclareAndFetchFirst_Empty() {

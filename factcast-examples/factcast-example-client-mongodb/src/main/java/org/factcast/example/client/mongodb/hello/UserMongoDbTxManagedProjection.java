@@ -17,13 +17,13 @@ package org.factcast.example.client.mongodb.hello;
 
 import java.util.Optional;
 import java.util.UUID;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.example.client.mongodb.hello.events.UserChangedV1;
 import org.factcast.example.client.mongodb.hello.events.UserCreatedV1;
 import org.factcast.factus.Handler;
 import org.factcast.factus.mongodb.tx.AbstractMongoDbTxManagedProjection;
 import org.factcast.factus.serializer.ProjectionMetaData;
-import org.jspecify.annotations.NonNull;
 import org.springframework.data.mongodb.MongoTransactionManager;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;

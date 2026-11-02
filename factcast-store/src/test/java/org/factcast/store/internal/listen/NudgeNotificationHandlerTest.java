@@ -25,12 +25,18 @@ import io.micrometer.core.instrument.Timer;
 import java.sql.ResultSet;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantLock;
+import org.factcast.core.subscription.FactStreamHorizon;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.*;
+import org.factcast.store.internal.horizon.FactStreamHorizonProvider;
 import org.factcast.store.internal.notification.*;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.MockedConstruction;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.jdbc.core.*;
@@ -47,6 +53,8 @@ class NudgeNotificationHandlerTest {
 
   @Mock private PgMetrics metrics;
 
+  @Mock private FactStreamHorizonProvider horizonProvider;
+
   @Mock ResultSet rs;
   private NudgeNotificationHandler handler;
   private @Mock Timer timer;
@@ -58,7 +66,10 @@ class NudgeNotificationHandlerTest {
     lenient().when(metrics.timer(any())).thenReturn(timer);
     lenient().when(metrics.startSample()).thenReturn(sample);
     lenient().doNothing().when(jdbc).execute(anyString());
-    handler = spy(new NudgeNotificationHandler(bus, jdbc, props, metrics, false));
+    lenient()
+        .when(horizonProvider.advance())
+        .thenReturn(new FactStreamHorizon(UUID.randomUUID(), 200, 200));
+    handler = spy(new NudgeNotificationHandler(bus, jdbc, props, metrics, horizonProvider, false));
   }
 
   @AfterEach
@@ -71,7 +82,7 @@ class NudgeNotificationHandlerTest {
     handler.destroy();
     when(props.isReadOnlyModeEnabled()).thenReturn(true);
 
-    handler = new NudgeNotificationHandler(bus, jdbc, props, metrics);
+    handler = new NudgeNotificationHandler(bus, jdbc, props, metrics, horizonProvider);
     awaitInitialTimerTasks();
 
     verifyNoInteractions(jdbc);
@@ -81,7 +92,7 @@ class NudgeNotificationHandlerTest {
   void writableModeRunsCleanup() throws Exception {
     handler.destroy();
 
-    handler = new NudgeNotificationHandler(bus, jdbc, props, metrics);
+    handler = new NudgeNotificationHandler(bus, jdbc, props, metrics, horizonProvider);
     awaitInitialTimerTasks();
 
     verify(jdbc).execute("CALL notificationCleanup()");
@@ -108,14 +119,14 @@ class NudgeNotificationHandlerTest {
   }
 
   @Test
-  void testNudgeInitialCallFetchesMaxSerAndPostsInternalNotification() {
+  void testNudgeInitialCallAdvancesHorizonAndPostsInternalNotification() {
     // Given
 
     // When
     handler.nudge(new NudgeNotification(12));
 
     // Then
-    verify(jdbc).queryForObject(contains("SELECT max(ser) FROM notification"), eq(Long.class));
+    verify(horizonProvider).advance();
     verify(bus).post(any(FactInsertionNotification.class));
   }
 
@@ -208,6 +219,13 @@ class NudgeNotificationHandlerTest {
     verify(bus).post(eq(FactInsertionNotification.internal("ns", "t3")));
     verify(bus).register(any());
     verifyNoMoreInteractions(bus);
+    assertThat(handler.notificationSer).hasValue(200);
+
+    ArgumentCaptor<Object[]> parameters = ArgumentCaptor.forClass(Object[].class);
+    verify(jdbc)
+        .query(
+            contains("notification.ser <= ?"), any(DataClassRowMapper.class), parameters.capture());
+    assertThat(parameters.getValue()).containsExactly(102L, 200L);
   }
 
   @Test
@@ -216,6 +234,10 @@ class NudgeNotificationHandlerTest {
     when(props.getMaxNotificationPollLatencyInMillis()).thenReturn(50L);
     // Access notificationSer to set it > 0
     handler.notificationSer.set(100L);
+    when(horizonProvider.advance())
+        .thenReturn(
+            new FactStreamHorizon(UUID.randomUUID(), 200, 200),
+            new FactStreamHorizon(UUID.randomUUID(), 201, 201));
 
     // Stub BASE_EXISTS_SQL to return true
     lenient()
@@ -308,8 +330,16 @@ class NudgeNotificationHandlerTest {
   }
 
   @Test
-  void fetchPairsAndDispatchOnlyExecutesOnceWhenCalledConcurrently() throws Exception {
+  void fetchPairsAndDispatchCoalescesRequestsArrivingDuringRefresh() throws Exception {
     // Given
+    handler.notificationSer.set(100);
+    when(horizonProvider.advance())
+        .thenReturn(
+            new FactStreamHorizon(UUID.randomUUID(), 200, 200),
+            new FactStreamHorizon(UUID.randomUUID(), 201, 201));
+    when(jdbc.queryForObject(
+            eq(NudgeNotificationHandler.BASE_EXISTS_SQL), eq(Boolean.class), anyLong()))
+        .thenReturn(true);
     CountDownLatch letGo = new CountDownLatch(1);
     CountDownLatch hasLock = new CountDownLatch(1);
     // Mock queryForList to hold execution
@@ -329,24 +359,222 @@ class NudgeNotificationHandlerTest {
 
     assertThat(hasLock.await(5, TimeUnit.SECONDS)).isTrue();
 
-    // Call from main thread while t1 holds lock
-    handler.fetchPairsAndDispatch();
+    // Several requests arriving during the same pass only need one additional refresh.
+    for (int i = 0; i < 3; i++) {
+      handler.fetchPairsAndDispatch();
+    }
 
     // Release t1
     letGo.countDown();
     t1.join();
 
     // Then
-    verify(jdbc, times(1)).query(anyString(), any(DataClassRowMapper.class), any(Object[].class));
+    verify(jdbc, times(2)).query(anyString(), any(DataClassRowMapper.class), any(Object[].class));
+  }
+
+  @Test
+  void refreshRequestedDuringDispatchWaitsUntilCursorIsUpdated() {
+    when(horizonProvider.advance())
+        .thenReturn(
+            new FactStreamHorizon(UUID.randomUUID(), 200, 200),
+            new FactStreamHorizon(UUID.randomUUID(), 201, 201));
+    when(jdbc.queryForObject(NudgeNotificationHandler.BASE_EXISTS_SQL, Boolean.class, 200L))
+        .thenReturn(true);
+    when(jdbc.query(anyString(), any(DataClassRowMapper.class), any(Object[].class)))
+        .thenReturn(Collections.emptyList());
+    doAnswer(
+            invocation -> {
+              handler.fetchPairsAndDispatch();
+              return null;
+            })
+        .doNothing()
+        .when(bus)
+        .post(any());
+
+    handler.fetchPairsAndDispatch();
+
+    verify(horizonProvider, times(2)).advance();
+    verify(bus).post(FactInsertionNotification.internal());
+    verify(jdbc).query(anyString(), any(DataClassRowMapper.class), eq(200L), eq(201L));
+    assertThat(handler.notificationSer).hasValue(201);
   }
 
   @Test
   void emitsMetricsWhenFetching() {
+    handler.notificationSer.set(100);
+    when(jdbc.queryForObject(NudgeNotificationHandler.BASE_EXISTS_SQL, Boolean.class, 100L))
+        .thenReturn(true);
+
     // When
     handler.fetchPairsAndDispatch();
 
     // Then
     verify(metrics).startSample();
     verify(sample).stop(timer);
+  }
+
+  @Test
+  void emptyBoundedFetchStillAdvancesNotificationCursor() {
+    handler.notificationSer.set(100);
+    when(jdbc.queryForObject(NudgeNotificationHandler.BASE_EXISTS_SQL, Boolean.class, 100L))
+        .thenReturn(true);
+
+    handler.fetchPairsAndDispatch();
+
+    assertThat(handler.notificationSer).hasValue(200);
+    verify(bus, never()).post(any());
+  }
+
+  @Test
+  void missingCursorWakesSubscribersWhenHorizonAdvances() {
+    handler.notificationSer.set(200);
+    when(horizonProvider.advance()).thenReturn(new FactStreamHorizon(UUID.randomUUID(), 201, 201));
+    when(jdbc.queryForObject(NudgeNotificationHandler.BASE_EXISTS_SQL, Boolean.class, 200L))
+        .thenReturn(false);
+
+    handler.fetchPairsAndDispatch();
+
+    verify(bus).post(FactInsertionNotification.internal());
+    verify(jdbc, never()).query(anyString(), any(DataClassRowMapper.class), any(Object[].class));
+    assertThat(handler.notificationSer).hasValue(201);
+  }
+
+  @Test
+  void missingCursorWakesSubscribersWhenHorizonIsUnchanged() {
+    handler.notificationSer.set(200);
+    when(jdbc.queryForObject(NudgeNotificationHandler.BASE_EXISTS_SQL, Boolean.class, 200L))
+        .thenReturn(false);
+
+    handler.fetchPairsAndDispatch();
+
+    verify(bus).post(FactInsertionNotification.internal());
+    verify(jdbc, never()).query(anyString(), any(DataClassRowMapper.class), any(Object[].class));
+    assertThat(handler.notificationSer).hasValue(200);
+  }
+
+  @Test
+  void rebasesCursorAndWakesSubscribersWhenNotificationHorizonResets() {
+    handler.notificationSer.set(200);
+    when(horizonProvider.advance()).thenReturn(new FactStreamHorizon(UUID.randomUUID(), 42, 1));
+
+    handler.fetchPairsAndDispatch();
+
+    verify(bus).post(FactInsertionNotification.internal());
+    verify(jdbc, never()).queryForObject(anyString(), eq(Boolean.class), anyLong());
+    assertThat(handler.notificationSer).hasValue(1);
+  }
+
+  @Test
+  void failedRefreshStillDrainsPendingRequestBeforeRethrowing() {
+    handler.notificationSer.set(100);
+    when(jdbc.queryForObject(NudgeNotificationHandler.BASE_EXISTS_SQL, Boolean.class, 100L))
+        .thenReturn(true);
+    var failure = new DataAccessResourceFailureException("database unavailable");
+    when(jdbc.query(anyString(), any(DataClassRowMapper.class), any(Object[].class)))
+        .thenAnswer(
+            invocation -> {
+              handler.fetchPairsAndDispatch();
+              throw failure;
+            })
+        .thenReturn(Collections.emptyList());
+
+    assertThatCode(handler::fetchPairsAndDispatch).isSameAs(failure);
+
+    verify(horizonProvider, times(2)).advance();
+    verify(jdbc, times(2)).query(anyString(), any(DataClassRowMapper.class), any(Object[].class));
+    assertThat(handler.notificationSer).hasValue(200);
+  }
+
+  @Test
+  void failedRefreshDrainsRequestArrivingDuringUnlock() throws Exception {
+    handler.destroy();
+    var failure = new DataAccessResourceFailureException("database unavailable");
+    when(horizonProvider.advance())
+        .thenThrow(failure)
+        .thenReturn(new FactStreamHorizon(UUID.randomUUID(), 200, 200));
+
+    try (var ignored = requestRefreshDuringFirstUnlock()) {
+      handler = new NudgeNotificationHandler(bus, jdbc, props, metrics, horizonProvider, false);
+
+      assertThatCode(handler::fetchPairsAndDispatch).isSameAs(failure);
+
+      verify(horizonProvider, times(2)).advance();
+      assertThat(handler.notificationSer).hasValue(200);
+    }
+  }
+
+  @Test
+  void failuresAcrossUnlockKeepFirstExceptionAndSuppressTheNext() throws Exception {
+    handler.destroy();
+    var firstFailure = new DataAccessResourceFailureException("first failure");
+    var secondFailure = new DataAccessResourceFailureException("second failure");
+    when(horizonProvider.advance()).thenThrow(firstFailure).thenThrow(secondFailure);
+
+    try (var ignored = requestRefreshDuringFirstUnlock()) {
+      handler = new NudgeNotificationHandler(bus, jdbc, props, metrics, horizonProvider, false);
+
+      assertThatCode(handler::fetchPairsAndDispatch).isSameAs(firstFailure);
+
+      assertThat(firstFailure.getSuppressed()).containsExactly(secondFailure);
+      verify(horizonProvider, times(2)).advance();
+    }
+  }
+
+  private MockedConstruction<ReentrantLock> requestRefreshDuringFirstUnlock() {
+    var actualLock = new ReentrantLock();
+    var requestOnUnlock = new AtomicBoolean(true);
+    return mockConstruction(
+        ReentrantLock.class,
+        (lock, context) -> {
+          when(lock.tryLock()).thenAnswer(invocation -> actualLock.tryLock());
+          when(lock.isHeldByCurrentThread())
+              .thenAnswer(invocation -> actualLock.isHeldByCurrentThread());
+          doAnswer(
+                  invocation -> {
+                    // Request after the inner loop finishes, while the owner still holds the lock.
+                    // Delegate to a real lock to preserve ownership and reentry behavior.
+                    if (requestOnUnlock.getAndSet(false)) handler.fetchPairsAndDispatch();
+                    actualLock.unlock();
+                    return null;
+                  })
+              .when(lock)
+              .unlock();
+        });
+  }
+
+  @Test
+  void repeatedExceptionInstanceIsNotSuppressedOntoItself() {
+    var failure = new DataAccessResourceFailureException("database unavailable");
+    when(horizonProvider.advance())
+        .thenAnswer(
+            invocation -> {
+              handler.fetchPairsAndDispatch();
+              throw failure;
+            })
+        .thenThrow(failure);
+
+    assertThatCode(handler::fetchPairsAndDispatch).isSameAs(failure);
+
+    assertThat(failure.getSuppressed()).isEmpty();
+    verify(horizonProvider, times(2)).advance();
+  }
+
+  @Test
+  void failedBoundedFetchPreservesCursorAndAllowsRetry() {
+    handler.notificationSer.set(100);
+    when(jdbc.queryForObject(NudgeNotificationHandler.BASE_EXISTS_SQL, Boolean.class, 100L))
+        .thenReturn(true);
+    when(jdbc.query(anyString(), any(DataClassRowMapper.class), any(Object[].class)))
+        .thenThrow(new DataAccessResourceFailureException("database unavailable"))
+        .thenReturn(Collections.emptyList());
+
+    assertThatCode(handler::fetchPairsAndDispatch)
+        .isInstanceOf(DataAccessResourceFailureException.class);
+
+    assertThat(handler.notificationSer).hasValue(100);
+
+    handler.fetchPairsAndDispatch();
+
+    assertThat(handler.notificationSer).hasValue(200);
   }
 }

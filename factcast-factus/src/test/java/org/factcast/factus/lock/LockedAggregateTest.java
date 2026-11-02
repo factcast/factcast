@@ -107,7 +107,9 @@ class LockedAggregateTest {
     // ASSERT
     InOrder inOrder = inOrder(factus, businessCode, factStore);
 
-    // verify that first, projection got updated...
+    // Capture the token before refreshing, so the decision cannot use an older projection.
+    inOrder.verify(factStore).currentStateFor(factSpecs);
+    // Then refresh the projection before running business code.
     inOrder.verify(factus).fetch(UserAggregate.class, aggId);
     // ... then our business code was run...
     inOrder.verify(businessCode).accept(any(), any());

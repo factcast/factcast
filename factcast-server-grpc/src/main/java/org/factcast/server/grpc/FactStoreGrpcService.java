@@ -36,7 +36,6 @@ import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.*;
 import org.factcast.core.subscription.*;
-import org.factcast.core.subscription.observer.HighWaterMarkFetcher;
 import org.factcast.core.util.*;
 import org.factcast.grpc.api.*;
 import org.factcast.grpc.api.conv.*;
@@ -70,7 +69,6 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
   @NonNull final FactStore store;
   @NonNull final Supplier<GrpcRequestMetadata> grpcRequestMetadataProvider;
   @NonNull final GrpcLimitProperties grpcLimitProperties;
-  @NonNull final HighWaterMarkFetcher ffwdTarget;
   @NonNull final ServerMetrics metrics;
   @NonNull final CompressionCodecs codecs;
 
@@ -86,7 +84,6 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
         store,
         grpcRequestMetadataProvider,
         new GrpcLimitProperties(),
-        HighWaterMarkFetcher.forTest(),
         new NOPServerMetrics(),
         new CompressionCodecs(CompressorRegistry.getDefaultInstance()));
   }
@@ -101,22 +98,6 @@ public class FactStoreGrpcService extends RemoteFactStoreImplBase implements Ini
         store,
         grpcRequestMetadataProvider,
         props,
-        HighWaterMarkFetcher.forTest(),
-        new NOPServerMetrics(),
-        new CompressionCodecs(CompressorRegistry.getDefaultInstance()));
-  }
-
-  @VisibleForTesting
-  @Deprecated
-  protected FactStoreGrpcService(
-      FactStore store,
-      Supplier<GrpcRequestMetadata> grpcRequestMetadataProvider,
-      HighWaterMarkFetcher target) {
-    this(
-        store,
-        grpcRequestMetadataProvider,
-        new GrpcLimitProperties(),
-        target,
         new NOPServerMetrics(),
         new CompressionCodecs(CompressorRegistry.getDefaultInstance()));
   }

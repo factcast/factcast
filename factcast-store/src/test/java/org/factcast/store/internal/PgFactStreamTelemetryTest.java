@@ -20,6 +20,7 @@ import static org.mockito.Mockito.*;
 import com.google.common.eventbus.EventBus;
 import java.util.Collections;
 import lombok.SneakyThrows;
+import org.factcast.core.subscription.FactStreamHorizon;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.*;
@@ -27,6 +28,7 @@ import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.filter.blacklist.Blacklist;
+import org.factcast.store.internal.horizon.FactStreamHorizonProvider;
 import org.factcast.store.internal.listen.PgConnectionSupplier;
 import org.factcast.store.internal.logsuppression.LogSuppression;
 import org.factcast.store.internal.pipeline.PushbackServerPipeline;
@@ -47,7 +49,7 @@ class PgFactStreamTelemetryTest {
   @Mock PgFactIdToSerialMapper idToSerMapper;
   @Mock SubscriptionImpl subscription;
   @Mock PgCatchupFactory pgCatchupFactory;
-  @Mock HighWaterMarkFetcher ffwdTarget;
+  @Mock FactStreamHorizonProvider horizonProvider;
   @Mock FactTransformerService transformationService;
   @Mock Blacklist blacklist;
   @Mock PgMetrics metrics;
@@ -66,15 +68,15 @@ class PgFactStreamTelemetryTest {
   @BeforeEach
   void setup() {
     lenient().doReturn(Collections.emptyList()).when(uut).catchupConnectionModifiers(any());
+    lenient().when(horizonProvider.advance()).thenReturn(FactStreamHorizon.empty());
   }
 
   @Test
   void postsTelemetryOnCatchup() {
     when(req.debugInfo()).thenReturn("test");
-    when(pgCatchupFactory.create(eq(req), eq(pipeline), any(), any(), any()))
+    when(pgCatchupFactory.create(
+            eq(req), eq(pipeline), any(), any(FactStreamHorizon.class), any(), any()))
         .thenReturn(mock(PgCatchup.class));
-
-    when(ffwdTarget.highWaterMark(any())).thenReturn(HighWaterMark.empty());
     uut.connect();
 
     InOrder inOrder = inOrder(telemetry);
@@ -88,9 +90,9 @@ class PgFactStreamTelemetryTest {
   void postsTelemetryOnFollow() {
     when(req.continuous()).thenReturn(true);
     when(req.debugInfo()).thenReturn("test");
-    when(pgCatchupFactory.create(eq(req), eq(pipeline), any(), any(), any()))
+    when(pgCatchupFactory.create(
+            eq(req), eq(pipeline), any(), any(FactStreamHorizon.class), any(), any()))
         .thenReturn(mock(PgCatchup.class));
-    when(ffwdTarget.highWaterMark(any())).thenReturn(HighWaterMark.empty());
 
     uut.connect();
 
@@ -105,9 +107,9 @@ class PgFactStreamTelemetryTest {
   void postsTelemetryOnClose() {
     when(req.continuous()).thenReturn(true);
     when(req.debugInfo()).thenReturn("test");
-    when(pgCatchupFactory.create(eq(req), eq(pipeline), any(), any(), any()))
+    when(pgCatchupFactory.create(
+            eq(req), eq(pipeline), any(), any(FactStreamHorizon.class), any(), any()))
         .thenReturn(mock(PgCatchup.class));
-    when(ffwdTarget.highWaterMark(any())).thenReturn(HighWaterMark.empty());
 
     uut.connect();
 
