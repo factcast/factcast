@@ -5,8 +5,8 @@
 
 === New exclusion mechanism replaces former "Blacklist"
 
-Maintaining a separate table of FactIds to be filtered out of every result turned out to be inefficient.
-Therefore, a new `exclusion_reason` column is introduced in the `fact` table, causing all Facts with a non-NULL
+Maintaining a separate table of factIds to be filtered out of every result turned out to be inefficient.
+Therefore, a new `exclusion_reason` column is introduced in the `fact` table, causing all facts with a non-NULL
 value to be ignored at query time. To migrate from the previous solution, follow the steps described below:
 
 If you use the postgres based blacklist table:
@@ -28,7 +28,7 @@ Attempts to add new entries to the old blacklist table will then trigger a warni
 If you use the filesystem blacklist:
 
 . As described above, start FactCast once without the new property `factcast.store.internalExclusionEnabled` being enabled, so that the new column can be created.
-. Use the insert statement documented [here](/concept/excluding-facts#excluding-one-or-multiple-facts), to migrate all existing entries to the new mechanism.
+. Use the insert statement documented xref:ROOT:Concept/excluding-facts.adoc#excluding-one-or-multiple-facts[here], to migrate all existing entries to the new mechanism.
 
 == Upgrading to 0.12.5
 
