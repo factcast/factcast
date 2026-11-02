@@ -676,6 +676,7 @@ class PgFactStreamTest {
                     horizonProvider,
                     pipeline,
                     telemetry,
+                    props,
                     reqTo,
                     logSuppression));
         lenient().doReturn(true).when(uut).isConnected();
@@ -705,6 +706,7 @@ class PgFactStreamTest {
                     horizonProvider,
                     pipeline,
                     telemetry,
+                    props,
                     reqTo,
                     logSuppression));
         uut.serial().set(5);
