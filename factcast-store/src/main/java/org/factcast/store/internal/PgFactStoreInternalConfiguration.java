@@ -80,7 +80,8 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @Import({
   SchemaRegistryConfiguration.class,
   PGTailIndexingConfiguration.class,
-  PgFactStoreInternalConfiguration.OffloadConfiguration.class
+  PgFactStoreInternalConfiguration.OffloadConfiguration.class,
+  PgFactStoreInternalConfiguration.BlacklistProviderConfiguration.class
 })
 public class PgFactStoreInternalConfiguration {
 
@@ -297,30 +298,6 @@ public class PgFactStoreInternalConfiguration {
   }
 
   @Bean
-  // should better be factcast.store.blacklist.type, but will be removed soon anyway.
-  @ConditionalOnProperty(value = "factcast.blacklist.type", matchIfMissing = true)
-  public BlacklistDataProvider blacklistProvider(
-      ResourceLoader resourceLoader,
-      Blacklist blacklist,
-      EventBus eventBus,
-      JdbcTemplate jdbc,
-      BlacklistConfigurationProperties blacklistConfiguration,
-      StoreConfigurationProperties storeConfiguration) {
-    switch (blacklistConfiguration.getType()) {
-      case POSTGRES:
-        return new PgBlacklistDataProvider(eventBus, jdbc, blacklist, storeConfiguration);
-      case RESOURCE:
-        return new ResourceBasedBlacklistDataProvider(
-            resourceLoader, blacklistConfiguration, blacklist);
-      default:
-        log.warn(
-            "No Provider found for blacklist type {}. Using default postgres provider.",
-            blacklistConfiguration.getType());
-        return new PgBlacklistDataProvider(eventBus, jdbc, blacklist, storeConfiguration);
-    }
-  }
-
-  @Bean
   public PgSchemaStoreChangeListener pgSchemaStoreChangeListener(
       EventBus bus, SchemaRegistry registry) {
     return new PgSchemaStoreChangeListener(bus, registry);
@@ -414,6 +391,38 @@ public class PgFactStoreInternalConfiguration {
               + StoreConfigurationProperties.PROPERTIES_PREFIX
               + ".offload.enabled=true");
       return new OffloadDataSource(offload.initializeDataSourceBuilder().build());
+    }
+  }
+
+  @Configuration(proxyBeanMethods = false)
+  static class BlacklistProviderConfiguration {
+
+    @Bean
+    // should better be factcast.store.blacklist.type, but will be removed soon anyway.
+    @ConditionalOnProperty(value = "factcast.blacklist.type", matchIfMissing = true)
+    @ConditionalOnProperty(
+        prefix = StoreConfigurationProperties.PROPERTIES_PREFIX,
+        name = "internal-exclusion-enabled",
+        havingValue = "false",
+        matchIfMissing = true)
+    BlacklistDataProvider blacklistProvider(
+        ResourceLoader resourceLoader,
+        Blacklist blacklist,
+        EventBus eventBus,
+        JdbcTemplate jdbc,
+        BlacklistConfigurationProperties blacklistConfiguration) {
+      switch (blacklistConfiguration.getType()) {
+        case POSTGRES:
+          return new PgBlacklistDataProvider(eventBus, jdbc, blacklist);
+        case RESOURCE:
+          return new ResourceBasedBlacklistDataProvider(
+              resourceLoader, blacklistConfiguration, blacklist);
+        default:
+          log.warn(
+              "No Provider found for blacklist type {}. Using default postgres provider.",
+              blacklistConfiguration.getType());
+          return new PgBlacklistDataProvider(eventBus, jdbc, blacklist);
+      }
     }
   }
 
