@@ -1,1 +1,6 @@
 {{> footer-scripts}}
+{{#if (eq env.SITE_SEARCH_PROVIDER 'lunr')}}
+<script src="{{{uiRootPath}}}/js/search-groups.js"></script>
+{{/if}}
+<script src="{{{uiRootPath}}}/js/vendor/glightbox.min.js"></script>
+<script src="{{{uiRootPath}}}/js/image-lightbox.js"></script>
