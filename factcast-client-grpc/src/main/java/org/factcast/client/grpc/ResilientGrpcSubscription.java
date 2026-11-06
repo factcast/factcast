@@ -149,6 +149,8 @@ public class ResilientGrpcSubscription extends AbstractSubscription {
   private synchronized void connect() {
     log.debug("Connecting ({})", originalRequest);
     initializeAndConnect();
+    // Initial setup runs on the caller's thread, so subscribe() must still report its failure.
+    assertSubscriptionStateNotClosed();
   }
 
   @VisibleForTesting
@@ -200,12 +202,11 @@ public class ResilientGrpcSubscription extends AbstractSubscription {
   @VisibleForTesting
   void fail(Throwable exception) {
     log.error("Too many failures, giving up. ({})", originalRequest);
+    // Awaiting callers need the cause even when failure happens during connection setup.
+    onErrorCause.set(exception);
     close();
     currentSubscription.unblock();
     originalObserver.onError(exception);
-
-    // see issue4904
-    throw ExceptionHelper.toRuntime(exception);
   }
 
   @FunctionalInterface

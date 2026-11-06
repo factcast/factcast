@@ -16,6 +16,7 @@
 package org.factcast.client.grpc;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -28,6 +29,7 @@ import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -40,6 +42,7 @@ import org.factcast.core.store.RetryableException;
 import org.factcast.core.subscription.FactStreamInfo;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionClosedException;
+import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
 import org.junit.jupiter.api.BeforeEach;
@@ -248,16 +251,77 @@ class ResilientGrpcSubscriptionTest {
   }
 
   @Test
-  void testFail() {
+  void testFail() throws Exception {
     IOException ex = new IOException();
 
-    // see issue4904
-    assertThatThrownBy(
-            () -> {
-              uut.fail(ex);
-            })
-        .isInstanceOf(RuntimeException.class);
+    assertThatNoException().isThrownBy(() -> uut.fail(ex));
+
+    assertThat(uut.isSubscriptionClosed()).isTrue();
+    verify(subscription).close();
     verify(obs).onError(ex);
+    assertThatThrownBy(uut::awaitCatchup).isSameAs(ex);
+    assertThatThrownBy(() -> uut.awaitCatchup(1L)).isSameAs(ex);
+    assertThatThrownBy(uut::awaitComplete).isSameAs(ex);
+    assertThatThrownBy(() -> uut.awaitComplete(1L)).isSameAs(ex);
+  }
+
+  @Test
+  void initialConnectionFailureStillThrows() {
+    RuntimeException ex = new IllegalStateException("Cannot initialize connection");
+    doThrow(ex).when(store).initializeIfNecessary();
+
+    assertThatThrownBy(() -> new ResilientGrpcSubscription(store, req, obs, config)).isSameAs(ex);
+    verify(obs).onError(ex);
+  }
+
+  @Test
+  void initialSubscribeFailureNotifiesObserverOnlyOnce() {
+    RuntimeException ex = new IllegalStateException("Cannot subscribe");
+    when(store.internalSubscribe(any(), any())).thenThrow(ex);
+
+    assertThatThrownBy(() -> new ResilientGrpcSubscription(store, req, obs, config)).isSameAs(ex);
+    verify(obs).onError(ex);
+  }
+
+  @Test
+  void reconnectFailureDoesNotThrow() throws Exception {
+    RuntimeException ex = new IllegalStateException("Cannot reinitialize connection");
+    doThrow(ex).when(store).initializeIfNecessary();
+
+    assertThatNoException().isThrownBy(uut::reConnect);
+
+    assertThat(uut.isSubscriptionClosed()).isTrue();
+    verify(subscription).close();
+    verify(obs).onError(ex);
+    assertThatThrownBy(uut::awaitComplete).isSameAs(ex);
+  }
+
+  @Test
+  void streamFailureDoesNotEscapeGrpcCallback() {
+    AtomicReference<SubscriptionImpl> plainSubscription = new AtomicReference<>();
+    when(store.internalSubscribe(any(), any()))
+        .thenAnswer(
+            invocation -> {
+              SubscriptionImpl plain = SubscriptionImpl.on(invocation.getArgument(1));
+              plainSubscription.set(plain);
+              return plain;
+            });
+    uut = new ResilientGrpcSubscription(store, req, obs, config);
+    SubscriptionImpl plain = plainSubscription.get();
+    ClientStreamObserver stream = new ClientStreamObserver(plain, 0);
+    StatusRuntimeException ex = Status.PERMISSION_DENIED.asRuntimeException();
+
+    try {
+      assertThatNoException().isThrownBy(() -> stream.onError(ex));
+
+      verify(obs).onError(ex);
+      assertThat(uut.isSubscriptionClosed()).isTrue();
+      assertThat(plain.isSubscriptionClosed()).isTrue();
+      assertThat(stream.clientBoundExecutor().isShutdown()).isTrue();
+      assertThatThrownBy(uut::awaitComplete).isSameAs(ex);
+    } finally {
+      plain.close();
+    }
   }
 
   @Test
@@ -328,14 +392,12 @@ class ResilientGrpcSubscriptionTest {
     @SneakyThrows
     @Test
     void onErrorFailing() {
-
-      try {
-        dfo.onError(new IOException());
-      } catch (Exception ignore) {
-        // ignore
-      }
+      IOException ex = new IOException();
+      dfo.onError(ex);
 
       verify(subscription).close();
+      verify(obs).onError(ex);
+      assertThat(uut.isSubscriptionClosed()).isTrue();
       assertThat(uut.resilience().numberOfAttemptsInWindow()).isEqualTo(1);
     }
 
@@ -343,11 +405,7 @@ class ResilientGrpcSubscriptionTest {
     void remembersOnErrorCause() {
       IOException exception = new IOException();
 
-      try {
-        dfo.onError(exception);
-      } catch (Exception ignore) {
-        // ignore
-      }
+      dfo.onError(exception);
 
       assertThat(uut.onErrorCause().get()).isSameAs(exception);
     }
@@ -355,11 +413,7 @@ class ResilientGrpcSubscriptionTest {
     @SneakyThrows
     @Test
     void successfulReConnectWipesSavedOnErrorCause() {
-      try {
-        dfo.onError(new RetryableException(new IOException()));
-      } catch (Exception ignore) {
-        // ignore
-      }
+      dfo.onError(new RetryableException(new IOException()));
 
       verify(uut).reConnect();
       verify(uut).doConnect();
@@ -371,13 +425,22 @@ class ResilientGrpcSubscriptionTest {
       Consumer<Subscription> consumer = mock(Consumer.class);
       Throwable t = new RuntimeException();
 
-      try {
-        dfo.onError(t);
-      } catch (Exception ignore) {
-        // ignore
-      }
+      dfo.onError(t);
 
       assertThatThrownBy(() -> uut.delegate(consumer)).isSameAs(t);
+    }
+
+    @Test
+    void exhaustedRetriesNotifyObserverWithoutThrowing() {
+      config.setAttempts(1);
+      RetryableException ex = new RetryableException(new IOException());
+
+      assertThatNoException().isThrownBy(() -> dfo.onError(ex));
+
+      verify(obs).onError(ex);
+      verify(uut, never()).reConnect();
+      assertThat(uut.isSubscriptionClosed()).isTrue();
+      assertThatThrownBy(uut::awaitCatchup).isSameAs(ex);
     }
 
     @SneakyThrows
