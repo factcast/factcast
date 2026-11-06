@@ -67,7 +67,7 @@ workflow(
 
         run(
             name = "Generate Docs",
-            command = "./mvnw --full -B -pl factcast-docs -Dantora.playbook=antora-playbook-release.yml clean package",
+            command = "./mvnw -B -pl factcast-docs -Dantora.playbook=antora-playbook-release.yml clean package",
         )
 
         uses(

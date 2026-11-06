@@ -42,7 +42,7 @@ jobs:
         distribution: 'temurin'
     - id: 'step-2'
       name: 'Generate Docs'
-      run: './mvnw --full -B -pl factcast-docs -Dantora.playbook=antora-playbook-release.yml clean package'
+      run: './mvnw -B -pl factcast-docs -Dantora.playbook=antora-playbook-release.yml clean package'
     - id: 'step-3'
       name: 'Configure Pages'
       uses: 'actions/configure-pages@v6'
