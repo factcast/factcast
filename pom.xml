@@ -132,7 +132,7 @@
     <redisson.version>4.8.0</redisson.version>
     <aws-sdk.version>2.57.11</aws-sdk.version>
     <mongodb-driver.version>5.14.0</mongodb-driver.version>
-    <shedlock.version>7.10.1</shedlock.version>
+    <shedlock.version>7.11.0</shedlock.version>
     <byte-buddy.version>1.18.17-jdk5</byte-buddy.version>
     <rewrite-java.version>8.90.4</rewrite-java.version>
     <skipUnitTests>false</skipUnitTests>
