@@ -99,6 +99,7 @@ public class PgSubscriptionFactory implements AutoCloseable {
             horizonProvider,
             new PushbackServerPipeline(pipe),
             telemetry,
+            props,
             req,
             logSuppression);
 

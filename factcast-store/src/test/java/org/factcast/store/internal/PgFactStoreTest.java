@@ -514,7 +514,7 @@ class PgFactStoreTest {
       FactSpec spec1 = FactSpec.ns("ns1").type("type1");
       List<FactSpec> specs = Lists.newArrayList(spec1);
 
-      PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs);
+      PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs, false);
       String stateSQL =
           pgQueryBuilder.createStateSQL(
               storeConfigurationProperties.getStateQueryBackwardScanWindow());
@@ -572,7 +572,7 @@ class PgFactStoreTest {
       FactSpec spec1 = FactSpec.ns("ns1").type("type1");
       List<FactSpec> specs = Lists.newArrayList(spec1);
 
-      PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs);
+      PgQueryBuilder pgQueryBuilder = new PgQueryBuilder(specs, false);
       String stateSQL =
           pgQueryBuilder.createStateSQL(
               storeConfigurationProperties.getStateQueryBackwardScanWindow());

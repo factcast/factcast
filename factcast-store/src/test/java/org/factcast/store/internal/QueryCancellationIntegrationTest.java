@@ -145,7 +145,7 @@ class QueryCancellationIntegrationTest {
 
             @Override
             protected PgQueryBuilder createPgQueryBuilder(List<FactSpec> specs) {
-              return new PgQueryBuilder(specs) {
+              return new PgQueryBuilder(specs, false) {
                 public String createBoundedSQL() {
                   var sql = super.createBoundedSQL();
 
