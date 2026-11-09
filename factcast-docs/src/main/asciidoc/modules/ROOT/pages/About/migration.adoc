@@ -22,8 +22,8 @@ It also establishes a procedure syncing changes from the deprecated `blacklist` 
 CALL migrate_blacklist_to_exclusion_reason(10000);
 ----
 . To switch to the new behavior, deploy FactCast again with `factcast.store.internalExclusionEnabled` set to `true`.
-Attempts to add new entries to the old blacklist table will then trigger a warning, but are still synced.
-. To not block potential rollbacks, it's recommended to keep the deprecated table around for some time and use it together with the automated sync for adding new exclusions.
+. Changes to the old blacklist table are synced to the new column automatically.
+. To not block potential rollbacks, it's recommended to keep the deprecated table around and use it when adding new exclusions for some time.
 
 If you use the filesystem blacklist:
 
