@@ -1,0 +1,46 @@
+= State tokens without advancing the horizon
+:page-blog-date: 2026-11-10
+:page-blog-tags: publish, concurrency, horizon
+:page-blog-summary: Reusing the cached horizon removes a publication barrier from state-token creation, at the cost of potentially more optimistic retries.
+
+Creating a state token now uses the server's cached safe horizon, avoiding a horizon database read and an exclusive publication lock.
+This addresses https://github.com/factcast/factcast/issues/5121[issue #5121] and builds on xref:docs:blog:posts/2026-10-28-ingestion-performance.adoc[Ingestion performance improvement].
+
+== What changes
+
+Unconditional publications share a lock and can commit out of serial-number order: a lower serial may still be in flight after a higher one commits.
+The safe horizon marks the boundary through which order is settled.
+Advancing it requires an exclusive lock, waiting for shared-lock holders and blocking new ones while establishing the boundary.
+Previously, every token creation did this for freshness, adding contention even with unrelated publishers, especially during bursts.
+
+Both `stateFor` and `currentStateFor` now store the requested fact specifications and the fact serial from the local horizon cache, already refreshed by notification processing and subscription catch-up.
+Each server has its own cache, which starts at a conservative zero and can lag behind the persisted horizon advanced by another server.
+Token creation still writes the token to the database.
+
+Conditional publication is unchanged: under the exclusive lock, it checks live facts after the token's boundary, including those beyond the cached horizon, and publishes only if none match.
+An older safe boundary widens this check, allowing additional rejections but no conflicting publications that a fresher boundary would reject.
+Keeping validation and publication under that lock is essential.
+
+== The trade-off
+
+Suppose the cache is at serial 100 and a matching fact at 105 has committed.
+A client obtains a token at 100 and reads a projection already containing 105.
+Conditional publication rejects the attempt because 105 follows the token's boundary—even if nothing changed after token creation.
+After a cache refresh, a new token can succeed if no further matching facts intervene.
+
+Only matching facts cause rejection.
+Heavy traffic for unrelated aggregates therefore offers a particularly useful opportunity to reduce contention without adding conflicts; broad specifications and frequently updated aggregates face more stale-boundary rejections.
+
+Factus projection catch-up can advance the horizon after token creation, helping the next attempt on the same server without updating the issued token.
+Catch-up and conditional publication can still wait for the lock.
+Delayed refreshes can give successive tokens the same stale boundary, causing repeated work and retry-budget exhaustion, especially across servers with different cached horizons.
+Retry limits and delays still matter; success is not guaranteed.
+
+== Application behavior and measurement
+
+The protocol stays the same: obtain a token, refresh decision state, and attempt conditional publication.
+Rejection consumes the token, so retry with a new token and refreshed state.
+Attempt logic must remain safe to repeat; use the existing success callback for work that should run only after successful publication.
+
+The benefit depends on workload and cache freshness.
+Measure latency per successful operation, attempts per success, failed conditional publications, and publication throughput together: faster token creation alone does not establish a faster complete operation.

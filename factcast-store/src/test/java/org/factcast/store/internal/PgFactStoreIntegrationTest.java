@@ -32,6 +32,7 @@ import org.factcast.core.store.*;
 import org.factcast.core.subscription.*;
 import org.factcast.core.subscription.observer.*;
 import org.factcast.store.StoreConfigurationProperties;
+import org.factcast.store.internal.horizon.FactStreamHorizonProvider;
 import org.factcast.store.internal.query.PgQueryBuilder;
 import org.factcast.store.test.AbstractFactStoreTest;
 import org.factcast.test.IntegrationTest;
@@ -64,6 +65,13 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
   @Autowired TokenStore tokenStore;
 
   @Autowired JdbcTemplate jdbcTemplate;
+
+  @Autowired FactStreamHorizonProvider horizonProvider;
+
+  @BeforeEach
+  void refreshHorizonAfterDatabaseWipe() {
+    horizonProvider.advance();
+  }
 
   @Override
   protected FactStore createStoreToTest() {
@@ -295,6 +303,7 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
     Fact fact4 = Fact.builder().ns("unrelated").type("t2").buildWithoutPayload();
 
     store.publish(Lists.newArrayList(fact1, fact2, fact3, fact4));
+    horizonProvider.advance();
 
     long ser1 = store.serialOf(fact1.id()).orElseThrow();
     long ser3 = store.serialOf(fact3.id()).orElseThrow();
@@ -402,6 +411,7 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
     Fact fact1 = Fact.builder().ns("ns1").type("t1").buildWithoutPayload();
     Fact fact2 = Fact.builder().ns("ns2").type("t2").buildWithoutPayload();
     store.publish(Lists.newArrayList(fact1, fact2));
+    horizonProvider.advance();
 
     StateToken token =
         store.stateFor(Lists.newArrayList(FactSpec.ns("nonExistentNs").type("nonExistentType")));
@@ -419,6 +429,7 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
     Fact fact2 = Fact.builder().ns("ns2").type("t2").buildWithoutPayload();
     Fact fact3 = Fact.builder().ns("unrelated").type("t3").buildWithoutPayload();
     store.publish(Lists.newArrayList(fact1, fact2, fact3));
+    horizonProvider.advance();
 
     long ser1 = store.serialOf(fact1.id()).orElseThrow();
     long ser2 = store.serialOf(fact2.id()).orElseThrow();
@@ -439,6 +450,7 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
   void publishIfUnchangedValidatesStateCorrectly() {
     Fact initialFact = Fact.builder().ns("counter").type("tick").buildWithoutPayload();
     store.publish(Collections.singletonList(initialFact));
+    horizonProvider.advance();
 
     var specs = Collections.singletonList(FactSpec.ns("counter").type("tick"));
     StateToken token = store.stateFor(specs);
@@ -451,6 +463,7 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
 
     // Now obtain a state token, publish another matching fact to change the state, then attempt
     // publish with old token
+    horizonProvider.advance();
     StateToken token2 = store.stateFor(specs);
     Fact concurrentFact = Fact.builder().ns("counter").type("tick").buildWithoutPayload();
     store.publish(Collections.singletonList(concurrentFact));

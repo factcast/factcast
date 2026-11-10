@@ -544,14 +544,16 @@ class PgFactStoreTest {
     }
 
     @Test
-    void tokenCreationStoresHorizonWithoutQueryingMatchingFacts() {
+    void tokenCreationStoresCachedHorizonWithoutAdvancingIt() {
       List<FactSpec> specs = List.of(FactSpec.ns("ns1").type("type1"));
-      when(horizonProvider.advance()).thenReturn(new FactStreamHorizon(UUID.randomUUID(), 42, 42));
+      when(horizonProvider.currentPrimary())
+          .thenReturn(new FactStreamHorizon(UUID.randomUUID(), 42, 42));
 
       State state = underTest.getStateFor(specs);
 
       assertThat(state.serialOfLastMatchingFact()).isEqualTo(42L);
       assertThat(state.specs()).isEqualTo(specs);
+      verify(horizonProvider, never()).advance();
       verifyNoInteractions(jdbcTemplate);
     }
   }
@@ -601,13 +603,25 @@ class PgFactStoreTest {
 
     @SneakyThrows
     @Test
-    void usesHorizonInsteadOfRawFactMaximum() {
+    void usesCachedHorizonWithoutAdvancingIt() {
       FactSpec spec1 = FactSpec.ns("ns1").type("type1");
       List<FactSpec> specs = Lists.newArrayList(spec1);
 
-      when(horizonProvider.advance()).thenReturn(new FactStreamHorizon(UUID.randomUUID(), 32, 32));
+      when(horizonProvider.currentPrimary())
+          .thenReturn(new FactStreamHorizon(UUID.randomUUID(), 32, 32));
 
       assertThat(underTest.getCurrentStateFor(specs).serialOfLastMatchingFact()).isEqualTo(32L);
+      verify(horizonProvider, never()).advance();
+      verifyNoInteractions(jdbcTemplate);
+    }
+
+    @Test
+    void usesEmptyCachedHorizonBeforeFirstRefresh() {
+      when(horizonProvider.currentPrimary()).thenReturn(FactStreamHorizon.empty());
+
+      assertThat(underTest.getCurrentStateFor(List.of(factSpec)).serialOfLastMatchingFact())
+          .isZero();
+      verify(horizonProvider, never()).advance();
       verifyNoInteractions(jdbcTemplate);
     }
   }

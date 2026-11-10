@@ -349,9 +349,11 @@ public class PgFactStore extends AbstractFactStore {
   @Override
   @NonNull
   protected State getCurrentStateFor(Collection<FactSpec> specs) {
+    // Reuse the safe cached horizon to avoid blocking publishers. A stale boundary can cause
+    // conservative rejection; conditional publication still validates under the exclusive lock.
     return metrics.time(
         StoreMetrics.OP.GET_STATE_FOR,
-        () -> State.of(specs, horizonProvider.advance().factSerial()));
+        () -> State.of(specs, horizonProvider.currentPrimary().factSerial()));
   }
 
   @SuppressWarnings("DataFlowIssue")
