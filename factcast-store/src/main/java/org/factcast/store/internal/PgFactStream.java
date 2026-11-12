@@ -63,6 +63,7 @@ public class PgFactStream {
   final FactStreamHorizonProvider horizonProvider;
   final PushbackServerPipeline pipeline;
   final PgStoreTelemetry telemetry;
+  final StoreConfigurationProperties props;
 
   @Getter(AccessLevel.PROTECTED)
   final SubscriptionRequestTO request;
@@ -86,6 +87,7 @@ public class PgFactStream {
       FactStreamHorizonProvider horizonProvider,
       PushbackServerPipeline pipeline,
       PgStoreTelemetry telemetry,
+      StoreConfigurationProperties props,
       SubscriptionRequestTO request,
       LogSuppression logSuppression) {
     this(
@@ -97,6 +99,7 @@ public class PgFactStream {
         horizonProvider,
         pipeline,
         telemetry,
+        props,
         request,
         logSuppression);
   }
@@ -111,6 +114,7 @@ public class PgFactStream {
       FactStreamHorizonProvider horizonProvider,
       PushbackServerPipeline pipeline,
       PgStoreTelemetry telemetry,
+      StoreConfigurationProperties props,
       SubscriptionRequestTO request,
       LogSuppression logSuppression) {
     this.connectionSupplier = connectionSupplier;
@@ -121,6 +125,7 @@ public class PgFactStream {
     // we need that subtype
     this.pipeline = pipeline;
     this.telemetry = telemetry;
+    this.props = props;
     this.offloadDataSource = offloadDataSource;
     this.request = request;
     this.logSuppression = logSuppression;
@@ -159,7 +164,7 @@ public class PgFactStream {
   @VisibleForTesting
   @NotNull
   PgSynchronizedQuery createPgSynchronizedQuery() {
-    PgQueryBuilder q = new PgQueryBuilder(request.specs());
+    PgQueryBuilder q = new PgQueryBuilder(request.specs(), props.isInternalExclusionEnabled());
     String sql = q.createBoundedSQL();
     log.trace("created query SQL for {} - SQL={}", request.specs(), sql);
     return new PgSynchronizedQuery(

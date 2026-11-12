@@ -16,81 +16,135 @@
 package org.factcast.store.internal;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
+import com.google.common.eventbus.EventBus;
 import org.factcast.store.OffloadDataSource;
 import org.factcast.store.StoreConfigurationProperties;
+import org.factcast.store.internal.filter.blacklist.Blacklist;
+import org.factcast.store.internal.filter.blacklist.BlacklistConfigurationProperties;
+import org.factcast.store.internal.filter.blacklist.BlacklistDataProvider;
 import org.factcast.store.internal.logsuppression.DefaultLogSuppression;
 import org.factcast.store.internal.logsuppression.LogSuppression;
 import org.factcast.store.internal.logsuppression.NopLogSuppression;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 class PgFactStoreInternalConfigurationTest {
 
-  private static final String OFFLOAD_URL = "jdbc:postgresql://localhost:5432/factcast-offload";
+  @Nested
+  class OffloadConfiguration {
 
-  private final ApplicationContextRunner contextRunner =
-      new ApplicationContextRunner().withUserConfiguration(OffloadTestConfiguration.class);
+    private static final String OFFLOAD_URL = "jdbc:postgresql://localhost:5432/factcast-offload";
 
-  @Test
-  void testLogSuppressionBean() {
-    PgFactStoreInternalConfiguration config = new PgFactStoreInternalConfiguration();
-    StoreConfigurationProperties props = new StoreConfigurationProperties();
+    private final ApplicationContextRunner contextRunner =
+        new ApplicationContextRunner().withUserConfiguration(OffloadTestConfiguration.class);
 
-    // Disabled
-    props.getLogSuppression().setEnabled(false);
-    LogSuppression disabled = config.logSuppression(props);
-    assertThat(disabled).isInstanceOf(NopLogSuppression.class);
+    @Test
+    void testLogSuppressionBean() {
+      PgFactStoreInternalConfiguration config = new PgFactStoreInternalConfiguration();
+      StoreConfigurationProperties props = new StoreConfigurationProperties();
 
-    // Enabled
-    props.getLogSuppression().setEnabled(true);
-    LogSuppression enabled = config.logSuppression(props);
-    assertThat(enabled).isInstanceOf(DefaultLogSuppression.class);
+      // Disabled
+      props.getLogSuppression().setEnabled(false);
+      LogSuppression disabled = config.logSuppression(props);
+      assertThat(disabled).isInstanceOf(NopLogSuppression.class);
+
+      // Enabled
+      props.getLogSuppression().setEnabled(true);
+      LogSuppression enabled = config.logSuppression(props);
+      assertThat(enabled).isInstanceOf(DefaultLogSuppression.class);
+    }
+
+    @Test
+    void offloadUrlAloneDoesNotEnableOffloading() {
+      contextRunner
+          .withPropertyValues("factcast.store.offload.url=" + OFFLOAD_URL)
+          .run(context -> assertThat(context).doesNotHaveBean(OffloadDataSource.class));
+    }
+
+    @Test
+    void explicitlyDisabledOffloadingDoesNotCreateOffloadDataSource() {
+      contextRunner
+          .withPropertyValues(
+              "factcast.store.offload.enabled=false", "factcast.store.offload.url=" + OFFLOAD_URL)
+          .run(context -> assertThat(context).doesNotHaveBean(OffloadDataSource.class));
+    }
+
+    @Test
+    void enabledOffloadingCreatesOffloadDataSource() {
+      contextRunner
+          .withPropertyValues(
+              "factcast.store.offload.enabled=true", "factcast.store.offload.url=" + OFFLOAD_URL)
+          .run(context -> assertThat(context).hasSingleBean(OffloadDataSource.class));
+    }
+
+    @Test
+    void enabledOffloadingRequiresUrl() {
+      contextRunner
+          .withPropertyValues("factcast.store.offload.enabled=true")
+          .run(
+              context -> {
+                assertThat(context).hasFailed();
+                assertThat(context.getStartupFailure())
+                    .hasRootCauseInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining(
+                        "factcast.store.offload.url must be configured when "
+                            + "factcast.store.offload.enabled=true");
+              });
+    }
+
+    @Configuration(proxyBeanMethods = false)
+    @EnableConfigurationProperties(StoreConfigurationProperties.class)
+    @Import(PgFactStoreInternalConfiguration.OffloadConfiguration.class)
+    static class OffloadTestConfiguration {}
   }
 
-  @Test
-  void offloadUrlAloneDoesNotEnableOffloading() {
-    contextRunner
-        .withPropertyValues("factcast.store.offload.url=" + OFFLOAD_URL)
-        .run(context -> assertThat(context).doesNotHaveBean(OffloadDataSource.class));
-  }
+  @Nested
+  class ExclusionConfiguration {
+    private final ApplicationContextRunner blacklistContextRunner =
+        new ApplicationContextRunner()
+            .withUserConfiguration(
+                PgFactStoreInternalConfiguration.BlacklistProviderConfiguration.class)
+            .withBean(Blacklist.class, Blacklist::new)
+            .withBean(EventBus.class, () -> mock(EventBus.class))
+            .withBean(JdbcTemplate.class, () -> mock(JdbcTemplate.class))
+            .withBean(
+                BlacklistConfigurationProperties.class, BlacklistConfigurationProperties::new);
 
-  @Test
-  void explicitlyDisabledOffloadingDoesNotCreateOffloadDataSource() {
-    contextRunner
-        .withPropertyValues(
-            "factcast.store.offload.enabled=false", "factcast.store.offload.url=" + OFFLOAD_URL)
-        .run(context -> assertThat(context).doesNotHaveBean(OffloadDataSource.class));
-  }
+    @Test
+    void blacklistProviderCreatedByDefault() {
+      blacklistContextRunner.run(
+          context -> assertThat(context).hasSingleBean(BlacklistDataProvider.class));
+    }
 
-  @Test
-  void enabledOffloadingCreatesOffloadDataSource() {
-    contextRunner
-        .withPropertyValues(
-            "factcast.store.offload.enabled=true", "factcast.store.offload.url=" + OFFLOAD_URL)
-        .run(context -> assertThat(context).hasSingleBean(OffloadDataSource.class));
-  }
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void internalExclusionPreventsBlacklistProvider(boolean enabled) {
+      blacklistContextRunner
+          .withPropertyValues("factcast.store.internal-exclusion-enabled=" + enabled)
+          .run(
+              context -> {
+                if (enabled) {
+                  assertThat(context).doesNotHaveBean(BlacklistDataProvider.class);
+                } else {
+                  assertThat(context).hasSingleBean(BlacklistDataProvider.class);
+                }
+              });
+    }
 
-  @Test
-  void enabledOffloadingRequiresUrl() {
-    contextRunner
-        .withPropertyValues("factcast.store.offload.enabled=true")
-        .run(
-            context -> {
-              assertThat(context).hasFailed();
-              assertThat(context.getStartupFailure())
-                  .hasRootCauseInstanceOf(IllegalArgumentException.class)
-                  .hasMessageContaining(
-                      "factcast.store.offload.url must be configured when "
-                          + "factcast.store.offload.enabled=true");
-            });
+    @Test
+    void internalExclusionPreventsBlacklistProviderWithCamelCaseProperty() {
+      blacklistContextRunner
+          .withPropertyValues("factcast.store.internalExclusionEnabled=true")
+          .run(context -> assertThat(context).doesNotHaveBean(BlacklistDataProvider.class));
+    }
   }
-
-  @Configuration(proxyBeanMethods = false)
-  @EnableConfigurationProperties(StoreConfigurationProperties.class)
-  @Import(PgFactStoreInternalConfiguration.OffloadConfiguration.class)
-  static class OffloadTestConfiguration {}
 }

@@ -387,7 +387,7 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
   @Test
   void hybridStateQueryDoesNotExecuteFallbackOnRecentHit() {
     fs.publish(List.of(Fact.builder().ns("recent").buildWithoutPayload()));
-    var builder = new PgQueryBuilder(List.of(FactSpec.ns("recent")));
+    var builder = new PgQueryBuilder(List.of(FactSpec.ns("recent")), false);
     var plan =
         jdbcTemplate.query(
             "EXPLAIN (ANALYZE, BUFFERS) " + builder.createStateSQL(512),

@@ -16,6 +16,7 @@
 package org.factcast.store.internal.listen;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 import com.google.common.eventbus.*;
 import java.util.*;
@@ -44,6 +45,7 @@ class PgListenerIntegrationTest {
   @Autowired EventBus eventBus;
   @Autowired FactStore factStore;
   @Autowired JdbcTemplate jdbc;
+  @Autowired NudgeNotificationHandler handler;
 
   @Nested
   class FactInsertTrigger {
@@ -64,7 +66,7 @@ class PgListenerIntegrationTest {
       try {
         eventBus.register(collector);
 
-        // this will trigger the first general FIN
+        // Seed a notification row so the handler can establish a selective dispatch baseline.
         factStore.publish(
             Collections.singletonList(
                 Fact.builder()
@@ -72,15 +74,12 @@ class PgListenerIntegrationTest {
                     .type("initial")
                     .id(UUID.randomUUID())
                     .buildWithoutPayload()));
-        // can come back as internal with type null, or type initial - depending on the state of the
-        // PGListener
-
-        // we want to be sure, that the pglistener recieved to notification and set its current
-        // serial, before we go on.
-        // Otherwise we would still notify all subscribers, but might not see swallow explicit
-        // notifications for inserts to come.
-
-        collector.awaitInitalRetrieval();
+        long initialSerial = jdbc.queryForObject("SELECT max(ser) FROM notification", Long.class);
+        // A global wakeup from wipe.sql can arrive before the seed is consumed. Wait for the
+        // actual cursor instead, so the following inserts produce per-type notifications.
+        await()
+            .atMost(5, TimeUnit.SECONDS)
+            .until(() -> handler.notificationSer.get() == initialSerial);
 
         // RUN
         factStore.publish(
@@ -109,9 +108,9 @@ class PgListenerIntegrationTest {
                 Fact.builder().ns(ns).type(t5).buildWithoutPayload(),
                 Fact.builder().ns(ns).type(t5).buildWithoutPayload(),
                 Fact.builder().ns(ns).type(t5).buildWithoutPayload()));
-        //
-        // so finally, there should be two notifications arriving as we have two txids
-        assertThat(collector.await()).isTrue();
+        assertThat(collector.await())
+            .as("Received notification types: %s", collector.types)
+            .isTrue();
 
         assertThat(collector.types).containsAll(expectedTypes);
       } finally {
@@ -121,7 +120,6 @@ class PgListenerIntegrationTest {
 
     private class TypeFactInsertCollector extends FactInsertCollector {
       Set<String> types = new HashSet<>();
-      CountDownLatch initial = new CountDownLatch(1);
 
       public TypeFactInsertCollector(int i) {
         super(i);
@@ -130,16 +128,7 @@ class PgListenerIntegrationTest {
       @Override
       public void recordEvent(StoreNotification e) {
         if (e instanceof FactInsertionNotification fin) {
-          initial.countDown();
           if (ns.equals(fin.ns()) && types.add(fin.type())) super.recordEvent(e);
-        }
-      }
-
-      public void awaitInitalRetrieval() {
-        try {
-          initial.await(3, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-          throw new RuntimeException(e);
         }
       }
     }

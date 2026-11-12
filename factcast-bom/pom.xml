@@ -217,7 +217,7 @@
       <dependency>
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
-        <version>33.7.2-jre</version>
+        <version>33.8.0-jre</version>
       </dependency>
       <!-- will be deprecated -->
       <dependency>
@@ -229,7 +229,7 @@
       <dependency>
         <groupId>at.yawk.lz4</groupId>
         <artifactId>lz4-java</artifactId>
-        <version>1.12.1</version>
+        <version>1.14.0</version>
       </dependency>
       <dependency>
         <groupId>org.apache.commons</groupId>

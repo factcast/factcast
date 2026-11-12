@@ -1,0 +1,72 @@
+= Ingestion performance improvement
+:page-blog-date: 2026-10-28
+:page-blog-tags: publish, ingest, concurrency, horizon
+:page-blog-summary: Concurrent unconditional publication now possible
+
+== Overview
+
+[quote]
+“FactCast is build for publishing business decisions, not high speed trading or gambling”
+
+That being said, with an ever-growing number of producers that could publish mass data, we came back to the limited ingestion throughput that is caused by (mainly) full serialization of publications and the number of transactions per second that can usually be achieved on PostgreSQL (rule of thumb is ~500 on commodity hardware).
+
+We started from 573 events per second on a developer laptop with version 0.9.15, while the current is 62x that fast publishing almost 36000 per second.
+This of course is peak and was measured under optimal conditions. Both of them.
+
+image::concurrent-unconditional-publishing-benchmark.png[]
+
+This is made possible by changing three major things:
+
+== 1. Listen notify replacement / “Nudge”
+
+*Baseline*
+
+* One notify per insert to let the eventstore(s) know that new data is there
+* Eventstore decides which subscriber is (potentially) interested
+* Wakes subscriber and makes them run a query for the new data
+
+*Improvement*
+
+* All inserts create rows in an unlogged notification table
+* Max one “Nudge” notification is sent per 100ms
+* Evenstore then queries the pending notifications
+* Wakes subscribers according to the queried notifications and makes them run a query for the new data
+* Eventstore queries again to find newer notifications in a configurable interval until 100ms are reached
+* When 100ms have passed a final query is done for new notifications as a safety net
+* Evenstore waits for another “nudge”
+
+*Effect*
+
+* Insertion does not need for a notify to finish (just the one that causes the nudge) → Throughput
+* I/O load and queries on the fact table stay roughly the same
+* Additional load by querying the notification table (is reduced regularly)
+
+== 2. Batched concurrent publication
+
+*Baseline*
+
+* Every publish creates its own database transaction
+
+*Improvement*
+
+* Every publish adds to a buffer and returns only when and if its respective entry was flushed
+
+*Effect*
+
+* Burst publications are joined into chunks per transaction, so that the TPS possible are not exceeded easily (max 500 by default, up to 10000).
+* We do never wait with flushing, so if publication frequency is low, it still will be one transaction per publication, and very little (as in almost unmeasurable) additional latency overhead.
+
+== 3. Lock free publication / Horizon
+
+*Baseline*
+
+* Full serialization by every publication using the same exclusive lock
+
+*Improvement*
+
+* Unconditional publication uses a shared lock instead, so that concurrent ones don’t block each other
+
+*Effect*
+
+* Order at the tail is no longer predictable
+* Solution: Querying is only done up to a horizon, where the transactions are committed and the order is final.

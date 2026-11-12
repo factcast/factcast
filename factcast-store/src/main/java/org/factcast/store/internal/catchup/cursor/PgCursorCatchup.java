@@ -56,7 +56,6 @@ public class PgCursorCatchup extends AbstractPgCatchup {
   @Override
   public void run() throws SQLException {
     try {
-
       final var b = createPgQueryBuilder(req.specs());
       final var extractor = new PgFactExtractor(serial);
       final var fromSerial = new AtomicLong(Math.max(serial.get(), fastForward));
@@ -100,7 +99,7 @@ public class PgCursorCatchup extends AbstractPgCatchup {
   /** hook for tests to influence the generated sql */
   @VisibleForTesting
   protected PgQueryBuilder createPgQueryBuilder(List<FactSpec> specs) {
-    return new PgQueryBuilder(req.specs());
+    return new PgQueryBuilder(req.specs(), props.isInternalExclusionEnabled());
   }
 
   private void logIfAboveThreshold(Duration elapsed) {

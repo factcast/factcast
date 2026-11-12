@@ -1,0 +1,5 @@
+= Sample: Unpublished draft
+:page-blog-draft: true
+
+This sample draft deliberately omits publication metadata.
+It must never appear in HTML output, search, indexes or RSS.

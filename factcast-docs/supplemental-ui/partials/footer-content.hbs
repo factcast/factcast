@@ -1,5 +1,5 @@
 <footer class="footer">
-  {{#with (resolvePage 'docs::About/imprint.adoc')}}
+  {{#with (resolvePage 'ROOT:About/imprint.adoc' component='docs')}}
   <a class="footer-imprint" href="{{{relativize ./url}}}">Legal Notice/Imprint</a>
   {{/with}}
   <a class="footer-github" href="https://github.com/factcast/factcast" title="FactCast on GitHub" aria-label="FactCast on GitHub">
