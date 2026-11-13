@@ -3,7 +3,7 @@
 :page-blog-tags: publish, concurrency, horizon
 :page-blog-summary: Reusing the cached horizon removes a publication barrier from state-token creation, at the cost of potentially more optimistic retries.
 
-Creating a state token now uses the server's cached safe horizon, avoiding a horizon database read and an exclusive publication lock.
+Creating a state token now uses the server's cached safe horizon by default, avoiding a horizon database read and an exclusive publication lock.
 This addresses https://github.com/factcast/factcast/issues/5121[issue #5121] and builds on xref:docs:blog:posts/2026-10-28-ingestion-performance.adoc[Ingestion performance improvement].
 
 == What changes
@@ -16,6 +16,10 @@ Previously, every token creation did this for freshness, adding contention even 
 Both `stateFor` and `currentStateFor` now store the requested fact specifications and the fact serial from the local horizon cache, already refreshed by notification processing and subscription catch-up.
 Each server has its own cache, which starts at a conservative zero and can lag behind the persisted horizon advanced by another server.
 Token creation still writes the token to the database.
+
+This behavior is controlled by `factcast.store.lean-state-token.enabled`, which defaults to `true`.
+Set it to `false` to advance the horizon before reading it when creating a token through either `stateFor` or `currentStateFor`.
+This reduces stale-boundary rejections at the cost of acquiring the exclusive publication lock during token creation.
 
 Conditional publication is unchanged: under the exclusive lock, it checks live facts after the token's boundary, including those beyond the cached horizon, and publishes only if none match.
 An older safe boundary widens this check, allowing additional rejections but no conflicting publications that a fresher boundary would reject.

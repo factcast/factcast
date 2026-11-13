@@ -556,6 +556,23 @@ class PgFactStoreTest {
       verify(horizonProvider, never()).advance();
       verifyNoInteractions(jdbcTemplate);
     }
+
+    @Test
+    void tokenCreationAdvancesBeforeReadingHorizonWhenLeanStateTokenIsDisabled() {
+      storeConfigurationProperties.getLeanStateToken().setEnabled(false);
+      List<FactSpec> specs = List.of(FactSpec.ns("ns1").type("type1"));
+      when(horizonProvider.currentPrimary())
+          .thenReturn(new FactStreamHorizon(UUID.randomUUID(), 42, 42));
+
+      State state = underTest.getStateFor(specs);
+
+      assertThat(state.serialOfLastMatchingFact()).isEqualTo(42L);
+      assertThat(state.specs()).isEqualTo(specs);
+      InOrder ordered = inOrder(horizonProvider);
+      ordered.verify(horizonProvider).advance();
+      ordered.verify(horizonProvider).currentPrimary();
+      verifyNoInteractions(jdbcTemplate);
+    }
   }
 
   @Nested
