@@ -351,7 +351,15 @@ public class PgFactStore extends AbstractFactStore {
   protected State getCurrentStateFor(Collection<FactSpec> specs) {
     return metrics.time(
         StoreMetrics.OP.GET_STATE_FOR,
-        () -> State.of(specs, horizonProvider.advance().factSerial()));
+        () -> {
+          if (!props.getLeanStateToken().isEnabled()) {
+            // Refresh before reading to avoid stale-boundary rejections, at the cost of locking.
+            horizonProvider.advance();
+          }
+          // A stale cached boundary can cause conservative rejection; conditional publication
+          // still validates under the exclusive lock.
+          return State.of(specs, horizonProvider.currentPrimary().factSerial());
+        });
   }
 
   @SuppressWarnings("DataFlowIssue")

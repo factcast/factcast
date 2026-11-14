@@ -78,6 +78,8 @@ final class FactStreamHorizonIntegrationTest {
     Fact unrelated = Fact.builder().ns("unrelated").buildWithoutPayload();
     store.publish(List.of(unrelated));
     long horizonSerial = store.serialOf(unrelated.id()).orElseThrow();
+    // Seed the cache explicitly so token creation does not race notification-driven refresh.
+    horizonProvider.advance();
     List<FactSpec> specs = List.of(FactSpec.ns(NS));
 
     StateToken unchangedToken = store.stateFor(specs);
@@ -109,6 +111,7 @@ final class FactStreamHorizonIntegrationTest {
             Fact.builder().ns(NS).buildWithoutPayload(),
             Fact.builder().ns(NS).buildWithoutPayload(),
             Fact.builder().ns(NS).buildWithoutPayload()));
+    horizonProvider.advance();
     StateToken tooLate = store.currentStateFor(specs);
     Fact staleDecision = Fact.builder().ns(NS).build("{\"observed\":" + projection.size() + "}");
 
@@ -140,6 +143,7 @@ final class FactStreamHorizonIntegrationTest {
                   if (attempts.incrementAndGet() == 1) {
                     assertThat(projection).hasSize(1);
                     store.publish(List.of(Fact.builder().ns(NS).buildWithoutPayload()));
+                    horizonProvider.advance();
                   }
                   return Attempt.publish(
                       Fact.builder().ns(NS).build("{\"observed\":" + projection.size() + "}"));
@@ -163,14 +167,15 @@ final class FactStreamHorizonIntegrationTest {
     transaction.executeWithoutResult(
         ignored -> {
           store.publish(List.of(fact));
-          long serial = store.serialOf(fact.id()).orElseThrow();
 
           StateToken stateToken = store.stateFor(List.of(FactSpec.ns(NS).type("transactional")));
           StateToken currentStateToken = store.currentStateFor(List.of(FactSpec.ns(NS)));
           assertThat(tokenStore.get(stateToken).orElseThrow().serialOfLastMatchingFact())
-              .isEqualTo(serial);
+              .isEqualTo(before.factSerial());
           assertThat(tokenStore.get(currentStateToken).orElseThrow().serialOfLastMatchingFact())
-              .isEqualTo(serial);
+              .isEqualTo(before.factSerial());
+          assertThat(horizonProvider.currentPrimary()).isEqualTo(before);
+          assertThat(horizonProvider.advance().factId()).isEqualTo(fact.id());
           assertThat(horizonProvider.currentPrimary()).isEqualTo(before);
         });
 
@@ -192,7 +197,7 @@ final class FactStreamHorizonIntegrationTest {
                 transaction.executeWithoutResult(
                     ignored -> {
                       store.publish(List.of(fact));
-                      store.stateFor(List.of(FactSpec.ns(NS)));
+                      horizonProvider.advance();
                       assertThat(horizonProvider.currentPrimary()).isEqualTo(before);
                       throw new IllegalStateException("rollback");
                     }))
@@ -247,8 +252,7 @@ final class FactStreamHorizonIntegrationTest {
                                               + "WHERE locktype='advisory' AND mode='ExclusiveLock' "
                                               + "AND granted=false)",
                                           Boolean.class)));
-                      StateToken token = store.stateFor(List.of(FactSpec.ns(NS)));
-                      return tokenStore.get(token).orElseThrow().serialOfLastMatchingFact();
+                      return horizonProvider.advance().factSerial();
                     });
               });
       Future<Long> secondState =
@@ -260,8 +264,7 @@ final class FactStreamHorizonIntegrationTest {
                 return transaction.execute(
                     ignored -> {
                       store.publish(List.of(second));
-                      StateToken token = store.stateFor(List.of(FactSpec.ns(NS)));
-                      return tokenStore.get(token).orElseThrow().serialOfLastMatchingFact();
+                      return horizonProvider.advance().factSerial();
                     });
               });
 
@@ -305,7 +308,7 @@ final class FactStreamHorizonIntegrationTest {
   }
 
   @Test
-  void stateTokenWaitsForHorizonBeforeCapturingState() throws Exception {
+  void stateTokensUseCachedHorizonWhilePublicationIsInFlight() throws Exception {
     Fact lowerMatching =
         Fact.builder().id(UUID.randomUUID()).ns(NS).type("matching-type").buildWithoutPayload();
     Fact higherNonMatching =
@@ -320,29 +323,28 @@ final class FactStreamHorizonIntegrationTest {
       CompletableFuture.runAsync(() -> store.publish(List.of(higherNonMatching)))
           .get(5, TimeUnit.SECONDS);
 
-      CompletableFuture<StateToken> tokenCreation =
-          CompletableFuture.supplyAsync(() -> store.stateFor(List.of(matchingSpec)));
-
-      await()
-          .atMost(Duration.ofSeconds(5))
-          .until(
+      FactStreamHorizon cached = horizonProvider.currentPrimary();
+      CompletableFuture<List<StateToken>> tokenCreation =
+          CompletableFuture.supplyAsync(
               () ->
-                  Boolean.TRUE.equals(
-                      jdbcTemplate.queryForObject(
-                          "SELECT EXISTS (SELECT 1 FROM pg_locks "
-                              + "WHERE locktype='advisory' AND mode='ExclusiveLock' "
-                              + "AND granted=false)",
-                          Boolean.class)));
-      assertThat(tokenCreation).isNotDone();
+                  List.of(
+                      store.stateFor(List.of(matchingSpec)),
+                      store.currentStateFor(List.of(matchingSpec))));
+
+      // Both tokens must be available while the publisher still holds its shared lock.
+      List<StateToken> tokens = tokenCreation.get(5, TimeUnit.SECONDS);
+      for (StateToken token : tokens) {
+        assertThat(tokenStore.get(token).orElseThrow().serialOfLastMatchingFact())
+            .isEqualTo(cached.factSerial());
+      }
 
       insert(lowerTransaction, reservedLowerSerial, lowerMatching);
       lowerTransaction.commit();
 
-      StateToken token = tokenCreation.get(5, TimeUnit.SECONDS);
-      State state = tokenStore.get(token).orElseThrow();
-      assertThat(state.serialOfLastMatchingFact())
-          .isEqualTo(store.serialOf(higherNonMatching.id()).orElseThrow());
-      assertThat(store.publishIfUnchanged(List.of(), Optional.of(token))).isTrue();
+      // Validation must still detect the lower serial that committed after token creation.
+      for (StateToken token : tokens) {
+        assertThat(store.publishIfUnchanged(List.of(), Optional.of(token))).isFalse();
+      }
     }
   }
 
