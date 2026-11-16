@@ -25,6 +25,24 @@ import org.springframework.boot.context.properties.source.MapConfigurationProper
 class StoreConfigurationPropertiesTest {
 
   @Test
+  void leanStateTokenDefaultsToEnabled() {
+    assertThat(new StoreConfigurationProperties().getLeanStateToken().isEnabled()).isTrue();
+  }
+
+  @Test
+  void bindsDocumentedLeanStateTokenProperty() {
+    Binder binder =
+        new Binder(
+            new MapConfigurationPropertySource(
+                Map.of("factcast.store.lean-state-token.enabled", "false")));
+
+    StoreConfigurationProperties props =
+        binder.bindOrCreate("factcast.store", StoreConfigurationProperties.class);
+
+    assertThat(props.getLeanStateToken().isEnabled()).isFalse();
+  }
+
+  @Test
   void bindsDocumentedPublishBatchedProperties() {
     Binder binder =
         new Binder(

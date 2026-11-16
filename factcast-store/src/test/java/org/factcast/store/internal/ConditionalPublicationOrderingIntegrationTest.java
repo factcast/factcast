@@ -25,6 +25,7 @@ import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
 import org.factcast.store.StoreConfigurationProperties;
+import org.factcast.store.internal.horizon.FactStreamHorizonProvider;
 import org.factcast.store.internal.lock.FactTableWriteLock;
 import org.factcast.test.IntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,9 +50,11 @@ class ConditionalPublicationOrderingIntegrationTest {
   @Autowired FactStore store;
   @Autowired ControlledWriteLock lock;
   @Autowired StoreConfigurationProperties properties;
+  @Autowired FactStreamHorizonProvider horizonProvider;
 
   @BeforeEach
-  void batchingIsEnabled() {
+  void refreshHorizonAndCheckBatching() {
+    horizonProvider.advance();
     assertThat(properties.getPublishBatched().isEnabled()).isTrue();
   }
 

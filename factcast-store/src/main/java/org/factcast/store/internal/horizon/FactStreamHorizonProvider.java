@@ -31,7 +31,7 @@ public interface FactStreamHorizonProvider {
   @NonNull
   FactStreamHorizon advance();
 
-  /** Returns the last primary horizon observed by {@link #advance()} without database access. */
+  /** Returns the cached committed primary horizon without database access. */
   @NonNull
   FactStreamHorizon currentPrimary();
 

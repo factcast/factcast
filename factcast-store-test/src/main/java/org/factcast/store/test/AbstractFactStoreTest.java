@@ -888,6 +888,8 @@ public abstract class AbstractFactStoreTest {
     // setup
     UUID agg1 = UUID.randomUUID();
     uut.publish(fact(agg1));
+    // Establish a fresh horizon before asserting that the first attempt succeeds.
+    catchup();
 
     PublishingResult ret =
         uut.lock(NS)
@@ -948,6 +950,8 @@ public abstract class AbstractFactStoreTest {
     UUID agg1 = UUID.randomUUID();
     UUID agg2 = UUID.randomUUID();
     uut.publish(fact(agg1));
+    // Establish a fresh horizon before asserting that the first attempt succeeds.
+    catchup();
 
     PublishingResult ret =
         uut.lock(NS)
@@ -970,6 +974,8 @@ public abstract class AbstractFactStoreTest {
     UUID agg1 = UUID.randomUUID();
     UUID agg2 = UUID.randomUUID();
     uut.publish(fact(agg1));
+    // Establish a fresh horizon before asserting that the first attempt succeeds.
+    catchup();
 
     PublishingResult ret =
         uut.lock(NS)
@@ -1144,6 +1150,8 @@ public abstract class AbstractFactStoreTest {
               if (c.getCount() > 0) {
                 Fact conflictingFact = fact(agg1);
                 uut.publish(conflictingFact);
+                // Refresh the horizon so the next retry can progress after this conflict.
+                catchup();
               }
               return Attempt.publish(fact(agg1)).andThen(e);
             });

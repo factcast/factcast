@@ -262,6 +262,14 @@ public class StoreConfigurationProperties implements InitializingBean {
 
   @Valid public PublishBatch publishBatched = new PublishBatch();
 
+  @Data
+  public static class LeanStateToken {
+    // Reuse the cached safe horizon to avoid publication lock contention during token creation.
+    boolean enabled = true;
+  }
+
+  @Valid LeanStateToken leanStateToken = new LeanStateToken();
+
   /**
    * When catching up, if production of a full notification of facts takes longer than this (10
    * seconds default, 2 seconds minimum), an additional flush is inserted into the pipelin in order
