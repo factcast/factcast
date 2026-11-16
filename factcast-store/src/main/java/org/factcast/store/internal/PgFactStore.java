@@ -352,13 +352,15 @@ public class PgFactStore extends AbstractFactStore {
     return metrics.time(
         StoreMetrics.OP.GET_STATE_FOR,
         () -> {
-          if (!props.getLeanStateToken().isEnabled()) {
-            // Refresh before reading to avoid stale-boundary rejections, at the cost of locking.
-            horizonProvider.advance();
-          }
+          FactStreamHorizon horizon =
+              props.getLeanStateToken().isEnabled()
+                  // Reuse the cached safe horizon to avoid publication lock contention.
+                  ? horizonProvider.currentPrimary()
+                  // Refresh to reduce stale-boundary rejections, at the cost of locking.
+                  : horizonProvider.advance();
           // A stale cached boundary can cause conservative rejection; conditional publication
           // still validates under the exclusive lock.
-          return State.of(specs, horizonProvider.currentPrimary().factSerial());
+          return State.of(specs, horizon.factSerial());
         });
   }
 

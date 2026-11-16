@@ -38,6 +38,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @SpringJUnitConfig(classes = PgTestConfiguration.class)
 @TestPropertySource(properties = "factcast.store.lean-state-token.enabled=false")
@@ -49,6 +51,7 @@ class AdvancingStateTokenIntegrationTest {
   @Autowired FactStore store;
   @Autowired TokenStore tokenStore;
   @Autowired FactStreamHorizonProvider horizonProvider;
+  @Autowired PlatformTransactionManager transactionManager;
 
   // Only token creation should refresh the horizon after publication in these tests.
   @MockitoBean NudgeNotificationHandler nudgeHandler;
@@ -71,8 +74,51 @@ class AdvancingStateTokenIntegrationTest {
     assertThat(tokenStore.get(token).orElseThrow().serialOfLastMatchingFact())
         .isGreaterThan(cached.factSerial())
         .isEqualTo(horizonProvider.currentPrimary().factSerial());
-    Fact decision = Fact.builder().ns("advancing-token").buildWithoutPayload();
-    assertThat(store.publishIfUnchanged(List.of(decision), Optional.of(token))).isTrue();
-    assertThat(store.fetchById(decision.id())).isPresent();
+    Fact conditionalFact = Fact.builder().ns("advancing-token").buildWithoutPayload();
+    assertThat(store.publishIfUnchanged(List.of(conditionalFact), Optional.of(token))).isTrue();
+    assertThat(store.fetchById(conditionalFact.id())).isPresent();
+  }
+
+  @ParameterizedTest
+  @ValueSource(booleans = {false, true})
+  void earlierPublicationInCallerTransactionDoesNotInvalidateLaterToken(
+      boolean useCurrentStateFor) {
+    // 1. wipe.sql empties db, so "cached" starts at serial 0
+    // 2. inside TX, publishing "initial" assigns serial 1 and holds the exclusive lock
+    // 3. stateFor/currentStateFor calls advance(): "tokenSerial" must be 1, while the shared cache
+    //    stays at 0 until commit
+    // 4. publishIfUnchanged must accept "conditionalFact" because "initial" predates "token".
+    // Reading
+    //    serial 0 from "cached" instead would make validation reject our own "initial" fact at 1
+    // 5. after commit, both "initial" and "conditionalFact" are visible; the shared horizon points
+    // to
+    //    "initial", since token creation advanced it before "conditionalFact" was published
+    List<FactSpec> specs = List.of(FactSpec.ns("advancing-token"));
+    FactStreamHorizon cached = horizonProvider.currentPrimary();
+    Fact initial = Fact.builder().ns("advancing-token").buildWithoutPayload();
+    Fact conditionalFact = Fact.builder().ns("advancing-token").buildWithoutPayload();
+    TransactionTemplate tx = new TransactionTemplate(transactionManager);
+    tx.setTimeout(5);
+
+    tx.executeWithoutResult(
+        ignored -> {
+          store.publish(List.of(initial));
+          StateToken token =
+              useCurrentStateFor ? store.currentStateFor(specs) : store.stateFor(specs);
+          long tokenSerial = tokenStore.get(token).orElseThrow().serialOfLastMatchingFact();
+
+          // shared cache must not expose this tx's uncommitted horizon
+          assertThat(horizonProvider.currentPrimary()).isEqualTo(cached);
+          assertThat(store.publishIfUnchanged(List.of(conditionalFact), Optional.of(token)))
+              .as(
+                  "an earlier publication in the caller transaction must not invalidate a later token")
+              .isTrue();
+          assertThat(tokenSerial).isEqualTo(store.serialOf(initial.id()).orElseThrow());
+          assertThat(horizonProvider.currentPrimary()).isEqualTo(cached);
+        });
+
+    assertThat(store.fetchById(initial.id())).isPresent();
+    assertThat(store.fetchById(conditionalFact.id())).isPresent();
+    assertThat(horizonProvider.currentPrimary().factId()).isEqualTo(initial.id());
   }
 }
