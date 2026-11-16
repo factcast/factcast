@@ -37,4 +37,25 @@ public interface Projection extends ProgressAware {
   default void onError(@NonNull Throwable exception) {
     LoggerFactory.getLogger(getClass()).warn("Unhandled onError:", exception);
   }
+
+  /**
+   * Selects the starting point only when no saved progress is available. Saved checkpoints and
+   * snapshots always take precedence, so changing this policy does not reset a projection.
+   *
+   * @return the nonnull initialization policy
+   */
+  default @NonNull InitialPosition initialPosition() {
+    return InitialPosition.FROM_SCRATCH;
+  }
+
+  enum InitialPosition {
+    /** Replay all matching history when no saved progress exists. */
+    FROM_SCRATCH,
+    /**
+     * Consume after the approximate current latest serial without saving an initial checkpoint.
+     * Without saved progress, each new initialization selects now again and can skip intervening
+     * events.
+     */
+    FROM_NOW
+  }
 }

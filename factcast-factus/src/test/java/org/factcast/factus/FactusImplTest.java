@@ -923,6 +923,7 @@ class FactusImplTest {
     void subscribe() {
       // INIT
       SubscribedProjection subscribedProjection = mock(SubscribedProjection.class);
+      when(subscribedProjection.initialPosition()).thenCallRealMethod();
       Projector<SubscribedProjection> eventApplier = mock(Projector.class);
 
       when(subscribedProjection.acquireWriteToken(any())).thenReturn(() -> {});
@@ -995,6 +996,7 @@ class FactusImplTest {
     void ignoresFastForwardIfBehindConsumedFact() {
       // INIT
       SubscribedProjection subscribedProjection = mock(SubscribedProjection.class);
+      when(subscribedProjection.initialPosition()).thenCallRealMethod();
       Projector<SubscribedProjection> eventApplier = mock(Projector.class);
 
       when(subscribedProjection.acquireWriteToken(any())).thenReturn(() -> {});
@@ -1046,6 +1048,7 @@ class FactusImplTest {
     void subscribeWithCustomRetryWaitTime() {
       // INIT
       SubscribedProjection subscribedProjection = mock(SubscribedProjection.class);
+      when(subscribedProjection.initialPosition()).thenCallRealMethod();
       Projector<SubscribedProjection> eventApplier = mock(Projector.class);
 
       when(subscribedProjection.acquireWriteToken(any())).thenReturn(() -> {});
@@ -1118,6 +1121,7 @@ class FactusImplTest {
     void closeSubscribed() throws Exception {
       // INIT
       SubscribedProjection subscribedProjection = mock(SubscribedProjection.class);
+      when(subscribedProjection.initialPosition()).thenCallRealMethod();
       Projector<SubscribedProjection> eventApplier = mock(Projector.class);
 
       when(subscribedProjection.acquireWriteToken(any())).thenReturn(() -> {});
