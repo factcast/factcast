@@ -49,7 +49,7 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
   @JsonProperty boolean ephemeral;
 
   // Retained by client-side copies, but never sent to the server.
-  @JsonIgnore boolean stateAwareEphemeral;
+  @JsonIgnore boolean resumableEphemeral;
 
   @JsonProperty UUID startingAfter;
 
@@ -74,7 +74,7 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
     streamInfo = request.streamInfo();
     continuous = request.continuous();
     ephemeral = request.ephemeral();
-    stateAwareEphemeral = request.stateAwareEphemeral();
+    resumableEphemeral = request.resumableEphemeral();
     startingAfter = request.startingAfter().orElse(null);
     debugInfo = request.debugInfo();
     specs.addAll(request.specs());

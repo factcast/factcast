@@ -45,11 +45,7 @@ public interface SpecBuilder {
    * policy does not guarantee that buffered facts have been processed when delivery returns.
    */
   @NonNull
-  default SubscriptionRequest fromNowOnAndResume() {
-    SubscriptionRequestTO request = SubscriptionRequestTO.from(fromNowOn());
-    request.stateAwareEphemeral(true);
-    return request;
-  }
+  SubscriptionRequest fromNowOnAndResume();
 
   // mutators
   @NonNull
