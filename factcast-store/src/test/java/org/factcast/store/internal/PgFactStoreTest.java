@@ -57,11 +57,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.*;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionCallback;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 @SuppressWarnings("rawtypes")
@@ -144,6 +146,53 @@ class PgFactStoreTest {
 
       assertThatThrownBy(() -> underTest.publishBatchable(Collections.singletonList(fact)))
           .isInstanceOf(RuntimeException.class);
+    }
+
+    @Test
+    void rejectsBatchablePublicationInReadOnlyMode() {
+      storeConfigurationProperties.setReadOnlyModeEnabled(true);
+
+      assertThatThrownBy(() -> underTest.publishBatchable(List.of(fact)))
+          .isInstanceOf(UnsupportedOperationException.class)
+          .hasMessage("Publishing is not allowed in read-only mode");
+
+      verifyNoInteractions(queue, jdbcTemplate, lock);
+    }
+
+    @Test
+    void publishesInsideCallerTransactionWithoutQueuing() {
+      boolean transactionWasActive = TransactionSynchronizationManager.isActualTransactionActive();
+      try {
+        TransactionSynchronizationManager.setActualTransactionActive(true);
+
+        underTest.publishBatchable(List.of(fact));
+
+        verify(lock).acquireExclusiveTXLock();
+        verify(lock, never()).acquireSharedTXLock();
+        verify(jdbcTemplate)
+            .batchUpdate(
+                eq(PgConstants.INSERT_FACT),
+                eq(List.of(fact)),
+                eq(Integer.MAX_VALUE),
+                any(ParameterizedPreparedStatementSetter.class));
+        verifyNoInteractions(queue);
+      } finally {
+        TransactionSynchronizationManager.setActualTransactionActive(transactionWasActive);
+      }
+    }
+
+    @Test
+    void queuesDefensiveCopyWhenPublishBatchingIsEnabled() {
+      storeConfigurationProperties.getPublishBatched().setEnabled(true);
+      when(queue.addAndFlush(anyList())).thenReturn(CompletableFuture.completedFuture(null));
+      List<Fact> facts = new ArrayList<>(List.of(fact));
+
+      underTest.publish(facts);
+
+      ArgumentCaptor<List<Fact>> published = ArgumentCaptor.forClass(List.class);
+      verify(queue).addAndFlush(published.capture());
+      assertThat(published.getValue()).isNotSameAs(facts).containsExactly(fact);
+      verifyNoInteractions(jdbcTemplate, lock);
     }
   }
 
@@ -245,6 +294,16 @@ class PgFactStoreTest {
       when(subscriptionFactory.subscribe(request, observer)).thenReturn(sub);
       Subscription s = underTest.subscribe(request, observer);
       assertThat(s).isSameAs(sub);
+    }
+
+    @Test
+    void subscribesContinuouslyWithFollowMetrics() {
+      when(request.continuous()).thenReturn(true);
+      when(subscriptionFactory.subscribe(request, observer)).thenReturn(sub);
+
+      assertThat(underTest.subscribe(request, observer)).isSameAs(sub);
+
+      verify(metrics).time(eq(StoreMetrics.OP.SUBSCRIBE_FOLLOW), any(Supplier.class));
     }
   }
 
@@ -748,6 +807,16 @@ class PgFactStoreTest {
 
       assertThat(underTest.lastSerialBefore(date.toLocalDate())).isEqualTo(42L);
     }
+
+    @Test
+    void returnsZeroWhenDateQueryHasNoResult() {
+      java.sql.Date date = java.sql.Date.valueOf("2020-01-01");
+      when(jdbcTemplate.queryForObject(
+              eq(PgConstants.LAST_SERIAL_BEFORE_DATE), any(RowMapper.class), eq(date)))
+          .thenThrow(new EmptyResultDataAccessException(1));
+
+      assertThat(underTest.lastSerialBefore(date.toLocalDate())).isZero();
+    }
   }
 
   @Nested
@@ -806,6 +875,16 @@ class PgFactStoreTest {
     @Test
     void returnsNullWhenNoDateBoundaryExists() {
       java.sql.Date date = java.sql.Date.valueOf("2020-01-01");
+
+      assertThat(underTest.firstSerialAfter(date.toLocalDate())).isNull();
+    }
+
+    @Test
+    void returnsNullWhenDateQueryHasNoResult() {
+      java.sql.Date date = java.sql.Date.valueOf("2020-01-01");
+      when(jdbcTemplate.queryForObject(
+              eq(PgConstants.FIRST_SERIAL_AFTER_DATE), any(RowMapper.class), eq(date)))
+          .thenThrow(new EmptyResultDataAccessException(1));
 
       assertThat(underTest.firstSerialAfter(date.toLocalDate())).isNull();
     }
