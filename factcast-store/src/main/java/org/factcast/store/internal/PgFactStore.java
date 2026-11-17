@@ -153,8 +153,9 @@ public class PgFactStore extends AbstractFactStore {
     }
     var defensiveCopy = new ArrayList<>(factsToPublish);
 
-    if (props.getPublishBatched().isEnabled()) publishBatchable(defensiveCopy);
-    else publishDirectly(defensiveCopy);
+    // if (props.getPublishBatched().isEnabled())
+    publishBatchable(defensiveCopy);
+    // else publishDirectly(defensiveCopy);
   }
 
   void publishDirectly(@NonNull List<? extends Fact> factsToPublish) {
