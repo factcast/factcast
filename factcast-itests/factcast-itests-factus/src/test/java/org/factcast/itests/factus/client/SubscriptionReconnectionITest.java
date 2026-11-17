@@ -22,9 +22,11 @@ import static org.awaitility.Awaitility.await;
 import eu.rekawek.toxiproxy.model.ToxicDirection;
 import io.grpc.StatusRuntimeException;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import nl.altindag.console.ConsoleCaptor;
@@ -38,6 +40,9 @@ import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionClosedException;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.observer.FactObserver;
+import org.factcast.factus.Factus;
+import org.factcast.factus.HandlerFor;
+import org.factcast.factus.projection.LocalSubscribedProjection;
 import org.factcast.itests.TestFactusApplication;
 import org.factcast.test.AbstractFactCastIntegrationTest;
 import org.factcast.test.toxi.FactCastProxy;
@@ -46,6 +51,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 
@@ -63,6 +69,9 @@ class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
   private static final int MAX_FACTS = 10000;
   private static final long LATENCY = 2000;
   @Autowired FactCast fc;
+  @Autowired Factus factus;
+  @Autowired JdbcTemplate jdbcTemplate;
+
   FactCastProxy proxy;
 
   @BeforeEach
@@ -172,6 +181,59 @@ class SubscriptionReconnectionITest extends AbstractFactCastIntegrationTest {
                           consoleCaptor.getStandardOutput().stream()
                               .filter(e -> e.contains("Trying to resubscribe")))
                       .hasSize(NUMBER_OF_ATTEMPTS - 1));
+    }
+  }
+
+  @Test
+  @SneakyThrows
+  void fromNowProjectionResumesOnReconnect() {
+    FromNowCounter projection = new FromNowCounter();
+    try (var sub = factus.subscribeAndBlock(projection)) {
+      sub.awaitCatchup(10000);
+      assertThat(projection.count.get()).isZero();
+      var initialPosition = projection.factStreamPosition();
+      assertThat(initialPosition).isNotNull();
+
+      proxy.disable();
+      // Commit an event directly to the store while the subscription's proxy is disabled.
+      Fact duringInterruption = Fact.builder().ns("ns").type("type").buildWithoutPayload();
+      jdbcTemplate.update(
+          "INSERT INTO fact(header,payload) VALUES (?::jsonb,?::jsonb)",
+          duringInterruption.jsonHeader(),
+          duringInterruption.jsonPayload());
+      // proxy still disabled, the projection count should not increase
+      assertThat(projection.count.get()).isZero();
+      assertThat(projection.factStreamPosition()).isEqualTo(initialPosition);
+
+      proxy.enable();
+      factus.waitFor(projection, duringInterruption.id(), Duration.ofSeconds(5));
+      assertThat(projection.count.get()).isEqualTo(1);
+
+      Fact afterReconnect = Fact.builder().ns("ns").type("type").buildWithoutPayload();
+      fc.publish(afterReconnect);
+      factus.waitFor(projection, afterReconnect.id(), Duration.ofSeconds(5));
+      // Recovery keeps the resumable cursor and never selects a fresh FROM_NOW boundary.
+      assertThat(projection.count.get()).isEqualTo(2);
+      assertThat(projection.initialPositionCalls.get()).isEqualTo(1);
+    } finally {
+      proxy.enable();
+    }
+  }
+
+  static class FromNowCounter extends LocalSubscribedProjection {
+    final AtomicInteger count = new AtomicInteger();
+    final AtomicInteger initialPositionCalls = new AtomicInteger();
+
+    @Override
+    @NonNull
+    public InitialPosition initialPosition() {
+      initialPositionCalls.incrementAndGet();
+      return InitialPosition.FROM_NOW;
+    }
+
+    @HandlerFor(ns = "ns", type = "type")
+    void apply(Fact fact) {
+      count.incrementAndGet();
     }
   }
 

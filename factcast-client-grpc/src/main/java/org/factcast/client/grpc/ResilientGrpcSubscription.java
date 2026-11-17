@@ -175,10 +175,10 @@ public class ResilientGrpcSubscription extends AbstractSubscription {
     FactStreamPosition last = lastPosition.get();
     if (last != null && last.factId() != null) {
       to.startingAfter(last.factId());
-      if (to.ephemeral()) {
-        // the subscription tracked last position, so we resume from there
-        to.ephemeral(false);
-      }
+    }
+    if (to.ephemeral() && to.startingAfter().isPresent()) {
+      // the subscription tracked last position, so we resume from there
+      to.ephemeral(false);
     }
 
     if (currentSubscription.get() == null) {
@@ -242,6 +242,10 @@ public class ResilientGrpcSubscription extends AbstractSubscription {
     @Override
     public void onFastForward(@NonNull FactStreamPosition factIdToFfwdTo) {
       originalObserver.onFastForward(factIdToFfwdTo);
+      if (originalRequest.ephemeral() && factIdToFfwdTo.factId() != null) {
+        // sets the last position after initial fast-forward for ephemeral projections
+        lastPosition.set(factIdToFfwdTo);
+      }
     }
 
     @Override
