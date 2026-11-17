@@ -52,9 +52,11 @@ public interface Projection extends ProgressAware {
     /** Replay all matching history when no saved progress exists. */
     FROM_SCRATCH,
     /**
-     * Consume after the approximate current latest serial without saving an initial checkpoint.
-     * Without saved progress, each new initialization selects now again and can skip intervening
-     * events.
+     * Start after the server-selected publication-safe horizon. With fast-forward support enabled,
+     * a real horizon UUID is signaled on the subscription stream. State-aware projections save it
+     * through their existing checkpoint setter and can resume from it. An empty horizon has no UUID
+     * to save. Without saved progress, a new initialization selects now again and can skip
+     * intervening events. This policy alone creates neither a snapshot nor aggregate existence.
      */
     FROM_NOW
   }

@@ -36,6 +36,16 @@ public interface SubscriptionRequest {
 
   boolean ephemeral();
 
+  /**
+   * Client-only opt-in to resume an ephemeral subscription once a usable UUID is available. An
+   * explicit starting UUID takes precedence over ephemeral initialization. Otherwise, a
+   * successfully forwarded fast-forward or delivered fact supplies the reconnect cursor. Legacy
+   * ephemeral subscriptions continue selecting now on every connection.
+   */
+  default boolean stateAwareEphemeral() {
+    return false;
+  }
+
   Optional<UUID> startingAfter();
 
   List<FactSpec> specs();

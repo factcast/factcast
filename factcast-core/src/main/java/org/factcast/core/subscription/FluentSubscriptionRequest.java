@@ -39,6 +39,8 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
 
   boolean ephemeral;
 
+  boolean stateAwareEphemeral;
+
   long keepaliveIntervalInMs;
 
   /**
@@ -88,6 +90,12 @@ class FluentSubscriptionRequest implements SubscriptionRequest {
     public @NonNull SubscriptionRequest fromNowOn() {
       toBuild.ephemeral = true;
       return toBuild;
+    }
+
+    @Override
+    public @NonNull SubscriptionRequest fromNowOnAndResume() {
+      toBuild.stateAwareEphemeral = true;
+      return fromNowOn();
     }
 
     @Override

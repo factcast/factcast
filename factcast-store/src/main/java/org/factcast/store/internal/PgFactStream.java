@@ -138,8 +138,14 @@ public class PgFactStream {
     initializeSerialToStartAfter();
     try {
       if (request.ephemeral()) {
-        // just fast forward to the latest event published by now
-        serial.set(horizonProvider.advance().factSerial());
+        // Ephemeral initialization takes precedence over a starting UUID, as before.
+        FactStreamHorizon horizon = horizonProvider.advance();
+        if (horizon.factId() != null) {
+          // Announce the initial boundary even if the supplied cursor is equal to or ahead of it.
+          pipeline.process(
+              Signal.of(FactStreamPosition.of(horizon.factId(), horizon.factSerial())));
+        }
+        serial.set(horizon.factSerial());
       } else {
         doCatchup();
       }

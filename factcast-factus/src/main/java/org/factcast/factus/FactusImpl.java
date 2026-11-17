@@ -130,7 +130,7 @@ public class FactusImpl implements Factus {
             managedProjection.withLock(
                 () ->
                     catchupProjection(
-                        managedProjection, factId(managedProjection.factStreamPosition()), null)));
+                        managedProjection, managedProjection.factStreamPosition(), null)));
   }
 
   @Override
@@ -213,17 +213,16 @@ public class FactusImpl implements Factus {
           }
         };
 
-    // The initial cursor belongs to this subscription; selecting now does not save progress.
-    UUID existingState = factId(subscribedProjection.factStreamPosition());
-    UUID startingAfter =
-        existingState != null
-            ? existingState
-            : factId(resolveInitialPosition(subscribedProjection));
-
+    UUID stateOrNull =
+        Optional.ofNullable(subscribedProjection.factStreamPosition())
+            .map(FactStreamPosition::factId)
+            .orElse(null);
     return fc.subscribe(
-        SubscriptionRequest.follow(handler.createFactSpecs())
-            .withDebugHintFrom(subscribedProjection.getClass())
-            .fromNullable(startingAfter),
+        configureFrom(
+            SubscriptionRequest.follow(handler.createFactSpecs())
+                .withDebugHintFrom(subscribedProjection.getClass()),
+            subscribedProjection,
+            stateOrNull),
         fo);
   }
 
@@ -315,28 +314,14 @@ public class FactusImpl implements Factus {
     return Optional.of(aggregate);
   }
 
-  @Nullable
-  private UUID factId(@Nullable FactStreamPosition position) {
-    return position == null ? null : position.factId();
-  }
-
-  /** Only called without usable saved progress; recovery must never evaluate the policy. */
-  @Nullable
-  private FactStreamPosition resolveInitialPosition(Projection projection) {
-    if (projection.initialPosition() == Projection.InitialPosition.FROM_SCRATCH) {
-      return null;
-    }
-    long serial = fc.store().latestSerial();
-    if (serial == 0) {
-      // empty store
-      return null;
-    }
-    Fact fact =
-        fc.store()
-            .fetchBySerial(serial)
-            .orElseThrow(
-                () -> new IllegalStateException("No fact found for initial serial " + serial));
-    return FactStreamPosition.of(fact.id(), serial);
+  private <P extends Projection> void catchupProjection(
+      @NonNull P projection,
+      FactStreamPosition stateOrNull,
+      @Nullable BiConsumer<P, UUID> afterProcessing) {
+    catchupProjection(
+        projection,
+        Optional.ofNullable(stateOrNull).map(FactStreamPosition::factId).orElse(null),
+        afterProcessing);
   }
 
   /**
@@ -347,18 +332,6 @@ public class FactusImpl implements Factus {
   protected <P extends Projection> UUID catchupProjection(
       @NonNull P projection,
       @Nullable UUID stateOrNull,
-      @Nullable BiConsumer<P, UUID> afterProcessing) {
-    // A fresh cursor is only a request boundary, not evidence of applied/restored state.
-    UUID startingAfter =
-        stateOrNull != null ? stateOrNull : factId(resolveInitialPosition(projection));
-    return catchupProjection(projection, stateOrNull, startingAfter, afterProcessing);
-  }
-
-  @SneakyThrows
-  private <P extends Projection> UUID catchupProjection(
-      @NonNull P projection,
-      @Nullable UUID existingStateOrNull,
-      @Nullable UUID startingAfter,
       @Nullable BiConsumer<P, UUID> afterProcessing) {
     Projector<P> handler = ehFactory.create(projection);
     AtomicInteger factCount = new AtomicInteger(0);
@@ -409,7 +382,7 @@ public class FactusImpl implements Factus {
               }
 
               // only persist ffwd if we ever had a state or applied facts in this catchup
-              if (existingStateOrNull != null || factStreamPosition != null) {
+              if (stateOrNull != null || factStreamPosition != null) {
                 positionOfLastFactApplied.set(factIdToFfwdTo);
               }
             }
@@ -423,15 +396,28 @@ public class FactusImpl implements Factus {
     //
     synchronized (projection) {
       fc.subscribe(
-              SubscriptionRequest.catchup(factSpecs)
-                  .withDebugHintFrom(projection.getClass())
-                  .fromNullable(startingAfter),
+              configureFrom(
+                  SubscriptionRequest.catchup(factSpecs).withDebugHintFrom(projection.getClass()),
+                  projection,
+                  stateOrNull),
               fo)
           .awaitComplete();
     }
     return Optional.ofNullable(positionOfLastFactApplied.get())
         .map(FactStreamPosition::factId)
         .orElse(null);
+  }
+
+  private SubscriptionRequest configureFrom(
+      SpecBuilder builder, Projection projection, @Nullable UUID savedPosition) {
+    if (savedPosition != null) {
+      return builder.from(savedPosition);
+    }
+    return switch (projection.initialPosition()) {
+      case FROM_SCRATCH -> builder.fromScratch();
+        // TODO check for state aware projection needed?
+      case FROM_NOW -> builder.fromNowOnAndResume();
+    };
   }
 
   @VisibleForTesting

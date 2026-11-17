@@ -37,6 +37,20 @@ public interface SpecBuilder {
   @NonNull
   SubscriptionRequest fromNowOn();
 
+  /**
+   * Start at the server-selected publication-safe horizon, then resume from a usable UUID on
+   * reconnect. The observer must handle fast-forward callbacks if it needs to save this boundary.
+   * The boundary is available only when fast-forward is negotiated and the horizon has a UUID.
+   * Without a UUID, reconnect selects now again; it does not replay history. This client-only
+   * policy does not guarantee that buffered facts have been processed when delivery returns.
+   */
+  @NonNull
+  default SubscriptionRequest fromNowOnAndResume() {
+    SubscriptionRequestTO request = SubscriptionRequestTO.from(fromNowOn());
+    request.stateAwareEphemeral(true);
+    return request;
+  }
+
   // mutators
   @NonNull
   SpecBuilder follow(@NonNull Collection<FactSpec> specification);
