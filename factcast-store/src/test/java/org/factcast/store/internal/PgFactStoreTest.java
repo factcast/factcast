@@ -669,9 +669,30 @@ class PgFactStoreTest {
 
     @Test
     void fetchesSerial() {
-      when(jdbcTemplate.queryForObject(eq(PgConstants.HIGHWATER_SERIAL), (RowMapper<Long>) any()))
-          .thenReturn(123L);
+      when(horizonProvider.currentPrimary())
+          .thenReturn(new FactStreamHorizon(UUID.randomUUID(), 123L, 0L));
       assertThat(underTest.latestSerial()).isEqualTo(123L);
+    }
+
+    @Test
+    void doesNotExposeFactsBeyondTheCommittedHorizon() {
+      when(horizonProvider.currentPrimary())
+          .thenReturn(new FactStreamHorizon(UUID.randomUUID(), 42L, 0L));
+
+      assertThat(underTest.latestSerial()).isEqualTo(42L);
+    }
+
+    @Test
+    void returnsZeroWhenNoFactsAreWithinTheHorizon() {
+      when(horizonProvider.currentPrimary()).thenReturn(FactStreamHorizon.empty());
+      assertThat(underTest.latestSerial()).isZero();
+    }
+
+    @Test
+    void returnsZeroWhenTheStoreIsEmpty() {
+      when(horizonProvider.currentPrimary()).thenReturn(FactStreamHorizon.empty());
+
+      assertThat(underTest.latestSerial()).isZero();
     }
   }
 
@@ -688,7 +709,44 @@ class PgFactStoreTest {
       when(jdbcTemplate.queryForObject(
               eq(PgConstants.LAST_SERIAL_BEFORE_DATE), any(RowMapper.class), eq(date)))
           .thenReturn(123L);
+      when(horizonProvider.currentPrimary())
+          .thenReturn(new FactStreamHorizon(UUID.randomUUID(), 200L, 0L));
       assertThat(underTest.lastSerialBefore(date.toLocalDate())).isEqualTo(123L);
+    }
+
+    @Test
+    void doesNotExposeDateBoundariesBeyondTheCommittedHorizon() {
+      java.sql.Date date = java.sql.Date.valueOf("2020-01-01");
+      when(jdbcTemplate.queryForObject(
+              eq(PgConstants.LAST_SERIAL_BEFORE_DATE), any(RowMapper.class), eq(date)))
+          .thenReturn(123L);
+      when(horizonProvider.currentPrimary())
+          .thenReturn(new FactStreamHorizon(UUID.randomUUID(), 42L, 0L));
+
+      assertThat(underTest.lastSerialBefore(date.toLocalDate())).isEqualTo(42L);
+    }
+
+    @Test
+    void returnsZeroWhenNoFactsAreWithinTheHorizon() {
+      java.sql.Date date = java.sql.Date.valueOf("2020-01-01");
+      when(jdbcTemplate.queryForObject(
+              eq(PgConstants.LAST_SERIAL_BEFORE_DATE), any(RowMapper.class), eq(date)))
+          .thenReturn(123L);
+      when(horizonProvider.currentPrimary()).thenReturn(FactStreamHorizon.empty());
+
+      assertThat(underTest.lastSerialBefore(date.toLocalDate())).isZero();
+    }
+
+    @Test
+    void futureDateFallsBackToTheCommittedHorizon() {
+      java.sql.Date date = java.sql.Date.valueOf("2020-01-01");
+      when(jdbcTemplate.queryForObject(
+              eq(PgConstants.LAST_SERIAL_BEFORE_DATE), any(RowMapper.class), eq(date)))
+          .thenReturn(-1L);
+      when(horizonProvider.currentPrimary())
+          .thenReturn(new FactStreamHorizon(UUID.randomUUID(), 42L, 0L));
+
+      assertThat(underTest.lastSerialBefore(date.toLocalDate())).isEqualTo(42L);
     }
   }
 
@@ -705,7 +763,51 @@ class PgFactStoreTest {
       when(jdbcTemplate.queryForObject(
               eq(PgConstants.FIRST_SERIAL_AFTER_DATE), any(RowMapper.class), eq(date)))
           .thenReturn(123L);
+      when(horizonProvider.currentPrimary())
+          .thenReturn(new FactStreamHorizon(UUID.randomUUID(), 200L, 0L));
       assertThat(underTest.firstSerialAfter(date.toLocalDate())).isEqualTo(123L);
+    }
+
+    @Test
+    void returnsSerialAtTheCommittedHorizon() {
+      java.sql.Date date = java.sql.Date.valueOf("2020-01-01");
+      when(jdbcTemplate.queryForObject(
+              eq(PgConstants.FIRST_SERIAL_AFTER_DATE), any(RowMapper.class), eq(date)))
+          .thenReturn(123L);
+      when(horizonProvider.currentPrimary())
+          .thenReturn(new FactStreamHorizon(UUID.randomUUID(), 123L, 0L));
+
+      assertThat(underTest.firstSerialAfter(date.toLocalDate())).isEqualTo(123L);
+    }
+
+    @Test
+    void returnsNullWhenFirstMatchingSerialIsBeyondTheCommittedHorizon() {
+      java.sql.Date date = java.sql.Date.valueOf("2020-01-01");
+      when(jdbcTemplate.queryForObject(
+              eq(PgConstants.FIRST_SERIAL_AFTER_DATE), any(RowMapper.class), eq(date)))
+          .thenReturn(123L);
+      when(horizonProvider.currentPrimary())
+          .thenReturn(new FactStreamHorizon(UUID.randomUUID(), 42L, 0L));
+
+      assertThat(underTest.firstSerialAfter(date.toLocalDate())).isNull();
+    }
+
+    @Test
+    void returnsNullWhenNoFactsAreWithinTheHorizon() {
+      java.sql.Date date = java.sql.Date.valueOf("2020-01-01");
+      when(jdbcTemplate.queryForObject(
+              eq(PgConstants.FIRST_SERIAL_AFTER_DATE), any(RowMapper.class), eq(date)))
+          .thenReturn(123L);
+      when(horizonProvider.currentPrimary()).thenReturn(FactStreamHorizon.empty());
+
+      assertThat(underTest.firstSerialAfter(date.toLocalDate())).isNull();
+    }
+
+    @Test
+    void returnsNullWhenNoDateBoundaryExists() {
+      java.sql.Date date = java.sql.Date.valueOf("2020-01-01");
+
+      assertThat(underTest.firstSerialAfter(date.toLocalDate())).isNull();
     }
   }
 

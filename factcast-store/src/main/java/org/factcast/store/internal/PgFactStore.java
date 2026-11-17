@@ -387,14 +387,8 @@ public class PgFactStore extends AbstractFactStore {
 
   @Override
   public long latestSerial() {
-    try {
-      Long l =
-          jdbcTemplate.queryForObject(
-              PgConstants.HIGHWATER_SERIAL, new SingleColumnRowMapper<>(Long.class));
-      return Optional.ofNullable(l).orElse(0L);
-    } catch (EmptyResultDataAccessException noFactsAtAll) {
-      return 0L;
-    }
+    // Committed rows can still be ahead of the safe stream boundary.
+    return horizonProvider.currentPrimary().factSerial();
   }
 
   @Override
@@ -407,10 +401,10 @@ public class PgFactStore extends AbstractFactStore {
               new SingleColumnRowMapper<>(Long.class),
               Date.valueOf(date));
       if (lastSer == -1) {
-        // must be in the future... we'd better return max(ser) here
+        // No date boundary exists yet, so return the latest safe serial.
         return latestSerial();
       } else {
-        return lastSer;
+        return Math.min(lastSer, horizonProvider.currentPrimary().factSerial());
       }
     } catch (EmptyResultDataAccessException noFactsAtAll) {
       return 0L;
@@ -420,10 +414,15 @@ public class PgFactStore extends AbstractFactStore {
   @Override
   public Long firstSerialAfter(@NonNull LocalDate date) {
     try {
-      return jdbcTemplate.queryForObject(
-          PgConstants.FIRST_SERIAL_AFTER_DATE,
-          new SingleColumnRowMapper<>(Long.class),
-          Date.valueOf(date));
+      Long firstSer =
+          jdbcTemplate.queryForObject(
+              PgConstants.FIRST_SERIAL_AFTER_DATE,
+              new SingleColumnRowMapper<>(Long.class),
+              Date.valueOf(date));
+      // Date boundaries beyond the committed horizon have no visible matching fact yet.
+      return firstSer != null && firstSer <= horizonProvider.currentPrimary().factSerial()
+          ? firstSer
+          : null;
     } catch (EmptyResultDataAccessException noFactsAtAll) {
       return null;
     }

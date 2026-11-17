@@ -505,6 +505,7 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
       Fact fact = Fact.builder().id(id).ns("foo").type("bar").buildWithoutPayload();
       store.publish(Collections.singletonList(fact));
       long expectedSerial = store.serialOf(id).orElseThrow();
+      horizonProvider.advance();
 
       long serial = localFactStore.latestSerial();
       assertThat(serial).isEqualTo(expectedSerial);
@@ -512,6 +513,7 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
       // make sure it changes
       var other = Fact.builder().ns("foo").type("bar").buildWithoutPayload();
       store.publish(Collections.singletonList(other));
+      horizonProvider.advance();
 
       assertThat(localFactStore.latestSerial()).isEqualTo(expectedSerial + 1);
     }
@@ -535,24 +537,31 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
       store.publish(Collections.singletonList(fact));
 
       long ser = store.fetchById(id).get().serial();
+      horizonProvider.advance();
 
       assertThat(localFactStore.lastSerialBefore(LocalDate.now().plusWeeks(1))).isEqualTo(ser);
     }
 
     @Test
     void testLastSerialBeforePastDate() {
+      store.publish(
+          List.of(
+              Fact.builder().ns("foo").type("bar").buildWithoutPayload(),
+              Fact.builder().ns("foo").type("bar").buildWithoutPayload()));
+      long latestSerial = horizonProvider.advance().factSerial();
 
+      // Model historical date boundaries using facts already inside the committed horizon.
       jdbcTemplate.update(
-          "INSERT INTO " + PgConstants.TABLE_DATE2SERIAL + "(factdate,firstser) VALUES (?, ?)",
-          LocalDate.now().minusWeeks(1),
-          100L);
+          "UPDATE " + PgConstants.TABLE_DATE2SERIAL + " SET factdate = ?",
+          LocalDate.now().minusWeeks(1));
 
       jdbcTemplate.update(
           "INSERT INTO " + PgConstants.TABLE_DATE2SERIAL + "(factdate,firstser) VALUES (?, ?)",
           LocalDate.now().minusDays(1),
-          200L);
+          latestSerial);
 
-      assertThat(localFactStore.lastSerialBefore(LocalDate.now().minusDays(1))).isEqualTo(200L - 1);
+      assertThat(localFactStore.lastSerialBefore(LocalDate.now().minusDays(1)))
+          .isEqualTo(latestSerial - 1);
     }
 
     @Test
@@ -563,6 +572,7 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
       UUID id = UUID.randomUUID();
       Fact fact = Fact.builder().id(id).ns("foo").type("bar").buildWithoutPayload();
       store.publish(Collections.singletonList(fact));
+      horizonProvider.advance();
 
       assertThat(localFactStore.firstSerialAfter(LocalDate.now()))
           .isEqualTo(localFactStore.latestSerial());

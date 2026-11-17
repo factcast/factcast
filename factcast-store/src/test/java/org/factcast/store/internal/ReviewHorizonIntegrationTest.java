@@ -23,6 +23,7 @@ import com.google.common.eventbus.Subscribe;
 import java.nio.charset.StandardCharsets;
 import java.sql.*;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.*;
@@ -88,6 +89,54 @@ class ReviewHorizonIntegrationTest {
     StoreConfigurationProperties props = new StoreConfigurationProperties();
     props.setReadOnlyModeEnabled(true);
     return new NudgeNotificationHandler(bus, jdbc, props, metrics, provider);
+  }
+
+  @Test
+  void serialLookupsDoNotExposeFactsBeyondTheCommittedHorizon() {
+    Fact visible = fact();
+    writer.publish(List.of(visible));
+    long safeSerial = writableHorizon.advance().factSerial();
+
+    Fact hidden = fact();
+    writer.publish(List.of(hidden));
+    long hiddenSerial = writer.serialOf(hidden.id()).orElseThrow();
+    assertThat(hiddenSerial).isGreaterThan(safeSerial);
+    assertThat(writableHorizon.currentPrimary().factSerial()).isEqualTo(safeSerial);
+
+    assertThat(writer.latestSerial()).isEqualTo(safeSerial);
+    assertThat(writer.lastSerialBefore(LocalDate.now().plusYears(1))).isEqualTo(safeSerial);
+
+    // Model a later day's index boundary that is committed ahead of the safe horizon.
+    LocalDate tomorrow = LocalDate.now().plusDays(1);
+    jdbc.update(
+        "INSERT INTO date2serial(factdate, firstser) VALUES (?, ?)", tomorrow, hiddenSerial + 1);
+    assertThat(writer.lastSerialBefore(tomorrow)).isEqualTo(safeSerial);
+    assertThat(writer.lastSerialBefore(LocalDate.now())).isZero();
+
+    writableHorizon.advance();
+    assertThat(writer.latestSerial()).isEqualTo(hiddenSerial);
+    assertThat(writer.lastSerialBefore(tomorrow)).isEqualTo(hiddenSerial);
+  }
+
+  @Test
+  void firstSerialAfterHidesDateBoundariesUntilTheHorizonAdvances() {
+    Fact visible = fact();
+    writer.publish(List.of(visible));
+    long safeSerial = writableHorizon.advance().factSerial();
+    assertThat(writer.firstSerialAfter(LocalDate.now())).isEqualTo(safeSerial);
+
+    Fact hidden = fact();
+    writer.publish(List.of(hidden));
+    long hiddenSerial = writer.serialOf(hidden.id()).orElseThrow();
+    LocalDate tomorrow = LocalDate.now().plusDays(1);
+    // Model a date boundary whose first fact has committed ahead of the safe horizon.
+    jdbc.update(
+        "INSERT INTO date2serial(factdate, firstser) VALUES (?, ?)", tomorrow, hiddenSerial);
+
+    assertThat(writer.firstSerialAfter(tomorrow)).isNull();
+
+    writableHorizon.advance();
+    assertThat(writer.firstSerialAfter(tomorrow)).isEqualTo(hiddenSerial);
   }
 
   @Test
