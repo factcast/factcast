@@ -67,7 +67,7 @@ class PgChunkedWithHoldCursorCatchupTest {
                 req,
                 pipeline,
                 serial,
-                new FactStreamHorizon(null, Long.MAX_VALUE, 0),
+                new FactStreamHorizon(Long.MAX_VALUE),
                 ds,
                 phase));
   }
@@ -210,7 +210,7 @@ class PgChunkedWithHoldCursorCatchupTest {
     @SneakyThrows
     void testDeclare() {
       when(connection.prepareStatement(anyString())).thenReturn(ps);
-      FactStreamHorizon horizon = new FactStreamHorizon(null, 42, 0);
+      FactStreamHorizon horizon = new FactStreamHorizon(42);
       when(queryBuilder.createBoundedStatementSetter(any(), same(horizon))).thenReturn(pss);
 
       PgChunkedWithHoldCursorCatchup.Cursor cursor = underTest.new Cursor(1000);

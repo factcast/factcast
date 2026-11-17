@@ -15,43 +15,32 @@
  */
 package org.factcast.store.internal.horizon;
 
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.*;
 import javax.sql.DataSource;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.factcast.core.subscription.FactStreamHorizon;
-import org.factcast.store.internal.PgConstants;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 @RequiredArgsConstructor
 public class ReadOnlyPgFactStreamHorizonProvider implements FactStreamHorizonProvider {
 
-  // note that there is only one horizon with id=1, as it is meant to be a singleton
-  static final String READ_HORIZON =
-      "SELECT "
-          + PgConstants.HORIZON_COLUMN_FACT_SER
-          + ","
-          + PgConstants.HORIZON_COLUMN_FACT_ID
-          + ","
-          + PgConstants.HORIZON_COLUMN_NOTIFICATION_SER
-          + " FROM "
-          + PgConstants.TABLE_HORIZON
-          + " WHERE id = 1";
-  private final Object instanceMutex = new Object();
-
-  @NonNull private final DataSource primaryDataSource;
-  private final AtomicReference<FactStreamHorizon> currentPrimary =
-      new AtomicReference<>(FactStreamHorizon.empty());
+  static final String MAX_SERIAL = "SELECT COALESCE(MAX(ser),0) FROM fact";
 
   @Override
+  @SuppressWarnings("java:S3551")
   public @NonNull FactStreamHorizon advance() {
-    synchronized (instanceMutex) {
-      FactStreamHorizon horizon = readPrimary();
-      currentPrimary.set(horizon);
-      return horizon;
-    }
+    return liveHorizon();
   }
+
+  private @NonNull FactStreamHorizon liveHorizon() {
+    Long l =
+        Objects.requireNonNull(
+            jdbcTemplate(primaryDataSource).queryForObject(MAX_SERIAL, Long.class));
+    return new FactStreamHorizon(l.longValue());
+  }
+
+  @NonNull private final DataSource primaryDataSource;
 
   @NonNull
   protected final FactStreamHorizon readPrimary() {
@@ -60,26 +49,16 @@ public class ReadOnlyPgFactStreamHorizonProvider implements FactStreamHorizonPro
 
   @Override
   public @NonNull FactStreamHorizon currentPrimary() {
-    return currentPrimary.get();
+    return readPrimary();
   }
 
   @Override
   public @NonNull FactStreamHorizon readFrom(@NonNull DataSource dataSource) {
     return jdbcTemplate(dataSource)
-        .queryForObject(
-            READ_HORIZON,
-            (rs, rowNum) ->
-                new FactStreamHorizon(
-                    rs.getObject(PgConstants.HORIZON_COLUMN_FACT_ID, UUID.class),
-                    rs.getLong(PgConstants.HORIZON_COLUMN_FACT_SER),
-                    rs.getLong(PgConstants.HORIZON_COLUMN_NOTIFICATION_SER)));
+        .queryForObject(MAX_SERIAL, (rs, rowNum) -> new FactStreamHorizon(rs.getLong(1)));
   }
 
   protected JdbcTemplate jdbcTemplate(@NonNull DataSource dataSource) {
     return new JdbcTemplate(dataSource);
-  }
-
-  protected final void updateCurrentPrimary(@NonNull FactStreamHorizon horizon) {
-    currentPrimary.set(horizon);
   }
 }

@@ -431,11 +431,10 @@ public class PgFactStore extends AbstractFactStore {
   void batchPublish(List<? extends Fact> facts) {
     int numberOfFactsToPublish = facts.size();
     log.trace("Inserting {} fact(s)", numberOfFactsToPublish);
-    boolean callerTransaction = TransactionSynchronizationManager.isActualTransactionActive();
     try {
       tx.execute(
           ts -> {
-            batchPublishInTransaction(facts, callerTransaction);
+            batchPublishInTransaction(facts, true);
 
             return null;
           });
@@ -450,8 +449,7 @@ public class PgFactStore extends AbstractFactStore {
 
   private void batchPublishInTransaction(List<? extends Fact> facts, boolean callerTransaction) {
     try {
-      if (callerTransaction) lock.acquireExclusiveTXLock();
-      else lock.acquireSharedTXLock();
+      lock.acquireExclusiveTXLock();
       jdbcTemplate.batchUpdate(
           PgConstants.INSERT_FACT,
           facts,

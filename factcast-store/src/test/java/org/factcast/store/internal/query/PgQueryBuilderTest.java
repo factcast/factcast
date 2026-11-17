@@ -102,7 +102,7 @@ class PgQueryBuilderTest {
       var spec5 = FactSpec.ns("*").type("t3");
       var specs = Lists.newArrayList(spec1, spec2, spec3, spec4, spec5);
       var underTest = new PgQueryBuilder(specs, false);
-      var horizon = new FactStreamHorizon(null, 150L, 7L);
+      var horizon = new FactStreamHorizon(150L);
       var setter =
           bounded
               ? underTest.createBoundedStatementSetter(serial, horizon)
@@ -174,7 +174,7 @@ class PgQueryBuilderTest {
       var underTest = new PgQueryBuilder(Lists.newArrayList(FactSpec.ns("*")), false);
       var ps = mock(PreparedStatement.class);
 
-      FactStreamHorizon horizon = new FactStreamHorizon(null, 42L, 7L);
+      FactStreamHorizon horizon = new FactStreamHorizon(42L);
       underTest.createBoundedStatementSetter(serial, horizon).setValues(ps);
 
       verify(ps).setLong(1, 12L);

@@ -35,7 +35,6 @@ import org.factcast.core.subscription.observer.FactObserver;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.PgMetrics;
 import org.factcast.store.internal.PgTestConfiguration;
-import org.factcast.store.internal.horizon.FactStreamHorizonProvider;
 import org.factcast.store.internal.notification.FactInsertionNotification;
 import org.factcast.test.IntegrationTest;
 import org.junit.jupiter.api.Test;
@@ -59,35 +58,28 @@ class PgAppendOnlyNotificationIntegrationTest {
   @Autowired JdbcTemplate jdbc;
   @Autowired EventBus eventBus;
   @Autowired NudgeNotificationHandler handler;
-  @Autowired FactStreamHorizonProvider horizonProvider;
   @Autowired StoreConfigurationProperties props;
   @Autowired PgMetrics metrics;
 
   @Test
-  void sequenceResetRebasesHorizonAndRestoresSelectiveDispatch() throws Exception {
+  void sequenceResetRestoresSelectiveDispatch() throws Exception {
     EventBus bus = new EventBus();
     NotificationCollector collector = new NotificationCollector();
     bus.register(collector);
     NudgeNotificationHandler isolatedHandler =
-        new NudgeNotificationHandler(bus, jdbc, props, metrics, horizonProvider, false);
+        new NudgeNotificationHandler(bus, jdbc, props, metrics, false);
     try {
       for (int i = 0; i < 3; i++) {
         store.publish(facts(1));
       }
-      long oldSerial = horizonProvider.advance().notificationSerial();
+      long oldSerial = notificationSerials().get(2);
       assertThat(oldSerial).isGreaterThan(1);
       isolatedHandler.fetchPairsAndDispatch();
       assertThat(isolatedHandler.notificationSer).hasValue(oldSerial);
       assertThat(collector.global).hasValue(1);
 
-      jdbc.execute("TRUNCATE notification");
-      assertThat(horizonProvider.advance().notificationSerial()).isEqualTo(oldSerial);
-
       jdbc.execute("TRUNCATE notification RESTART IDENTITY");
-      assertThat(horizonProvider.advance().notificationSerial()).isZero();
-      assertThat(horizonProvider.currentPrimary().notificationSerial()).isZero();
       store.publish(facts(1));
-      assertThat(horizonProvider.advance().notificationSerial()).isEqualTo(1);
       isolatedHandler.fetchPairsAndDispatch();
       assertThat(isolatedHandler.notificationSer).hasValue(1);
       assertThat(collector.global).hasValue(2);
@@ -95,7 +87,6 @@ class PgAppendOnlyNotificationIntegrationTest {
       assertThat(collector.global).hasValue(2);
 
       store.publish(facts(1));
-      assertThat(horizonProvider.advance().notificationSerial()).isEqualTo(2);
       isolatedHandler.fetchPairsAndDispatch();
       assertThat(isolatedHandler.notificationSer).hasValue(2);
       assertThat(collector.global).hasValue(2);
@@ -107,7 +98,6 @@ class PgAppendOnlyNotificationIntegrationTest {
 
   @Test
   void preservesEverySerialAndDispatchesSelectivelyAfterBootstrap() {
-    horizonProvider.advance();
     store.publish(facts(100));
 
     List<Long> originalSerials = notificationSerials();
@@ -153,7 +143,6 @@ class PgAppendOnlyNotificationIntegrationTest {
   @Test
   void cleanupOfNotificationCursorFallsBackToGlobalWakeAndFollowDeliversNextFact()
       throws Exception {
-    horizonProvider.advance();
     Fact first = Fact.builder().id(UUID.randomUUID()).ns(NS).type(TYPE).buildWithoutPayload();
     store.publish(List.of(first));
     long cursor = notificationSerials().get(0);

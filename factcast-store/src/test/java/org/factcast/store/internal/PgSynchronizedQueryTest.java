@@ -62,8 +62,7 @@ class PgSynchronizedQueryTest {
   @Mock FactStreamHorizonProvider horizonProvider;
 
   private PgSynchronizedQuery queryWithHorizon(long horizonSerial) {
-    when(horizonProvider.currentPrimary())
-        .thenReturn(new FactStreamHorizon(UUID.randomUUID(), horizonSerial, horizonSerial));
+    when(horizonProvider.currentPrimary()).thenReturn(new FactStreamHorizon(horizonSerial));
     return new PgSynchronizedQuery(
         "test",
         pipeline,
@@ -144,7 +143,7 @@ class PgSynchronizedQueryTest {
     Connection con = mock(Connection.class);
     PreparedStatement statement = mock(PreparedStatement.class);
     ResultSet rs = mock(ResultSet.class);
-    FactStreamHorizon horizon = new FactStreamHorizon(UUID.randomUUID(), 42, 42);
+    FactStreamHorizon horizon = new FactStreamHorizon(42);
     when(horizonProvider.currentPrimary()).thenReturn(horizon);
     when(connectionSupplier.getPooledAsSingleDataSource(anyList())).thenReturn(ds);
     when(ds.getConnection()).thenReturn(con);
@@ -179,8 +178,7 @@ class PgSynchronizedQueryTest {
     SingleConnectionDataSource ds = mock(SingleConnectionDataSource.class);
     Connection con = mock(Connection.class);
     PreparedStatement statement = mock(PreparedStatement.class);
-    when(horizonProvider.currentPrimary())
-        .thenReturn(new FactStreamHorizon(UUID.randomUUID(), 42, 42));
+    when(horizonProvider.currentPrimary()).thenReturn(new FactStreamHorizon(42));
     when(connectionSupplier.getPooledAsSingleDataSource(anyList())).thenReturn(ds);
     when(ds.getConnection()).thenReturn(con);
     when(con.prepareStatement(sql)).thenReturn(statement);
@@ -205,8 +203,7 @@ class PgSynchronizedQueryTest {
   @SneakyThrows
   void skipsDatabaseWhenCursorAlreadyReachedHorizon() {
     AtomicLong cursor = new AtomicLong(42);
-    when(horizonProvider.currentPrimary())
-        .thenReturn(new FactStreamHorizon(UUID.randomUUID(), 42, 42));
+    when(horizonProvider.currentPrimary()).thenReturn(new FactStreamHorizon(42));
     uut =
         new PgSynchronizedQuery(
             "test",

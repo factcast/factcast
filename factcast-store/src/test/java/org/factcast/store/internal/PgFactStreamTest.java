@@ -47,6 +47,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.postgresql.util.*;
 import org.slf4j.MDC;
 import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
 @ExtendWith(MockitoExtension.class)
@@ -67,8 +68,13 @@ class PgFactStreamTest {
 
   @InjectMocks @Spy PgFactStream uut;
 
+  @BeforeEach
+  void isolateFastForwardLookup() {
+    lenient().doNothing().when(uut).fastForward(any());
+  }
+
   private static FactStreamHorizon horizon(long factSerial) {
-    return new FactStreamHorizon(UUID.randomUUID(), factSerial, factSerial);
+    return new FactStreamHorizon(factSerial);
   }
 
   @Nested
@@ -275,6 +281,11 @@ class PgFactStreamTest {
   @Nested
   class FastForward {
 
+    @BeforeEach
+    void useRealFastForward() {
+      doCallRealMethod().when(uut).fastForward(any());
+    }
+
     @Test
     void noFfwdNotConnected() {
       uut.close();
@@ -294,14 +305,26 @@ class PgFactStreamTest {
 
     @Test
     void ffwdIfTargetAhead() {
-      UUID uuid = UUID.randomUUID();
-      FactStreamPosition target = TestFactStreamPosition.random();
-
       UUID targetId = UUID.randomUUID();
       long targetSer = 1000;
-      uut.fastForward(new FactStreamHorizon(targetId, targetSer, targetSer));
 
-      verify(pipeline).process(Signal.of(FactStreamPosition.of(targetId, targetSer)));
+      try (var templates =
+          mockConstruction(
+              JdbcTemplate.class,
+              (jdbc, context) ->
+                  when(jdbc.queryForObject(
+                          "SELECT (header->>'id')::uuid FROM fact WHERE ser=?",
+                          UUID.class,
+                          targetSer))
+                      .thenReturn(targetId))) {
+        uut.fastForward(new FactStreamHorizon(targetSer));
+
+        verify(templates.constructed().get(0))
+            .queryForObject(
+                "SELECT (header->>'id')::uuid FROM fact WHERE ser=?", UUID.class, targetSer);
+        verify(pipeline).process(Signal.of(FactStreamPosition.of(targetId, targetSer)));
+        assertThat(uut.serial()).hasValue(targetSer);
+      }
     }
 
     @Test
@@ -610,6 +633,7 @@ class PgFactStreamTest {
                     props,
                     reqTo,
                     logSuppression));
+        doNothing().when(uut).fastForward(any());
         lenient().doReturn(true).when(uut).isConnected();
         lenient().doReturn(mds).when(uut).createCatchupDataSource(any(DataSource.class), any());
         lenient().when(horizonProvider.advance()).thenReturn(primaryHorizon);
@@ -643,6 +667,7 @@ class PgFactStreamTest {
                     props,
                     reqTo,
                     logSuppression));
+        doNothing().when(uut).fastForward(any());
         lenient().doReturn(true).when(uut).isConnected();
         lenient().doReturn(mds).when(uut).createCatchupDataSource(any(DataSource.class), any());
         lenient().when(horizonProvider.advance()).thenReturn(primaryHorizon);
@@ -679,6 +704,7 @@ class PgFactStreamTest {
                     props,
                     reqTo,
                     logSuppression));
+        doNothing().when(uut).fastForward(any());
         lenient().doReturn(true).when(uut).isConnected();
         lenient().doReturn(mds).when(uut).createCatchupDataSource(any(DataSource.class), any());
         when(horizonProvider.advance()).thenReturn(primaryHorizon);
@@ -710,6 +736,7 @@ class PgFactStreamTest {
                     reqTo,
                     logSuppression));
         uut.serial().set(5);
+        doNothing().when(uut).fastForward(any());
         lenient().doReturn(true).when(uut).isConnected();
         lenient().doReturn(mds).when(uut).createCatchupDataSource(any(DataSource.class), any());
         when(horizonProvider.advance()).thenReturn(primaryHorizon);
@@ -792,6 +819,7 @@ class PgFactStreamTest {
                   props,
                   reqTo,
                   new NopLogSuppression()));
+      doNothing().when(uut).fastForward(any());
 
       doReturn(mds).when(uut).createCatchupDataSource(ds, pipeline);
       // serial is 0 → from scratch, but property is null → no MDC marking

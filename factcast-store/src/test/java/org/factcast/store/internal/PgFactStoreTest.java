@@ -263,7 +263,7 @@ class PgFactStoreTest {
               eq(Lists.newArrayList(fact)),
               eq(Integer.MAX_VALUE),
               any(ParameterizedPreparedStatementSetter.class));
-      verify(lock).acquireSharedTXLock();
+      verify(lock).acquireExclusiveTXLock();
     }
 
     @Test
@@ -603,24 +603,10 @@ class PgFactStoreTest {
     }
 
     @Test
-    void tokenCreationStoresCachedHorizonWithoutAdvancingIt() {
-      List<FactSpec> specs = List.of(FactSpec.ns("ns1").type("type1"));
-      when(horizonProvider.currentPrimary())
-          .thenReturn(new FactStreamHorizon(UUID.randomUUID(), 42, 42));
-
-      State state = underTest.getStateFor(specs);
-
-      assertThat(state.serialOfLastMatchingFact()).isEqualTo(42L);
-      assertThat(state.specs()).isEqualTo(specs);
-      verify(horizonProvider, never()).advance();
-      verifyNoInteractions(jdbcTemplate);
-    }
-
-    @Test
-    void tokenCreationUsesReturnedHorizonWhenLeanStateTokenIsDisabled() {
+    void tokenCreationUsesLatestSerialWhenLeanStateTokenIsDisabled() {
       storeConfigurationProperties.getLeanStateToken().setEnabled(false);
       List<FactSpec> specs = List.of(FactSpec.ns("ns1").type("type1"));
-      when(horizonProvider.advance()).thenReturn(new FactStreamHorizon(UUID.randomUUID(), 42, 42));
+      when(horizonProvider.advance()).thenReturn(new FactStreamHorizon(42));
 
       State state = underTest.getStateFor(specs);
 
@@ -667,40 +653,6 @@ class PgFactStoreTest {
   }
 
   @Nested
-  class WhenGettingCurrentStateFor {
-    @Mock FactSpec factSpec;
-
-    @BeforeEach
-    void setup() {
-      configureMetricTimeSupplier();
-    }
-
-    @SneakyThrows
-    @Test
-    void usesCachedHorizonWithoutAdvancingIt() {
-      FactSpec spec1 = FactSpec.ns("ns1").type("type1");
-      List<FactSpec> specs = Lists.newArrayList(spec1);
-
-      when(horizonProvider.currentPrimary())
-          .thenReturn(new FactStreamHorizon(UUID.randomUUID(), 32, 32));
-
-      assertThat(underTest.getCurrentStateFor(specs).serialOfLastMatchingFact()).isEqualTo(32L);
-      verify(horizonProvider, never()).advance();
-      verifyNoInteractions(jdbcTemplate);
-    }
-
-    @Test
-    void usesEmptyCachedHorizonBeforeFirstRefresh() {
-      when(horizonProvider.currentPrimary()).thenReturn(FactStreamHorizon.empty());
-
-      assertThat(underTest.getCurrentStateFor(List.of(factSpec)).serialOfLastMatchingFact())
-          .isZero();
-      verify(horizonProvider, never()).advance();
-      verifyNoInteractions(jdbcTemplate);
-    }
-  }
-
-  @Nested
   class WhenFetchingBySerial {
     @BeforeEach
     void setup() {
@@ -728,23 +680,8 @@ class PgFactStoreTest {
 
     @Test
     void fetchesSerial() {
-      when(horizonProvider.currentPrimary())
-          .thenReturn(new FactStreamHorizon(UUID.randomUUID(), 123L, 0L));
+      when(horizonProvider.currentPrimary()).thenReturn(new FactStreamHorizon(123L));
       assertThat(underTest.latestSerial()).isEqualTo(123L);
-    }
-
-    @Test
-    void doesNotExposeFactsBeyondTheCommittedHorizon() {
-      when(horizonProvider.currentPrimary())
-          .thenReturn(new FactStreamHorizon(UUID.randomUUID(), 42L, 0L));
-
-      assertThat(underTest.latestSerial()).isEqualTo(42L);
-    }
-
-    @Test
-    void returnsZeroWhenNoFactsAreWithinTheHorizon() {
-      when(horizonProvider.currentPrimary()).thenReturn(FactStreamHorizon.empty());
-      assertThat(underTest.latestSerial()).isZero();
     }
 
     @Test
@@ -768,42 +705,17 @@ class PgFactStoreTest {
       when(jdbcTemplate.queryForObject(
               eq(PgConstants.LAST_SERIAL_BEFORE_DATE), any(RowMapper.class), eq(date)))
           .thenReturn(123L);
-      when(horizonProvider.currentPrimary())
-          .thenReturn(new FactStreamHorizon(UUID.randomUUID(), 200L, 0L));
+      when(horizonProvider.currentPrimary()).thenReturn(new FactStreamHorizon(200L));
       assertThat(underTest.lastSerialBefore(date.toLocalDate())).isEqualTo(123L);
     }
 
     @Test
-    void doesNotExposeDateBoundariesBeyondTheCommittedHorizon() {
-      java.sql.Date date = java.sql.Date.valueOf("2020-01-01");
-      when(jdbcTemplate.queryForObject(
-              eq(PgConstants.LAST_SERIAL_BEFORE_DATE), any(RowMapper.class), eq(date)))
-          .thenReturn(123L);
-      when(horizonProvider.currentPrimary())
-          .thenReturn(new FactStreamHorizon(UUID.randomUUID(), 42L, 0L));
-
-      assertThat(underTest.lastSerialBefore(date.toLocalDate())).isEqualTo(42L);
-    }
-
-    @Test
-    void returnsZeroWhenNoFactsAreWithinTheHorizon() {
-      java.sql.Date date = java.sql.Date.valueOf("2020-01-01");
-      when(jdbcTemplate.queryForObject(
-              eq(PgConstants.LAST_SERIAL_BEFORE_DATE), any(RowMapper.class), eq(date)))
-          .thenReturn(123L);
-      when(horizonProvider.currentPrimary()).thenReturn(FactStreamHorizon.empty());
-
-      assertThat(underTest.lastSerialBefore(date.toLocalDate())).isZero();
-    }
-
-    @Test
-    void futureDateFallsBackToTheCommittedHorizon() {
+    void futureDateFallsBackToTheLatestSerial() {
       java.sql.Date date = java.sql.Date.valueOf("2020-01-01");
       when(jdbcTemplate.queryForObject(
               eq(PgConstants.LAST_SERIAL_BEFORE_DATE), any(RowMapper.class), eq(date)))
           .thenReturn(-1L);
-      when(horizonProvider.currentPrimary())
-          .thenReturn(new FactStreamHorizon(UUID.randomUUID(), 42L, 0L));
+      when(horizonProvider.currentPrimary()).thenReturn(new FactStreamHorizon(42L));
 
       assertThat(underTest.lastSerialBefore(date.toLocalDate())).isEqualTo(42L);
     }
@@ -832,44 +744,19 @@ class PgFactStoreTest {
       when(jdbcTemplate.queryForObject(
               eq(PgConstants.FIRST_SERIAL_AFTER_DATE), any(RowMapper.class), eq(date)))
           .thenReturn(123L);
-      when(horizonProvider.currentPrimary())
-          .thenReturn(new FactStreamHorizon(UUID.randomUUID(), 200L, 0L));
+      when(horizonProvider.currentPrimary()).thenReturn(new FactStreamHorizon(200L));
       assertThat(underTest.firstSerialAfter(date.toLocalDate())).isEqualTo(123L);
     }
 
     @Test
-    void returnsSerialAtTheCommittedHorizon() {
+    void returnsLatestSerialWhenItIsTheFirstMatchingSerial() {
       java.sql.Date date = java.sql.Date.valueOf("2020-01-01");
       when(jdbcTemplate.queryForObject(
               eq(PgConstants.FIRST_SERIAL_AFTER_DATE), any(RowMapper.class), eq(date)))
           .thenReturn(123L);
-      when(horizonProvider.currentPrimary())
-          .thenReturn(new FactStreamHorizon(UUID.randomUUID(), 123L, 0L));
+      when(horizonProvider.currentPrimary()).thenReturn(new FactStreamHorizon(123L));
 
       assertThat(underTest.firstSerialAfter(date.toLocalDate())).isEqualTo(123L);
-    }
-
-    @Test
-    void returnsNullWhenFirstMatchingSerialIsBeyondTheCommittedHorizon() {
-      java.sql.Date date = java.sql.Date.valueOf("2020-01-01");
-      when(jdbcTemplate.queryForObject(
-              eq(PgConstants.FIRST_SERIAL_AFTER_DATE), any(RowMapper.class), eq(date)))
-          .thenReturn(123L);
-      when(horizonProvider.currentPrimary())
-          .thenReturn(new FactStreamHorizon(UUID.randomUUID(), 42L, 0L));
-
-      assertThat(underTest.firstSerialAfter(date.toLocalDate())).isNull();
-    }
-
-    @Test
-    void returnsNullWhenNoFactsAreWithinTheHorizon() {
-      java.sql.Date date = java.sql.Date.valueOf("2020-01-01");
-      when(jdbcTemplate.queryForObject(
-              eq(PgConstants.FIRST_SERIAL_AFTER_DATE), any(RowMapper.class), eq(date)))
-          .thenReturn(123L);
-      when(horizonProvider.currentPrimary()).thenReturn(FactStreamHorizon.empty());
-
-      assertThat(underTest.firstSerialAfter(date.toLocalDate())).isNull();
     }
 
     @Test
@@ -985,7 +872,7 @@ class PgFactStoreTest {
 
       underTest.batchPublish(facts);
 
-      verify(lock).acquireSharedTXLock();
+      verify(lock).acquireExclusiveTXLock();
       verify(jdbcTemplate).batchUpdate(eq(PgConstants.INSERT_FACT), any(), anyInt(), any());
     }
   }
@@ -1000,7 +887,7 @@ class PgFactStoreTest {
 
       underTest.batchPublishInTransaction(facts);
 
-      verify(lock).acquireSharedTXLock();
+      verify(lock).acquireExclusiveTXLock();
       verify(jdbcTemplate).batchUpdate(eq(PgConstants.INSERT_FACT), any(), anyInt(), any());
     }
 

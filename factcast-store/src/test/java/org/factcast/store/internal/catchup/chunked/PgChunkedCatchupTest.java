@@ -64,7 +64,7 @@ class PgChunkedCatchupTest {
   @Mock PgCatchupFactory.Phase phase;
 
   PgChunkedCatchup underTest;
-  private final FactStreamHorizon horizon = new FactStreamHorizon(null, Long.MAX_VALUE, 0);
+  private final FactStreamHorizon horizon = new FactStreamHorizon(Long.MAX_VALUE);
 
   @BeforeEach
   void setup() {

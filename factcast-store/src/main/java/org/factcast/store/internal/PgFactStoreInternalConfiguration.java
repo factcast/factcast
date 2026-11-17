@@ -233,13 +233,8 @@ public class PgFactStoreInternalConfiguration {
   @IsReadAndWriteEnv
   @DependsOnDatabaseInitialization
   public FactStreamHorizonProvider factStreamHorizonProvider(
-      DataSource dataSource,
-      JdbcTemplate jdbcTemplate,
-      FactTableWriteLock factTableWriteLock,
-      PgMetrics metrics,
-      PlatformTransactionManager transactionManager) {
-    return new PgFactStreamHorizonProvider(
-        dataSource, jdbcTemplate, factTableWriteLock, metrics, transactionManager);
+      DataSource dataSource, JdbcTemplate jdbcTemplate) {
+    return new PgFactStreamHorizonProvider(dataSource, jdbcTemplate);
   }
 
   @Bean
@@ -350,9 +345,8 @@ public class PgFactStoreInternalConfiguration {
       EventBus bus,
       JdbcTemplate jdbcTemplate,
       StoreConfigurationProperties props,
-      PgMetrics metrics,
-      FactStreamHorizonProvider horizonProvider) {
-    return new NudgeNotificationHandler(bus, jdbcTemplate, props, metrics, horizonProvider);
+      PgMetrics metrics) {
+    return new NudgeNotificationHandler(bus, jdbcTemplate, props, metrics);
   }
 
   @Bean

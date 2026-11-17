@@ -45,6 +45,7 @@ import org.factcast.store.internal.telemetry.PgStoreTelemetry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.*;
 
 /**
@@ -231,14 +232,18 @@ public class PgFactStream {
   void fastForward(@NonNull FactStreamHorizon atTheStartOfQuery) {
     if (isConnected()) {
 
-      UUID targetId = atTheStartOfQuery.factId();
       long targetSer = atTheStartOfQuery.factSerial();
 
       // there is no need to check for the start id, as it'll be
       // contained in serial or smaller, see initializeSerialToStartAfter
       long currentSerial = serial.get();
 
-      if (targetId != null && currentSerial < targetSer) {
+      if (currentSerial < targetSer) {
+        // A stream position needs the fact ID as well as the serial used to bound this catchup.
+        UUID targetId =
+            new JdbcTemplate(connectionSupplier.dataSource())
+                .queryForObject(
+                    "SELECT (header->>'id')::uuid FROM fact WHERE ser=?", UUID.class, targetSer);
         log.debug("{} sending ffwd to id {} (serial {})", request, targetId, targetSer);
         pipeline.process(Signal.of(FactStreamPosition.of(targetId, targetSer)));
 

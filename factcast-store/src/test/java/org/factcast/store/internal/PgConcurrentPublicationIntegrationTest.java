@@ -27,7 +27,6 @@ import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.*;
 import org.factcast.core.subscription.observer.FactObserver;
-import org.factcast.store.internal.horizon.FactStreamHorizonProvider;
 import org.factcast.test.IntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,9 +40,9 @@ import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 @Sql(scripts = "/wipe.sql", config = @SqlConfig(separator = "#"))
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @IntegrationTest
-class PgConcurrentHorizonIntegrationTest {
+class PgConcurrentPublicationIntegrationTest {
 
-  private static final String NS = "concurrent-horizon";
+  private static final String NS = "concurrent-publication";
   private static final int PUBLISHERS = 8;
   private static final int FACTS_PER_PUBLISHER = 5000;
   private static final int PREEXISTING_FACTS = 200;
@@ -51,12 +50,9 @@ class PgConcurrentHorizonIntegrationTest {
 
   @Autowired FactStore store;
   @Autowired JdbcTemplate jdbc;
-  @Autowired FactStreamHorizonProvider horizonProvider;
 
   @Test
   void concurrentPublishesReachFollowingSubscriberExactlyOnceInSerialOrder() throws Exception {
-    // @Sql resets the row in PostgreSQL; refresh the provider's in-memory primary horizon too.
-    horizonProvider.advance();
     store.publish(facts(0, PREEXISTING_FACTS, 0));
 
     ExecutorService publishers = Executors.newFixedThreadPool(PUBLISHERS);
@@ -142,7 +138,6 @@ class PgConcurrentHorizonIntegrationTest {
   @Test
   void subscriberAlreadyFollowingReceivesConcurrentPublishesExactlyOnceInSerialOrder()
       throws Exception {
-    horizonProvider.advance();
 
     int expectedFacts = PUBLISHERS * FACTS_PER_PUBLISHER + 1;
     ExecutorService publishers = Executors.newFixedThreadPool(PUBLISHERS);
@@ -269,13 +264,6 @@ class PgConcurrentHorizonIntegrationTest {
     assertThat(delivered.stream().map(ObservedFact::id).distinct().count())
         .isEqualTo(expectedFacts);
     assertThat(subscriptionError.get()).isNull();
-
-    FactStreamHorizon finalHorizon = horizonProvider.currentPrimary();
-    ObservedFact latest = databaseOrder.get(databaseOrder.size() - 1);
-    assertThat(finalHorizon.factSerial()).isEqualTo(latest.serial());
-    assertThat(finalHorizon.factId()).isEqualTo(latest.id());
-    assertThat(finalHorizon.notificationSerial())
-        .isEqualTo(jdbc.queryForObject("SELECT MAX(ser) FROM notification", Long.class));
   }
 
   private void publishInSmallBatches(

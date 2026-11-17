@@ -26,10 +26,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
-import org.factcast.core.subscription.FactStreamHorizon;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.*;
-import org.factcast.store.internal.horizon.FactStreamHorizonProvider;
 import org.factcast.store.internal.notification.*;
 import org.springframework.beans.factory.*;
 import org.springframework.jdbc.core.*;
@@ -37,11 +35,11 @@ import org.springframework.jdbc.core.*;
 @Slf4j
 public class NudgeNotificationHandler implements DisposableBean {
   static final String BASE_EXISTS_SQL = "SELECT (exists(select 1 from notification where ser=?))";
+  static final String MAX_NOTIFICATION_SERIAL = "SELECT COALESCE(MAX(ser),0) FROM notification";
   private final @NonNull EventBus bus;
   private final @NonNull JdbcTemplate jdbc;
   private final @NonNull StoreConfigurationProperties props;
   private final @NonNull PgMetrics metrics;
-  private final @NonNull FactStreamHorizonProvider horizonProvider;
   @VisibleForTesting protected final AtomicLong notificationSer = new AtomicLong(0);
   @VisibleForTesting protected final Timer timer = new Timer(true);
   // this we need in order to skip obsolete tasks
@@ -54,9 +52,8 @@ public class NudgeNotificationHandler implements DisposableBean {
       @NonNull EventBus bus,
       @NonNull JdbcTemplate jdbc,
       @NonNull StoreConfigurationProperties props,
-      @NonNull PgMetrics metrics,
-      @NonNull FactStreamHorizonProvider horizonProvider) {
-    this(bus, jdbc, props, metrics, horizonProvider, !props.isReadOnlyModeEnabled());
+      @NonNull PgMetrics metrics) {
+    this(bus, jdbc, props, metrics, !props.isReadOnlyModeEnabled());
   }
 
   @VisibleForTesting
@@ -65,13 +62,11 @@ public class NudgeNotificationHandler implements DisposableBean {
       @NonNull JdbcTemplate jdbc,
       @NonNull StoreConfigurationProperties props,
       @NonNull PgMetrics metrics,
-      @NonNull FactStreamHorizonProvider horizonProvider,
       boolean scheduleCleanupTask) {
     this.bus = bus;
     this.jdbc = jdbc;
     this.props = props;
     this.metrics = metrics;
-    this.horizonProvider = horizonProvider;
     bus.register(this);
 
     if (scheduleCleanupTask) {
@@ -187,14 +182,14 @@ public class NudgeNotificationHandler implements DisposableBean {
 
   private void fetchPairsAndDispatchOnce() {
     long lowerSerial = notificationSer.get();
-    FactStreamHorizon horizon = horizonProvider.advance();
-    long horizonSerial = horizon.notificationSerial();
-    if (horizonSerial < lowerSerial) {
-      // The unlogged notification sequence has restarted. Wake every subscriber once before
-      // continuing from the rebased persisted horizon.
-      log.warn("Notification sequence restarted, waking all subscribers");
+    // Writers hold the exclusive publication lock until commit, so committed maxima are ordered.
+    long upperSerial =
+        Objects.requireNonNull(jdbc.queryForObject(MAX_NOTIFICATION_SERIAL, Long.class));
+    if (upperSerial < lowerSerial) {
+      // Cleanup or a sequence reset can lower the maximum. Wake subscribers before rebasing.
+      log.trace("Notification maximum moved backwards, waking all subscribers");
       bus.post(FactInsertionNotification.internal());
-      notificationSer.set(horizonSerial);
+      notificationSer.set(upperSerial);
       return;
     }
     boolean baseLineMissing =
@@ -205,11 +200,11 @@ public class NudgeNotificationHandler implements DisposableBean {
     if (baseLineMissing || lowerSerial == 0) {
       log.trace("No reliable notification baseline, waking all subscribers");
       bus.post(FactInsertionNotification.internal());
-      notificationSer.set(horizonSerial);
+      notificationSer.set(upperSerial);
       return;
     }
 
-    if (horizonSerial <= lowerSerial) return;
+    if (upperSerial <= lowerSerial) return;
 
     final var timerSample = metrics.startSample();
     try {
@@ -220,13 +215,13 @@ public class NudgeNotificationHandler implements DisposableBean {
                   + "GROUP BY DISTINCT(ns,type) ORDER BY max",
               DataClassRowMapper.newInstance(FetchNotificationTuple.class),
               lowerSerial,
-              horizonSerial);
+              upperSerial);
 
       if (!tuples.isEmpty()) {
         log.trace("Fetched {} notification{}", tuples.size(), tuples.size() > 1 ? "s" : "");
         tuples.forEach(t -> bus.post(t.toFactInsertionNotification()));
       }
-      notificationSer.set(horizonSerial);
+      notificationSer.set(upperSerial);
     } finally {
       timerSample.stop(metricsTimer);
     }
