@@ -36,14 +36,6 @@ public interface SubscriptionRequest {
 
   boolean ephemeral();
 
-  /**
-   * Client-only opt-in to resume an ephemeral subscription once a usable UUID is available. An
-   * explicit starting UUID takes precedence over ephemeral initialization.
-   */
-  default boolean resumableEphemeral() {
-    return false;
-  }
-
   Optional<UUID> startingAfter();
 
   List<FactSpec> specs();

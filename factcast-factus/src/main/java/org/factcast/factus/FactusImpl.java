@@ -415,8 +415,7 @@ public class FactusImpl implements Factus {
     }
     return switch (projection.initialPosition()) {
       case FROM_SCRATCH -> builder.fromScratch();
-        // TODO check for state aware projection needed?
-      case FROM_NOW -> builder.fromNowOnAndResume();
+      case FROM_NOW -> builder.fromNowOn();
     };
   }
 

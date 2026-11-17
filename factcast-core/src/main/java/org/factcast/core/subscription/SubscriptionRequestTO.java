@@ -15,7 +15,6 @@
  */
 package org.factcast.core.subscription;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.lang.management.ManagementFactory;
@@ -48,9 +47,6 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
 
   @JsonProperty boolean ephemeral;
 
-  // Retained by client-side copies, but never sent to the server.
-  @JsonIgnore boolean resumableEphemeral;
-
   @JsonProperty UUID startingAfter;
 
   @JsonProperty String debugInfo;
@@ -74,7 +70,6 @@ public class SubscriptionRequestTO implements SubscriptionRequest {
     streamInfo = request.streamInfo();
     continuous = request.continuous();
     ephemeral = request.ephemeral();
-    resumableEphemeral = request.resumableEphemeral();
     startingAfter = request.startingAfter().orElse(null);
     debugInfo = request.debugInfo();
     specs.addAll(request.specs());

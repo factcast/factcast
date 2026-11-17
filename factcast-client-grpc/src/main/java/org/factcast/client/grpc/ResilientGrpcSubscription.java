@@ -175,9 +175,10 @@ public class ResilientGrpcSubscription extends AbstractSubscription {
     FactStreamPosition last = lastPosition.get();
     if (last != null && last.factId() != null) {
       to.startingAfter(last.factId());
-    }
-    if (to.resumableEphemeral() && to.startingAfter().isPresent()) {
-      to.ephemeral(false);
+      if (to.ephemeral()) {
+        // the subscription tracked last position, so we resume from there
+        to.ephemeral(false);
+      }
     }
 
     if (currentSubscription.get() == null) {
@@ -241,10 +242,6 @@ public class ResilientGrpcSubscription extends AbstractSubscription {
     @Override
     public void onFastForward(@NonNull FactStreamPosition factIdToFfwdTo) {
       originalObserver.onFastForward(factIdToFfwdTo);
-      // A failed callback must not establish a reconnect boundary.
-      if (originalRequest.resumableEphemeral() && factIdToFfwdTo.factId() != null) {
-        lastPosition.set(factIdToFfwdTo);
-      }
     }
 
     @Override
