@@ -141,7 +141,7 @@ public class PgFactStore extends AbstractFactStore {
         && !TransactionSynchronizationManager.isActualTransactionActive()) {
       publishUsingBatching(defensiveCopy);
     } else {
-      publish_withoutBatching(defensiveCopy);
+      publishWithoutBatching(defensiveCopy);
     }
   }
 

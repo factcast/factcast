@@ -914,7 +914,7 @@ class PgFactStoreTest {
       PgFactStore spy = spy(underTest);
       doNothing().when(spy).doPublish(anyList());
 
-      spy.publish_withoutBatching(facts);
+      spy.publishWithoutBatching(facts);
 
       verify(spy).doPublish(facts);
     }
