@@ -22,12 +22,10 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
-import javax.annotation.*;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.factcast.core.spec.FactSpec;
-import org.factcast.core.subscription.FactStreamHorizon;
 import org.factcast.core.util.FactCastJson;
 import org.factcast.store.internal.PgConstants;
 import org.springframework.jdbc.core.PreparedStatementSetter;
@@ -39,7 +37,6 @@ import org.springframework.jdbc.core.PreparedStatementSetter;
  * @author uwe.schaefer@prisma-capacity.eu
  */
 @Slf4j
-@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 public class PgQueryBuilder {
 
   private static final String ORDER_BY = " ORDER BY ";
@@ -59,34 +56,18 @@ public class PgQueryBuilder {
     this.internalExclusionEnabled = internalExclusionEnabled;
   }
 
-  public PreparedStatementSetter createUnboundedStatementSetter(@NonNull AtomicLong serial) {
-    return p -> setParameters(p, serial.get(), 0, OptionalLong.empty());
-  }
-
-  public PreparedStatementSetter createBoundedStatementSetter(
-      @NonNull AtomicLong serial, @Nonnull FactStreamHorizon horizon) {
-    return p -> setParameters(p, serial.get(), 0, OptionalLong.of(horizon.factSerial()));
-  }
-
-  public PreparedStatementSetter createStateStatementSetter(
-      long serial, @NonNull Optional<FactStreamHorizon> horizon) {
-    return p -> {
-      OptionalLong horizonSerial = toOptionalLong(horizon.map(FactStreamHorizon::factSerial));
-      int count = setParameters(p, serial, 0, horizonSerial);
-      setParameters(p, serial, count, horizonSerial);
-    };
+  public PreparedStatementSetter createStatementSetter(@NonNull AtomicLong serial) {
+    return p -> setParameters(p, serial.get(), 0);
   }
 
   public PreparedStatementSetter createStateStatementSetter(long serial) {
-    return createStateStatementSetter(serial, Optional.empty());
+    return p -> {
+      int count = setParameters(p, serial, 0);
+      setParameters(p, serial, count);
+    };
   }
 
-  private static OptionalLong toOptionalLong(Optional<Long> value) {
-    return value.map(OptionalLong::of).orElseGet(OptionalLong::empty);
-  }
-
-  private int setParameters(PreparedStatement p, long serial, int count, OptionalLong horizonSerial)
-      throws SQLException {
+  private int setParameters(PreparedStatement p, long serial, int count) throws SQLException {
     for (FactSpec spec : factSpecs) {
       ObjectNode headerCriteria = createHeaderCriteria(spec);
       if (!headerCriteria.isEmpty()) {
@@ -98,9 +79,6 @@ public class PgQueryBuilder {
       count = setMetaKeyExists(p, count, spec);
     }
     p.setLong(++count, serial);
-    if (horizonSerial.isPresent()) {
-      p.setLong(++count, horizonSerial.getAsLong());
-    }
     return count;
   }
 
@@ -185,7 +163,7 @@ public class PgQueryBuilder {
   }
 
   @SuppressWarnings("java:S3776")
-  private String createWhereClause(boolean bounded) {
+  private String createWhereClause() {
     List<String> predicates = new LinkedList<>();
     factSpecs.forEach(
         spec -> {
@@ -228,9 +206,6 @@ public class PgQueryBuilder {
         });
     String predicatesAsString = String.join(OR, predicates);
     String where = "( " + predicatesAsString + " ) " + AND + PgConstants.COLUMN_SER + ">?";
-    if (bounded) {
-      where += AND + PgConstants.COLUMN_SER + "<=?";
-    }
     // when internal exclusion is enabled, only ever match non-excluded facts; matches the
     // partial GIN index idx_fact_header_active WHERE exclusion_reason IS NULL
     if (internalExclusionEnabled) {
@@ -239,15 +214,7 @@ public class PgQueryBuilder {
     return where;
   }
 
-  public String createUnboundedSQL() {
-    return createSQL(false);
-  }
-
-  public String createBoundedSQL() {
-    return createSQL(true);
-  }
-
-  private String createSQL(boolean bounded) {
+  public String createSQL() {
 
     if (useTemporaryTable()) {
       return "INSERT INTO "
@@ -259,7 +226,7 @@ public class PgQueryBuilder {
           + FROM
           + PgConstants.TABLE_FACT
           + WHERE
-          + createWhereClause(bounded);
+          + createWhereClause();
       // we don't need the order by here, because it will be ordered when reading from the temp
       // table
 
@@ -269,7 +236,7 @@ public class PgQueryBuilder {
           + FROM
           + PgConstants.TABLE_FACT
           + WHERE
-          + createWhereClause(bounded)
+          + createWhereClause()
           + ORDER_BY
           + PgConstants.COLUMN_SER
           + " ASC";
@@ -279,22 +246,16 @@ public class PgQueryBuilder {
     return tempTableName != null;
   }
 
-  /**
-   * Probes a bounded recent serial range before searching all matches. Both branches share one
-   * statement snapshot, and COALESCE skips the fallback when the recent probe succeeds.
-   */
+  // Probe recent serials before searching all matches. Both branches share one statement
+  // snapshot, and COALESCE skips the fallback when the recent probe succeeds.
   public String createStateSQL(long backwardScanWindow) {
-    return createStateSQL(backwardScanWindow, false);
-  }
-
-  public String createStateSQL(long backwardScanWindow, boolean bounded) {
     String matchingSerials =
         "SELECT "
             + PgConstants.COLUMN_SER
             + FROM
             + PgConstants.TABLE_FACT
             + WHERE
-            + createWhereClause(bounded);
+            + createWhereClause();
     // sql query is not easy to grasp, but roughly does something like:
     // select COALESCE( <most recent quick lookup> , <most recent full GIN search>)
     //

@@ -27,7 +27,6 @@ import lombok.SneakyThrows;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import org.assertj.core.util.Lists;
 import org.factcast.core.spec.FactSpec;
-import org.factcast.core.subscription.FactStreamHorizon;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -53,9 +52,9 @@ class PgQueryBuilderTest {
       var ps = mock(PreparedStatement.class);
 
       var expectedPredicate = expectedJson == null ? "(true)" : "(true AND header @> ?::jsonb)";
-      assertThat(normalized(underTest.createUnboundedSQL()))
+      assertThat(normalized(underTest.createSQL()))
           .contains("WHERE (" + expectedPredicate + ") AND ser > ?");
-      underTest.createUnboundedStatementSetter(new AtomicLong(42)).setValues(ps);
+      underTest.createStatementSetter(new AtomicLong(42)).setValues(ps);
 
       int index = 0;
       if (expectedJson != null) {
@@ -85,9 +84,8 @@ class PgQueryBuilderTest {
     }
 
     @SneakyThrows
-    @ParameterizedTest
-    @ValueSource(booleans = {false, true})
-    void happyPath(boolean bounded) {
+    @Test
+    void happyPath() {
       when(serial.get()).thenReturn(120L);
       var spec1 =
           FactSpec.ns("ns1")
@@ -102,11 +100,7 @@ class PgQueryBuilderTest {
       var spec5 = FactSpec.ns("*").type("t3");
       var specs = Lists.newArrayList(spec1, spec2, spec3, spec4, spec5);
       var underTest = new PgQueryBuilder(specs, false);
-      var horizon = new FactStreamHorizon(150L);
-      var setter =
-          bounded
-              ? underTest.createBoundedStatementSetter(serial, horizon)
-              : underTest.createUnboundedStatementSetter(serial);
+      var setter = underTest.createStatementSetter(serial);
       var ps = mock(PreparedStatement.class);
 
       setter.setValues(ps);
@@ -143,18 +137,12 @@ class PgQueryBuilderTest {
 
       // ser>?
       verify(ps).setLong(++index, serial.get());
-      if (bounded) {
-        verify(ps).setLong(++index, horizon.factSerial());
-      }
       verifyNoMoreInteractions(ps);
 
       // Every branch must bind the full set of predicates in the same order, including the
       // threshold. Compare against the subscription setter to cover all optional parameters.
       var stateStatement = mock(PreparedStatement.class);
-      underTest
-          .createStateStatementSetter(
-              serial.get(), bounded ? Optional.of(horizon) : Optional.empty())
-          .setValues(stateStatement);
+      underTest.createStateStatementSetter(serial.get()).setValues(stateStatement);
       var expected = mockingDetails(ps).getInvocations().stream().toList();
       var actual = mockingDetails(stateStatement).getInvocations().stream().toList();
       assertThat(actual).hasSize(expected.size() * 2);
@@ -165,29 +153,6 @@ class PgQueryBuilderTest {
         assertThat(actual.get(i).getArgument(1, Object.class))
             .isEqualTo(reference.getArgument(1, Object.class));
       }
-    }
-
-    @SneakyThrows
-    @Test
-    void boundedSetterAppendsImmutableHorizonSerial() {
-      when(serial.get()).thenReturn(12L);
-      var underTest = new PgQueryBuilder(Lists.newArrayList(FactSpec.ns("*")), false);
-      var ps = mock(PreparedStatement.class);
-
-      FactStreamHorizon horizon = new FactStreamHorizon(42L);
-      underTest.createBoundedStatementSetter(serial, horizon).setValues(ps);
-
-      verify(ps).setLong(1, 12L);
-      verify(ps).setLong(2, 42L);
-      verifyNoMoreInteractions(ps);
-
-      var stateStatement = mock(PreparedStatement.class);
-      underTest.createStateStatementSetter(12L, Optional.of(horizon)).setValues(stateStatement);
-      verify(stateStatement).setLong(1, 12L);
-      verify(stateStatement).setLong(2, 42L);
-      verify(stateStatement).setLong(3, 12L);
-      verify(stateStatement).setLong(4, 42L);
-      verifyNoMoreInteractions(stateStatement);
     }
   }
 
@@ -202,27 +167,14 @@ class PgQueryBuilderTest {
               List.of(FactSpec.ns("x").type("y"), FactSpec.ns("a").type("b")), false);
       var ps = mock(PreparedStatement.class);
 
-      assertThat(normalized(underTest.createUnboundedSQL()))
+      assertThat(normalized(underTest.createSQL()))
           .contains("WHERE ((true AND header @> ?::jsonb) OR (true AND header @> ?::jsonb))");
-      underTest.createUnboundedStatementSetter(new AtomicLong(42)).setValues(ps);
+      underTest.createStatementSetter(new AtomicLong(42)).setValues(ps);
 
       verify(ps).setString(1, "{\"ns\":\"x\",\"type\":\"y\"}");
       verify(ps).setString(2, "{\"ns\":\"a\",\"type\":\"b\"}");
       verify(ps).setLong(3, 42L);
       verifyNoMoreInteractions(ps);
-    }
-
-    @SneakyThrows
-    @Test
-    void boundedQueryIncludesInclusiveHorizonSerial() {
-      var underTest = new PgQueryBuilder(Lists.newArrayList(FactSpec.ns("*")), false);
-
-      assertThat(normalized(underTest.createBoundedSQL()))
-          .isEqualTo(
-              normalized(
-                  "SELECT "
-                      + org.factcast.store.internal.PgConstants.PROJECTION_FACT
-                      + " FROM fact WHERE ((true)) AND ser>? AND ser<=? ORDER BY ser ASC"));
     }
 
     @SneakyThrows
@@ -233,7 +185,7 @@ class PgQueryBuilderTest {
       var spec2 = FactSpec.ns("ns2").type("t2").meta("foo", "bar");
       var specs = Lists.newArrayList(spec1, spec2);
       var underTest = new PgQueryBuilder(specs, internalExclusionEnabled);
-      var sql = normalized(underTest.createUnboundedSQL());
+      var sql = normalized(underTest.createSQL());
 
       var expected =
           String.format(
@@ -266,7 +218,7 @@ SELECT ser, header, payload,
               .version(1);
       var specs = Lists.newArrayList(spec1);
       var underTest = new PgQueryBuilder(specs, internalExclusionEnabled);
-      var sql = underTest.createUnboundedSQL();
+      var sql = underTest.createSQL();
 
       var expected =
           String.format(
@@ -306,7 +258,7 @@ WHERE (
               .aggIdProperty("schnick.schnack.schnuck.orgId", id2);
       var specs = Lists.newArrayList(spec1);
       var underTest = new PgQueryBuilder(specs, internalExclusionEnabled);
-      var sql = underTest.createUnboundedSQL();
+      var sql = underTest.createSQL();
 
       // note that filtering cannot be done in the database, as the version is not defined.
       var expected =
@@ -358,7 +310,7 @@ ORDER BY
               .aggIdProperty("schnick.schnack.schnuck.orgId", id2);
       var specs = Lists.newArrayList(spec1);
       var underTest = new PgQueryBuilder(specs, internalExclusionEnabled);
-      var sql = underTest.createUnboundedSQL();
+      var sql = underTest.createSQL();
 
       var expected =
           String.format(
@@ -420,7 +372,7 @@ ORDER BY
       var spec2 = FactSpec.ns("ns2").type("t2").meta("foo", "bar");
       var specs = Lists.newArrayList(spec1, spec2);
       var underTest = new PgQueryBuilder(specs, internalExclusionEnabled);
-      var sql = underTest.createUnboundedSQL();
+      var sql = underTest.createSQL();
       var expected =
           String.format(
               """
@@ -450,7 +402,7 @@ SELECT ser, header, payload,
       var spec3 = FactSpec.ns("*").type("*");
       var specs = Lists.newArrayList(spec1, spec2, spec3);
       var underTest = new PgQueryBuilder(specs, internalExclusionEnabled);
-      var sql = underTest.createUnboundedSQL();
+      var sql = underTest.createSQL();
       var expected =
           String.format(
               """
@@ -533,25 +485,6 @@ SELECT COALESCE(
 """
               .formatted(backwardScanWindow);
       assertThat(normalized(sql)).isEqualTo(normalized(expected));
-    }
-
-    @SneakyThrows
-    @Test
-    void boundedStateSqlIncludesHorizon() {
-      var underTest = new PgQueryBuilder(List.of(FactSpec.ns("ns1").type("t1")), false);
-
-      var sql = underTest.createStateSQL(512, true);
-
-      assertThat(normalized(sql))
-          .isEqualTo(
-              normalized(
-                  "WITH boundary AS MATERIALIZED (SELECT MAX(ser) - 512 AS cutoff FROM fact) "
-                      + "SELECT COALESCE((SELECT ser FROM fact WHERE ((true AND header @> ?::jsonb)) "
-                      + "AND ser > ? AND ser <= ? "
-                      + "AND ser > (SELECT cutoff FROM boundary) ORDER BY ser DESC LIMIT 1), "
-                      + "(WITH subq AS MATERIALIZED (SELECT ser FROM fact WHERE "
-                      + "((true AND header @> ?::jsonb)) "
-                      + "AND ser > ? AND ser <= ?) SELECT MAX(ser) FROM subq), 0)"));
     }
   }
 

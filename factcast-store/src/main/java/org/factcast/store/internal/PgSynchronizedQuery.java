@@ -50,7 +50,7 @@ class PgSynchronizedQuery {
 
   @NonNull final String sql;
 
-  @NonNull final Function<FactStreamHorizon, PreparedStatementSetter> setterFactory;
+  @NonNull final PreparedStatementSetter statementSetter;
 
   @NonNull final RowCallbackHandler rowHandler;
 
@@ -67,7 +67,7 @@ class PgSynchronizedQuery {
       @NonNull PushbackServerPipeline pipe,
       @NonNull PgConnectionSupplier connectionSupplier,
       @NonNull String sql,
-      @NonNull Function<FactStreamHorizon, PreparedStatementSetter> setterFactory,
+      @NonNull PreparedStatementSetter statementSetter,
       @NonNull Supplier<Boolean> isConnected,
       @NonNull AtomicLong serialToContinueFrom,
       @NonNull FactStreamHorizonProvider horizonProvider) {
@@ -77,7 +77,7 @@ class PgSynchronizedQuery {
     this.horizonProvider = horizonProvider;
     this.connectionSupplier = connectionSupplier;
     this.sql = sql;
-    this.setterFactory = setterFactory;
+    this.statementSetter = statementSetter;
 
     rowHandler =
         new PgSynchronizedQuery.FactRowCallbackHandler(pipe, isConnected, serialToContinueFrom);
@@ -105,7 +105,7 @@ class PgSynchronizedQuery {
       if (serialToContinueFrom.get() < horizonSerial) {
         try (SingleConnectionDataSource ds =
             connectionSupplier.getPooledAsSingleDataSource(filters)) {
-          new JdbcTemplate(ds).query(sql, setterFactory.apply(horizon), rowHandler);
+          new JdbcTemplate(ds).query(sql, statementSetter, rowHandler);
         }
       }
       queryCompleted = true;

@@ -31,15 +31,15 @@ public class PgFactStreamHorizonProvider implements FactStreamHorizonProvider {
 
   @Override
   public @NonNull FactStreamHorizon currentPrimary() {
-    return getMaxOrNull(primaryJdbcTemplate);
+    return getMaxOrZero(primaryJdbcTemplate);
   }
 
   @Override
   public @NonNull FactStreamHorizon readFrom(@NonNull DataSource dataSource) {
-    return getMaxOrNull(new JdbcTemplate(dataSource));
+    return getMaxOrZero(new JdbcTemplate(dataSource));
   }
 
-  private FactStreamHorizon getMaxOrNull(@NonNull JdbcTemplate jdbcTemplate) {
+  private FactStreamHorizon getMaxOrZero(@NonNull JdbcTemplate jdbcTemplate) {
     return jdbcTemplate.queryForObject(
         MAX_SERIAL, (rs, rowNum) -> new FactStreamHorizon(rs.getLong(1)));
   }

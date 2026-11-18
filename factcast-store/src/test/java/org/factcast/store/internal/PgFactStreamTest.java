@@ -267,13 +267,13 @@ class PgFactStreamTest {
     }
 
     @Test
-    void createsDatabaseBoundedFollowQuery() {
+    void createsFollowQueryWithoutUpperSerialBound() {
       when(reqTo.specs()).thenReturn(List.of(FactSpec.ns("*")));
       when(reqTo.debugInfo()).thenReturn("test");
 
       PgSynchronizedQuery query = uut.createPgSynchronizedQuery();
 
-      assertThat(query).extracting("sql").asString().contains("ser<=?");
+      assertThat(query).extracting("sql").asString().contains("ser>?").doesNotContain("ser<=?");
       assertThat(query).extracting("horizonProvider").isSameAs(horizonProvider);
     }
   }

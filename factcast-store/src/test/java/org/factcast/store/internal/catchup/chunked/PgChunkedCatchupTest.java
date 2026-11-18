@@ -206,7 +206,7 @@ class PgChunkedCatchupTest {
       verify(sample).stop(timer);
       ArgumentCaptor<String> sql = ArgumentCaptor.forClass(String.class);
       verify(jdbc).update(sql.capture(), any(PreparedStatementSetter.class));
-      assertThat(sql.getValue()).contains("ser<=?");
+      assertThat(sql.getValue()).contains("ser>?").doesNotContain("ser<=?");
     }
 
     @Test

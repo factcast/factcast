@@ -146,8 +146,8 @@ class QueryCancellationIntegrationTest {
             @Override
             protected PgQueryBuilder createPgQueryBuilder(List<FactSpec> specs) {
               return new PgQueryBuilder(specs, false) {
-                public String createBoundedSQL() {
-                  var sql = super.createBoundedSQL();
+                public String createSQL() {
+                  var sql = super.createSQL();
 
                   // slow down the query
                   int insertionPoint = sql.indexOf("WHERE");

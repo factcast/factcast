@@ -166,14 +166,14 @@ public class PgFactStream {
   @NotNull
   PgSynchronizedQuery createPgSynchronizedQuery() {
     PgQueryBuilder q = new PgQueryBuilder(request.specs(), props.isInternalExclusionEnabled());
-    String sql = q.createBoundedSQL();
+    String sql = q.createSQL();
     log.trace("created query SQL for {} - SQL={}", request.specs(), sql);
     return new PgSynchronizedQuery(
         request.debugInfo(),
         pipeline,
         connectionSupplier,
         sql,
-        horizon -> q.createBoundedStatementSetter(serial, horizon),
+        q.createStatementSetter(serial),
         this::isConnected,
         serial,
         horizonProvider);

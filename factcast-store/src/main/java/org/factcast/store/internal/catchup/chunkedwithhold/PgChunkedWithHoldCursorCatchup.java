@@ -150,7 +150,7 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
     int fetchedRows = 0;
     final var timerSample = metrics.startSample();
     try {
-      cursor.declare(queryBuilder, fromSerial, horizon);
+      cursor.declare(queryBuilder, fromSerial);
 
       log.debug("{} catchup {}, fetching first chunk", req, phase);
 
@@ -205,10 +205,7 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
 
     @VisibleForTesting
     @SuppressWarnings("java:S2077")
-    void declare(
-        @NonNull PgQueryBuilder queryBuilder,
-        @NonNull AtomicLong fromSerial,
-        @NonNull FactStreamHorizon horizon)
+    void declare(@NonNull PgQueryBuilder queryBuilder, @NonNull AtomicLong fromSerial)
         throws SQLException {
 
       Preconditions.checkArgument(chunkSize >= 1000, "chunkSize must be >= 1000");
@@ -231,7 +228,7 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
                                   )
                                   SELECT array_agg(ser ORDER BY rn) FROM numbered GROUP BY grp ORDER BY grp ASC
                               """,
-              name(), chunkSize(), queryBuilder.createBoundedSQL());
+              name(), chunkSize(), queryBuilder.createSQL());
 
       log.trace(
           "{} catchup {}, declaring cursor-with-hold after SER={}\n{}",
@@ -241,7 +238,7 @@ public class PgChunkedWithHoldCursorCatchup extends AbstractPgCatchup {
           sql);
 
       try (PreparedStatement declare = ds.getConnection().prepareStatement(sql)) {
-        queryBuilder.createBoundedStatementSetter(fromSerial, horizon).setValues(declare);
+        queryBuilder.createStatementSetter(fromSerial).setValues(declare);
         declare.execute();
         log.trace("{} catchup {}, cursor-with-hold declared", req, phase);
       }

@@ -315,23 +315,15 @@ public class PgFactStore extends AbstractFactStore {
 
   @VisibleForTesting
   State doGetState(@NotNull Collection<FactSpec> specs, long lastMatchingSerial) {
-    return doGetState(specs, lastMatchingSerial, Optional.empty());
-  }
-
-  @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-  private State doGetState(
-      @NotNull Collection<FactSpec> specs,
-      long lastMatchingSerial,
-      @NonNull Optional<FactStreamHorizon> horizon) {
     return metrics.time(
         StoreMetrics.OP.GET_STATE_FOR,
         () -> {
           PgQueryBuilder pgQueryBuilder =
               new PgQueryBuilder(specs, props.isInternalExclusionEnabled());
           int backwardScanWindow = props.getStateQueryBackwardScanWindow();
-          String stateSQL = pgQueryBuilder.createStateSQL(backwardScanWindow, horizon.isPresent());
+          String stateSQL = pgQueryBuilder.createStateSQL(backwardScanWindow);
           PreparedStatementSetter statementSetter =
-              pgQueryBuilder.createStateStatementSetter(lastMatchingSerial, horizon);
+              pgQueryBuilder.createStateStatementSetter(lastMatchingSerial);
 
           ResultSetExtractor<Long> rch =
               resultSet -> {
