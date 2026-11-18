@@ -30,7 +30,7 @@ public class PgFactStreamHorizonProvider implements FactStreamHorizonProvider {
   }
 
   @Override
-  public @NonNull FactStreamHorizon currentPrimary() {
+  public @NonNull FactStreamHorizon get() {
     return getMaxOrZero(primaryJdbcTemplate);
   }
 

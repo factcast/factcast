@@ -94,7 +94,7 @@ public class NudgeNotificationHandler implements DisposableBean {
     // this makes all currently schedule tasks just return. unfortunately, we cannot cancel tasks on
     // a timer without also canceling the timer itself
     long version = timerVersion.incrementAndGet();
-    long interval = props.getMaxNotificationPollLatencyInMillis();
+    long interval = props.getFactNotificationPollLatencyInMillis();
 
     for (long i = 0; i < 100; i = i + interval) {
       timer.schedule(new ScheduledPoll(version), i + interval);

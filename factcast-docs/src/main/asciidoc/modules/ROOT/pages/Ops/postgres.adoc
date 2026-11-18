@@ -6,16 +6,6 @@
 === reWriteBatchedInserts
 
 Writable instances automatically enable pgJDBC's `reWriteBatchedInserts=true` during Spring datasource initialization.
-No user configuration is needed for an unstarted Tomcat JDBC pool or a directly configured PostgreSQL datasource.
-The store currently requires Tomcat for its connection supplier; this configurator does not introduce support for other pool implementations.
-The configurator runs after configuration property binding and before bean initialization methods.
-It preserves other connection properties and overrides an explicit `reWriteBatchedInserts=false` in the JDBC URL, since URL values take precedence over driver properties.
-The driver remains responsible for rewriting compatible JDBC batches; publication transaction boundaries are unchanged.
-
-Pools that already contain physical connections (for example, opened by their constructors or factory methods), externally managed/JNDI pools, and opaque datasource wrappers cannot be configured this way.
-Pools supplied with an external datasource are also left unchanged; a supported underlying datasource is configured if it is itself a Spring bean.
-Existing physical connections are never modified or forcibly closed.
-For these custom configurations, enable the option before creating connections, for example with `?reWriteBatchedInserts=true` in the PostgreSQL JDBC URL.
 Read-only instances do not install the automatic configurator.
 
 === Optimize GIN Indexes Updates

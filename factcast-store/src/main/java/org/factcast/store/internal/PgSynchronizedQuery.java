@@ -86,7 +86,7 @@ class PgSynchronizedQuery {
   // the synchronized here is crucial!
   @SuppressWarnings({"SameReturnValue", "java:S1181"})
   public synchronized void run(boolean useIndex) throws PipelineAlreadyClosedException {
-    FactStreamHorizon horizon = horizonProvider.currentPrimary();
+    FactStreamHorizon horizon = horizonProvider.get();
     long horizonSerial = horizon.factSerial();
     boolean queryCompleted = false;
     List<ConnectionModifier> filters =

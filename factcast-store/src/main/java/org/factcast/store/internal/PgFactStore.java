@@ -328,7 +328,7 @@ public class PgFactStore extends AbstractFactStore {
     return metrics.time(
         StoreMetrics.OP.GET_STATE_FOR,
         () -> {
-          FactStreamHorizon horizon = horizonProvider.currentPrimary();
+          FactStreamHorizon horizon = horizonProvider.get();
           return State.of(specs, horizon.factSerial());
         });
   }
@@ -357,7 +357,7 @@ public class PgFactStore extends AbstractFactStore {
   @Override
   public long latestSerial() {
     // Committed rows can still be ahead of the safe stream boundary.
-    return horizonProvider.currentPrimary().factSerial();
+    return horizonProvider.get().factSerial();
   }
 
   @Override
@@ -373,7 +373,7 @@ public class PgFactStore extends AbstractFactStore {
         // No date boundary exists yet, so return the latest safe serial.
         return latestSerial();
       } else {
-        return Math.min(lastSer, horizonProvider.currentPrimary().factSerial());
+        return Math.min(lastSer, horizonProvider.get().factSerial());
       }
     } catch (EmptyResultDataAccessException noFactsAtAll) {
       return 0L;

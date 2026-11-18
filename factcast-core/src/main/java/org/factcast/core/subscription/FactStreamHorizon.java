@@ -17,7 +17,7 @@ package org.factcast.core.subscription;
 
 import lombok.NonNull;
 
-// Carries the inclusive fact serial bound read from the database for this query.
+// Carries the max serial published
 public record FactStreamHorizon(long factSerial) {
 
   public static FactStreamHorizon empty() {

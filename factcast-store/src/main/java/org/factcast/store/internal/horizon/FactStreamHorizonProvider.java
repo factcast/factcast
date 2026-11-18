@@ -15,6 +15,7 @@
  */
 package org.factcast.store.internal.horizon;
 
+import java.util.function.Supplier;
 import javax.sql.DataSource;
 import lombok.NonNull;
 import org.factcast.core.subscription.FactStreamHorizon;
@@ -25,13 +26,7 @@ import org.factcast.core.subscription.FactStreamHorizon;
  * <p>A fact query may fast-forward through a returned boundary only when the query itself is
  * bounded by that value.
  */
-public interface FactStreamHorizonProvider {
-
-  // Reads the current primary boundary from the database.
-  @NonNull
-  FactStreamHorizon currentPrimary();
-
-  // Reads the current boundary through the supplied data source.
+public interface FactStreamHorizonProvider extends Supplier<FactStreamHorizon> {
   @NonNull
   FactStreamHorizon readFrom(@NonNull DataSource dataSource);
 }

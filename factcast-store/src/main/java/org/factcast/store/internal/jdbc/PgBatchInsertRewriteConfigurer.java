@@ -19,6 +19,7 @@ import java.util.Arrays;
 import java.util.Properties;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
 import org.postgresql.PGProperty;
 import org.postgresql.ds.common.BaseDataSource;
 import org.springframework.beans.factory.config.BeanPostProcessor;
@@ -30,7 +31,7 @@ public final class PgBatchInsertRewriteConfigurer implements BeanPostProcessor {
   // A regular post-processor runs after Boot's priority-ordered configuration property binding,
   // but before initialization methods can open the pool. Never borrow a connection here.
   @Override
-  public Object postProcessBeforeInitialization(Object bean, String beanName) {
+  public Object postProcessBeforeInitialization(@NonNull Object bean, @NonNull String beanName) {
     if (bean instanceof org.apache.tomcat.jdbc.pool.DataSource ds) {
       if (ds.getDataSource() != null || ds.getDataSourceJNDI() != null || !isPostgres(ds.getUrl()))
         return bean;
@@ -50,7 +51,7 @@ public final class PgBatchInsertRewriteConfigurer implements BeanPostProcessor {
     return url != null && url.startsWith("jdbc:postgresql:");
   }
 
-  private static Properties withRewrite(Properties original) {
+  private static @NonNull Properties withRewrite(Properties original) {
     Properties properties = new Properties();
     if (original != null) {
       properties.putAll(original);
@@ -63,7 +64,7 @@ public final class PgBatchInsertRewriteConfigurer implements BeanPostProcessor {
     return properties;
   }
 
-  private static String rewriteUrl(String url) {
+  private static @NonNull String rewriteUrl(String url) {
     int query = url.indexOf('?');
     if (query < 0) return url;
     // URL properties override driver properties. Replace every occurrence without rebuilding

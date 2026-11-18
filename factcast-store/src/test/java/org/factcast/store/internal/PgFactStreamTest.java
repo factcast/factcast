@@ -94,7 +94,7 @@ class PgFactStreamTest {
       lenient().doReturn(pgSynchronizedQuery).when(uut).createPgSynchronizedQuery();
       // doNothing().when(uut).catchupAndFastForward(any(), any(), any());
       lenient().doNothing().when(uut).follow(any(), any());
-      lenient().when(horizonProvider.currentPrimary()).thenReturn(initialHorizon);
+      lenient().when(horizonProvider.get()).thenReturn(initialHorizon);
       lenient().when(connectionSupplier.dataSource()).thenReturn(ds);
       lenient().when(reqTo.debugInfo()).thenReturn("foo");
       lenient().when(uut.catchupConnectionModifiers(reqTo)).thenReturn(Collections.emptyList());
@@ -174,7 +174,7 @@ class PgFactStreamTest {
     void setup() {
       lenient().doNothing().when(uut).doCatchup();
       lenient().when(reqTo.debugInfo()).thenReturn("foo");
-      lenient().when(horizonProvider.currentPrimary()).thenReturn(initialHorizon);
+      lenient().when(horizonProvider.get()).thenReturn(initialHorizon);
     }
 
     @SneakyThrows
@@ -476,7 +476,7 @@ class PgFactStreamTest {
     @BeforeEach
     void setup() {
       lenient().when(reqTo.debugInfo()).thenReturn("test-debug-info");
-      lenient().when(horizonProvider.currentPrimary()).thenReturn(initialHorizon);
+      lenient().when(horizonProvider.get()).thenReturn(initialHorizon);
       lenient().doReturn(ds).when(connectionSupplier).dataSource();
       lenient().doReturn(mds).when(uut).createCatchupDataSource(ds, pipeline);
       lenient().when(uut.isConnected()).thenReturn(true);
@@ -584,7 +584,7 @@ class PgFactStreamTest {
       }
       when(connectionSupplier.dataSource()).thenReturn(ds);
       doReturn(Collections.emptyList()).when(uut).catchupConnectionModifiers(any());
-      when(horizonProvider.currentPrimary()).thenReturn(initialHorizon);
+      when(horizonProvider.get()).thenReturn(initialHorizon);
       when(pgCatchupFactory.create(
               any(),
               any(),
@@ -644,7 +644,7 @@ class PgFactStreamTest {
         doNothing().when(uut).fastForward(any(), any());
         lenient().doReturn(true).when(uut).isConnected();
         lenient().doReturn(mds).when(uut).createCatchupDataSource(any(DataSource.class), any());
-        lenient().when(horizonProvider.currentPrimary()).thenReturn(primaryHorizon);
+        lenient().when(horizonProvider.get()).thenReturn(primaryHorizon);
         lenient().doReturn(123L).when(uut).catchupPhaseOne(any(), same(primaryHorizon));
         lenient()
             .doNothing()
@@ -678,7 +678,7 @@ class PgFactStreamTest {
         doNothing().when(uut).fastForward(any(), any());
         lenient().doReturn(true).when(uut).isConnected();
         lenient().doReturn(mds).when(uut).createCatchupDataSource(any(DataSource.class), any());
-        lenient().when(horizonProvider.currentPrimary()).thenReturn(primaryHorizon);
+        lenient().when(horizonProvider.get()).thenReturn(primaryHorizon);
         lenient().when(horizonProvider.readFrom(mds)).thenReturn(offloadHorizon);
         lenient().doReturn(100L).when(uut).catchupPhaseOne(any(), same(offloadHorizon));
         lenient()
@@ -715,7 +715,7 @@ class PgFactStreamTest {
         doNothing().when(uut).fastForward(any(), any());
         lenient().doReturn(true).when(uut).isConnected();
         lenient().doReturn(mds).when(uut).createCatchupDataSource(any(DataSource.class), any());
-        when(horizonProvider.currentPrimary()).thenReturn(primaryHorizon);
+        when(horizonProvider.get()).thenReturn(primaryHorizon);
         when(horizonProvider.readFrom(mds)).thenReturn(horizon(200));
         doReturn(123L).when(uut).catchupPhaseOne(same(mds), same(primaryHorizon));
         doNothing().when(uut).catchupPhaseTwo(any(), anyLong(), any(FactStreamHorizon.class));
@@ -747,7 +747,7 @@ class PgFactStreamTest {
         doNothing().when(uut).fastForward(any(), any());
         lenient().doReturn(true).when(uut).isConnected();
         lenient().doReturn(mds).when(uut).createCatchupDataSource(any(DataSource.class), any());
-        when(horizonProvider.currentPrimary()).thenReturn(primaryHorizon);
+        when(horizonProvider.get()).thenReturn(primaryHorizon);
         when(horizonProvider.readFrom(mds))
             .thenThrow(new DataAccessResourceFailureException("offload unavailable"));
         doNothing().when(uut).catchupPhaseTwo(any(), anyLong(), any(FactStreamHorizon.class));

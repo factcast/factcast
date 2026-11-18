@@ -281,7 +281,7 @@ public class StoreConfigurationProperties implements InitializingBean {
   @Positive
   @Min(5)
   @Max(50)
-  long maxNotificationPollLatencyInMillis = 25;
+  long factNotificationPollLatencyInMillis = 25;
 
   @Getter
   @Setter

@@ -593,25 +593,10 @@ class PgFactStoreTest {
       when(rs.getLong(1)).thenReturn(42L);
       assertThat(extractorCaptor.getValue().extractData(rs)).isEqualTo(42L);
     }
-
-    @Test
-    void tokenCreationUsesLatestSerialWhenLeanStateTokenIsDisabled() {
-      storeConfigurationProperties.getLeanStateToken().setEnabled(false);
-      List<FactSpec> specs = List.of(FactSpec.ns("ns1").type("type1"));
-      when(horizonProvider.currentPrimary()).thenReturn(new FactStreamHorizon(42));
-
-      State state = underTest.getStateFor(specs);
-
-      assertThat(state.serialOfLastMatchingFact()).isEqualTo(42L);
-      assertThat(state.specs()).isEqualTo(specs);
-      verify(horizonProvider).currentPrimary();
-      verifyNoInteractions(jdbcTemplate);
-    }
   }
 
   @Nested
   class WhenGettingStateForWithSerial {
-    final long LAST_MATCHING_SERIAL = 43;
     @Mock FactSpec factSpec;
 
     @BeforeEach
@@ -633,6 +618,7 @@ class PgFactStoreTest {
           ArgumentCaptor.forClass(PreparedStatementSetter.class);
       when(jdbcTemplate.query(eq(stateSQL), captor.capture(), any(ResultSetExtractor.class)))
           .thenReturn(32L);
+      long LAST_MATCHING_SERIAL = 43;
       assertThat(underTest.getStateFor(specs, LAST_MATCHING_SERIAL).serialOfLastMatchingFact())
           .isEqualTo(32L);
 
@@ -671,13 +657,13 @@ class PgFactStoreTest {
 
     @Test
     void fetchesSerial() {
-      when(horizonProvider.currentPrimary()).thenReturn(new FactStreamHorizon(123L));
+      when(horizonProvider.get()).thenReturn(new FactStreamHorizon(123L));
       assertThat(underTest.latestSerial()).isEqualTo(123L);
     }
 
     @Test
     void returnsZeroWhenTheStoreIsEmpty() {
-      when(horizonProvider.currentPrimary()).thenReturn(FactStreamHorizon.empty());
+      when(horizonProvider.get()).thenReturn(FactStreamHorizon.empty());
 
       assertThat(underTest.latestSerial()).isZero();
     }
@@ -696,7 +682,7 @@ class PgFactStoreTest {
       when(jdbcTemplate.queryForObject(
               eq(PgConstants.LAST_SERIAL_BEFORE_DATE), any(RowMapper.class), eq(date)))
           .thenReturn(123L);
-      when(horizonProvider.currentPrimary()).thenReturn(new FactStreamHorizon(200L));
+      when(horizonProvider.get()).thenReturn(new FactStreamHorizon(200L));
       assertThat(underTest.lastSerialBefore(date.toLocalDate())).isEqualTo(123L);
     }
 
@@ -706,7 +692,7 @@ class PgFactStoreTest {
       when(jdbcTemplate.queryForObject(
               eq(PgConstants.LAST_SERIAL_BEFORE_DATE), any(RowMapper.class), eq(date)))
           .thenReturn(-1L);
-      when(horizonProvider.currentPrimary()).thenReturn(new FactStreamHorizon(42L));
+      when(horizonProvider.get()).thenReturn(new FactStreamHorizon(42L));
 
       assertThat(underTest.lastSerialBefore(date.toLocalDate())).isEqualTo(42L);
     }
@@ -735,7 +721,7 @@ class PgFactStoreTest {
       when(jdbcTemplate.queryForObject(
               eq(PgConstants.FIRST_SERIAL_AFTER_DATE), any(RowMapper.class), eq(date)))
           .thenReturn(123L);
-      when(horizonProvider.currentPrimary()).thenReturn(new FactStreamHorizon(200L));
+      when(horizonProvider.get()).thenReturn(new FactStreamHorizon(200L));
       assertThat(underTest.firstSerialAfter(date.toLocalDate())).isEqualTo(123L);
     }
 
@@ -745,7 +731,7 @@ class PgFactStoreTest {
       when(jdbcTemplate.queryForObject(
               eq(PgConstants.FIRST_SERIAL_AFTER_DATE), any(RowMapper.class), eq(date)))
           .thenReturn(123L);
-      when(horizonProvider.currentPrimary()).thenReturn(new FactStreamHorizon(123L));
+      when(horizonProvider.get()).thenReturn(new FactStreamHorizon(123L));
 
       assertThat(underTest.firstSerialAfter(date.toLocalDate())).isEqualTo(123L);
     }

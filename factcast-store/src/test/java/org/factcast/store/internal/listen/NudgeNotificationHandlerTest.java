@@ -58,7 +58,7 @@ class NudgeNotificationHandlerTest {
 
   @BeforeEach
   void setUp() {
-    lenient().when(props.getMaxNotificationPollLatencyInMillis()).thenReturn(25L);
+    lenient().when(props.getFactNotificationPollLatencyInMillis()).thenReturn(25L);
     lenient().when(metrics.timer(any())).thenReturn(timer);
     lenient().when(metrics.startSample()).thenReturn(sample);
     lenient().doNothing().when(jdbc).execute(anyString());
@@ -129,7 +129,7 @@ class NudgeNotificationHandlerTest {
   @Test
   void schedulesSubsequentPolls() throws Exception {
     // Given
-    when(props.getMaxNotificationPollLatencyInMillis()).thenReturn(25L);
+    when(props.getFactNotificationPollLatencyInMillis()).thenReturn(25L);
     // Access notificationSer to set it > 0
     handler.notificationSer.set(100L);
 
@@ -153,7 +153,7 @@ class NudgeNotificationHandlerTest {
   @Test
   void foldsDuplicatePolls() throws Exception {
     // Given
-    when(props.getMaxNotificationPollLatencyInMillis()).thenReturn(25L);
+    when(props.getFactNotificationPollLatencyInMillis()).thenReturn(25L);
     // Access notificationSer to set it > 0
     handler.notificationSer.set(101L);
 
@@ -176,7 +176,7 @@ class NudgeNotificationHandlerTest {
   @Test
   void notifesForEachPair() throws Exception {
     // Given
-    when(props.getMaxNotificationPollLatencyInMillis()).thenReturn(25L);
+    when(props.getFactNotificationPollLatencyInMillis()).thenReturn(25L);
     // Access notificationSer to set it > 0
     handler.notificationSer.set(102L);
 
@@ -227,7 +227,7 @@ class NudgeNotificationHandlerTest {
   @Test
   void notifiesQuicklyAfterScheduledPoll() throws Exception {
     // Given
-    when(props.getMaxNotificationPollLatencyInMillis()).thenReturn(50L);
+    when(props.getFactNotificationPollLatencyInMillis()).thenReturn(50L);
     // Access notificationSer to set it > 0
     handler.notificationSer.set(100L);
     when(jdbc.queryForObject(NudgeNotificationHandler.MAX_NOTIFICATION_SERIAL, Long.class))
@@ -280,7 +280,7 @@ class NudgeNotificationHandlerTest {
   @Test
   void ignoresOlderVersions() throws Exception {
     // Given
-    when(props.getMaxNotificationPollLatencyInMillis()).thenReturn(25L);
+    when(props.getFactNotificationPollLatencyInMillis()).thenReturn(25L);
     // Access notificationSer to set it > 0
     handler.notificationSer.set(110L);
 
