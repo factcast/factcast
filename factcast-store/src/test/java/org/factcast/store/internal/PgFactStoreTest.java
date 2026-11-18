@@ -131,7 +131,7 @@ class PgFactStoreTest {
       when(queue.addAndFlush(anyList())).thenReturn(future);
       when(future.get()).thenThrow(new InterruptedException());
 
-      assertThatThrownBy(() -> underTest.publishBatchable(Collections.singletonList(fact)))
+      assertThatThrownBy(() -> underTest.publish_usingBatching(Collections.singletonList(fact)))
           .isInstanceOf(RuntimeException.class)
           .hasCauseInstanceOf(InterruptedException.class);
 
@@ -144,7 +144,7 @@ class PgFactStoreTest {
       when(queue.addAndFlush(anyList())).thenReturn(future);
       when(future.get()).thenThrow(new ExecutionException(new RuntimeException("cause")));
 
-      assertThatThrownBy(() -> underTest.publishBatchable(Collections.singletonList(fact)))
+      assertThatThrownBy(() -> underTest.publish_usingBatching(Collections.singletonList(fact)))
           .isInstanceOf(RuntimeException.class);
     }
 
@@ -152,7 +152,7 @@ class PgFactStoreTest {
     void rejectsBatchablePublicationInReadOnlyMode() {
       storeConfigurationProperties.setReadOnlyModeEnabled(true);
 
-      assertThatThrownBy(() -> underTest.publishBatchable(List.of(fact)))
+      assertThatThrownBy(() -> underTest.publish_usingBatching(List.of(fact)))
           .isInstanceOf(UnsupportedOperationException.class)
           .hasMessage("Publishing is not allowed in read-only mode");
 
@@ -165,10 +165,9 @@ class PgFactStoreTest {
       try {
         TransactionSynchronizationManager.setActualTransactionActive(true);
 
-        underTest.publishBatchable(List.of(fact));
+        underTest.publish_usingBatching(List.of(fact));
 
         verify(lock).acquireExclusiveTXLock();
-        verify(lock, never()).acquireSharedTXLock();
         verify(jdbcTemplate)
             .batchUpdate(
                 eq(PgConstants.INSERT_FACT),
@@ -468,18 +467,6 @@ class PgFactStoreTest {
       configureMetricTimeSupplier();
       when(metrics.counter(StoreMetrics.EVENT.UNSUCCESSFUL_CONDITIONAL_PUBLISH))
           .thenReturn(counter);
-    }
-
-    @Test
-    void doesNotExclusivelyLockWithoutToken() {
-
-      underTest = spy(underTest);
-
-      boolean b = underTest.publishIfUnchanged(Lists.newArrayList(fact), Optional.empty());
-      verify(lock, never()).acquireExclusiveTXLock();
-      assertThat(b).isTrue();
-      verify(underTest).publishBatchable(any());
-      verify(counter, never()).increment();
     }
 
     @Test
@@ -869,7 +856,7 @@ class PgFactStoreTest {
                 return callback.doInTransaction(mock(TransactionStatus.class));
               });
 
-      underTest.batchPublish(facts);
+      underTest.doPublish(facts);
 
       verify(lock).acquireExclusiveTXLock();
       verify(jdbcTemplate).batchUpdate(eq(PgConstants.INSERT_FACT), any(), anyInt(), any());
@@ -879,12 +866,18 @@ class PgFactStoreTest {
   @Nested
   class WhenBatchPublishingInTransaction {
 
+    @BeforeEach
+    void setup() {
+      configureMetricTimeRunnable();
+    }
+
     @Test
     void publishes() {
+
       Fact fact = mock(Fact.class);
       List<Fact> facts = Lists.newArrayList(fact);
 
-      underTest.batchPublishInTransaction(facts);
+      underTest.publish_usingBatching(facts);
 
       verify(lock).acquireExclusiveTXLock();
       verify(jdbcTemplate).batchUpdate(eq(PgConstants.INSERT_FACT), any(), anyInt(), any());
@@ -897,7 +890,7 @@ class PgFactStoreTest {
       when(jdbcTemplate.batchUpdate(anyString(), any(), anyInt(), any()))
           .thenThrow(new DuplicateKeyException("duplicate"));
 
-      assertThatThrownBy(() -> underTest.batchPublishInTransaction(facts))
+      assertThatThrownBy(() -> underTest.publish_usingBatching(facts))
           .isInstanceOf(DuplicateFactException.class);
     }
   }
@@ -928,11 +921,11 @@ class PgFactStoreTest {
       List<Fact> facts = Lists.newArrayList(fact);
 
       PgFactStore spy = spy(underTest);
-      doNothing().when(spy).batchPublish(anyList());
+      doNothing().when(spy).doPublish(anyList());
 
-      spy.publishDirectly(facts);
+      spy.publish_withoutBatching(facts);
 
-      verify(spy).batchPublish(facts);
+      verify(spy).doPublish(facts);
     }
   }
 }

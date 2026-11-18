@@ -54,7 +54,7 @@ class UnconditionalPublishQueueTest {
 
     // Assert
     future.get(); // Should not throw
-    verify(pgFactStore, timeout(1000)).batchPublish(facts);
+    verify(pgFactStore, timeout(1000)).doPublish(facts);
   }
 
   @Test
@@ -68,7 +68,7 @@ class UnconditionalPublishQueueTest {
               return null;
             })
         .when(pgFactStore)
-        .batchPublish(anyList());
+        .doPublish(anyList());
 
     Future<Void> publication = underTest.addAndFlush(List.of(fact));
     try {
@@ -97,7 +97,7 @@ class UnconditionalPublishQueueTest {
               return null;
             })
         .when(pgFactStore)
-        .batchPublish(anyList());
+        .doPublish(anyList());
 
     // Act
     Future<Void> future = underTest.addAndFlush(facts);
@@ -106,7 +106,7 @@ class UnconditionalPublishQueueTest {
     // Wait for completion (it should complete now that retries succeed)
     future.get();
 
-    verify(pgFactStore, times(2)).batchPublish(facts); // Initial failure + retry
+    verify(pgFactStore, times(2)).doPublish(facts); // Initial failure + retry
   }
 
   @Test
@@ -149,7 +149,7 @@ class UnconditionalPublishQueueTest {
               return null;
             })
         .when(pgFactStore)
-        .batchPublish(anyList());
+        .doPublish(anyList());
 
     // make sure, everything is quiet
     assertThat(cdl.await(50, TimeUnit.MILLISECONDS)).isFalse();
@@ -182,10 +182,10 @@ class UnconditionalPublishQueueTest {
         .isInstanceOf(DuplicateFactException.class);
 
     // this one failed:
-    verify(pgFactStore, times(1)).batchPublish(argThat(l -> l.containsAll(allFacts)));
+    verify(pgFactStore, times(1)).doPublish(argThat(l -> l.containsAll(allFacts)));
     // so those need to happen
-    verify(pgFactStore, times(1)).batchPublish(eq(facts1));
-    verify(pgFactStore, times(1)).batchPublish(eq(facts2));
-    verify(pgFactStore, times(1)).batchPublish(eq(facts3));
+    verify(pgFactStore, times(1)).doPublish(eq(facts1));
+    verify(pgFactStore, times(1)).doPublish(eq(facts2));
+    verify(pgFactStore, times(1)).doPublish(eq(facts3));
   }
 }

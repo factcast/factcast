@@ -18,39 +18,18 @@ package org.factcast.store.internal.lock;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.*;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @RequiredArgsConstructor
 @SuppressWarnings("java:S2077")
 public class AdvisoryWriteLock implements FactTableWriteLock {
-  private static final String LOCK_SHARED_SQL =
-      "SELECT pg_advisory_xact_lock_shared(" + AdvisoryLocks.PUBLISH.code() + ")";
   private static final String LOCK_EXCLUSIVE_SQL =
       "SELECT pg_advisory_xact_lock(" + AdvisoryLocks.PUBLISH.code() + ")";
-  private static final TransactionSynchronization EXCLUSIVE_LOCK_MARKER =
-      new TransactionSynchronization() {};
 
   private final JdbcTemplate tpl;
 
   @Override
   @Transactional(propagation = Propagation.MANDATORY)
-  public void acquireSharedTXLock() {
-    tpl.execute(LOCK_SHARED_SQL);
-  }
-
-  @Override
-  @Transactional(propagation = Propagation.MANDATORY)
   public void acquireExclusiveTXLock() {
     tpl.execute(LOCK_EXCLUSIVE_SQL);
-    if (!isExclusiveTXLockHeld()) {
-      TransactionSynchronizationManager.registerSynchronization(EXCLUSIVE_LOCK_MARKER);
-    }
-  }
-
-  @Override
-  public boolean isExclusiveTXLockHeld() {
-    return TransactionSynchronizationManager.isSynchronizationActive()
-        && TransactionSynchronizationManager.getSynchronizations().contains(EXCLUSIVE_LOCK_MARKER);
   }
 }

@@ -177,11 +177,6 @@ class ConditionalPublicationOrderingIntegrationTest {
     }
 
     @Override
-    public void acquireSharedTXLock() {
-      delegate.acquireSharedTXLock();
-    }
-
-    @Override
     public void acquireExclusiveTXLock() {
       CountDownLatch attempted = nextExclusiveLock.get();
       if (attempted != null) {
@@ -204,11 +199,6 @@ class ConditionalPublicationOrderingIntegrationTest {
         throw new IllegalStateException(e);
       }
       if (!gate.acquireBeforePausing()) delegate.acquireExclusiveTXLock();
-    }
-
-    @Override
-    public boolean isExclusiveTXLockHeld() {
-      return delegate.isExclusiveTXLockHeld();
     }
 
     record Gate(boolean acquireBeforePausing, CountDownLatch paused, CountDownLatch release) {}

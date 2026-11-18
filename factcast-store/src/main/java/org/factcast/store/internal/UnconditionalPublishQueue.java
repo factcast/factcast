@@ -111,7 +111,7 @@ class UnconditionalPublishQueue {
     if (!pubs.isEmpty()) {
       // try to publish as one
       try {
-        pgFactStore.batchPublish(facts);
+        pgFactStore.doPublish(facts);
         // since it worked, we can complete all
         pubs.forEach(pub -> pub.completion().complete(null));
       } catch (Exception e) {
@@ -123,7 +123,7 @@ class UnconditionalPublishQueue {
             .forEach(
                 pub -> {
                   try {
-                    pgFactStore.batchPublish(pub.facts());
+                    pgFactStore.doPublish(pub.facts());
                     pub.completion().complete(null);
                   } catch (Exception dupe) {
                     pub.completion().completeExceptionally(dupe);

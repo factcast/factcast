@@ -40,7 +40,6 @@ import org.springframework.dao.*;
 import org.springframework.jdbc.core.*;
 import org.springframework.transaction.*;
 import org.springframework.transaction.annotation.*;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
@@ -124,28 +123,6 @@ public class PgFactStore extends AbstractFactStore {
                     new TransformationRequest(value, Collections.singleton(version))));
   }
 
-  void publishBatchable(@NonNull List<? extends Fact> factsToPublish) {
-    if (props.isReadOnlyModeEnabled()) {
-      throw new UnsupportedOperationException("Publishing is not allowed in read-only mode");
-    }
-    if (TransactionSynchronizationManager.isActualTransactionActive()) {
-      publishDirectly(factsToPublish);
-      return;
-    }
-    metrics.time(
-        StoreMetrics.OP.PUBLISH,
-        () -> {
-          try {
-            queue.addAndFlush(factsToPublish).get();
-          } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException(e);
-          } catch (ExecutionException e) {
-            throw ExceptionHelper.toRuntime(e.getCause());
-          }
-        });
-  }
-
   @Override
   public void publish(@NonNull List<? extends Fact> factsToPublish) {
     if (props.isReadOnlyModeEnabled()) {
@@ -153,12 +130,8 @@ public class PgFactStore extends AbstractFactStore {
     }
     var defensiveCopy = new ArrayList<>(factsToPublish);
 
-    if (props.getPublishBatched().isEnabled()) publishBatchable(defensiveCopy);
-    else publishDirectly(defensiveCopy);
-  }
-
-  void publishDirectly(@NonNull List<? extends Fact> factsToPublish) {
-    metrics.time(StoreMetrics.OP.PUBLISH, () -> batchPublish(factsToPublish));
+    if (props.getPublishBatched().isEnabled()) publish_usingBatching(defensiveCopy);
+    else publish_withoutBatching(defensiveCopy);
   }
 
   @VisibleForTesting
@@ -276,29 +249,29 @@ public class PgFactStore extends AbstractFactStore {
   @SuppressWarnings("java:S6809") // as we started a transaction already
   public boolean publishIfUnchanged(
       @NonNull List<? extends Fact> factsToPublish, @NonNull Optional<StateToken> optionalToken) {
+    if (optionalToken.isEmpty()) {
+      // even though this fallback behavior already is present in super, we branch here to avoid
+      // double (and unnecessarily exclusive) locking
+      publish(factsToPublish);
+      return true;
+    }
     if (props.isReadOnlyModeEnabled()) {
       throw new UnsupportedOperationException("Publishing is not allowed in read-only mode");
     }
 
     var defensiveCopy = new ArrayList<>(factsToPublish);
 
-    if (optionalToken.isEmpty()) {
-      // even though this fallback behavior already is present in super, we branch here to avoid
-      // double (and unnecessarily exclusive) locking
-      publishBatchable(defensiveCopy);
-      return true;
-    } else
-      return metrics.time(
-          StoreMetrics.OP.PUBLISH_IF_UNCHANGED,
-          () -> {
-            // The exclusive lock waits for shared-lock holders and protects validation through
-            // commit. Queued publications may follow because their publish calls have not returned.
-            lock.acquireExclusiveTXLock();
-            boolean successful = PgFactStore.super.publishIfUnchanged(defensiveCopy, optionalToken);
-            if (!successful)
-              metrics.counter(StoreMetrics.EVENT.UNSUCCESSFUL_CONDITIONAL_PUBLISH).increment();
-            return successful;
-          });
+    return metrics.time(
+        StoreMetrics.OP.PUBLISH_IF_UNCHANGED,
+        () -> {
+          // The exclusive lock waits for shared-lock holders and protects validation through
+          // commit. Queued publications may follow because their publish calls have not returned.
+          lock.acquireExclusiveTXLock();
+          boolean successful = PgFactStore.super.publishIfUnchanged(defensiveCopy, optionalToken);
+          if (!successful)
+            metrics.counter(StoreMetrics.EVENT.UNSUCCESSFUL_CONDITIONAL_PUBLISH).increment();
+          return successful;
+        });
   }
 
   @Override
@@ -399,54 +372,64 @@ public class PgFactStore extends AbstractFactStore {
   @Override
   public Long firstSerialAfter(@NonNull LocalDate date) {
     try {
-      Long firstSer =
-          jdbcTemplate.queryForObject(
-              PgConstants.FIRST_SERIAL_AFTER_DATE,
-              new SingleColumnRowMapper<>(Long.class),
-              Date.valueOf(date));
-      // Date boundaries beyond the committed horizon have no visible matching fact yet.
-      return firstSer != null && firstSer <= horizonProvider.currentPrimary().factSerial()
-          ? firstSer
-          : null;
+      return jdbcTemplate.queryForObject(
+          PgConstants.FIRST_SERIAL_AFTER_DATE,
+          new SingleColumnRowMapper<>(Long.class),
+          Date.valueOf(date));
     } catch (EmptyResultDataAccessException noFactsAtAll) {
       return null;
     }
   }
 
-  void batchPublish(List<? extends Fact> facts) {
+  // Publication
+  void publish_usingBatching(@NonNull List<? extends Fact> factsToPublish) {
+    if (props.isReadOnlyModeEnabled()) {
+      throw new UnsupportedOperationException("Publishing is not allowed in read-only mode");
+    }
+    metrics.time(
+        StoreMetrics.OP.PUBLISH,
+        () -> {
+          try {
+            queue.addAndFlush(factsToPublish).get();
+          } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e);
+          } catch (ExecutionException e) {
+            throw ExceptionHelper.toRuntime(e.getCause());
+          }
+        });
+  }
+
+  void publish_withoutBatching(@NonNull List<? extends Fact> factsToPublish) {
+    metrics.time(StoreMetrics.OP.PUBLISH, () -> doPublish(factsToPublish));
+  }
+
+  void doPublish(List<? extends Fact> facts) {
     int numberOfFactsToPublish = facts.size();
     log.trace("Inserting {} fact(s)", numberOfFactsToPublish);
     try {
       tx.execute(
           ts -> {
-            batchPublishInTransaction(facts, true);
+            try {
+              lock.acquireExclusiveTXLock();
+              jdbcTemplate.batchUpdate(
+                  PgConstants.INSERT_FACT,
+                  facts,
+                  // batch limitation not necessary
+                  Integer.MAX_VALUE,
+                  (statement, fact) -> {
+                    statement.setString(1, fact.jsonHeader());
+                    statement.setString(2, fact.jsonPayload());
+                  });
+              // adding serials to headers is done via trigger
+            } catch (DuplicateKeyException dupkey) {
+              throw new DuplicateFactException(dupkey.getMessage());
+            }
 
             return null;
           });
     } catch (TransactionException e) {
       throw ExceptionHelper.toRuntime(e.getCause());
-    }
-  }
-
-  void batchPublishInTransaction(List<? extends Fact> facts) {
-    batchPublishInTransaction(facts, false);
-  }
-
-  private void batchPublishInTransaction(List<? extends Fact> facts, boolean callerTransaction) {
-    try {
-      lock.acquireExclusiveTXLock();
-      jdbcTemplate.batchUpdate(
-          PgConstants.INSERT_FACT,
-          facts,
-          // batch limitation not necessary
-          Integer.MAX_VALUE,
-          (statement, fact) -> {
-            statement.setString(1, fact.jsonHeader());
-            statement.setString(2, fact.jsonPayload());
-          });
-      // adding serials to headers is done via trigger
-    } catch (DuplicateKeyException dupkey) {
-      throw new DuplicateFactException(dupkey.getMessage());
     }
   }
 }
