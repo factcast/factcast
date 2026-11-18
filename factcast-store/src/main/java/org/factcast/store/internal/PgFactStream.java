@@ -140,7 +140,7 @@ public class PgFactStream {
     try {
       if (request.ephemeral()) {
         // just fast forward to the latest event published by now
-        serial.set(horizonProvider.advance().factSerial());
+        serial.set(horizonProvider.currentPrimary().factSerial());
       } else {
         doCatchup();
       }
@@ -199,9 +199,6 @@ public class PgFactStream {
         eventBus.register(queryExecutor);
         // catchup phase 3 – make sure, we did not miss any fact due to
         // slow registration
-        //
-        // we should make sure, we advance the horizon before if possible
-        horizonProvider.advance();
         queryExecutor.trigger();
       } else {
         pipeline.process(Signal.complete());
@@ -258,7 +255,7 @@ public class PgFactStream {
     try (var suppression = logSuppression.forCatchup(request)) {
       if (!isConnected()) return;
 
-      FactStreamHorizon horizon = horizonProvider.advance();
+      FactStreamHorizon horizon = horizonProvider.currentPrimary();
       sendFactStreamInfo(horizon);
 
       if (!isConnected()) return;

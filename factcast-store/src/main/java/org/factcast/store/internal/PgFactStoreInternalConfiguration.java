@@ -234,14 +234,14 @@ public class PgFactStoreInternalConfiguration {
   @DependsOnDatabaseInitialization
   public FactStreamHorizonProvider factStreamHorizonProvider(
       DataSource dataSource, JdbcTemplate jdbcTemplate) {
-    return new PgFactStreamHorizonProvider(dataSource, jdbcTemplate);
+    return new PgFactStreamHorizonProvider(dataSource);
   }
 
   @Bean
   @IsReadOnlyEnv
   @DependsOnDatabaseInitialization
   public FactStreamHorizonProvider readOnlyFactStreamHorizonProvider(DataSource dataSource) {
-    return new ReadOnlyPgFactStreamHorizonProvider(dataSource);
+    return new PgFactStreamHorizonProvider(dataSource);
   }
 
   @Bean

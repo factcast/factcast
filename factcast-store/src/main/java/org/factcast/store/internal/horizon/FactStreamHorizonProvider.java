@@ -27,15 +27,11 @@ import org.factcast.core.subscription.FactStreamHorizon;
  */
 public interface FactStreamHorizonProvider {
 
-  /** Advances or refreshes the horizon through the provider's configured primary data source. */
-  @NonNull
-  FactStreamHorizon advance();
-
-  /** Returns the cached committed primary horizon without database access. */
+  // Reads the current primary boundary from the database.
   @NonNull
   FactStreamHorizon currentPrimary();
 
-  /** Reads the persisted horizon through a specific data source without advancing it. */
+  // Reads the current boundary through the supplied data source.
   @NonNull
   FactStreamHorizon readFrom(@NonNull DataSource dataSource);
 }

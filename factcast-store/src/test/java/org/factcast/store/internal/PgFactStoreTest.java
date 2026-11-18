@@ -606,14 +606,13 @@ class PgFactStoreTest {
     void tokenCreationUsesLatestSerialWhenLeanStateTokenIsDisabled() {
       storeConfigurationProperties.getLeanStateToken().setEnabled(false);
       List<FactSpec> specs = List.of(FactSpec.ns("ns1").type("type1"));
-      when(horizonProvider.advance()).thenReturn(new FactStreamHorizon(42));
+      when(horizonProvider.currentPrimary()).thenReturn(new FactStreamHorizon(42));
 
       State state = underTest.getStateFor(specs);
 
       assertThat(state.serialOfLastMatchingFact()).isEqualTo(42L);
       assertThat(state.specs()).isEqualTo(specs);
-      verify(horizonProvider).advance();
-      verify(horizonProvider, never()).currentPrimary();
+      verify(horizonProvider).currentPrimary();
       verifyNoInteractions(jdbcTemplate);
     }
   }

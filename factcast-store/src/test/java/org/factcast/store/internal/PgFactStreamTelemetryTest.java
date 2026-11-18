@@ -68,7 +68,7 @@ class PgFactStreamTelemetryTest {
   @BeforeEach
   void setup() {
     lenient().doReturn(Collections.emptyList()).when(uut).catchupConnectionModifiers(any());
-    lenient().when(horizonProvider.advance()).thenReturn(FactStreamHorizon.empty());
+    lenient().when(horizonProvider.currentPrimary()).thenReturn(FactStreamHorizon.empty());
   }
 
   @Test

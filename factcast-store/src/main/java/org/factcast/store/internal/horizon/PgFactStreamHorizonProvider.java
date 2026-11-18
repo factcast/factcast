@@ -17,12 +17,30 @@ package org.factcast.store.internal.horizon;
 
 import javax.sql.DataSource;
 import lombok.NonNull;
+import org.factcast.core.subscription.FactStreamHorizon;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-public class PgFactStreamHorizonProvider extends ReadOnlyPgFactStreamHorizonProvider {
+public class PgFactStreamHorizonProvider implements FactStreamHorizonProvider {
 
-  public PgFactStreamHorizonProvider(
-      @NonNull DataSource primaryDataSource, @NonNull JdbcTemplate jdbcTemplate) {
-    super(primaryDataSource);
+  private static final String MAX_SERIAL = "SELECT COALESCE(MAX(ser),0) FROM fact";
+  private final JdbcTemplate primaryJdbcTemplate;
+
+  public PgFactStreamHorizonProvider(@NonNull DataSource primaryDataSource) {
+    this.primaryJdbcTemplate = new JdbcTemplate(primaryDataSource);
+  }
+
+  @Override
+  public @NonNull FactStreamHorizon currentPrimary() {
+    return getMaxOrNull(primaryJdbcTemplate);
+  }
+
+  @Override
+  public @NonNull FactStreamHorizon readFrom(@NonNull DataSource dataSource) {
+    return getMaxOrNull(new JdbcTemplate(dataSource));
+  }
+
+  private FactStreamHorizon getMaxOrNull(@NonNull JdbcTemplate jdbcTemplate) {
+    return jdbcTemplate.queryForObject(
+        MAX_SERIAL, (rs, rowNum) -> new FactStreamHorizon(rs.getLong(1)));
   }
 }

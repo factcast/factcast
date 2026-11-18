@@ -153,9 +153,8 @@ public class PgFactStore extends AbstractFactStore {
     }
     var defensiveCopy = new ArrayList<>(factsToPublish);
 
-    // if (props.getPublishBatched().isEnabled())
-    publishBatchable(defensiveCopy);
-    // else publishDirectly(defensiveCopy);
+    if (props.getPublishBatched().isEnabled()) publishBatchable(defensiveCopy);
+    else publishDirectly(defensiveCopy);
   }
 
   void publishDirectly(@NonNull List<? extends Fact> factsToPublish) {
@@ -353,14 +352,7 @@ public class PgFactStore extends AbstractFactStore {
     return metrics.time(
         StoreMetrics.OP.GET_STATE_FOR,
         () -> {
-          FactStreamHorizon horizon =
-              props.getLeanStateToken().isEnabled()
-                  // Reuse the cached safe horizon to avoid publication lock contention.
-                  ? horizonProvider.currentPrimary()
-                  // Refresh to reduce stale-boundary rejections, at the cost of locking.
-                  : horizonProvider.advance();
-          // A stale cached boundary can cause conservative rejection; conditional publication
-          // still validates under the exclusive lock.
+          FactStreamHorizon horizon = horizonProvider.currentPrimary();
           return State.of(specs, horizon.factSerial());
         });
   }
