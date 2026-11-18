@@ -27,6 +27,46 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.MapPropertySource;
 
 class PgBatchInsertRewriteConfigurerTest {
+  @Test
+  void leavesDelegatedAndJndiPoolsUntouched() {
+    var delegated = org.mockito.Mockito.mock(org.apache.tomcat.jdbc.pool.DataSource.class);
+    org.mockito.Mockito.when(delegated.getDataSource())
+        .thenReturn(new org.postgresql.ds.PGSimpleDataSource());
+    var jndi = org.mockito.Mockito.mock(org.apache.tomcat.jdbc.pool.DataSource.class);
+    org.mockito.Mockito.when(jndi.getDataSourceJNDI()).thenReturn("jdbc/primary");
+    var configurer = new PgBatchInsertRewriteConfigurer();
+
+    assertThat(configurer.postProcessBeforeInitialization(delegated, "delegated"))
+        .isSameAs(delegated);
+    assertThat(configurer.postProcessBeforeInitialization(jndi, "jndi")).isSameAs(jndi);
+    org.mockito.Mockito.verify(delegated, org.mockito.Mockito.never())
+        .setUrl(org.mockito.ArgumentMatchers.any());
+    org.mockito.Mockito.verify(jndi, org.mockito.Mockito.never())
+        .setUrl(org.mockito.ArgumentMatchers.any());
+  }
+
+  @Test
+  void leavesUnconfiguredPoolAndUnrelatedBeansUntouched() {
+    var ds = new org.apache.tomcat.jdbc.pool.DataSource();
+    var bean = new Object();
+    var configurer = new PgBatchInsertRewriteConfigurer();
+    assertThat(configurer.postProcessBeforeInitialization(ds, "pool")).isSameAs(ds);
+    assertThat(ds.getUrl()).isNull();
+    assertThat(ds.getDbProperties()).doesNotContainKey("reWriteBatchedInserts");
+    assertThat(configurer.postProcessBeforeInitialization(bean, "other")).isSameAs(bean);
+  }
+
+  @Test
+  void enablesRewritingWhenNoDriverPropertiesWereConfigured() {
+    var ds = org.mockito.Mockito.mock(org.apache.tomcat.jdbc.pool.DataSource.class);
+    org.mockito.Mockito.when(ds.getUrl()).thenReturn("jdbc:postgresql://localhost/db");
+    new PgBatchInsertRewriteConfigurer().postProcessBeforeInitialization(ds, "pool");
+    var properties = org.mockito.ArgumentCaptor.forClass(java.util.Properties.class);
+    org.mockito.Mockito.verify(ds).setDbProperties(properties.capture());
+    assertThat(properties.getValue()).containsEntry("reWriteBatchedInserts", "true");
+    org.mockito.Mockito.verify(ds).setUrl("jdbc:postgresql://localhost/db");
+  }
+
   @Configuration(proxyBeanMethods = false)
   @EnableConfigurationProperties
   static class Config {

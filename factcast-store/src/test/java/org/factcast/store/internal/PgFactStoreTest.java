@@ -836,6 +836,70 @@ class PgFactStoreTest {
     }
 
     @Test
+    void lockFailureAbortsInsertsAndIsRecordedForBothTimers() {
+      var failure = new IllegalStateException("lock unavailable");
+      when(tx.execute(any()))
+          .thenAnswer(
+              inv -> {
+                TransactionCallback<Void> callback = inv.getArgument(0);
+                return callback.doInTransaction(mock(TransactionStatus.class));
+              });
+      doThrow(failure).when(lock).acquireExclusiveTXLock();
+
+      assertThatThrownBy(() -> underTest.doPublish(List.of(mock(Fact.class)))).isSameAs(failure);
+
+      verifyNoInteractions(jdbcTemplate);
+      verify(metrics)
+          .recordDuration(eq(StoreMetrics.OP.PUBLICATION_LOCK), anyLong(), same(failure));
+      verify(metrics)
+          .recordDuration(eq(StoreMetrics.OP.PUBLICATION_TRANSACTION), anyLong(), same(failure));
+    }
+
+    @Test
+    void transactionFailurePreservesItsUnderlyingCauseAndRecordsFailure() {
+      var cause = new IllegalStateException("commit failed");
+      var failure =
+          new org.springframework.transaction.TransactionSystemException(
+              "transaction failed", cause);
+      when(tx.execute(any())).thenThrow(failure);
+
+      assertThatThrownBy(() -> underTest.doPublish(List.of(mock(Fact.class)))).isSameAs(cause);
+
+      verify(metrics)
+          .recordDuration(eq(StoreMetrics.OP.PUBLICATION_TRANSACTION), anyLong(), same(failure));
+    }
+
+    @Test
+    void bindsEveryFactsHeaderAndPayload() throws SQLException {
+      var fact = mock(Fact.class);
+      when(fact.jsonHeader()).thenReturn("{header}");
+      when(fact.jsonPayload()).thenReturn("{payload}");
+      when(tx.execute(any()))
+          .thenAnswer(
+              inv -> {
+                TransactionCallback<Void> callback = inv.getArgument(0);
+                return callback.doInTransaction(mock(TransactionStatus.class));
+              });
+      var statement = mock(PreparedStatement.class);
+      when(jdbcTemplate.batchUpdate(
+              anyString(),
+              anyCollection(),
+              anyInt(),
+              any(ParameterizedPreparedStatementSetter.class)))
+          .thenAnswer(
+              inv -> {
+                ParameterizedPreparedStatementSetter<Fact> setter = inv.getArgument(3);
+                setter.setValues(statement, fact);
+                return new int[][] {{1}};
+              });
+
+      underTest.doPublish(List.of(fact));
+
+      verify(statement).setString(1, "{header}");
+      verify(statement).setString(2, "{payload}");
+    }
+
+    @Test
     void publishes() {
       Fact fact = mock(Fact.class);
       List<Fact> facts = Lists.newArrayList(fact);
