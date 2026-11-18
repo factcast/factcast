@@ -139,7 +139,7 @@ public class PgFactStore extends AbstractFactStore {
     // Keep publication in the caller's transaction so its locks and rollback apply.
     if (props.getPublishBatched().isEnabled()
         && !TransactionSynchronizationManager.isActualTransactionActive()) {
-      publish_usingBatching(defensiveCopy);
+      publishUsingBatching(defensiveCopy);
     } else {
       publish_withoutBatching(defensiveCopy);
     }
@@ -393,7 +393,7 @@ public class PgFactStore extends AbstractFactStore {
   }
 
   // Publication
-  void publish_usingBatching(@NonNull List<? extends Fact> factsToPublish) {
+  void publishUsingBatching(@NonNull List<? extends Fact> factsToPublish) {
     if (props.isReadOnlyModeEnabled()) {
       throw new UnsupportedOperationException("Publishing is not allowed in read-only mode");
     }
@@ -411,10 +411,11 @@ public class PgFactStore extends AbstractFactStore {
         });
   }
 
-  void publish_withoutBatching(@NonNull List<? extends Fact> factsToPublish) {
+  void publishWithoutBatching(@NonNull List<? extends Fact> factsToPublish) {
     metrics.time(StoreMetrics.OP.PUBLISH, () -> doPublish(factsToPublish));
   }
 
+  @SuppressWarnings("java:S1141")
   protected void doPublish(List<? extends Fact> facts) {
     int numberOfFactsToPublish = facts.size();
     log.trace("Inserting {} fact(s)", numberOfFactsToPublish);

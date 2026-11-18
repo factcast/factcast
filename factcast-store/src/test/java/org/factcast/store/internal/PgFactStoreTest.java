@@ -131,7 +131,7 @@ class PgFactStoreTest {
       when(queue.addAndFlush(anyList())).thenReturn(future);
       when(future.get()).thenThrow(new InterruptedException());
 
-      assertThatThrownBy(() -> underTest.publish_usingBatching(Collections.singletonList(fact)))
+      assertThatThrownBy(() -> underTest.publishUsingBatching(Collections.singletonList(fact)))
           .isInstanceOf(RuntimeException.class)
           .hasCauseInstanceOf(InterruptedException.class);
 
@@ -144,7 +144,7 @@ class PgFactStoreTest {
       when(queue.addAndFlush(anyList())).thenReturn(future);
       when(future.get()).thenThrow(new ExecutionException(new RuntimeException("cause")));
 
-      assertThatThrownBy(() -> underTest.publish_usingBatching(Collections.singletonList(fact)))
+      assertThatThrownBy(() -> underTest.publishUsingBatching(Collections.singletonList(fact)))
           .isInstanceOf(RuntimeException.class);
     }
 
@@ -152,7 +152,7 @@ class PgFactStoreTest {
     void rejectsBatchablePublicationInReadOnlyMode() {
       storeConfigurationProperties.setReadOnlyModeEnabled(true);
 
-      assertThatThrownBy(() -> underTest.publish_usingBatching(List.of(fact)))
+      assertThatThrownBy(() -> underTest.publishUsingBatching(List.of(fact)))
           .isInstanceOf(UnsupportedOperationException.class)
           .hasMessage("Publishing is not allowed in read-only mode");
 
@@ -868,7 +868,7 @@ class PgFactStoreTest {
       Fact fact = mock(Fact.class);
       List<Fact> facts = Lists.newArrayList(fact);
 
-      underTest.publish_usingBatching(facts);
+      underTest.publishUsingBatching(facts);
 
       verify(lock).acquireExclusiveTXLock();
       verify(jdbcTemplate).batchUpdate(eq(PgConstants.INSERT_FACT), any(), anyInt(), any());
@@ -881,7 +881,7 @@ class PgFactStoreTest {
       when(jdbcTemplate.batchUpdate(anyString(), any(), anyInt(), any()))
           .thenThrow(new DuplicateKeyException("duplicate"));
 
-      assertThatThrownBy(() -> underTest.publish_usingBatching(facts))
+      assertThatThrownBy(() -> underTest.publishUsingBatching(facts))
           .isInstanceOf(DuplicateFactException.class);
     }
   }

@@ -261,7 +261,7 @@ public class StoreConfigurationProperties implements InitializingBean {
 
     // Allow nearby publications to share a transaction; zero disables the batching wait.
     @Min(0)
-    @Max(20)
+    @Max(10)
     long flushDelayMillis = 0;
   }
 

@@ -79,7 +79,7 @@ public class PgMetrics implements InitializingBean {
 
   public void recordValue(StoreMetrics.VALUE operation, long value) {
     try {
-      distributionSummary(operation).record(value);
+      distributionSummary(operation).record((double) value);
     } catch (Exception e) {
       log.warn("Failed recording publication value", e);
     }
@@ -87,7 +87,7 @@ public class PgMetrics implements InitializingBean {
 
   public void increment(StoreMetrics.EVENT operation, long count) {
     try {
-      counter(operation).increment(count);
+      counter(operation).increment((double) count);
     } catch (Exception e) {
       log.warn("Failed recording publication count", e);
     }
