@@ -258,6 +258,10 @@ public class StoreConfigurationProperties implements InitializingBean {
     @Min(10)
     @Max(10000)
     int maxBatchSize = 500;
+
+    // Allow nearby publications to share a transaction; zero disables the batching wait.
+    @Min(0)
+    long flushDelayMillis = 20;
   }
 
   @Valid public PublishBatch publishBatched = new PublishBatch();

@@ -66,7 +66,7 @@ public class PgFactStore extends AbstractFactStore {
 
   @NonNull private final StoreConfigurationProperties props;
 
-  private final @NonNull UnconditionalPublishQueue queue;
+  private final @NonNull PublicationQueue queue;
   private final @NonNull TransactionTemplate tx;
 
   public PgFactStore(
@@ -94,7 +94,11 @@ public class PgFactStore extends AbstractFactStore {
     this.props = props;
 
     this.tx = new TransactionTemplate(platformTransactionManager);
-    this.queue = new UnconditionalPublishQueue(this, props.getPublishBatched().getMaxBatchSize());
+    this.queue =
+        new PublicationQueue(
+            this,
+            props.getPublishBatched().getMaxBatchSize(),
+            props.getPublishBatched().getFlushDelayMillis());
   }
 
   @Override

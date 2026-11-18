@@ -49,13 +49,15 @@ class StoreConfigurationPropertiesTest {
             new MapConfigurationPropertySource(
                 Map.of(
                     "factcast.store.publish-batched.enabled", "true",
-                    "factcast.store.publish-batched.max-batch-size", "1000")));
+                    "factcast.store.publish-batched.max-batch-size", "1000",
+                    "factcast.store.publish-batched.flush-delay-millis", "5")));
 
     StoreConfigurationProperties props =
         binder.bindOrCreate("factcast.store", StoreConfigurationProperties.class);
 
     assertThat(props.getPublishBatched().isEnabled()).isTrue();
     assertThat(props.getPublishBatched().getMaxBatchSize()).isEqualTo(1000);
+    assertThat(props.getPublishBatched().getFlushDelayMillis()).isEqualTo(5);
   }
 
   @Test
@@ -64,6 +66,7 @@ class StoreConfigurationPropertiesTest {
 
     assertThat(props.getPublishBatched().isEnabled()).isFalse();
     assertThat(props.getPublishBatched().getMaxBatchSize()).isEqualTo(500);
+    assertThat(props.getPublishBatched().getFlushDelayMillis()).isEqualTo(20);
   }
 
   @Test

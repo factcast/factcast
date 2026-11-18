@@ -116,7 +116,7 @@ class PgFactStoreTest {
 
   @Nested
   class WhenPublishingDeferrable {
-    @Mock UnconditionalPublishQueue queue;
+    @Mock PublicationQueue queue;
     @Mock Fact fact;
 
     @BeforeEach

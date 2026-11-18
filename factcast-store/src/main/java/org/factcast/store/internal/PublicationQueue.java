@@ -25,12 +25,17 @@ import org.factcast.core.*;
 
 @Slf4j
 @RequiredArgsConstructor
-class UnconditionalPublishQueue {
+class PublicationQueue {
 
   private final PgFactStore pgFactStore;
   private final int maxBatchSize;
-  private final ExecutorService flushingExecutor = Executors.newSingleThreadExecutor();
+  private final long flushDelayMillis;
+  private final ScheduledExecutorService flushingExecutor;
   private final AtomicLong ordinalCounter = new AtomicLong(Long.MIN_VALUE);
+
+  PublicationQueue(PgFactStore pgFactStore, int maxBatchSize, long flushDelayMillis) {
+    this(pgFactStore, maxBatchSize, flushDelayMillis, Executors.newSingleThreadScheduledExecutor());
+  }
 
   record Publication(
       long ordinal, List<? extends Fact> facts, CompletableFuture<Void> completion) {}
@@ -53,15 +58,18 @@ class UnconditionalPublishQueue {
       // flush(ser) based on the ser
       serial.set(ordinalCounter.incrementAndGet());
       queue.add(new Publication(serial.get(), toPublish, completion));
-      // Submit in queue order so earlier publications can start flushing first.
-      flushingExecutor.submit(
+      // Give nearby publications time to join the batch without blocking the flushing thread.
+      // Later arrivals do not postpone this task; their tasks become no-ops if already flushed.
+      flushingExecutor.schedule(
           () -> {
             try {
               flush(serial.get());
             } catch (Exception e) {
               log.error(e.getMessage(), e);
             }
-          });
+          },
+          flushDelayMillis,
+          TimeUnit.MILLISECONDS);
     }
     return completion;
   }
@@ -90,7 +98,7 @@ class UnconditionalPublishQueue {
     // the longer it takes for the first publication to be completed.
     // Also the number of conversations open is not infinite as well.
     List<Publication> pubs = new ArrayList<>(maxBatchSize);
-    List<Fact> facts = new ArrayList<>(maxBatchSize);
+    List<Fact> facts = new ArrayList<>(maxBatchSize * 4);
 
     // collect all facts & futures currently in the queue, regardless if there are more/later
     // publications already
@@ -115,6 +123,7 @@ class UnconditionalPublishQueue {
         // since it worked, we can complete all
         pubs.forEach(pub -> pub.completion().complete(null));
       } catch (Exception e) {
+        log.debug("failed to flush the publication queue in one go. Falling back to iteration.");
         // ok, we need to go one by one then to throw the dup exception in the right
         // place(s)
         //

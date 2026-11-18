@@ -22,11 +22,14 @@ import static org.mockito.Mockito.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import org.assertj.core.api.Assertions;
 import org.factcast.core.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -37,11 +40,87 @@ class UnconditionalPublishQueueTest {
 
   @Mock private Fact fact;
 
-  private UnconditionalPublishQueue underTest;
+  private PublicationQueue underTest;
 
   @BeforeEach
   void setUp() {
-    underTest = new UnconditionalPublishQueue(pgFactStore, 500);
+    underTest = new PublicationQueue(pgFactStore, 500, 20);
+  }
+
+  @Test
+  void waitsTwentyMillisecondsBeforeFlushingAnIsolatedPublication() throws Exception {
+    AtomicLong publishingStarted = new AtomicLong();
+    doAnswer(
+            invocation -> {
+              publishingStarted.set(System.nanoTime());
+              return null;
+            })
+        .when(pgFactStore)
+        .doPublish(anyList());
+
+    long enqueued = System.nanoTime();
+    underTest.addAndFlush(List.of(fact)).get(5, TimeUnit.SECONDS);
+
+    assertThat(publishingStarted.get() - enqueued)
+        .isGreaterThanOrEqualTo(TimeUnit.MILLISECONDS.toNanos(20));
+  }
+
+  @ParameterizedTest
+  @ValueSource(longs = {0, 20, 50})
+  void publicationsQueuedBeforeTheFirstDeadlineShareOneFlush(long delayMillis) throws Exception {
+    ScheduledExecutorService scheduler = mock(ScheduledExecutorService.class);
+    underTest = new PublicationQueue(pgFactStore, 500, delayMillis, scheduler);
+    Fact secondFact = mock(Fact.class);
+    Fact thirdFact = mock(Fact.class);
+
+    Future<Void> first = underTest.addAndFlush(List.of(fact));
+    Future<Void> second = underTest.addAndFlush(List.of(secondFact));
+    Future<Void> third = underTest.addAndFlush(List.of(thirdFact));
+
+    assertThat(first.isDone()).isFalse();
+    assertThat(second.isDone()).isFalse();
+    assertThat(third.isDone()).isFalse();
+    verifyNoInteractions(pgFactStore);
+    ArgumentCaptor<Runnable> scheduled = ArgumentCaptor.forClass(Runnable.class);
+    verify(scheduler, times(3))
+        .schedule(scheduled.capture(), eq(delayMillis), eq(TimeUnit.MILLISECONDS));
+
+    // Advancing to the first deadline is enough; later arrivals never reset that deadline.
+    scheduled.getAllValues().get(0).run();
+    first.get(1, TimeUnit.SECONDS);
+    second.get(1, TimeUnit.SECONDS);
+    third.get(1, TimeUnit.SECONDS);
+    scheduled.getAllValues().get(1).run();
+    scheduled.getAllValues().get(2).run();
+
+    verify(pgFactStore).doPublish(List.of(fact, secondFact, thirdFact));
+    verifyNoMoreInteractions(pgFactStore);
+  }
+
+  @Test
+  void entriesBeyondTheBatchLimitStillFlushAtTheirScheduledDeadline() throws Exception {
+    ScheduledExecutorService scheduler = mock(ScheduledExecutorService.class);
+    underTest = new PublicationQueue(pgFactStore, 2, 20, scheduler);
+    Fact secondFact = mock(Fact.class);
+    Fact thirdFact = mock(Fact.class);
+    Future<Void> first = underTest.addAndFlush(List.of(fact));
+    Future<Void> second = underTest.addAndFlush(List.of(secondFact));
+    Future<Void> third = underTest.addAndFlush(List.of(thirdFact));
+    ArgumentCaptor<Runnable> scheduled = ArgumentCaptor.forClass(Runnable.class);
+    verify(scheduler, times(3)).schedule(scheduled.capture(), eq(20L), eq(TimeUnit.MILLISECONDS));
+
+    scheduled.getAllValues().get(0).run();
+    first.get(1, TimeUnit.SECONDS);
+    second.get(1, TimeUnit.SECONDS);
+    assertThat(third.isDone()).isFalse();
+    scheduled.getAllValues().get(1).run();
+    assertThat(third.isDone()).isFalse();
+    scheduled.getAllValues().get(2).run();
+    third.get(1, TimeUnit.SECONDS);
+
+    verify(pgFactStore).doPublish(List.of(fact, secondFact));
+    verify(pgFactStore).doPublish(List.of(thirdFact));
+    verifyNoMoreInteractions(pgFactStore);
   }
 
   @Test
@@ -115,7 +194,7 @@ class UnconditionalPublishQueueTest {
     CountDownLatch cdl = new CountDownLatch(1);
 
     // should not make any difference, but being cautious
-    UnconditionalPublishQueue q = spy(new UnconditionalPublishQueue(pgFactStore, 100));
+    PublicationQueue q = spy(new PublicationQueue(pgFactStore, 100, 20));
 
     doAnswer(
             i -> {
