@@ -9,7 +9,7 @@
 |factcast.store.schema-registry-url |If defined, FactCast goes into validating mode. The only protocols allowed here are "http", "https", "classpath" and "file". Note that http(s) and file always require two slashes after the colon, e.g. "https://someserver/..." or "file:///root/folder/...". |---
 |factcast.store.schema-registry-zip-enabled |For an HTTP(S) registry, download `registry.zip` from the registry URL at startup. If the ZIP is missing or invalid, FactCast falls back to fetching the index and files separately. Scheduled refreshes continue to use the index and individual files.                                 |false
 |factcast.store.validation-enabled |Can be used for disabling fact validation if `factcast.store.schema-registry-url` is defined. Useful for mass data ingestion. |true
-|factcast.store.persistent-registry |If fetched Schema and Transformation Documents are persisted into Postgres |false
+|factcast.store.persistent-registry |If fetched Schema and Transformation Documents are persisted into Postgres |true
 |factcast.store.allow-unvalidated-publish |If validation is enabled, this controls if publishing facts, that are not validatable (due to missing meta-data or due to missing schema in the registry) are allowed to be published or should be rejected. |false
 |factcast.store.schema-store-refresh-cron |Defines the cron schedule for refreshing the schema registry by querying for the latest remote changes |`*/60 * * * * *` (every minute)
 |factcast.store.allow-schema-replace |If a schema can be replaced by an updated version from the registry (not a good idea in production environments) |false
@@ -40,18 +40,19 @@
 |factcast.store.fact-notification-blocking-wait-time-in-millis |Controls how long to block waiting for new notifications from the database (Postgres LISTEN/ NOTIFY mechanism). When this time is exceeded, the notification is repeated. Minimum value is 5000. |15000 (15sec)
 |factcast.store.fact-notification-max-round-trip-latency-in-millis |When FactCast did not receive any notifications after fact-notification-blocking-wait-time-in-millis milliseconds it validates the health of the database connection. For this purpose it sends an internal notification to the database and waits for the given time to receive back an answer. If the time is exceeded the database connection is renewed. Minimum value is 50. |200
 |factcast.store.fact-notification-new-connection-wait-time-in-millis |How much time to wait between invalidating and acquiring a new connection. Note: This parameter is only applied in the part of FactCast which deals with receiving and forwarding database notifications. Minimum value is 10. |100
+|factcast.store.max-notification-poll-latency-in-millis |Interval in milliseconds between follow-up notification polls after receiving a database nudge. Must be between 5 and 50. |25
 |factcast.store.page-size |How many facts to fetch from the database in one go. Higher values mean more memory usage. This setting will be respected by all catchup strategies. Must be positive. |50
 |factcast.store.chunk-size |Size of a chunk, that is used to fetch events from the store during CHUNKED_WITH_HOLD catchup strategy. The page-size will still define how many rows will be loaded into memory. |10000
 |factcast.store.index-check-cron |Cron expression defining a routine check for index validity. |`0 0 3 * * *` (3 am)
-|factcast.store.tail-indexing-enabled |Enable/ disable xref:ROOT:Concept/tail-index.adoc[tail indexing]. |false
+|factcast.store.tail-indexing-enabled |Enable/ disable xref:ROOT:Concept/tail-index.adoc[tail indexing]. |true
 |factcast.store.tail-management-cron |Cron schedule when tail rotation should be carried out. |`0 0 0 * * *` (at midnight)
 |factcast.store.tail-generations-to-keep |The number of tail indexes to keep. The higher the number, the slower the inserts. Probably 2 or 3 is a good value unless you have a very high tail rebuild frequency and not permanently connected applications (like offline clients for instance). Must be a positive number, maximum is 128. |3
 |factcast.store.minimum-tail-age |Minimum age of the youngest tail index, before a new one is created. |7 days
-|factcast.store.tail-creation-timeout |Index creation can hang for a long time in case of many open transactions. To avoid this, you can specify a timeout.; We will subtract 5 seconds from the given duration before applying it to setTimeout. |`1d`
+|factcast.store.tail-creation-timeout |Index creation can hang for a long time in case of many open transactions. To avoid this, you can specify a timeout.; We will subtract 5 seconds from the given duration before applying it to setTimeout. |`23h59m`
 |factcast.store.tail-indexing-fast-update-enabled |Controls if, when creating tail indexes, fastUpdate feature will be used. Note that depending on the pending list, this may introduce pauses when inserting facts (flushing the list). |true
 |factcast.store.tail-indexing-pending-list-limit |Maximum size of the pending list when using factUpdate. (See https://www.postgresql.org/docs/16/gin-tips.html). |4096
 |factcast.store.transformation-cache-page-size |Defines the max number of facts being scheduled for transformation in one go. Must be positive and not exceed 32000. |100
-|factcast.store.transformation-cache-buffer-size |Defines the max number of transformed facts being buffered in memory that will be flushed to the database in one go. Must be positive and not exceed 9999. |1000
+|factcast.store.transformation-cache-buffer-size |Defines the max number of transformed facts being buffered in memory that will be flushed to the database in one go. Must be positive and not exceed 9999. |50
 |factcast.store.size-of-thread-pool-for-subscriptions |This is the number of threads we create for handling new subscriptions requests. It's implemented via a fixed thread pool. As soon as the subscription request finishes or enters phase 3 (follow) the thread is freed up again. In earlier versions we used the common FJP which limits the parallelism to the number of cores - 1. If you ever encounter too much database load or too high waiting time for subscriptions this can be an option. |100
 |factcast.store.size-of-thread-pool-for-buffered-transformations |This is the number of threads we create for handling buffered transformations. It's implemented via work stealing thread pool. In early versions we used the common FJP which limits the parallelism to the number of cores - 1. |25
 |factcast.store.read-only-mode-enabled |Configures FactCast to work in read-only mode. You cannot publish any events in this mode and certain functionality like tail index generation or state token generation is disabled. You can still use a persistent schema store or transformation cache, however they will work in read-only mode. Additionally, liquibase is disabled. |false
@@ -74,7 +75,7 @@
 |factcast.store.offload.driver-class-name |Same as any DataSource |---
 |factcast.store.offload.type |Same as any DataSource |---
 |factcast.store.offload.jndi-name |Same as any DataSource |---
-|factcast.store.offload.generate-unique-name |Same as any DataSource |---
+|factcast.store.offload.generate-unique-name |Same as any DataSource |true
 |factcast.store.offload.name |Same as any DataSource |---
 |factcast.store.state-query-backward-scan-window |Controls the range of recent serial positions searched backwards for the latest matching fact when creating a state token. If no match is found within this window, the query falls back to filtering via GIN indexes. This allows quick lookups for recent changes while limiting expensive backwards searches when matching facts are rare or absent. |20000
 |factcast.store.internal-exclusion-enabled |Enable only after finishing the blacklist migration described xref:About/migration.adoc#_upgrading_to_0_13_0[here]. Disables the blacklist entirely and instead enables filtering via exclusion column on the database level.     |false
