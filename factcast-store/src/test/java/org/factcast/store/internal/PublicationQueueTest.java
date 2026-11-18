@@ -34,17 +34,113 @@ import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class UnconditionalPublishQueueTest {
+class PublicationQueueTest {
 
   @Mock private PgFactStore pgFactStore;
 
   @Mock private Fact fact;
 
+  @Mock private PgMetrics metrics;
+
   private PublicationQueue underTest;
 
   @BeforeEach
   void setUp() {
-    underTest = new PublicationQueue(pgFactStore, 500, 20);
+    underTest = new PublicationQueue(pgFactStore, metrics, 500, 20);
+  }
+
+  @Test
+  void measuresBacklogWaitingWithoutCountingActiveFlushesOrEmptyQueueTime() throws Exception {
+    var registry = new io.micrometer.core.instrument.simple.SimpleMeterRegistry();
+    var clock = new AtomicLong(100);
+    var scheduler = mock(ScheduledExecutorService.class);
+    underTest =
+        new PublicationQueue(pgFactStore, new PgMetrics(registry), 1, 0, scheduler, clock::get);
+    var first = underTest.addAndFlush(List.of(fact, fact));
+    clock.set(110);
+    var second = underTest.addAndFlush(List.of(fact));
+    doAnswer(
+            inv -> {
+              clock.addAndGet(100);
+              return null;
+            })
+        .when(pgFactStore)
+        .doPublish(anyList());
+
+    clock.set(120);
+    underTest.flush(Long.MAX_VALUE); // 20ns idle, then 100ns active work; one entry remains.
+    clock.set(230);
+    underTest.flush(Long.MAX_VALUE); // Only the 10ns since finishing the previous flush is idle.
+    clock.set(1000);
+    underTest.flush(Long.MAX_VALUE); // Empty flush must not produce a sample.
+    var third = underTest.addAndFlush(List.of(fact));
+    underTest.flush(Long.MAX_VALUE); // Include a zero idle sample, excluding the empty interval.
+    first.get();
+    second.get();
+    third.get();
+
+    var idle =
+        registry
+            .get(StoreMetrics.DURATION_METRIC_NAME)
+            .tag("operation", "publicationBacklogIdle")
+            .timer();
+    assertThat(idle.count()).isEqualTo(3);
+    assertThat(idle.totalTime(TimeUnit.NANOSECONDS)).isEqualTo(30);
+    var wait =
+        registry
+            .get(StoreMetrics.DURATION_METRIC_NAME)
+            .tag("operation", "publicationQueueWait")
+            .timer();
+    assertThat(wait.count()).isEqualTo(3);
+    assertThat(wait.totalTime(TimeUnit.NANOSECONDS)).isEqualTo(140);
+    var entries =
+        registry
+            .get(StoreMetrics.METER_METRIC_NAME)
+            .tag("operation", "publicationBatchEntries")
+            .summary();
+    assertThat(entries.count()).isEqualTo(3);
+    assertThat(entries.totalAmount()).isEqualTo(3);
+    assertThat(
+            registry
+                .get(StoreMetrics.METER_METRIC_NAME)
+                .tag("operation", "publicationBatchFacts")
+                .summary()
+                .totalAmount())
+        .isEqualTo(4);
+    assertThat(
+            registry
+                .get(StoreMetrics.METER_METRIC_NAME)
+                .tag("operation", "queuedFactsCommitted")
+                .counter()
+                .count())
+        .isEqualTo(4);
+  }
+
+  @Test
+  void countsOnlyCommittedPublicationsAfterBatchFallback() throws Exception {
+    var scheduler = mock(ScheduledExecutorService.class);
+    underTest = new PublicationQueue(pgFactStore, metrics, 500, 0, scheduler);
+    Fact duplicate = mock(Fact.class);
+    doAnswer(
+            inv -> {
+              List<Fact> facts = inv.getArgument(0);
+              if (facts.contains(duplicate)) throw new DuplicateFactException("duplicate");
+              return null;
+            })
+        .when(pgFactStore)
+        .doPublish(anyList());
+    var good = underTest.addAndFlush(List.of(fact, fact));
+    var bad = underTest.addAndFlush(List.of(duplicate));
+
+    underTest.flush(Long.MAX_VALUE);
+    good.get();
+    assertThrows(ExecutionException.class, bad::get);
+    verify(metrics).recordValue(StoreMetrics.VALUE.PUBLICATION_BATCH_ENTRIES, 2);
+    verify(metrics).recordValue(StoreMetrics.VALUE.PUBLICATION_BATCH_FACTS, 3);
+    verify(metrics).increment(StoreMetrics.EVENT.PUBLICATION_BATCH_FALLBACK, 1);
+    verify(metrics).increment(StoreMetrics.EVENT.QUEUED_PUBLICATIONS_COMMITTED, 1);
+    verify(metrics).increment(StoreMetrics.EVENT.QUEUED_FACTS_COMMITTED, 2);
+    verify(metrics, never()).increment(StoreMetrics.EVENT.QUEUED_FACTS_COMMITTED, 1);
   }
 
   @Test
@@ -69,7 +165,7 @@ class UnconditionalPublishQueueTest {
   @ValueSource(longs = {0, 20, 50})
   void publicationsQueuedBeforeTheFirstDeadlineShareOneFlush(long delayMillis) throws Exception {
     ScheduledExecutorService scheduler = mock(ScheduledExecutorService.class);
-    underTest = new PublicationQueue(pgFactStore, 500, delayMillis, scheduler);
+    underTest = new PublicationQueue(pgFactStore, metrics, 500, delayMillis, scheduler);
     Fact secondFact = mock(Fact.class);
     Fact thirdFact = mock(Fact.class);
 
@@ -100,7 +196,7 @@ class UnconditionalPublishQueueTest {
   @Test
   void entriesBeyondTheBatchLimitStillFlushAtTheirScheduledDeadline() throws Exception {
     ScheduledExecutorService scheduler = mock(ScheduledExecutorService.class);
-    underTest = new PublicationQueue(pgFactStore, 2, 20, scheduler);
+    underTest = new PublicationQueue(pgFactStore, metrics, 2, 20, scheduler);
     Fact secondFact = mock(Fact.class);
     Fact thirdFact = mock(Fact.class);
     Future<Void> first = underTest.addAndFlush(List.of(fact));
@@ -194,7 +290,7 @@ class UnconditionalPublishQueueTest {
     CountDownLatch cdl = new CountDownLatch(1);
 
     // should not make any difference, but being cautious
-    PublicationQueue q = spy(new PublicationQueue(pgFactStore, 100, 20));
+    PublicationQueue q = spy(new PublicationQueue(pgFactStore, metrics, 100, 20));
 
     doAnswer(
             i -> {

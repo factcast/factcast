@@ -98,6 +98,7 @@ public class PgFactStore extends AbstractFactStore {
     this.queue =
         new PublicationQueue(
             this,
+            metrics,
             props.getPublishBatched().getMaxBatchSize(),
             props.getPublishBatched().getFlushDelayMillis());
   }
@@ -417,11 +418,23 @@ public class PgFactStore extends AbstractFactStore {
   protected void doPublish(List<? extends Fact> facts) {
     int numberOfFactsToPublish = facts.size();
     log.trace("Inserting {} fact(s)", numberOfFactsToPublish);
+    long transactionStarted = System.nanoTime();
+    Exception transactionFailure = null;
     try {
       tx.execute(
           ts -> {
             try {
-              lock.acquireExclusiveTXLock();
+              long lockStarted = System.nanoTime();
+              Exception lockFailure = null;
+              try {
+                lock.acquireExclusiveTXLock();
+              } catch (RuntimeException e) {
+                lockFailure = e;
+                throw e;
+              } finally {
+                metrics.recordDuration(
+                    StoreMetrics.OP.PUBLICATION_LOCK, System.nanoTime() - lockStarted, lockFailure);
+              }
               jdbcTemplate.batchUpdate(
                   PgConstants.INSERT_FACT,
                   facts,
@@ -439,7 +452,16 @@ public class PgFactStore extends AbstractFactStore {
             return null;
           });
     } catch (TransactionException e) {
+      transactionFailure = e;
       throw ExceptionHelper.toRuntime(e.getCause());
+    } catch (RuntimeException e) {
+      transactionFailure = e;
+      throw e;
+    } finally {
+      metrics.recordDuration(
+          StoreMetrics.OP.PUBLICATION_TRANSACTION,
+          System.nanoTime() - transactionStarted,
+          transactionFailure);
     }
   }
 }
