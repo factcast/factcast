@@ -226,7 +226,8 @@ public class PgFactStream {
   }
 
   @VisibleForTesting
-  void fastForward(@NonNull FactStreamHorizon atTheStartOfQuery) {
+  void fastForward(
+      @NonNull FactStreamHorizon atTheStartOfQuery, @NonNull PrimaryDataSourceSupplier primary) {
     if (isConnected()) {
 
       long targetSer = atTheStartOfQuery.factSerial();
@@ -236,9 +237,9 @@ public class PgFactStream {
       long currentSerial = serial.get();
 
       if (currentSerial < targetSer) {
-        // A stream position needs the fact ID as well as the serial used to bound this catchup.
+        // Reuse the catch-up connection so the lookup never waits for a second pool slot.
         UUID targetId =
-            new JdbcTemplate(connectionSupplier.dataSource())
+            new JdbcTemplate(primary.get())
                 .queryForObject(
                     "SELECT (header->>'id')::uuid FROM fact WHERE ser=?", UUID.class, targetSer);
         log.debug("{} sending ffwd to id {} (serial {})", request, targetId, targetSer);
@@ -275,7 +276,7 @@ public class PgFactStream {
         catchupPhaseTwo(primary, phase1HighwaterMark, horizon);
 
         // now that phase 1&2 are done, we can ffwd to the initial HWM on the primary
-        fastForward(horizon);
+        fastForward(horizon, primary);
       }
     } catch (PipelineAlreadyClosedException e) {
       throw new CatchupException(e);

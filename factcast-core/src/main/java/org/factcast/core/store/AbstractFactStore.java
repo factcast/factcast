@@ -38,7 +38,7 @@ public abstract class AbstractFactStore implements FactStore {
       if (state.isPresent()) {
         try {
           if (isStateUnchanged(state.get())) {
-            publish(factsToPublish);
+            doPublish(factsToPublish);
             return true;
           } else {
             return false;
@@ -94,4 +94,6 @@ public abstract class AbstractFactStore implements FactStore {
   protected State getStateFor(@NonNull Collection<FactSpec> specs, long lastMatchingSerial) {
     return getStateFor(specs);
   }
+
+  protected abstract void doPublish(List<? extends Fact> factsToPublish);
 }

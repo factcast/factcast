@@ -40,6 +40,7 @@ import org.springframework.dao.*;
 import org.springframework.jdbc.core.*;
 import org.springframework.transaction.*;
 import org.springframework.transaction.annotation.*;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
@@ -134,8 +135,13 @@ public class PgFactStore extends AbstractFactStore {
     }
     var defensiveCopy = new ArrayList<>(factsToPublish);
 
-    if (props.getPublishBatched().isEnabled()) publish_usingBatching(defensiveCopy);
-    else publish_withoutBatching(defensiveCopy);
+    // Keep publication in the caller's transaction so its locks and rollback apply.
+    if (props.getPublishBatched().isEnabled()
+        && !TransactionSynchronizationManager.isActualTransactionActive()) {
+      publish_usingBatching(defensiveCopy);
+    } else {
+      publish_withoutBatching(defensiveCopy);
+    }
   }
 
   @VisibleForTesting
@@ -408,7 +414,7 @@ public class PgFactStore extends AbstractFactStore {
     metrics.time(StoreMetrics.OP.PUBLISH, () -> doPublish(factsToPublish));
   }
 
-  void doPublish(List<? extends Fact> facts) {
+  protected void doPublish(List<? extends Fact> facts) {
     int numberOfFactsToPublish = facts.size();
     log.trace("Inserting {} fact(s)", numberOfFactsToPublish);
     try {

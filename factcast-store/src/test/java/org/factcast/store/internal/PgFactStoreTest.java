@@ -161,11 +161,12 @@ class PgFactStoreTest {
 
     @Test
     void publishesInsideCallerTransactionWithoutQueuing() {
+      storeConfigurationProperties.getPublishBatched().setEnabled(true);
       boolean transactionWasActive = TransactionSynchronizationManager.isActualTransactionActive();
       try {
         TransactionSynchronizationManager.setActualTransactionActive(true);
 
-        underTest.publish_usingBatching(List.of(fact));
+        underTest.publish(List.of(fact));
 
         verify(lock).acquireExclusiveTXLock();
         verify(jdbcTemplate)
@@ -486,7 +487,7 @@ class PgFactStoreTest {
           underTest.publishIfUnchanged(Lists.newArrayList(fact), Optional.of(optionalToken));
       verify(lock).acquireExclusiveTXLock();
       assertThat(b).isFalse();
-      verify(underTest, never()).publish(any(List.class));
+      verify(underTest, never()).doPublish(any(List.class));
       verify(counter).increment();
     }
 
@@ -524,9 +525,13 @@ class PgFactStoreTest {
 
       boolean b =
           underTest.publishIfUnchanged(Lists.newArrayList(fact), Optional.of(optionalToken));
-      verify(lock).acquireExclusiveTXLock();
+      // Validation and insertion both ensure the lock is held; the real lock skips reacquisition.
+      verify(lock, times(2)).acquireExclusiveTXLock();
       assertThat(b).isTrue();
-      verify(underTest).publish(any());
+      verify(underTest).doPublish(List.of(fact));
+      verify(jdbcTemplate)
+          .batchUpdate(
+              eq(PgConstants.INSERT_FACT), eq(List.of(fact)), eq(Integer.MAX_VALUE), any());
       verify(counter, never()).increment();
     }
 
