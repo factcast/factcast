@@ -66,7 +66,7 @@ class StoreConfigurationPropertiesTest {
 
     assertThat(props.getPublishBatched().isEnabled()).isFalse();
     assertThat(props.getPublishBatched().getMaxBatchSize()).isEqualTo(500);
-    assertThat(props.getPublishBatched().getFlushDelayMillis()).isEqualTo(20);
+    assertThat(props.getPublishBatched().getFlushDelayMillis()).isZero();
   }
 
   @Test
