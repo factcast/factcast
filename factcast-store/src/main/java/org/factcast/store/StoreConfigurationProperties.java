@@ -283,6 +283,11 @@ public class StoreConfigurationProperties implements InitializingBean {
   @Max(50)
   long factNotificationPollLatencyInMillis = 25;
 
+  @Positive
+  @Min(500)
+  @Max(60000)
+  long factNotificationSafetyPollLatencyInMillis = 1000;
+
   @Getter
   @Setter
   public static class OffloadDataSourceProperties extends DataSourceProperties {

@@ -18,7 +18,6 @@ package org.factcast.store.internal.listen;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.eventbus.*;
 import jakarta.annotation.*;
-import java.sql.*;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -47,6 +46,7 @@ public class NudgeNotificationHandler implements DisposableBean {
   private final AtomicBoolean refreshRequested = new AtomicBoolean(false);
   private final ReentrantLock refreshLock = new ReentrantLock();
   private final io.micrometer.core.instrument.@NonNull Timer metricsTimer;
+  private final AtomicLong lastPoll = new AtomicLong(0);
 
   public NudgeNotificationHandler(
       @NonNull EventBus bus,
@@ -77,6 +77,11 @@ public class NudgeNotificationHandler implements DisposableBean {
       timer.scheduleAtFixedRate(
           new ScheduledCleanup(), 0, Duration.ofMinutes(cleanupIntervalInMinutes).toMillis());
     }
+
+    // fallback that makes sure nothing is missed, even if last commit took >100msec & it is
+    // followed by silence.
+    timer.scheduleAtFixedRate(new CatchAllTask(), 0, 500);
+
     metricsTimer = metrics.timer(StoreMetrics.OP.SELECT_DISTINCT_NOTIFICATIONS);
   }
 
@@ -165,6 +170,7 @@ public class NudgeNotificationHandler implements DisposableBean {
     // The caller holds refreshLock. Clear before work so incoming requests trigger another pass.
     while (refreshRequested.getAndSet(false)) {
       try {
+        lastPoll.set(System.currentTimeMillis());
         fetchPairsAndDispatchOnce();
       } catch (RuntimeException e) {
         exception = accumulateFailure(exception, e);
@@ -224,6 +230,15 @@ public class NudgeNotificationHandler implements DisposableBean {
       notificationSer.set(upperSerial);
     } finally {
       timerSample.stop(metricsTimer);
+    }
+  }
+
+  class CatchAllTask extends TimerTask {
+
+    @Override
+    public void run() {
+      if (System.currentTimeMillis() - lastPoll.get()
+          > props.getFactNotificationSafetyPollLatencyInMillis()) fetchPairsAndDispatch();
     }
   }
 }

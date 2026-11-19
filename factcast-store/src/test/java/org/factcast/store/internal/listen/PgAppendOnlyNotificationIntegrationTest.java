@@ -23,8 +23,12 @@ import com.google.common.eventbus.Subscribe;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.TimerTask;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import org.factcast.core.Fact;
@@ -44,6 +48,9 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @SpringJUnitConfig(classes = PgTestConfiguration.class)
 @Sql(scripts = "/wipe.sql", config = @SqlConfig(separator = "#"))
@@ -60,6 +67,109 @@ class PgAppendOnlyNotificationIntegrationTest {
   @Autowired NudgeNotificationHandler handler;
   @Autowired StoreConfigurationProperties props;
   @Autowired PgMetrics metrics;
+  @Autowired PlatformTransactionManager transactionManager;
+
+  @Test
+  void publicationCommittedAfterSuppressedNudgePollWindowStillReachesFollower() throws Exception {
+    Fact first = facts(1).get(0);
+    Fact second = facts(1).get(0);
+    List<UUID> received = new CopyOnWriteArrayList<>();
+    CountDownLatch secondReceived = new CountDownLatch(1);
+
+    try (Subscription subscription =
+        store.subscribe(
+            SubscriptionRequestTO.from(SubscriptionRequest.follow(FactSpec.ns(NS)).fromScratch()),
+            fact -> {
+              received.add(fact.id());
+              if (second.id().equals(fact.id())) secondReceived.countDown();
+            })) {
+      subscription.awaitCatchup(10_000);
+      long nudgeVersion = handler.timerVersion.get();
+      var outer = new TransactionTemplate(transactionManager);
+      var inner = new TransactionTemplate(transactionManager);
+      inner.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+
+      // Both transactions must have the same real PostgreSQL now() bucket. Start the outer
+      // transaction first, but publish/commit the inner one first. Retry boundary crossings
+      // before either transaction publishes; do not change timestamps or notification triggers.
+      boolean publishedInSameWindow = false;
+      for (int attempt = 0; attempt < 20 && !publishedInSameWindow; attempt++) {
+        publishedInSameWindow =
+            Boolean.TRUE.equals(
+                outer.execute(
+                    status -> {
+                      long window = notificationWindow();
+                      boolean firstPublished =
+                          Boolean.TRUE.equals(
+                              inner.execute(
+                                  innerStatus -> {
+                                    if (notificationWindow() != window) return false;
+                                    store.publish(List.of(first));
+                                    return true;
+                                  }));
+                      if (!firstPublished) return false;
+
+                      store.publish(List.of(second));
+                      assertThat(
+                              jdbc.queryForList(
+                                  "SELECT tw FROM notification WHERE ns=? ORDER BY ser",
+                                  Long.class,
+                                  NS))
+                          .containsExactly(window, window);
+                      await()
+                          .atMost(Duration.ofSeconds(5))
+                          .until(() -> handler.timerVersion.get() > nudgeVersion);
+                      await()
+                          .atMost(Duration.ofSeconds(5))
+                          .untilAsserted(() -> assertThat(received).containsExactly(first.id()));
+
+                      // A marker on the handler's own timer runs after the four polls due at
+                      // 25/50/75/100 ms. Keep the second publication uncommitted until then.
+                      AtomicBoolean pollsFinished = new AtomicBoolean();
+                      handler.timer.schedule(
+                          new TimerTask() {
+                            @Override
+                            public void run() {
+                              pollsFinished.set(true);
+                            }
+                          },
+                          200);
+                      await().atMost(Duration.ofSeconds(5)).untilTrue(pollsFinished);
+                      return true;
+                    }));
+      }
+      assertThat(publishedInSameWindow)
+          .as("two transactions started in one 100 ms bucket")
+          .isTrue();
+      assertThat(store.fetchById(second.id())).as("the second publication committed").isPresent();
+
+      secondReceived.await(3, TimeUnit.SECONDS);
+      List<UUID> deliveredWithoutAnotherNudge = List.copyOf(received);
+      long cursorBeforeRecovery = handler.notificationSer.get();
+      long committedNotificationSerial = notificationSerials().get(1);
+      List<Boolean> committedNudges =
+          jdbc.queryForList(
+              "SELECT nudge FROM notification WHERE ns=? ORDER BY ser", Boolean.class, NS);
+
+      // Positive control: no further publication is needed. An explicit refresh alone must
+      // deliver the committed second fact, ruling out a subscription/filter/insert failure.
+      handler.fetchPairsAndDispatch();
+      await()
+          .atMost(Duration.ofSeconds(5))
+          .untilAsserted(() -> assertThat(received).containsExactly(first.id(), second.id()));
+
+      assertThat(deliveredWithoutAnotherNudge)
+          .as(
+              "delivery without an extra refresh (notification cursor=%s, committed maximum=%s,"
+                  + " nudge flags=%s)",
+              cursorBeforeRecovery, committedNotificationSerial, committedNudges)
+          .containsExactly(first.id(), second.id());
+    }
+  }
+
+  private long notificationWindow() {
+    return jdbc.queryForObject("SELECT (extract(epoch FROM now()) * 10)::bigint", Long.class);
+  }
 
   @Test
   void sequenceResetRestoresSelectiveDispatch() throws Exception {
