@@ -17,12 +17,14 @@ package org.factcast.store.internal.listen;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import com.google.common.eventbus.EventBus;
 import io.micrometer.core.instrument.Timer;
 import java.sql.ResultSet;
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -59,6 +61,8 @@ class NudgeNotificationHandlerTest {
   @BeforeEach
   void setUp() {
     lenient().when(props.getFactNotificationPollLatencyInMillis()).thenReturn(25L);
+    // Individual safety-poll tests enable it after isolating the background timer.
+    lenient().when(props.getFactNotificationSafetyPollLatencyInMillis()).thenReturn(Long.MAX_VALUE);
     lenient().when(metrics.timer(any())).thenReturn(timer);
     lenient().when(metrics.startSample()).thenReturn(sample);
     lenient().doNothing().when(jdbc).execute(anyString());
@@ -321,6 +325,109 @@ class NudgeNotificationHandlerTest {
 
     // When / Then
     assertThatCode(() -> handler.new ScheduledCleanup().run()).doesNotThrowAnyException();
+  }
+
+  @Test
+  void safetyPollDispatchesWithoutANudgeAndSkipsImmediateRepeat() throws Exception {
+    stopBackgroundTimer();
+    when(props.getFactNotificationSafetyPollLatencyInMillis()).thenReturn(60_000L);
+    var task = handler.new CatchAllTask();
+
+    task.run();
+    task.run();
+
+    verify(jdbc).queryForObject(NudgeNotificationHandler.MAX_NOTIFICATION_SERIAL, Long.class);
+    verify(bus).post(FactInsertionNotification.internal());
+    assertThat(handler.notificationSer).hasValue(200);
+  }
+
+  @Test
+  void safetyPollSkipsAfterAnOrdinaryRefresh() throws Exception {
+    stopBackgroundTimer();
+    when(props.getFactNotificationSafetyPollLatencyInMillis()).thenReturn(60_000L);
+    handler.fetchPairsAndDispatch();
+    clearInvocations(jdbc, bus);
+
+    handler.new CatchAllTask().run();
+
+    verifyNoInteractions(jdbc, bus);
+  }
+
+  @Test
+  void safetyPollResumesAfterConfiguredIdleInterval() throws Exception {
+    stopBackgroundTimer();
+    when(props.getFactNotificationSafetyPollLatencyInMillis()).thenReturn(500L);
+    handler.fetchPairsAndDispatch();
+    when(jdbc.queryForObject(NudgeNotificationHandler.MAX_NOTIFICATION_SERIAL, Long.class))
+        .thenReturn(201L);
+    when(jdbc.queryForObject(NudgeNotificationHandler.BASE_EXISTS_SQL, Boolean.class, 200L))
+        .thenReturn(true);
+    when(jdbc.query(anyString(), any(DataClassRowMapper.class), eq(200L), eq(201L)))
+        .thenReturn(List.of(new NudgeNotificationHandler.FetchNotificationTuple(201L, "ns", "t")));
+    var task = handler.new CatchAllTask();
+
+    await()
+        .atMost(Duration.ofSeconds(5))
+        .untilAsserted(
+            () -> {
+              task.run();
+              verify(bus).post(FactInsertionNotification.internal("ns", "t"));
+            });
+
+    assertThat(handler.notificationSer).hasValue(201);
+  }
+
+  @Test
+  void safetyPollHandlesDatabaseFailureAndRetriesLater() throws Exception {
+    stopBackgroundTimer();
+    when(props.getFactNotificationSafetyPollLatencyInMillis()).thenReturn(500L);
+    when(jdbc.queryForObject(NudgeNotificationHandler.MAX_NOTIFICATION_SERIAL, Long.class))
+        .thenThrow(new DataAccessResourceFailureException("database unavailable"))
+        .thenReturn(200L);
+    var task = handler.new CatchAllTask();
+
+    assertThatCode(task::run).doesNotThrowAnyException();
+    assertThat(handler.notificationSer).hasValue(0);
+    verify(bus, never()).post(any());
+
+    await()
+        .atMost(Duration.ofSeconds(5))
+        .untilAsserted(
+            () -> {
+              task.run();
+              verify(bus).post(FactInsertionNotification.internal());
+            });
+    assertThat(handler.notificationSer).hasValue(200);
+  }
+
+  @Test
+  void safetyPollRunsPeriodicallyInReadOnlyModeAfterDatabaseFailure() throws Exception {
+    handler.destroy();
+    when(props.isReadOnlyModeEnabled()).thenReturn(true);
+    when(props.getFactNotificationSafetyPollLatencyInMillis()).thenReturn(500L);
+    when(jdbc.queryForObject(NudgeNotificationHandler.MAX_NOTIFICATION_SERIAL, Long.class))
+        .thenThrow(new DataAccessResourceFailureException("database unavailable"))
+        .thenReturn(200L, 201L);
+    when(jdbc.queryForObject(NudgeNotificationHandler.BASE_EXISTS_SQL, Boolean.class, 200L))
+        .thenReturn(false);
+    CountDownLatch dispatched = new CountDownLatch(2);
+    doAnswer(
+            invocation -> {
+              dispatched.countDown();
+              return null;
+            })
+        .when(bus)
+        .post(any(FactInsertionNotification.class));
+
+    handler = new NudgeNotificationHandler(bus, jdbc, props, metrics);
+
+    assertThat(dispatched.await(5, TimeUnit.SECONDS)).isTrue();
+    verify(jdbc, never()).execute(anyString());
+  }
+
+  private void stopBackgroundTimer() throws InterruptedException {
+    awaitInitialTimerTasks();
+    handler.timer.cancel();
   }
 
   @Test

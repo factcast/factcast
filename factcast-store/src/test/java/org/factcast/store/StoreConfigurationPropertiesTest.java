@@ -17,12 +17,58 @@ package org.factcast.store;
 
 import static org.assertj.core.api.Assertions.*;
 
+import jakarta.validation.Validation;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.boot.context.properties.bind.Binder;
 import org.springframework.boot.context.properties.source.MapConfigurationPropertySource;
 
 class StoreConfigurationPropertiesTest {
+
+  @Test
+  void safetyPollDefaultsToOneSecond() {
+    assertThat(new StoreConfigurationProperties().getFactNotificationSafetyPollLatencyInMillis())
+        .isEqualTo(1000);
+  }
+
+  @ParameterizedTest
+  @ValueSource(longs = {500, 1000, 60_000})
+  void bindsAndAcceptsSafetyPollInterval(long interval) {
+    Binder binder =
+        new Binder(
+            new MapConfigurationPropertySource(
+                Map.of(
+                    "factcast.store.fact-notification-safety-poll-latency-in-millis", interval)));
+
+    StoreConfigurationProperties props =
+        binder.bindOrCreate("factcast.store", StoreConfigurationProperties.class);
+
+    assertThat(props.getFactNotificationSafetyPollLatencyInMillis()).isEqualTo(interval);
+    try (var factory = Validation.buildDefaultValidatorFactory()) {
+      assertThat(
+              factory
+                  .getValidator()
+                  .validateProperty(props, "factNotificationSafetyPollLatencyInMillis"))
+          .isEmpty();
+    }
+  }
+
+  @ParameterizedTest
+  @ValueSource(longs = {-1, 0, 499, 60_001})
+  void rejectsSafetyPollIntervalOutsideDocumentedBounds(long interval) {
+    StoreConfigurationProperties props = new StoreConfigurationProperties();
+    props.setFactNotificationSafetyPollLatencyInMillis(interval);
+
+    try (var factory = Validation.buildDefaultValidatorFactory()) {
+      assertThat(
+              factory
+                  .getValidator()
+                  .validateProperty(props, "factNotificationSafetyPollLatencyInMillis"))
+          .isNotEmpty();
+    }
+  }
 
   @Test
   void bindsDocumentedPublishBatchedProperties() {

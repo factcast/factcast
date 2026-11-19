@@ -170,8 +170,8 @@ public class NudgeNotificationHandler implements DisposableBean {
     // The caller holds refreshLock. Clear before work so incoming requests trigger another pass.
     while (refreshRequested.getAndSet(false)) {
       try {
-        lastPoll.set(System.currentTimeMillis());
         fetchPairsAndDispatchOnce();
+        lastPoll.set(System.currentTimeMillis());
       } catch (RuntimeException e) {
         exception = accumulateFailure(exception, e);
       }
@@ -238,7 +238,13 @@ public class NudgeNotificationHandler implements DisposableBean {
     @Override
     public void run() {
       if (System.currentTimeMillis() - lastPoll.get()
-          > props.getFactNotificationSafetyPollLatencyInMillis()) fetchPairsAndDispatch();
+          > props.getFactNotificationSafetyPollLatencyInMillis()) {
+        try {
+          fetchPairsAndDispatch();
+        } catch (RuntimeException e) {
+          log.warn("Scheduled safety notification poll failed", e);
+        }
+      }
     }
   }
 }

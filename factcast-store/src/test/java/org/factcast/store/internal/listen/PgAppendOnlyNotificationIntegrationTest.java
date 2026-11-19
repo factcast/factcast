@@ -176,8 +176,11 @@ class PgAppendOnlyNotificationIntegrationTest {
     EventBus bus = new EventBus();
     NotificationCollector collector = new NotificationCollector();
     bus.register(collector);
+    // This test drives every refresh explicitly; background polls would change the event counts.
+    StoreConfigurationProperties isolatedProps = new StoreConfigurationProperties();
+    isolatedProps.setFactNotificationSafetyPollLatencyInMillis(Long.MAX_VALUE);
     NudgeNotificationHandler isolatedHandler =
-        new NudgeNotificationHandler(bus, jdbc, props, metrics, false);
+        new NudgeNotificationHandler(bus, jdbc, isolatedProps, metrics, false);
     try {
       for (int i = 0; i < 3; i++) {
         store.publish(facts(1));
