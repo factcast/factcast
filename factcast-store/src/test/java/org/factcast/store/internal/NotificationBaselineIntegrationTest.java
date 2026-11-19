@@ -16,10 +16,12 @@
 package org.factcast.store.internal;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mockConstruction;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import java.util.List;
+import java.util.Timer;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.factcast.core.Fact;
@@ -68,7 +70,10 @@ class NotificationBaselineIntegrationTest {
   NudgeNotificationHandler readerHandler(EventBus bus) {
     StoreConfigurationProperties props = new StoreConfigurationProperties();
     props.setReadOnlyModeEnabled(true);
-    return new NudgeNotificationHandler(bus, jdbc, props, metrics);
+    // Only the explicit nudges should poll; neither the safety poll nor follow-ups may race them.
+    try (var ignored = mockConstruction(Timer.class)) {
+      return new NudgeNotificationHandler(bus, jdbc, props, metrics);
+    }
   }
 
   @Test
