@@ -213,13 +213,16 @@ public class FactusImpl implements Factus {
           }
         };
 
+    UUID stateOrNull =
+        Optional.ofNullable(subscribedProjection.factStreamPosition())
+            .map(FactStreamPosition::factId)
+            .orElse(null);
     return fc.subscribe(
-        SubscriptionRequest.follow(handler.createFactSpecs())
-            .withDebugHintFrom(subscribedProjection.getClass())
-            .fromNullable(
-                Optional.ofNullable(subscribedProjection.factStreamPosition())
-                    .map(FactStreamPosition::factId)
-                    .orElse(null)),
+        configureFrom(
+            SubscriptionRequest.follow(handler.createFactSpecs())
+                .withDebugHintFrom(subscribedProjection.getClass()),
+            subscribedProjection,
+            stateOrNull),
         fo);
   }
 
@@ -393,15 +396,27 @@ public class FactusImpl implements Factus {
     //
     synchronized (projection) {
       fc.subscribe(
-              SubscriptionRequest.catchup(factSpecs)
-                  .withDebugHintFrom(projection.getClass())
-                  .fromNullable(stateOrNull),
+              configureFrom(
+                  SubscriptionRequest.catchup(factSpecs).withDebugHintFrom(projection.getClass()),
+                  projection,
+                  stateOrNull),
               fo)
           .awaitComplete();
     }
     return Optional.ofNullable(positionOfLastFactApplied.get())
         .map(FactStreamPosition::factId)
         .orElse(null);
+  }
+
+  private SubscriptionRequest configureFrom(
+      SpecBuilder builder, Projection projection, @Nullable UUID savedPosition) {
+    if (savedPosition != null) {
+      return builder.from(savedPosition);
+    }
+    return switch (projection.initialPosition()) {
+      case FROM_SCRATCH -> builder.fromScratch();
+      case FROM_NOW -> builder.fromNowOn();
+    };
   }
 
   @VisibleForTesting

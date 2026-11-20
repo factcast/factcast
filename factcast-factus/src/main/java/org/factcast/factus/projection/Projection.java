@@ -37,4 +37,19 @@ public interface Projection extends ProgressAware {
   default void onError(@NonNull Throwable exception) {
     LoggerFactory.getLogger(getClass()).warn("Unhandled onError:", exception);
   }
+
+  default @NonNull InitialPosition initialPosition() {
+    return InitialPosition.FROM_SCRATCH;
+  }
+
+  enum InitialPosition {
+    /** Replay all matching history when no saved progress exists. */
+    FROM_SCRATCH,
+    /**
+     * Start after the server-selected publication-safe horizon. With fast-forward support enabled,
+     * a real horizon UUID is signaled on the subscription stream. Without saved progress, a new
+     * initialization selects now again and can skip intervening events.
+     */
+    FROM_NOW
+  }
 }

@@ -138,8 +138,7 @@ public class PgFactStream {
     initializeSerialToStartAfter();
     try {
       if (request.ephemeral()) {
-        // just fast forward to the latest event published by now
-        serial.set(horizonProvider.advance().factSerial());
+        fastForward(horizonProvider.advance());
       } else {
         doCatchup();
       }
