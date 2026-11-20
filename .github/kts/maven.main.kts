@@ -77,6 +77,7 @@ workflow(
             action = SetupJava(
                 distribution = SetupJava.Distribution.Corretto,
                 javaVersion = "21",
+                cache = SetupJava.BuildPlatform.Maven
             ),
         )
 
