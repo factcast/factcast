@@ -118,9 +118,7 @@ class NudgeNotificationHandlerTest {
 
     var controlledTimer = new ControlledTimer();
     handler =
-        spy(
-            new NudgeNotificationHandler(
-                bus, jdbc, props, metrics, false, controlledTimer.timer));
+        spy(new NudgeNotificationHandler(bus, jdbc, props, metrics, false, controlledTimer.timer));
     return controlledTimer;
   }
 
@@ -203,8 +201,7 @@ class NudgeNotificationHandlerTest {
     firstNudgeTasks.get(0).run();
     handler.nudge(new NudgeNotification(13));
 
-    assertThat(controlledTimer.delays)
-        .containsExactly(25L, 50L, 75L, 100L, 25L, 50L, 75L, 100L);
+    assertThat(controlledTimer.delays).containsExactly(25L, 50L, 75L, 100L, 25L, 50L, 75L, 100L);
     firstNudgeTasks.subList(1, firstNudgeTasks.size()).forEach(TimerTask::run);
     controlledTimer.tasks.subList(4, controlledTimer.tasks.size()).forEach(TimerTask::run);
 
