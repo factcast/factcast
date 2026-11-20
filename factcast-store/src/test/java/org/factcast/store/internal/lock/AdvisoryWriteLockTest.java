@@ -57,7 +57,8 @@ class AdvisoryWriteLockTest {
   class AcquireSharedTXLock {
 
     @Test
-    @Disabled("Shared publish locks are temporarily replaced with exclusive locks during migration.")
+    @Disabled(
+        "Shared publish locks are temporarily replaced with exclusive locks during migration.")
     void executesSharedAdvisoryLockStatement() {
       underTest.acquireSharedTXLock();
 

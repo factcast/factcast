@@ -30,7 +30,9 @@ public class AdvisoryWriteLock implements FactTableWriteLock {
       new TransactionSynchronization() {};
 
   private final JdbcTemplate tpl;
-// for this particular version we use exclusive locks instead of shared ones, but do not change anything else
+
+  // for this particular version we use exclusive locks instead of shared ones, but do not change
+  // anything else
   // this change is ONLY MEANT FOR rolling upgrades to version 0.13
   @Override
   @Transactional(propagation = Propagation.MANDATORY)

@@ -115,7 +115,8 @@ class ReviewHorizonIntegrationTest {
   }
 
   @Test
-  @Disabled("This scenario requires shared publish locks, which are temporarily replaced during migration.")
+  @Disabled(
+      "This scenario requires shared publish locks, which are temporarily replaced during migration.")
   void migratedCheckpointDoesNotSkipInFlightLowerSerial() throws Exception {
     ExecutorService executor = Executors.newSingleThreadExecutor();
     Fact lowerFact = fact();

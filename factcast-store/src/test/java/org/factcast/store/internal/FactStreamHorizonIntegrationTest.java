@@ -309,7 +309,8 @@ final class FactStreamHorizonIntegrationTest {
   }
 
   @Test
-  @Disabled("This scenario requires shared publish locks, which are temporarily replaced during migration.")
+  @Disabled(
+      "This scenario requires shared publish locks, which are temporarily replaced during migration.")
   void stateTokensUseCachedHorizonWhilePublicationIsInFlight() throws Exception {
     Fact lowerMatching =
         Fact.builder().id(UUID.randomUUID()).ns(NS).type("matching-type").buildWithoutPayload();
@@ -351,7 +352,8 @@ final class FactStreamHorizonIntegrationTest {
   }
 
   @Test
-  @Disabled("This scenario requires shared publish locks, which are temporarily replaced during migration.")
+  @Disabled(
+      "This scenario requires shared publish locks, which are temporarily replaced during migration.")
   void horizonWaitsForLowerSerialBeforeFollowQueryCanAdvancePastIt() throws Exception {
     List<UUID> received = new CopyOnWriteArrayList<>();
     SubscriptionRequest request =
