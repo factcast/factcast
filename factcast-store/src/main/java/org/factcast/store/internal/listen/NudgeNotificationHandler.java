@@ -40,7 +40,7 @@ public class NudgeNotificationHandler implements DisposableBean {
   private final @NonNull StoreConfigurationProperties props;
   private final @NonNull PgMetrics metrics;
   @VisibleForTesting protected final AtomicLong notificationSer = new AtomicLong(0);
-  @VisibleForTesting protected final Timer timer = new Timer(true);
+  @VisibleForTesting protected final Timer timer;
   // this we need in order to skip obsolete tasks
   @VisibleForTesting protected final AtomicLong timerVersion = new AtomicLong(0);
   private final AtomicBoolean refreshRequested = new AtomicBoolean(false);
@@ -63,10 +63,22 @@ public class NudgeNotificationHandler implements DisposableBean {
       @NonNull StoreConfigurationProperties props,
       @NonNull PgMetrics metrics,
       boolean scheduleCleanupTask) {
+    this(bus, jdbc, props, metrics, scheduleCleanupTask, new Timer(true));
+  }
+
+  @VisibleForTesting
+  NudgeNotificationHandler(
+      @NonNull EventBus bus,
+      @NonNull JdbcTemplate jdbc,
+      @NonNull StoreConfigurationProperties props,
+      @NonNull PgMetrics metrics,
+      boolean scheduleCleanupTask,
+      @NonNull Timer timer) {
     this.bus = bus;
     this.jdbc = jdbc;
     this.props = props;
     this.metrics = metrics;
+    this.timer = timer;
     bus.register(this);
 
     if (scheduleCleanupTask) {

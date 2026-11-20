@@ -3,6 +3,19 @@
 
 == Upgrading to 0.13.0
 
+=== Mandatory migration path from 0.12.x to 0.13.0
+
+In 0.12.x we allowed lock-free publication, which was forbidden before. We observed poor performance under high load cause by the mitigation (locking on the read path, reading only to horizon).
+
+Therefore this change is reverted and we go back to full serialization of publications from 0.13.0 on.
+
+In oder to guarantee a smooth and safe transition, there are two was to go forward:
+
+1. Have a downtime, stop all FactCast Servers, start upgraded servers making sure no 0.12.x and 0.13.0+ run at the same time.
+2. Have a rolling update first to version "0.12.7-migration-to-0.13" (which will be slow in production under heavy load) followed by a rolling upgrade to 0.13.0.
+
+Note that 0.12.7-migration-to-0.13 is not an official release, and you should not use it unless for this migration.
+
 === New exclusion mechanism replaces former "Blacklist"
 
 Maintaining a separate table of factIds to be filtered out of every result turned out to be inefficient.
