@@ -171,16 +171,15 @@ class PublicationQueue {
           // place(s)
           //
           // there is no need to log the exception, as it will resurface again below
-          pubs.parallelStream()
-              .forEach(
-                  pub -> {
-                    try {
-                      pgFactStore.doPublish(pub.facts());
-                      committed(pub);
-                    } catch (Exception dupe) {
-                      pub.completion().completeExceptionally(dupe);
-                    }
-                  });
+          pubs.forEach(
+              pub -> {
+                try {
+                  pgFactStore.doPublish(pub.facts());
+                  committed(pub);
+                } catch (Exception dupe) {
+                  pub.completion().completeExceptionally(dupe);
+                }
+              });
         }
       }
     } finally {

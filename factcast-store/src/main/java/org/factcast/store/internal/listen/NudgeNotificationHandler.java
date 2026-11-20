@@ -203,11 +203,17 @@ public class NudgeNotificationHandler implements DisposableBean {
             && Boolean.FALSE.equals(
                 jdbc.queryForObject(BASE_EXISTS_SQL, Boolean.class, lowerSerial));
 
-    if (baseLineMissing || lowerSerial == 0) {
-      log.trace("No reliable notification baseline, waking all subscribers");
-      bus.post(FactInsertionNotification.internal());
-      notificationSer.set(upperSerial);
-      return;
+    //noinspection StatementWithEmptyBody
+    if (upperSerial > 0) {
+      if ((baseLineMissing || lowerSerial == 0)) {
+        log.trace("No reliable notification baseline, waking all subscribers");
+        bus.post(FactInsertionNotification.internal());
+        notificationSer.set(upperSerial);
+        return;
+      }
+    } else {
+      // if nothing happened for a long time, all notifications might have been deleted.
+      // in that case, we do not want to wake subscribers,
     }
 
     if (upperSerial <= lowerSerial) return;
