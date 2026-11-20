@@ -56,5 +56,4 @@ This is made possible by changing two major things:
 * Burst publications are joined into chunks per transaction, so that the TPS possible are not exceeded easily (max 500 by default, up to 10000).
 * We do never wait with flushing, so if publication frequency is low, it still will be one transaction per publication, and very little (as in almost unmeasurable) additional latency overhead.
 
-
 We also experiementde with lock-free publication in version 0.12.0-0.12.7 but realized, that this created much more complexit and latency on hte read path, so that version 0.13.0 removed it again.
