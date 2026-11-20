@@ -79,7 +79,9 @@ public class PreFetchingQuery implements FetchingQuery {
         } while (!exhausted);
 
       } catch (InterruptedException e) {
-        // in that case we do not care.
+        // Preserve cancellation and fail so catchup cannot fast-forward past unprocessed rows.
+        Thread.currentThread().interrupt();
+        throw new SQLException("Interrupted while waiting for a catchup page", e);
       }
       return rows;
     } finally {
