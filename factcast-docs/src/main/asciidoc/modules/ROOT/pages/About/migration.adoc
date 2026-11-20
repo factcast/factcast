@@ -9,7 +9,7 @@ In 0.12.x we allowed lock-free publication, which was forbidden before. We obser
 
 Therefore this change is reverted and we go back to full serialization of publications from 0.13.0 on.
 
-In oder to guarantee a smooth and safe transition, there are two was to go forward:
+In order to guarantee a smooth and safe transition, there are two ways to go forward:
 
 1. Have a downtime, stop all FactCast Servers, start upgraded servers making sure no 0.12.x and 0.13.0+ run at the same time.
 2. Have a rolling update first to version "0.12.7-migration-to-0.13" (which will be slow in production under heavy load) followed by a rolling upgrade to 0.13.0.
