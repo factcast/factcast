@@ -112,6 +112,35 @@ class NudgeNotificationHandlerTest {
     assertThat(completed.await(5, TimeUnit.SECONDS)).isTrue();
   }
 
+  private ControlledTimer replaceTimerWithControlledTimer() throws Exception {
+    handler.destroy();
+    clearInvocations(bus, jdbc, metrics, timer, sample);
+
+    var controlledTimer = new ControlledTimer();
+    handler =
+        spy(
+            new NudgeNotificationHandler(
+                bus, jdbc, props, metrics, false, controlledTimer.timer));
+    return controlledTimer;
+  }
+
+  private static class ControlledTimer {
+    final java.util.Timer timer = mock(java.util.Timer.class);
+    final List<TimerTask> tasks = new ArrayList<>();
+    final List<Long> delays = new ArrayList<>();
+
+    ControlledTimer() {
+      doAnswer(
+              invocation -> {
+                tasks.add(invocation.getArgument(0));
+                delays.add(invocation.getArgument(1));
+                return null;
+              })
+          .when(timer)
+          .schedule(any(TimerTask.class), anyLong());
+    }
+  }
+
   @Test
   void testDestroyUnregistersBus() throws Exception {
     handler.destroy();
@@ -133,6 +162,7 @@ class NudgeNotificationHandlerTest {
   @Test
   void schedulesSubsequentPolls() throws Exception {
     // Given
+    var controlledTimer = replaceTimerWithControlledTimer();
     when(props.getFactNotificationPollLatencyInMillis()).thenReturn(25L);
     // Access notificationSer to set it > 0
     handler.notificationSer.set(100L);
@@ -150,13 +180,15 @@ class NudgeNotificationHandlerTest {
     // Then
     // Should call fetchPairsAndDispatch, which queries for pairs.
     verify(handler).fetchPairsAndDispatch();
-    Thread.sleep(110);
+    assertThat(controlledTimer.delays).containsExactly(25L, 50L, 75L, 100L);
+    controlledTimer.tasks.forEach(TimerTask::run);
     verify(handler, times(5)).fetchPairsAndDispatch();
   }
 
   @Test
   void foldsDuplicatePolls() throws Exception {
     // Given
+    var controlledTimer = replaceTimerWithControlledTimer();
     when(props.getFactNotificationPollLatencyInMillis()).thenReturn(25L);
     // Access notificationSer to set it > 0
     handler.notificationSer.set(101L);
@@ -166,20 +198,24 @@ class NudgeNotificationHandlerTest {
         .when(jdbc.queryForObject(NudgeNotificationHandler.BASE_EXISTS_SQL, Boolean.class, 101L))
         .thenReturn(true);
     // When
-    // schedules 25 50 75 100
     handler.nudge(new NudgeNotification(13));
-    Thread.sleep(30);
-    // schedules 55 80 105 130
+    var firstNudgeTasks = List.copyOf(controlledTimer.tasks);
+    firstNudgeTasks.get(0).run();
     handler.nudge(new NudgeNotification(13));
 
-    Thread.sleep(150);
-    // one for initial, one for 25,30 (initial for 2nd nudge), 55, 80, 105, 130
+    assertThat(controlledTimer.delays)
+        .containsExactly(25L, 50L, 75L, 100L, 25L, 50L, 75L, 100L);
+    firstNudgeTasks.subList(1, firstNudgeTasks.size()).forEach(TimerTask::run);
+    controlledTimer.tasks.subList(4, controlledTimer.tasks.size()).forEach(TimerTask::run);
+
+    // The first nudge's 25ms poll, both immediate polls, and the four current-version polls run.
     verify(handler, times(7)).fetchPairsAndDispatch();
   }
 
   @Test
   void notifesForEachPair() throws Exception {
     // Given
+    replaceTimerWithControlledTimer();
     when(props.getFactNotificationPollLatencyInMillis()).thenReturn(25L);
     // Access notificationSer to set it > 0
     handler.notificationSer.set(102L);
@@ -231,6 +267,7 @@ class NudgeNotificationHandlerTest {
   @Test
   void notifiesQuicklyAfterScheduledPoll() throws Exception {
     // Given
+    var controlledTimer = replaceTimerWithControlledTimer();
     when(props.getFactNotificationPollLatencyInMillis()).thenReturn(50L);
     // Access notificationSer to set it > 0
     handler.notificationSer.set(100L);
@@ -275,8 +312,9 @@ class NudgeNotificationHandlerTest {
     verify(bus).post(eq(FactInsertionNotification.internal("ns", "t3")));
     verifyNoMoreInteractions(bus);
 
-    // now after 50ms, a scheduled poll should emit another
-    assertThat(cdl4.await(75, TimeUnit.MILLISECONDS)).isTrue();
+    // Running the first scheduled poll should emit another notification.
+    controlledTimer.tasks.get(0).run();
+    assertThat(cdl4.getCount()).isZero();
     verify(bus, times(2)).post(eq(FactInsertionNotification.internal("ns", "t1")));
     verifyNoMoreInteractions(bus);
   }
@@ -284,6 +322,7 @@ class NudgeNotificationHandlerTest {
   @Test
   void ignoresOlderVersions() throws Exception {
     // Given
+    var controlledTimer = replaceTimerWithControlledTimer();
     when(props.getFactNotificationPollLatencyInMillis()).thenReturn(25L);
     // Access notificationSer to set it > 0
     handler.notificationSer.set(110L);
@@ -295,12 +334,10 @@ class NudgeNotificationHandlerTest {
                 eq(NudgeNotificationHandler.BASE_EXISTS_SQL), eq(Boolean.class), same(110)))
         .thenReturn(true);
     // When
-    // schedules 25 50 75 100
     handler.nudge(new NudgeNotification(13));
-    Thread.sleep(5);
+    assertThat(controlledTimer.delays).containsExactly(25L, 50L, 75L, 100L);
     handler.timerVersion.incrementAndGet();
-    Thread.sleep(100);
-    // one for initial, one for 25,30 (initial for 2nd nudge), 55, 80, 105, 130
+    controlledTimer.tasks.forEach(TimerTask::run);
     verify(handler, times(1)).fetchPairsAndDispatch();
   }
 
