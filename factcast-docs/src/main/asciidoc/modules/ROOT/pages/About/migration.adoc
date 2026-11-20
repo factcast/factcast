@@ -5,7 +5,7 @@
 
 === Mandatory migration path from 0.12.x to 0.13.0
 
-In 0.12.x we allowed lock-free publication, which was forbidden before. We observed poor performance under high load cause by the mitigation (locking on the read path, reading only to horizon).
+In 0.12.x we allowed lock-free publication, which was forbidden before. We observed poor performance under high load caused by the mitigation (locking on the read path, reading only to horizon).
 
 Therefore this change is reverted and we go back to full serialization of publications from 0.13.0 on.
 
