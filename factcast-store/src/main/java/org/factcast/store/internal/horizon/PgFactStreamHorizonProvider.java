@@ -15,161 +15,32 @@
  */
 package org.factcast.store.internal.horizon;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
 import javax.sql.DataSource;
 import lombok.NonNull;
 import org.factcast.core.subscription.FactStreamHorizon;
-import org.factcast.store.internal.PgConstants;
-import org.factcast.store.internal.PgMetrics;
-import org.factcast.store.internal.StoreMetrics;
-import org.factcast.store.internal.lock.FactTableWriteLock;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionDefinition;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
-import org.springframework.transaction.support.TransactionTemplate;
 
-/**
- * Advances the persisted horizon behind the publication advisory-lock barrier.
- *
- * <p>Regular publishers hold the PUBLISH lock shared for their entire transaction. Taking it
- * exclusively therefore waits for all earlier publishers and prevents a later publisher from
- * consuming a serial until both maxima have been read and persisted.
- */
-public class PgFactStreamHorizonProvider extends ReadOnlyPgFactStreamHorizonProvider {
+public class PgFactStreamHorizonProvider implements FactStreamHorizonProvider {
 
-  static final String MAX_NOTIFICATION_SERIAL = "SELECT COALESCE(MAX(ser),0) FROM notification";
-  // pg_sequences exposes last_value to writers with USAGE on the sequence. A restarted
-  // unlogged sequence falls below the durable horizon, unlike ordinary notification cleanup.
-  // Its last_value is null until the first nextval after a restart.
-  private static final String NOTIFICATION_SEQUENCE_LAST_VALUE =
-      "(SELECT COALESCE(last_value, 0) FROM pg_sequences WHERE "
-          + "format('%I.%I', schemaname, sequencename) = "
-          + "pg_get_serial_sequence('notification', 'ser'))";
-  static final String UPDATE_HORIZON =
-      "UPDATE "
-          + PgConstants.TABLE_HORIZON
-          + " "
-          + "SET "
-          + PgConstants.HORIZON_COLUMN_FACT_SER
-          + "=?, "
-          + PgConstants.HORIZON_COLUMN_FACT_ID
-          + "=?, "
-          + PgConstants.HORIZON_COLUMN_NOTIFICATION_SER
-          + "=CASE WHEN "
-          + NOTIFICATION_SEQUENCE_LAST_VALUE
-          + " < "
-          + PgConstants.HORIZON_COLUMN_NOTIFICATION_SER
-          + " THEN ? ELSE GREATEST("
-          + PgConstants.HORIZON_COLUMN_NOTIFICATION_SER
-          + ", ?) END "
-          + "WHERE id = 1 RETURNING "
-          + PgConstants.HORIZON_COLUMN_FACT_SER
-          + ", "
-          + PgConstants.HORIZON_COLUMN_FACT_ID
-          + ", "
-          + PgConstants.HORIZON_COLUMN_NOTIFICATION_SER;
+  private static final String MAX_SERIAL = "SELECT COALESCE(MAX(ser),0) FROM fact";
+  private final JdbcTemplate primaryJdbcTemplate;
 
-  private final @NonNull JdbcTemplate jdbcTemplate;
-  private final @NonNull FactTableWriteLock factTableWriteLock;
-  private final @NonNull PgMetrics metrics;
-  private final @NonNull TransactionTemplate transactionTemplate;
-
-  public PgFactStreamHorizonProvider(
-      @NonNull DataSource primaryDataSource,
-      @NonNull JdbcTemplate jdbcTemplate,
-      @NonNull FactTableWriteLock factTableWriteLock,
-      @NonNull PgMetrics metrics,
-      @NonNull PlatformTransactionManager transactionManager) {
-    super(primaryDataSource);
-    this.jdbcTemplate = jdbcTemplate;
-    this.factTableWriteLock = factTableWriteLock;
-    this.metrics = metrics;
-    transactionTemplate = new TransactionTemplate(transactionManager);
-    transactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+  public PgFactStreamHorizonProvider(@NonNull DataSource primaryDataSource) {
+    this.primaryJdbcTemplate = new JdbcTemplate(primaryDataSource);
   }
 
   @Override
-  @SuppressWarnings("java:S3551")
-  public @NonNull FactStreamHorizon advance() {
-    return metrics.time(
-        StoreMetrics.OP.ADVANCE_FACT_STREAM_HORIZON,
-        () -> {
-          if (factTableWriteLock.isExclusiveTXLockHeld()) {
-            // This transaction already owns the publication barrier. A new transaction
-            // would wait for that same lock until this one commits.
-            FactStreamHorizon inTransaction = doAdvance();
-            TransactionSynchronizationManager.registerSynchronization(
-                new TransactionSynchronization() {
-                  @Override
-                  public void afterCommit() {
-                    updateCommittedHorizon(inTransaction);
-                  }
-                });
-            return inTransaction;
-          }
-          FactStreamHorizon committed =
-              Objects.requireNonNull(transactionTemplate.execute(ignored -> doAdvance()));
-          updateCommittedHorizon(committed);
-          return committed;
-        });
+  public @NonNull FactStreamHorizon get() {
+    return getMaxOrZero(primaryJdbcTemplate);
   }
 
-  private void updateCommittedHorizon(FactStreamHorizon horizon) {
-    while (true) {
-      FactStreamHorizon observed = currentPrimary();
-      // A delayed commit callback must not move the cache backwards. A genuine reset (for
-      // example, after truncation) does have a lower persisted horizon, so verify it in the DB.
-      FactStreamHorizon next = atLeast(horizon, observed) ? horizon : readPrimary();
-      synchronized (this) {
-        if (currentPrimary().equals(observed)) {
-          updateCurrentPrimary(next);
-          return;
-        }
-      }
-    }
+  @Override
+  public @NonNull FactStreamHorizon readFrom(@NonNull DataSource dataSource) {
+    return getMaxOrZero(new JdbcTemplate(dataSource));
   }
 
-  private static boolean atLeast(FactStreamHorizon left, FactStreamHorizon right) {
-    return left.factSerial() > right.factSerial()
-        || (left.factSerial() == right.factSerial()
-            && left.notificationSerial() >= right.notificationSerial());
-  }
-
-  private FactStreamHorizon doAdvance() {
-    factTableWriteLock.acquireExclusiveTXLock();
-    FactStreamHorizon next = liveHorizon();
+  private FactStreamHorizon getMaxOrZero(@NonNull JdbcTemplate jdbcTemplate) {
     return jdbcTemplate.queryForObject(
-        UPDATE_HORIZON,
-        (rs, rowNum) ->
-            new FactStreamHorizon(
-                rs.getObject(PgConstants.HORIZON_COLUMN_FACT_ID, UUID.class),
-                rs.getLong(PgConstants.HORIZON_COLUMN_FACT_SER),
-                rs.getLong(PgConstants.HORIZON_COLUMN_NOTIFICATION_SER)),
-        next.factSerial(),
-        next.factId(),
-        next.notificationSerial(),
-        next.notificationSerial());
-  }
-
-  private @NonNull FactStreamHorizon liveHorizon() {
-    List<FactStreamHorizon> factHorizons =
-        jdbcTemplate.query(
-            PgConstants.LATEST_FACT,
-            (rs, rowNum) ->
-                new FactStreamHorizon(
-                    rs.getObject(PgConstants.HORIZON_COLUMN_FACT_ID, UUID.class),
-                    rs.getLong(PgConstants.HORIZON_COLUMN_FACT_SER),
-                    0));
-    FactStreamHorizon factHorizon =
-        factHorizons.isEmpty() ? FactStreamHorizon.empty() : factHorizons.get(0);
-    Long notificationSerial = jdbcTemplate.queryForObject(MAX_NOTIFICATION_SERIAL, Long.class);
-    return new FactStreamHorizon(
-        factHorizon.factId(),
-        factHorizon.factSerial(),
-        notificationSerial == null ? 0 : notificationSerial);
+        MAX_SERIAL, (rs, rowNum) -> new FactStreamHorizon(rs.getLong(1)));
   }
 }

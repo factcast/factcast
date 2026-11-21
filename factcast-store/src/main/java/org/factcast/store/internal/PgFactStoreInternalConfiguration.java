@@ -39,7 +39,7 @@ import org.factcast.store.internal.catchup.PgCatchupFactory;
 import org.factcast.store.internal.check.IndexCheck;
 import org.factcast.store.internal.filter.blacklist.*;
 import org.factcast.store.internal.horizon.*;
-import org.factcast.store.internal.jdbc.PgBatchInsertRewriteVerifier;
+import org.factcast.store.internal.jdbc.PgBatchInsertRewriteConfigurer;
 import org.factcast.store.internal.listen.*;
 import org.factcast.store.internal.lock.*;
 import org.factcast.store.internal.logsuppression.*;
@@ -121,9 +121,8 @@ public class PgFactStoreInternalConfiguration {
 
   @Bean
   @IsReadAndWriteEnv
-  @SuppressWarnings("java:S2440") // it's a configuration class, damnit
-  public PgBatchInsertRewriteVerifier pgBatchInsertRewriteVerifier(DataSource dataSource) {
-    return new PgBatchInsertRewriteVerifier(dataSource);
+  public static PgBatchInsertRewriteConfigurer pgBatchInsertRewriteConfigurer() {
+    return new PgBatchInsertRewriteConfigurer();
   }
 
   @Bean
@@ -233,20 +232,15 @@ public class PgFactStoreInternalConfiguration {
   @IsReadAndWriteEnv
   @DependsOnDatabaseInitialization
   public FactStreamHorizonProvider factStreamHorizonProvider(
-      DataSource dataSource,
-      JdbcTemplate jdbcTemplate,
-      FactTableWriteLock factTableWriteLock,
-      PgMetrics metrics,
-      PlatformTransactionManager transactionManager) {
-    return new PgFactStreamHorizonProvider(
-        dataSource, jdbcTemplate, factTableWriteLock, metrics, transactionManager);
+      DataSource dataSource, JdbcTemplate jdbcTemplate) {
+    return new PgFactStreamHorizonProvider(dataSource);
   }
 
   @Bean
   @IsReadOnlyEnv
   @DependsOnDatabaseInitialization
   public FactStreamHorizonProvider readOnlyFactStreamHorizonProvider(DataSource dataSource) {
-    return new ReadOnlyPgFactStreamHorizonProvider(dataSource);
+    return new PgFactStreamHorizonProvider(dataSource);
   }
 
   @Bean
@@ -350,9 +344,8 @@ public class PgFactStoreInternalConfiguration {
       EventBus bus,
       JdbcTemplate jdbcTemplate,
       StoreConfigurationProperties props,
-      PgMetrics metrics,
-      FactStreamHorizonProvider horizonProvider) {
-    return new NudgeNotificationHandler(bus, jdbcTemplate, props, metrics, horizonProvider);
+      PgMetrics metrics) {
+    return new NudgeNotificationHandler(bus, jdbcTemplate, props, metrics);
   }
 
   @Bean

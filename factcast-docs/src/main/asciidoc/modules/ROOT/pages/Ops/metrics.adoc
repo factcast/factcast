@@ -111,6 +111,56 @@ At the **time of writing (0.4.3)**, the metrics exposed by the namespaces group 
 |schemaUpdateFailure |`meter` |Counts the number of times that the server was unable to update its schema definition from the schema registry, while fetching the initial state of the registry or during refresh.
 |===
 
+=== Measuring publication throughput
+
+The following operations use the existing `store=pgsql` tag. Timers belong to
+`factcast.store.timer`; counters and distribution summaries belong to `factcast.store.meter`.
+Durations use a monotonic clock and are exported in the backend's timer units.
+These measurements do not change flush scheduling or the default flush delay of zero.
+
+[cols="1,1,3",options="header"]
+|===
+|Operation |Type |Meaning
+|publicationBatchEntries |Distribution summary |Number of API publications drained into each queue batch. One list of facts is one publication.
+|publicationBatchFacts |Distribution summary |Total facts in each drained batch. Failed batches are included; individual fallback attempts do not add batch-size samples.
+|publicationQueueWait |Timer |Enqueue until removal from the queue, once per publication. Includes scheduling delay and waiting behind earlier batches; excludes its database execution and fallback retries.
+|publicationBacklogIdle |Timer |Time with queued work while no flush is active, once per productive flush. Starts at the first enqueue into an idle, empty queue, or when the previous flush finishes with entries remaining. Excludes active flush work (including fallback and completion callbacks) and time when the queue is empty. Zero durations are included; no-op scheduled tasks add no samples.
+|publicationTransaction |Timer |One `doPublish` attempt, around `TransactionTemplate.execute`: includes connection acquisition, lock acquisition, inserts, and transaction completion. Failed combined attempts and individual fallback attempts are all recorded, with the exception class in the `exception` tag. When joining a caller transaction, this measures only the participating call, not the caller's eventual commit or rollback.
+|publicationLock |Timer |The lock-acquisition call inside `doPublish`, including lock waiting and call overhead. Already-held locks can return immediately. This does not measure how long the lock is held or the earlier conditional-publication validation lock.
+|queuedPublicationsCommitted |Counter |Successfully committed queued API publications, incremented after `doPublish` returns and before completing the caller's future. Failed attempts do not increment it.
+|queuedFactsCommitted |Counter |Facts belonging to those committed queued publications. Use its rate for successful queued facts per second.
+|publicationBatchFallback |Counter |Combined queue batches that failed and entered individual retries.
+|===
+
+Queue measurements and committed counters cover only calls routed through `PublicationQueue`.
+Calls participating in a caller transaction bypass that queue. Transaction and lock timers also
+cover direct publications, so use a workload consisting only of queued unconditional publications
+when comparing those timers with queue metrics. `exception=None` means an attempt returned
+normally; it does not imply that a surrounding caller transaction has committed.
+
+For a baseline, use 256 concurrent synchronous producers, fixed payload/list sizes and batch limit,
+a warm-up period, and a fixed measurement window. Start without duplicates. Repeat runs with
+`factcast.store.publish-batched.flush-delay-millis` set to 0 and the delays being evaluated,
+alternating their order and keeping database conditions comparable.
+
+Compare successful facts/sec and publications/sec (counter rates), batch size distributions,
+queue-wait and backlog-idle durations, and transaction/lock durations. For summaries, sum divided
+by count gives mean batch size; timer total duration divided by count gives mean duration.
+Backend percentile or histogram configuration is needed for p50/p95/p99; this instrumentation
+does not enable histograms automatically. Record end-to-end publish latency at the producer as
+well, since store timers exclude network and client overhead. Treat any throughput difference
+smaller than run-to-run variation cautiously, including the overhead of collecting metrics.
+
+* Unchanged batch sizes with higher queue wait indicate that the flush delay adds waiting without improving batching.
+* Larger batches with lower throughput indicate that batching savings do not compensate for idle time.
+* Material backlog idle time at delay zero suggests that continuously draining the queue could improve throughput.
+* Long transaction durations with little backlog idle time suggest investigating database work; compare lock acquisition time to distinguish contention.
+
+Once the baseline is understood, introduce a controlled duplicate rate and inspect
+`publicationBatchFallback`. Committed counters exclude rolled-back facts, while transaction timers
+include the cost of failures and retries. SQL statement consolidation and preserving batching during
+failure recovery are separate follow-up experiments; neither is changed by this instrumentation.
+
 === gRPC Metrics
 
 If you're looking for remote calls and their execution times (including marshalling/de-marshalling from protobuf), you can have a look at the metrics automatically added by the https://yidongnan.github.io/grpc-spring-boot-starter/en/[gRPC library]

@@ -17,29 +17,57 @@ package org.factcast.store;
 
 import static org.assertj.core.api.Assertions.*;
 
+import jakarta.validation.Validation;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.boot.context.properties.bind.Binder;
 import org.springframework.boot.context.properties.source.MapConfigurationPropertySource;
 
 class StoreConfigurationPropertiesTest {
 
   @Test
-  void leanStateTokenDefaultsToEnabled() {
-    assertThat(new StoreConfigurationProperties().getLeanStateToken().isEnabled()).isTrue();
+  void safetyPollDefaultsToOneSecond() {
+    assertThat(new StoreConfigurationProperties().getFactNotificationSafetyPollLatencyInMillis())
+        .isEqualTo(1000);
   }
 
-  @Test
-  void bindsDocumentedLeanStateTokenProperty() {
+  @ParameterizedTest
+  @ValueSource(longs = {500, 1000, 60_000})
+  void bindsAndAcceptsSafetyPollInterval(long interval) {
     Binder binder =
         new Binder(
             new MapConfigurationPropertySource(
-                Map.of("factcast.store.lean-state-token.enabled", "false")));
+                Map.of(
+                    "factcast.store.fact-notification-safety-poll-latency-in-millis", interval)));
 
     StoreConfigurationProperties props =
         binder.bindOrCreate("factcast.store", StoreConfigurationProperties.class);
 
-    assertThat(props.getLeanStateToken().isEnabled()).isFalse();
+    assertThat(props.getFactNotificationSafetyPollLatencyInMillis()).isEqualTo(interval);
+    try (var factory = Validation.buildDefaultValidatorFactory()) {
+      assertThat(
+              factory
+                  .getValidator()
+                  .validateProperty(props, "factNotificationSafetyPollLatencyInMillis"))
+          .isEmpty();
+    }
+  }
+
+  @ParameterizedTest
+  @ValueSource(longs = {-1, 0, 499, 60_001})
+  void rejectsSafetyPollIntervalOutsideDocumentedBounds(long interval) {
+    StoreConfigurationProperties props = new StoreConfigurationProperties();
+    props.setFactNotificationSafetyPollLatencyInMillis(interval);
+
+    try (var factory = Validation.buildDefaultValidatorFactory()) {
+      assertThat(
+              factory
+                  .getValidator()
+                  .validateProperty(props, "factNotificationSafetyPollLatencyInMillis"))
+          .isNotEmpty();
+    }
   }
 
   @Test
@@ -49,13 +77,15 @@ class StoreConfigurationPropertiesTest {
             new MapConfigurationPropertySource(
                 Map.of(
                     "factcast.store.publish-batched.enabled", "true",
-                    "factcast.store.publish-batched.max-batch-size", "1000")));
+                    "factcast.store.publish-batched.max-batch-size", "1000",
+                    "factcast.store.publish-batched.flush-delay-millis", "5")));
 
     StoreConfigurationProperties props =
         binder.bindOrCreate("factcast.store", StoreConfigurationProperties.class);
 
     assertThat(props.getPublishBatched().isEnabled()).isTrue();
     assertThat(props.getPublishBatched().getMaxBatchSize()).isEqualTo(1000);
+    assertThat(props.getPublishBatched().getFlushDelayMillis()).isEqualTo(5);
   }
 
   @Test
@@ -64,6 +94,7 @@ class StoreConfigurationPropertiesTest {
 
     assertThat(props.getPublishBatched().isEnabled()).isFalse();
     assertThat(props.getPublishBatched().getMaxBatchSize()).isEqualTo(500);
+    assertThat(props.getPublishBatched().getFlushDelayMillis()).isZero();
   }
 
   @Test

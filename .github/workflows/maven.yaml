@@ -37,6 +37,7 @@ jobs:
       with:
         java-version: '21'
         distribution: 'corretto'
+        cache: 'maven'
     - id: 'step-4'
       name: 'Build with Maven, no testing'
       run: './mvnw -B clean install -DskipTests'

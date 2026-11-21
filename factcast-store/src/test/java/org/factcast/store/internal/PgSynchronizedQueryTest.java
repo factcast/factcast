@@ -62,14 +62,13 @@ class PgSynchronizedQueryTest {
   @Mock FactStreamHorizonProvider horizonProvider;
 
   private PgSynchronizedQuery queryWithHorizon(long horizonSerial) {
-    when(horizonProvider.currentPrimary())
-        .thenReturn(new FactStreamHorizon(UUID.randomUUID(), horizonSerial, horizonSerial));
+    when(horizonProvider.get()).thenReturn(new FactStreamHorizon(horizonSerial));
     return new PgSynchronizedQuery(
         "test",
         pipeline,
         connectionSupplier,
         sql,
-        ignored -> setter,
+        setter,
         () -> true,
         serialToContinueFrom,
         horizonProvider);
@@ -137,15 +136,14 @@ class PgSynchronizedQueryTest {
 
   @Test
   @SneakyThrows
-  void usesOneHorizonBoundAndFastForwardsAfterSuccessfulFlush() {
+  void bindsParametersAndFastForwardsAfterSuccessfulFlush() {
     AtomicLong cursor = new AtomicLong(5);
-    AtomicReference<FactStreamHorizon> suppliedHorizon = new AtomicReference<>();
     SingleConnectionDataSource ds = mock(SingleConnectionDataSource.class);
     Connection con = mock(Connection.class);
     PreparedStatement statement = mock(PreparedStatement.class);
     ResultSet rs = mock(ResultSet.class);
-    FactStreamHorizon horizon = new FactStreamHorizon(UUID.randomUUID(), 42, 42);
-    when(horizonProvider.currentPrimary()).thenReturn(horizon);
+    FactStreamHorizon horizon = new FactStreamHorizon(42);
+    when(horizonProvider.get()).thenReturn(horizon);
     when(connectionSupplier.getPooledAsSingleDataSource(anyList())).thenReturn(ds);
     when(ds.getConnection()).thenReturn(con);
     when(con.prepareStatement(sql)).thenReturn(statement);
@@ -153,48 +151,30 @@ class PgSynchronizedQueryTest {
     when(rs.next()).thenReturn(false);
     uut =
         new PgSynchronizedQuery(
-            "test",
-            pipeline,
-            connectionSupplier,
-            sql,
-            currentHorizon -> {
-              suppliedHorizon.set(currentHorizon);
-              return setter;
-            },
-            () -> true,
-            cursor,
-            horizonProvider);
+            "test", pipeline, connectionSupplier, sql, setter, () -> true, cursor, horizonProvider);
 
     uut.run(false);
 
-    assertThat(suppliedHorizon).hasValue(horizon);
+    verify(setter).setValues(statement);
     assertThat(cursor).hasValue(42);
-    verify(horizonProvider).currentPrimary();
+    verify(horizonProvider).get();
   }
 
   @Test
   @SneakyThrows
-  void doesNotFastForwardWhenBoundedQueryFails() {
+  void doesNotFastForwardWhenQueryFails() {
     AtomicLong cursor = new AtomicLong(5);
     SingleConnectionDataSource ds = mock(SingleConnectionDataSource.class);
     Connection con = mock(Connection.class);
     PreparedStatement statement = mock(PreparedStatement.class);
-    when(horizonProvider.currentPrimary())
-        .thenReturn(new FactStreamHorizon(UUID.randomUUID(), 42, 42));
+    when(horizonProvider.get()).thenReturn(new FactStreamHorizon(42));
     when(connectionSupplier.getPooledAsSingleDataSource(anyList())).thenReturn(ds);
     when(ds.getConnection()).thenReturn(con);
     when(con.prepareStatement(sql)).thenReturn(statement);
     when(statement.executeQuery()).thenThrow(new SQLException("boom"));
     uut =
         new PgSynchronizedQuery(
-            "test",
-            pipeline,
-            connectionSupplier,
-            sql,
-            ignored -> setter,
-            () -> true,
-            cursor,
-            horizonProvider);
+            "test", pipeline, connectionSupplier, sql, setter, () -> true, cursor, horizonProvider);
 
     assertThatThrownBy(() -> uut.run(false)).isInstanceOf(Exception.class);
 
@@ -205,18 +185,10 @@ class PgSynchronizedQueryTest {
   @SneakyThrows
   void skipsDatabaseWhenCursorAlreadyReachedHorizon() {
     AtomicLong cursor = new AtomicLong(42);
-    when(horizonProvider.currentPrimary())
-        .thenReturn(new FactStreamHorizon(UUID.randomUUID(), 42, 42));
+    when(horizonProvider.get()).thenReturn(new FactStreamHorizon(42));
     uut =
         new PgSynchronizedQuery(
-            "test",
-            pipeline,
-            connectionSupplier,
-            sql,
-            ignored -> setter,
-            () -> true,
-            cursor,
-            horizonProvider);
+            "test", pipeline, connectionSupplier, sql, setter, () -> true, cursor, horizonProvider);
 
     uut.run(false);
 

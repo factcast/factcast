@@ -64,7 +64,7 @@ class PgChunkedCatchupTest {
   @Mock PgCatchupFactory.Phase phase;
 
   PgChunkedCatchup underTest;
-  private final FactStreamHorizon horizon = new FactStreamHorizon(null, Long.MAX_VALUE, 0);
+  private final FactStreamHorizon horizon = new FactStreamHorizon(Long.MAX_VALUE);
 
   @BeforeEach
   void setup() {
@@ -206,7 +206,7 @@ class PgChunkedCatchupTest {
       verify(sample).stop(timer);
       ArgumentCaptor<String> sql = ArgumentCaptor.forClass(String.class);
       verify(jdbc).update(sql.capture(), any(PreparedStatementSetter.class));
-      assertThat(sql.getValue()).contains("ser<=?");
+      assertThat(sql.getValue()).contains("ser>?").doesNotContain("ser<=?");
     }
 
     @Test

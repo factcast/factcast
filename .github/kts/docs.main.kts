@@ -62,6 +62,8 @@ workflow(
             action = SetupJava(
                 distribution = SetupJava.Distribution.Temurin,
                 javaVersion = "25",
+                cache = SetupJava.BuildPlatform.Maven
+
             ),
         )
 

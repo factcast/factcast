@@ -28,7 +28,6 @@ import org.factcast.core.spec.FactSpec;
 import org.factcast.core.store.FactStore;
 import org.factcast.core.subscription.*;
 import org.factcast.core.subscription.observer.FactObserver;
-import org.factcast.store.internal.horizon.*;
 import org.factcast.store.internal.notification.NudgeNotification;
 import org.factcast.test.IntegrationTest;
 import org.junit.jupiter.api.Test;
@@ -36,7 +35,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.source.ConfigurationPropertySources;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.core.env.MapPropertySource;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
@@ -46,30 +44,17 @@ import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 @Sql(scripts = "/wipe.sql", config = @SqlConfig(separator = "#"))
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @IntegrationTest
-class PgReadOnlyHorizonIntegrationTest {
+class PgReadOnlyPublicationIntegrationTest {
 
-  private static final String NS = "read-only-horizon";
+  private static final String NS = "read-only-publication";
 
   @Autowired FactStore writer;
   @Autowired EventBus writerBus;
-  @Autowired JdbcTemplate jdbc;
-  @Autowired FactStreamHorizonProvider writableHorizon;
 
   @Test
   void readOnlyInstanceCatchesUpExistingFactsAndFollowsNewPublications() throws Exception {
-    writableHorizon.advance();
     List<Fact> existing = facts(3);
     writer.publish(existing);
-    long lastExistingSerial = writer.serialOf(existing.get(existing.size() - 1).id()).orElseThrow();
-    await()
-        .atMost(Duration.ofSeconds(10))
-        .untilAsserted(
-            () ->
-                assertThat(
-                        jdbc.queryForObject(
-                            "SELECT fact_ser FROM factstream_horizon WHERE id=1", Long.class))
-                    .isEqualTo(lastExistingSerial));
-
     try (AnnotationConfigApplicationContext readOnlyContext =
         new AnnotationConfigApplicationContext()) {
       readOnlyContext
@@ -83,8 +68,6 @@ class PgReadOnlyHorizonIntegrationTest {
           PgTestConfiguration.class, LiquibaseConfigurationForReadOnlyMode.class);
       readOnlyContext.refresh();
 
-      assertThat(readOnlyContext.getBean(FactStreamHorizonProvider.class))
-          .isInstanceOf(ReadOnlyPgFactStreamHorizonProvider.class);
       FactStore reader = readOnlyContext.getBean(FactStore.class);
       NudgeRelay relay = new NudgeRelay(readOnlyContext.getBean(EventBus.class));
       writerBus.register(relay);

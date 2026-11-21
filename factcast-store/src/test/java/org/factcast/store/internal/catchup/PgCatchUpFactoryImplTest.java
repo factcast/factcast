@@ -50,7 +50,7 @@ class PgCatchUpFactoryImplTest {
   @Mock SingleConnectionDataSource ds;
 
   @InjectMocks PgCatchUpFactoryImpl underTest;
-  private final FactStreamHorizon horizon = new FactStreamHorizon(null, 42, 42);
+  private final FactStreamHorizon horizon = new FactStreamHorizon(42);
 
   @Nested
   class Create {

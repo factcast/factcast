@@ -1,4 +1,6 @@
-CREATE ROLE readonly LOGIN PASSWORD 'readonly';
+-- Keep this statement multiline to guard against accidental newline-based script splitting.
+CREATE ROLE readonly
+  LOGIN PASSWORD 'readonly';
 GRANT CONNECT ON DATABASE fc TO readonly;
 GRANT USAGE ON SCHEMA public TO readonly;
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO readonly;

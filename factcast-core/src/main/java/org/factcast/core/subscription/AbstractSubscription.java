@@ -56,14 +56,20 @@ public abstract class AbstractSubscription implements Subscription {
 
   @Override
   public void close() {
+    List<Runnable> closeHandlers;
     synchronized (onClose) {
-      if (!isSubscriptionClosed.getAndSet(true)) {
-        try {
-          internalClose();
-        } finally {
-          onClose.forEach(this::tryRun);
-        }
+      if (isSubscriptionClosed.getAndSet(true)) {
+        return;
       }
+      closeHandlers = new ArrayList<>(onClose);
+      onClose.clear();
+    }
+    // Closing resources can acquire locks held by threads that also close this subscription.
+    // Run cleanup outside the registration lock so those threads can return immediately.
+    try {
+      internalClose();
+    } finally {
+      closeHandlers.forEach(this::tryRun);
     }
   }
 }

@@ -66,6 +66,33 @@ public class PgMetrics implements InitializingBean {
         Tag.of(StoreMetrics.TAG_EXCEPTION_KEY, exceptionTagValue));
   }
 
+  // Recording must never change publication outcomes, including after a successful commit.
+  public void recordDuration(StoreMetrics.OP operation, long nanos, @Nullable Exception failure) {
+    try {
+      timerBuilder(operation, mapException(failure))
+          .register(registry)
+          .record(nanos, java.util.concurrent.TimeUnit.NANOSECONDS);
+    } catch (Exception e) {
+      log.warn("Failed recording publication duration", e);
+    }
+  }
+
+  public void recordValue(StoreMetrics.VALUE operation, long value) {
+    try {
+      distributionSummary(operation).record((double) value);
+    } catch (Exception e) {
+      log.warn("Failed recording publication value", e);
+    }
+  }
+
+  public void increment(StoreMetrics.EVENT operation, long count) {
+    try {
+      counter(operation).increment((double) count);
+    } catch (Exception e) {
+      log.warn("Failed recording publication count", e);
+    }
+  }
+
   public void time(@NonNull StoreMetrics.OP operation, @NonNull Runnable r) {
     Sample sample = Timer.start();
     Exception exception = null;

@@ -45,6 +45,7 @@ import org.factcast.store.internal.telemetry.PgStoreTelemetry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.*;
 
 /**
@@ -139,7 +140,7 @@ public class PgFactStream {
     try {
       if (request.ephemeral()) {
         // just fast forward to the latest event published by now
-        serial.set(horizonProvider.advance().factSerial());
+        serial.set(horizonProvider.get().factSerial());
       } else {
         doCatchup();
       }
@@ -165,14 +166,14 @@ public class PgFactStream {
   @NotNull
   PgSynchronizedQuery createPgSynchronizedQuery() {
     PgQueryBuilder q = new PgQueryBuilder(request.specs(), props.isInternalExclusionEnabled());
-    String sql = q.createBoundedSQL();
+    String sql = q.createSQL();
     log.trace("created query SQL for {} - SQL={}", request.specs(), sql);
     return new PgSynchronizedQuery(
         request.debugInfo(),
         pipeline,
         connectionSupplier,
         sql,
-        horizon -> q.createBoundedStatementSetter(serial, horizon),
+        q.createStatementSetter(serial),
         this::isConnected,
         serial,
         horizonProvider);
@@ -198,9 +199,6 @@ public class PgFactStream {
         eventBus.register(queryExecutor);
         // catchup phase 3 – make sure, we did not miss any fact due to
         // slow registration
-        //
-        // we should make sure, we advance the horizon before if possible
-        horizonProvider.advance();
         queryExecutor.trigger();
       } else {
         pipeline.process(Signal.complete());
@@ -228,17 +226,22 @@ public class PgFactStream {
   }
 
   @VisibleForTesting
-  void fastForward(@NonNull FactStreamHorizon atTheStartOfQuery) {
+  void fastForward(
+      @NonNull FactStreamHorizon atTheStartOfQuery, @NonNull PrimaryDataSourceSupplier primary) {
     if (isConnected()) {
 
-      UUID targetId = atTheStartOfQuery.factId();
       long targetSer = atTheStartOfQuery.factSerial();
 
       // there is no need to check for the start id, as it'll be
       // contained in serial or smaller, see initializeSerialToStartAfter
       long currentSerial = serial.get();
 
-      if (targetId != null && currentSerial < targetSer) {
+      if (currentSerial < targetSer) {
+        // Reuse the catch-up connection so the lookup never waits for a second pool slot.
+        UUID targetId =
+            new JdbcTemplate(primary.get())
+                .queryForObject(
+                    "SELECT (header->>'id')::uuid FROM fact WHERE ser=?", UUID.class, targetSer);
         log.debug("{} sending ffwd to id {} (serial {})", request, targetId, targetSer);
         pipeline.process(Signal.of(FactStreamPosition.of(targetId, targetSer)));
 
@@ -253,7 +256,7 @@ public class PgFactStream {
     try (var suppression = logSuppression.forCatchup(request)) {
       if (!isConnected()) return;
 
-      FactStreamHorizon horizon = horizonProvider.advance();
+      FactStreamHorizon horizon = horizonProvider.get();
       sendFactStreamInfo(horizon);
 
       if (!isConnected()) return;
@@ -273,7 +276,7 @@ public class PgFactStream {
         catchupPhaseTwo(primary, phase1HighwaterMark, horizon);
 
         // now that phase 1&2 are done, we can ffwd to the initial HWM on the primary
-        fastForward(horizon);
+        fastForward(horizon, primary);
       }
     } catch (PipelineAlreadyClosedException e) {
       throw new CatchupException(e);

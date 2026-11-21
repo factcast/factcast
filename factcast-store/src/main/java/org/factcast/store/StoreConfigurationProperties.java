@@ -258,17 +258,14 @@ public class StoreConfigurationProperties implements InitializingBean {
     @Min(10)
     @Max(10000)
     int maxBatchSize = 500;
+
+    // Allow nearby publications to share a transaction; zero disables the batching wait.
+    @Min(0)
+    @Max(10)
+    long flushDelayMillis = 0;
   }
 
   @Valid public PublishBatch publishBatched = new PublishBatch();
-
-  @Data
-  public static class LeanStateToken {
-    // Reuse the cached safe horizon to avoid publication lock contention during token creation.
-    boolean enabled = true;
-  }
-
-  @Valid LeanStateToken leanStateToken = new LeanStateToken();
 
   /**
    * When catching up, if production of a full notification of facts takes longer than this (10
@@ -284,7 +281,12 @@ public class StoreConfigurationProperties implements InitializingBean {
   @Positive
   @Min(5)
   @Max(50)
-  long maxNotificationPollLatencyInMillis = 25;
+  long factNotificationPollLatencyInMillis = 25;
+
+  @Positive
+  @Min(500)
+  @Max(60000)
+  long factNotificationSafetyPollLatencyInMillis = 1000;
 
   @Getter
   @Setter

@@ -68,7 +68,7 @@ public class PgCursorCatchup extends AbstractPgCatchup {
             horizon.factSerial());
         return;
       }
-      final var catchupSQL = b.createBoundedSQL();
+      final var catchupSQL = b.createSQL();
       final var isFromScratch = (fromSerial.get() <= 0);
       log.trace("{} catchup {} - facts starting with SER={}", req, phase, fromSerial.get());
 
@@ -78,7 +78,7 @@ public class PgCursorCatchup extends AbstractPgCatchup {
         conn.setAutoCommit(false);
         prep.setFetchSize(props.getPageSize());
         prep.setQueryTimeout(0);
-        b.createBoundedStatementSetter(fromSerial, horizon).setValues(prep);
+        b.createStatementSetter(fromSerial).setValues(prep);
 
         final var timer = metrics.timer(StoreMetrics.OP.RESULT_STREAM_START, isFromScratch);
         final var timerSample = metrics.startSample();
