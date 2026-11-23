@@ -288,7 +288,7 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
   }
 
   @Test
-  void getStateForMatchingFactsReturnsHorizon() {
+  void getStateForMatchingFactsReturnsLatestSerial() {
     Fact fact1 = Fact.builder().ns("ns1").type("t1").buildWithoutPayload();
     Fact fact2 = Fact.builder().ns("unrelated").type("t2").buildWithoutPayload();
     Fact fact3 = Fact.builder().ns("ns1").type("t1").buildWithoutPayload();
@@ -398,7 +398,7 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
   }
 
   @Test
-  void getStateForNonMatchingSpecsWithPopulatedFactsReturnsHorizon() {
+  void getStateForNonMatchingSpecsWithPopulatedFactsReturnsLatestSerial() {
     Fact fact1 = Fact.builder().ns("ns1").type("t1").buildWithoutPayload();
     Fact fact2 = Fact.builder().ns("ns2").type("t2").buildWithoutPayload();
     store.publish(Lists.newArrayList(fact1, fact2));
@@ -528,18 +528,24 @@ class PgFactStoreIntegrationTest extends AbstractFactStoreTest {
 
     @Test
     void testLastSerialBeforePastDate() {
+      store.publish(
+          List.of(
+              Fact.builder().ns("foo").type("bar").buildWithoutPayload(),
+              Fact.builder().ns("foo").type("bar").buildWithoutPayload()));
+      long latestSerial = fs.latestSerial();
 
+      // Model historical date boundaries using committed facts.
       jdbcTemplate.update(
-          "INSERT INTO " + PgConstants.TABLE_DATE2SERIAL + "(factdate,firstser) VALUES (?, ?)",
-          LocalDate.now().minusWeeks(1),
-          100L);
+          "UPDATE " + PgConstants.TABLE_DATE2SERIAL + " SET factdate = ?",
+          LocalDate.now().minusWeeks(1));
 
       jdbcTemplate.update(
           "INSERT INTO " + PgConstants.TABLE_DATE2SERIAL + "(factdate,firstser) VALUES (?, ?)",
           LocalDate.now().minusDays(1),
-          200L);
+          latestSerial);
 
-      assertThat(localFactStore.lastSerialBefore(LocalDate.now().minusDays(1))).isEqualTo(200L - 1);
+      assertThat(localFactStore.lastSerialBefore(LocalDate.now().minusDays(1)))
+          .isEqualTo(latestSerial - 1);
     }
 
     @Test

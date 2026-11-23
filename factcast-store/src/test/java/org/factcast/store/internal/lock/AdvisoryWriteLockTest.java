@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2026 factcast.org
+ * Copyright © 2017-2020 factcast.org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,64 +15,78 @@
  */
 package org.factcast.store.internal.lock;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.verify;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-@ExtendWith(MockitoExtension.class)
 class AdvisoryWriteLockTest {
-
-  private static final String LOCK_SHARED_SQL =
-      "SELECT pg_advisory_xact_lock_shared(" + AdvisoryLocks.PUBLISH.code() + ")";
-
-  private static final String LOCK_EXCLUSIVE_SQL =
+  private final JdbcTemplate jdbc = mock(JdbcTemplate.class);
+  private final AdvisoryWriteLock lock = new AdvisoryWriteLock(jdbc);
+  private static final String SQL =
       "SELECT pg_advisory_xact_lock(" + AdvisoryLocks.PUBLISH.code() + ")";
 
-  @Mock private JdbcTemplate tpl;
-
-  @InjectMocks private AdvisoryWriteLock underTest;
-
   @BeforeEach
-  void startTransactionSynchronization() {
+  void beginTransaction() {
     TransactionSynchronizationManager.initSynchronization();
   }
 
   @AfterEach
-  void stopTransactionSynchronization() {
+  void endTransaction() {
     TransactionSynchronizationManager.clearSynchronization();
   }
 
-  @Nested
-  class AcquireSharedTXLock {
-
-    @Test
-    void executesSharedAdvisoryLockStatement() {
-      underTest.acquireSharedTXLock();
-
-      verify(tpl).execute(LOCK_SHARED_SQL);
-      assertThat(underTest.isExclusiveTXLockHeld()).isFalse();
-    }
+  @Test
+  void repeatedAcquisitionsWithinOneTransactionExecuteOnce() {
+    TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {});
+    lock.acquireExclusiveTXLock();
+    lock.acquireExclusiveTXLock();
+    verify(jdbc).execute(SQL);
   }
 
-  @Nested
-  class AcquireExclusiveTXLock {
+  @Test
+  void failedAcquisitionDoesNotSuppressRetry() {
+    var failure = new IllegalStateException("lock failed");
+    doThrow(failure).doNothing().when(jdbc).execute(SQL);
+    assertThatThrownBy(lock::acquireExclusiveTXLock).isSameAs(failure);
+    lock.acquireExclusiveTXLock();
+    lock.acquireExclusiveTXLock();
+    verify(jdbc, times(2)).execute(SQL);
+  }
 
-    @Test
-    void executesExclusiveAdvisoryLockStatement() {
-      underTest.acquireExclusiveTXLock();
+  @Test
+  void savepointRollbackRequiresReacquisition() {
+    lock.acquireExclusiveTXLock();
+    TransactionSynchronizationManager.getSynchronizations()
+        .forEach(sync -> sync.savepointRollback(new Object()));
+    lock.acquireExclusiveTXLock();
+    lock.acquireExclusiveTXLock();
+    verify(jdbc, times(2)).execute(SQL);
+  }
 
-      verify(tpl).execute(LOCK_EXCLUSIVE_SQL);
-      assertThat(underTest.isExclusiveTXLockHeld()).isTrue();
-    }
+  @Test
+  void lockStateBelongsToItsOwner() {
+    var otherJdbc = mock(JdbcTemplate.class);
+    var otherLock = new AdvisoryWriteLock(otherJdbc);
+    lock.acquireExclusiveTXLock();
+    otherLock.acquireExclusiveTXLock();
+    lock.acquireExclusiveTXLock();
+    otherLock.acquireExclusiveTXLock();
+    verify(jdbc).execute(SQL);
+    verify(otherJdbc).execute(SQL);
+  }
+
+  @Test
+  void newTransactionDoesNotReusePreviousLockState() {
+    lock.acquireExclusiveTXLock();
+    TransactionSynchronizationManager.clearSynchronization();
+    TransactionSynchronizationManager.initSynchronization();
+    lock.acquireExclusiveTXLock();
+    verify(jdbc, times(2)).execute(SQL);
   }
 }

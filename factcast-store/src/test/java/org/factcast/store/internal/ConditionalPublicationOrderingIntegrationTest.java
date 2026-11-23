@@ -51,7 +51,7 @@ class ConditionalPublicationOrderingIntegrationTest {
   @Autowired StoreConfigurationProperties properties;
 
   @BeforeEach
-  void batchingIsEnabled() {
+  void checkBatching() {
     assertThat(properties.getPublishBatched().isEnabled()).isTrue();
   }
 
@@ -60,7 +60,7 @@ class ConditionalPublicationOrderingIntegrationTest {
     var token = store.stateFor(List.of(FactSpec.ns("ordering")));
     Fact unconditional = Fact.builder().ns("ordering").buildWithoutPayload();
     Fact conditional = Fact.builder().ns("ordering").buildWithoutPayload();
-    var gate = lock.pauseNextSharedLock(false);
+    var gate = lock.pauseNextPublicationLock(false);
 
     ExecutorService executor = Executors.newFixedThreadPool(2);
     try {
@@ -69,7 +69,7 @@ class ConditionalPublicationOrderingIntegrationTest {
         assertThat(gate.paused().await(5, TimeUnit.SECONDS)).isTrue();
         assertThat(pending.isDone()).isFalse();
 
-        // The queued writer has not acquired the shared lock, so the conditional writer may
+        // The queued writer has not acquired the exclusive lock, so the conditional writer may
         // commit first. Invocation order imposes no ordering on these overlapping calls.
         Future<Boolean> published =
             executor.submit(
@@ -106,11 +106,11 @@ class ConditionalPublicationOrderingIntegrationTest {
   }
 
   @Test
-  void writerHoldingTheSharedLockMustCommitBeforeTokenValidation() throws Exception {
+  void writerHoldingTheExclusiveLockMustCommitBeforeTokenValidation() throws Exception {
     var token = store.stateFor(List.of(FactSpec.ns("ordering")));
     Fact unconditional = Fact.builder().ns("ordering").buildWithoutPayload();
     Fact conditional = Fact.builder().ns("ordering").buildWithoutPayload();
-    var gate = lock.pauseNextSharedLock(true);
+    var gate = lock.pauseNextPublicationLock(true);
     var exclusiveAttempted = new CountDownLatch(1);
 
     ExecutorService executor = Executors.newFixedThreadPool(2);
@@ -125,7 +125,7 @@ class ConditionalPublicationOrderingIntegrationTest {
                   return store.publishIfUnchanged(List.of(conditional), Optional.of(token));
                 });
 
-        // The real PostgreSQL shared lock prevents validation until the writer commits,
+        // The real PostgreSQL exclusive lock prevents validation until the writer commits,
         // even though its publish call has not returned yet.
         assertThat(exclusiveAttempted.await(5, TimeUnit.SECONDS)).isTrue();
         assertThat(pending.isDone()).isFalse();
@@ -159,41 +159,21 @@ class ConditionalPublicationOrderingIntegrationTest {
   // Only scheduling is controlled here; all database locking is performed by the real bean.
   static class ControlledWriteLock implements FactTableWriteLock {
     private final FactTableWriteLock delegate;
-    private final AtomicReference<Gate> nextSharedLock = new AtomicReference<>();
+    private final AtomicReference<Gate> nextPublicationLock = new AtomicReference<>();
     private final ThreadLocal<CountDownLatch> nextExclusiveLock = new ThreadLocal<>();
 
     ControlledWriteLock(FactTableWriteLock delegate) {
       this.delegate = delegate;
     }
 
-    Gate pauseNextSharedLock(boolean acquireBeforePausing) {
+    Gate pauseNextPublicationLock(boolean acquireBeforePausing) {
       var gate = new Gate(acquireBeforePausing, new CountDownLatch(1), new CountDownLatch(1));
-      nextSharedLock.set(gate);
+      nextPublicationLock.set(gate);
       return gate;
     }
 
     void observeExclusiveLockOnCurrentThread(CountDownLatch attempted) {
       nextExclusiveLock.set(attempted);
-    }
-
-    @Override
-    public void acquireSharedTXLock() {
-      Gate gate = nextSharedLock.getAndSet(null);
-      if (gate == null) {
-        delegate.acquireSharedTXLock();
-        return;
-      }
-      if (gate.acquireBeforePausing()) delegate.acquireSharedTXLock();
-      gate.paused().countDown();
-      try {
-        if (!gate.release().await(15, TimeUnit.SECONDS)) {
-          throw new IllegalStateException("Publication was not released by the test");
-        }
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-        throw new IllegalStateException(e);
-      }
-      if (!gate.acquireBeforePausing()) delegate.acquireSharedTXLock();
     }
 
     @Override
@@ -203,12 +183,22 @@ class ConditionalPublicationOrderingIntegrationTest {
         nextExclusiveLock.remove();
         attempted.countDown();
       }
-      delegate.acquireExclusiveTXLock();
-    }
-
-    @Override
-    public boolean isExclusiveTXLockHeld() {
-      return delegate.isExclusiveTXLockHeld();
+      Gate gate = nextPublicationLock.getAndSet(null);
+      if (gate == null) {
+        delegate.acquireExclusiveTXLock();
+        return;
+      }
+      if (gate.acquireBeforePausing()) delegate.acquireExclusiveTXLock();
+      gate.paused().countDown();
+      try {
+        if (!gate.release().await(15, TimeUnit.SECONDS)) {
+          throw new IllegalStateException("Publication was not released by the test");
+        }
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new IllegalStateException(e);
+      }
+      if (!gate.acquireBeforePausing()) delegate.acquireExclusiveTXLock();
     }
 
     record Gate(boolean acquireBeforePausing, CountDownLatch paused, CountDownLatch release) {}

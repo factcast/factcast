@@ -40,6 +40,7 @@ jobs:
       with:
         java-version: '25'
         distribution: 'temurin'
+        cache: 'maven'
     - id: 'step-2'
       name: 'Generate Docs'
       run: './mvnw -B -pl factcast-docs -Dantora.playbook=antora-playbook-release.yml clean package'

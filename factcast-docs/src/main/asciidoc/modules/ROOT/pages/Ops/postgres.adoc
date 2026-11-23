@@ -5,8 +5,8 @@
 
 === reWriteBatchedInserts
 
-Writable instances benefit from pgJDBC's `reWriteBatchedInserts=true` on the primary datasource.
-For example, add `?reWriteBatchedInserts=true` to a PostgreSQL JDBC URL.
+Writable instances automatically enable pgJDBC's `reWriteBatchedInserts=true` during Spring datasource initialization.
+Read-only instances do not install the automatic configurator.
 
 === Optimize GIN Indexes Updates
 

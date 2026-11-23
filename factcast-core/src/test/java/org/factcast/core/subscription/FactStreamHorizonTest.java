@@ -15,34 +15,22 @@
  */
 package org.factcast.core.subscription;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 class FactStreamHorizonTest {
-
   @Test
-  void minReturnsLeftWhenItsFactSerialIsLower() {
-    FactStreamHorizon left = new FactStreamHorizon(UUID.randomUUID(), 3, 10);
-    FactStreamHorizon right = new FactStreamHorizon(UUID.randomUUID(), 5, 2);
-
-    assertThat(FactStreamHorizon.min(left, right)).isSameAs(left);
+  void emptyStartsBeforeTheFirstFact() {
+    assertThat(FactStreamHorizon.empty().factSerial()).isZero();
   }
 
   @Test
-  void minReturnsRightWhenItsFactSerialIsLower() {
-    FactStreamHorizon left = new FactStreamHorizon(UUID.randomUUID(), 5, 2);
-    FactStreamHorizon right = new FactStreamHorizon(UUID.randomUUID(), 3, 10);
-
-    assertThat(FactStreamHorizon.min(left, right)).isSameAs(right);
-  }
-
-  @Test
-  void minReturnsRightWhenFactSerialsAreEqual() {
-    FactStreamHorizon left = new FactStreamHorizon(UUID.randomUUID(), 3, 2);
-    FactStreamHorizon right = new FactStreamHorizon(UUID.randomUUID(), 3, 10);
-
-    assertThat(FactStreamHorizon.min(left, right)).isSameAs(right);
+  void minimumSelectsTheEarlierBoundaryRegardlessOfArgumentOrder() {
+    var earlier = new FactStreamHorizon(4);
+    var later = new FactStreamHorizon(9);
+    assertThat(FactStreamHorizon.min(earlier, later)).isEqualTo(earlier);
+    assertThat(FactStreamHorizon.min(later, earlier)).isEqualTo(earlier);
+    assertThat(FactStreamHorizon.min(earlier, new FactStreamHorizon(4))).isEqualTo(earlier);
   }
 }

@@ -20,6 +20,7 @@ jobs:
       with:
         java-version: '17'
         distribution: 'corretto'
+        cache: 'maven'
     - id: 'step-2'
       name: 'Spotless'
       run: './mvnw -B sortpom:sort --file pom.xml'

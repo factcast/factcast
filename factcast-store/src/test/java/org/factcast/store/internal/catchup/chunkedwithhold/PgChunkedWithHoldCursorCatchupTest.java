@@ -67,7 +67,7 @@ class PgChunkedWithHoldCursorCatchupTest {
                 req,
                 pipeline,
                 serial,
-                new FactStreamHorizon(null, Long.MAX_VALUE, 0),
+                new FactStreamHorizon(Long.MAX_VALUE),
                 ds,
                 phase));
   }
@@ -210,14 +210,13 @@ class PgChunkedWithHoldCursorCatchupTest {
     @SneakyThrows
     void testDeclare() {
       when(connection.prepareStatement(anyString())).thenReturn(ps);
-      FactStreamHorizon horizon = new FactStreamHorizon(null, 42, 0);
-      when(queryBuilder.createBoundedStatementSetter(any(), same(horizon))).thenReturn(pss);
+      when(queryBuilder.createStatementSetter(any())).thenReturn(pss);
 
       PgChunkedWithHoldCursorCatchup.Cursor cursor = underTest.new Cursor(1000);
-      cursor.declare(queryBuilder, new AtomicLong(0), horizon);
+      cursor.declare(queryBuilder, new AtomicLong(0));
 
-      verify(queryBuilder).createBoundedSQL();
-      verify(queryBuilder).createBoundedStatementSetter(any(AtomicLong.class), same(horizon));
+      verify(queryBuilder).createSQL();
+      verify(queryBuilder).createStatementSetter(any(AtomicLong.class));
       verify(ps).execute();
       verify(pss).setValues(ps);
     }
@@ -378,7 +377,7 @@ class PgChunkedWithHoldCursorCatchupTest {
       RuntimeException failure = new IllegalStateException("declaration failed");
       when(metrics.timer(StoreMetrics.OP.RESULT_STREAM_START, true)).thenReturn(timer);
       when(metrics.startSample()).thenReturn(sample);
-      doThrow(failure).when(cursor).declare(any(), any(), any());
+      doThrow(failure).when(cursor).declare(any(), any());
 
       assertThatThrownBy(
               () ->

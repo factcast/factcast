@@ -61,9 +61,9 @@ import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
       PgFactStoreOffloadIntegrationTest.OffloadTestConfig.class
     })
 @TestPropertySource("/offload-datasource.properties")
-@Sql(
-    scripts = {"/wipe.sql", "/add-readonly-user.sql"},
-    config = @SqlConfig(separator = "#"))
+// The wipe script uses # to submit its SQL as one block; role setup uses statement delimiters.
+@Sql(scripts = "/wipe.sql", config = @SqlConfig(separator = "#"))
+@Sql(scripts = "/add-readonly-user.sql", config = @SqlConfig(separator = ";"))
 @IntegrationTest
 class PgFactStoreOffloadIntegrationTest {
 
@@ -121,8 +121,8 @@ class PgFactStoreOffloadIntegrationTest {
 
     subscription.get(10, TimeUnit.SECONDS);
 
-    // The third fact was published after this finite subscription captured its horizon.
-    assertThat(observer.facts()).hasValue(2);
+    // The query includes the third fact because it committed before the query snapshot.
+    assertThat(observer.facts()).hasValue(3);
     assertThat(observer.catchups()).hasValue(1);
     assertThat(observer.completes()).hasValue(1);
     assertThat(observer.error()).hasNullValue();

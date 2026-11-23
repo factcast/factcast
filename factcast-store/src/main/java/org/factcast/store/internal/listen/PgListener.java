@@ -155,7 +155,8 @@ public class PgListener implements InitializingBean, DisposableBean {
   // make sure subscribers did not miss anything while we reconnected
   @VisibleForTesting
   protected void informSubscribersAboutFreshConnection() {
-    post(new NudgeNotification(0));
+    post(new NudgeNotification(0)); // may decide to not wake subscribers, if no notifications exist
+    post(FactInsertionNotification.internal());
     post(BlacklistChangeNotification.internal());
     post(SchemaStoreChangeNotification.internal());
   }

@@ -18,6 +18,10 @@ package org.factcast.store.internal.pipeline;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import java.util.concurrent.*;
+import org.factcast.core.Fact;
+import org.factcast.core.subscription.SubscriptionImpl;
+import org.factcast.core.subscription.observer.FactObserver;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -60,5 +64,59 @@ class PushbackServerPipelineTest {
   @Test
   void testProcessNullSignalThrows() {
     assertThatThrownBy(() -> underTest.process(null)).isInstanceOf(NullPointerException.class);
+  }
+
+  @Test
+  void completingWhileClientClosesDoesNotDeadlock() throws Exception {
+    CountDownLatch observerCompleted = new CountDownLatch(1);
+    CountDownLatch clientClosing = new CountDownLatch(1);
+    SubscriptionImpl subscription =
+        SubscriptionImpl.on(
+            new FactObserver() {
+              @Override
+              public void onNext(Fact fact) {}
+
+              @Override
+              public void onComplete() {
+                observerCompleted.countDown();
+                await(clientClosing);
+              }
+            });
+    PushbackServerPipeline pipeline =
+        new PushbackServerPipeline(new ServerPipelineAdapter(subscription));
+    subscription.onClose(
+        () -> {
+          clientClosing.countDown();
+          pipeline.close();
+        });
+
+    // Daemon threads let a regression fail with a timeout instead of hanging the test JVM.
+    ExecutorService executor =
+        Executors.newFixedThreadPool(
+            2,
+            task -> {
+              Thread thread = new Thread(task, "subscription-close-regression");
+              thread.setDaemon(true);
+              return thread;
+            });
+    try {
+      Future<?> completing = executor.submit(() -> pipeline.process(Signal.complete()));
+      assertThat(observerCompleted.await(5, TimeUnit.SECONDS)).isTrue();
+      Future<?> closing = executor.submit(subscription::close);
+      completing.get(5, TimeUnit.SECONDS);
+      closing.get(5, TimeUnit.SECONDS);
+      assertThat(pipeline.isClosed()).isTrue();
+    } finally {
+      executor.shutdownNow();
+    }
+  }
+
+  private static void await(CountDownLatch latch) {
+    try {
+      assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new AssertionError(e);
+    }
   }
 }

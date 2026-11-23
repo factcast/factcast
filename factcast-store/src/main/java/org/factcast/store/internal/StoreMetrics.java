@@ -41,6 +41,10 @@ public class StoreMetrics {
 
   public enum OP implements MetricName {
     PUBLISH("publish"),
+    PUBLICATION_QUEUE_WAIT("publicationQueueWait"),
+    PUBLICATION_BACKLOG_IDLE("publicationBacklogIdle"),
+    PUBLICATION_TRANSACTION("publicationTransaction"),
+    PUBLICATION_LOCK("publicationLock"),
 
     SUBSCRIBE_FOLLOW("subscribe-follow"),
 
@@ -82,6 +86,9 @@ public class StoreMetrics {
   }
 
   public enum EVENT implements MetricName {
+    QUEUED_PUBLICATIONS_COMMITTED("queuedPublicationsCommitted"),
+    QUEUED_FACTS_COMMITTED("queuedFactsCommitted"),
+    PUBLICATION_BATCH_FALLBACK("publicationBatchFallback"),
     MISSED_ROUNDTRIP("missedRoundtrip"),
     UNSUCCESSFUL_CONDITIONAL_PUBLISH("unsuccessfulConditionalPublish"),
     FACTS_SENT("factsSent");
@@ -99,6 +106,8 @@ public class StoreMetrics {
   }
 
   public enum VALUE implements MetricName {
+    PUBLICATION_BATCH_ENTRIES("publicationBatchEntries"),
+    PUBLICATION_BATCH_FACTS("publicationBatchFacts"),
     CATCHUP_TRANSFORMATION_RATIO("catchupTransformationRatio"),
     TAIL_INDICES("tailIndices");
 

@@ -15,15 +15,13 @@
  */
 package org.factcast.core.subscription;
 
-import jakarta.annotation.Nullable;
-import java.util.UUID;
 import lombok.NonNull;
 
-/** The inclusive, persisted upper bounds for fact and notification queries. */
-public record FactStreamHorizon(@Nullable UUID factId, long factSerial, long notificationSerial) {
+// Carries the max serial published
+public record FactStreamHorizon(long factSerial) {
 
   public static FactStreamHorizon empty() {
-    return new FactStreamHorizon(null, 0, 0);
+    return new FactStreamHorizon(0);
   }
 
   public static FactStreamHorizon min(

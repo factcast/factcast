@@ -57,7 +57,7 @@ class AbstractFactStoreTest {
     StateToken token = new StateToken(UUID.randomUUID());
     when(tokenStore.get(eq(token))).thenReturn(Optional.empty());
     boolean published = uut.publishIfUnchanged(Lists.emptyList(), Optional.of(token));
-    verify(uut, never()).publish(any());
+    verify(uut, never()).doPublish(any());
     assert !published;
   }
 
@@ -71,7 +71,7 @@ class AbstractFactStoreTest {
     when(uut.getStateFor(Lists.emptyList(), lastSerial))
         .thenReturn(State.of(Lists.emptyList(), notZero));
     boolean published = uut.publishIfUnchanged(Lists.emptyList(), Optional.of(token));
-    verify(uut, never()).publish(any());
+    verify(uut, never()).doPublish(any());
     verify(uut).invalidate(eq(token));
     assert !published;
   }
@@ -86,7 +86,7 @@ class AbstractFactStoreTest {
     when(uut.getStateFor(Lists.emptyList(), lastSerial))
         .thenReturn(State.of(Lists.emptyList(), zero));
     boolean published = uut.publishIfUnchanged(Lists.emptyList(), Optional.of(token));
-    verify(uut).publish(any());
+    verify(uut).doPublish(any());
     verify(uut).invalidate(eq(token));
     assert published;
   }

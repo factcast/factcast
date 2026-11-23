@@ -57,11 +57,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.*;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionCallback;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 @SuppressWarnings("rawtypes")
@@ -114,7 +116,7 @@ class PgFactStoreTest {
 
   @Nested
   class WhenPublishingDeferrable {
-    @Mock UnconditionalPublishQueue queue;
+    @Mock PublicationQueue queue;
     @Mock Fact fact;
 
     @BeforeEach
@@ -129,7 +131,7 @@ class PgFactStoreTest {
       when(queue.addAndFlush(anyList())).thenReturn(future);
       when(future.get()).thenThrow(new InterruptedException());
 
-      assertThatThrownBy(() -> underTest.publishBatchable(Collections.singletonList(fact)))
+      assertThatThrownBy(() -> underTest.publishUsingBatching(Collections.singletonList(fact)))
           .isInstanceOf(RuntimeException.class)
           .hasCauseInstanceOf(InterruptedException.class);
 
@@ -142,8 +144,55 @@ class PgFactStoreTest {
       when(queue.addAndFlush(anyList())).thenReturn(future);
       when(future.get()).thenThrow(new ExecutionException(new RuntimeException("cause")));
 
-      assertThatThrownBy(() -> underTest.publishBatchable(Collections.singletonList(fact)))
+      assertThatThrownBy(() -> underTest.publishUsingBatching(Collections.singletonList(fact)))
           .isInstanceOf(RuntimeException.class);
+    }
+
+    @Test
+    void rejectsBatchablePublicationInReadOnlyMode() {
+      storeConfigurationProperties.setReadOnlyModeEnabled(true);
+
+      assertThatThrownBy(() -> underTest.publishUsingBatching(List.of(fact)))
+          .isInstanceOf(UnsupportedOperationException.class)
+          .hasMessage("Publishing is not allowed in read-only mode");
+
+      verifyNoInteractions(queue, jdbcTemplate, lock);
+    }
+
+    @Test
+    void publishesInsideCallerTransactionWithoutQueuing() {
+      storeConfigurationProperties.getPublishBatched().setEnabled(true);
+      boolean transactionWasActive = TransactionSynchronizationManager.isActualTransactionActive();
+      try {
+        TransactionSynchronizationManager.setActualTransactionActive(true);
+
+        underTest.publish(List.of(fact));
+
+        verify(lock).acquireExclusiveTXLock();
+        verify(jdbcTemplate)
+            .batchUpdate(
+                eq(PgConstants.INSERT_FACT),
+                eq(List.of(fact)),
+                eq(Integer.MAX_VALUE),
+                any(ParameterizedPreparedStatementSetter.class));
+        verifyNoInteractions(queue);
+      } finally {
+        TransactionSynchronizationManager.setActualTransactionActive(transactionWasActive);
+      }
+    }
+
+    @Test
+    void queuesDefensiveCopyWhenPublishBatchingIsEnabled() {
+      storeConfigurationProperties.getPublishBatched().setEnabled(true);
+      when(queue.addAndFlush(anyList())).thenReturn(CompletableFuture.completedFuture(null));
+      List<Fact> facts = new ArrayList<>(List.of(fact));
+
+      underTest.publish(facts);
+
+      ArgumentCaptor<List<Fact>> published = ArgumentCaptor.forClass(List.class);
+      verify(queue).addAndFlush(published.capture());
+      assertThat(published.getValue()).isNotSameAs(facts).containsExactly(fact);
+      verifyNoInteractions(jdbcTemplate, lock);
     }
   }
 
@@ -214,7 +263,7 @@ class PgFactStoreTest {
               eq(Lists.newArrayList(fact)),
               eq(Integer.MAX_VALUE),
               any(ParameterizedPreparedStatementSetter.class));
-      verify(lock).acquireSharedTXLock();
+      verify(lock).acquireExclusiveTXLock();
     }
 
     @Test
@@ -245,6 +294,16 @@ class PgFactStoreTest {
       when(subscriptionFactory.subscribe(request, observer)).thenReturn(sub);
       Subscription s = underTest.subscribe(request, observer);
       assertThat(s).isSameAs(sub);
+    }
+
+    @Test
+    void subscribesContinuouslyWithFollowMetrics() {
+      when(request.continuous()).thenReturn(true);
+      when(subscriptionFactory.subscribe(request, observer)).thenReturn(sub);
+
+      assertThat(underTest.subscribe(request, observer)).isSameAs(sub);
+
+      verify(metrics).time(eq(StoreMetrics.OP.SUBSCRIBE_FOLLOW), any(Supplier.class));
     }
   }
 
@@ -412,18 +471,6 @@ class PgFactStoreTest {
     }
 
     @Test
-    void doesNotExclusivelyLockWithoutToken() {
-
-      underTest = spy(underTest);
-
-      boolean b = underTest.publishIfUnchanged(Lists.newArrayList(fact), Optional.empty());
-      verify(lock, never()).acquireExclusiveTXLock();
-      assertThat(b).isTrue();
-      verify(underTest).publishBatchable(any());
-      verify(counter, never()).increment();
-    }
-
-    @Test
     void brokenToken() {
 
       underTest = spy(underTest);
@@ -440,7 +487,7 @@ class PgFactStoreTest {
           underTest.publishIfUnchanged(Lists.newArrayList(fact), Optional.of(optionalToken));
       verify(lock).acquireExclusiveTXLock();
       assertThat(b).isFalse();
-      verify(underTest, never()).publish(any(List.class));
+      verify(underTest, never()).doPublish(any(List.class));
       verify(counter).increment();
     }
 
@@ -478,9 +525,13 @@ class PgFactStoreTest {
 
       boolean b =
           underTest.publishIfUnchanged(Lists.newArrayList(fact), Optional.of(optionalToken));
-      verify(lock).acquireExclusiveTXLock();
+      // Validation and insertion both ensure the lock is held; the real lock skips reacquisition.
+      verify(lock, times(2)).acquireExclusiveTXLock();
       assertThat(b).isTrue();
-      verify(underTest).publish(any());
+      verify(underTest).doPublish(List.of(fact));
+      verify(jdbcTemplate)
+          .batchUpdate(
+              eq(PgConstants.INSERT_FACT), eq(List.of(fact)), eq(Integer.MAX_VALUE), any());
       verify(counter, never()).increment();
     }
 
@@ -542,23 +593,10 @@ class PgFactStoreTest {
       when(rs.getLong(1)).thenReturn(42L);
       assertThat(extractorCaptor.getValue().extractData(rs)).isEqualTo(42L);
     }
-
-    @Test
-    void tokenCreationStoresHorizonWithoutQueryingMatchingFacts() {
-      List<FactSpec> specs = List.of(FactSpec.ns("ns1").type("type1"));
-      when(horizonProvider.advance()).thenReturn(new FactStreamHorizon(UUID.randomUUID(), 42, 42));
-
-      State state = underTest.getStateFor(specs);
-
-      assertThat(state.serialOfLastMatchingFact()).isEqualTo(42L);
-      assertThat(state.specs()).isEqualTo(specs);
-      verifyNoInteractions(jdbcTemplate);
-    }
   }
 
   @Nested
   class WhenGettingStateForWithSerial {
-    final long LAST_MATCHING_SERIAL = 43;
     @Mock FactSpec factSpec;
 
     @BeforeEach
@@ -580,6 +618,7 @@ class PgFactStoreTest {
           ArgumentCaptor.forClass(PreparedStatementSetter.class);
       when(jdbcTemplate.query(eq(stateSQL), captor.capture(), any(ResultSetExtractor.class)))
           .thenReturn(32L);
+      long LAST_MATCHING_SERIAL = 43;
       assertThat(underTest.getStateFor(specs, LAST_MATCHING_SERIAL).serialOfLastMatchingFact())
           .isEqualTo(32L);
 
@@ -587,28 +626,6 @@ class PgFactStoreTest {
       captor.getValue().setValues(ps);
       verify(ps).setLong(2, LAST_MATCHING_SERIAL);
       verify(ps).setLong(4, LAST_MATCHING_SERIAL);
-    }
-  }
-
-  @Nested
-  class WhenGettingCurrentStateFor {
-    @Mock FactSpec factSpec;
-
-    @BeforeEach
-    void setup() {
-      configureMetricTimeSupplier();
-    }
-
-    @SneakyThrows
-    @Test
-    void usesHorizonInsteadOfRawFactMaximum() {
-      FactSpec spec1 = FactSpec.ns("ns1").type("type1");
-      List<FactSpec> specs = Lists.newArrayList(spec1);
-
-      when(horizonProvider.advance()).thenReturn(new FactStreamHorizon(UUID.randomUUID(), 32, 32));
-
-      assertThat(underTest.getCurrentStateFor(specs).serialOfLastMatchingFact()).isEqualTo(32L);
-      verifyNoInteractions(jdbcTemplate);
     }
   }
 
@@ -640,9 +657,15 @@ class PgFactStoreTest {
 
     @Test
     void fetchesSerial() {
-      when(jdbcTemplate.queryForObject(eq(PgConstants.HIGHWATER_SERIAL), (RowMapper<Long>) any()))
-          .thenReturn(123L);
+      when(horizonProvider.get()).thenReturn(new FactStreamHorizon(123L));
       assertThat(underTest.latestSerial()).isEqualTo(123L);
+    }
+
+    @Test
+    void returnsZeroWhenTheStoreIsEmpty() {
+      when(horizonProvider.get()).thenReturn(FactStreamHorizon.empty());
+
+      assertThat(underTest.latestSerial()).isZero();
     }
   }
 
@@ -659,7 +682,29 @@ class PgFactStoreTest {
       when(jdbcTemplate.queryForObject(
               eq(PgConstants.LAST_SERIAL_BEFORE_DATE), any(RowMapper.class), eq(date)))
           .thenReturn(123L);
+      when(horizonProvider.get()).thenReturn(new FactStreamHorizon(200L));
       assertThat(underTest.lastSerialBefore(date.toLocalDate())).isEqualTo(123L);
+    }
+
+    @Test
+    void futureDateFallsBackToTheLatestSerial() {
+      java.sql.Date date = java.sql.Date.valueOf("2020-01-01");
+      when(jdbcTemplate.queryForObject(
+              eq(PgConstants.LAST_SERIAL_BEFORE_DATE), any(RowMapper.class), eq(date)))
+          .thenReturn(-1L);
+      when(horizonProvider.get()).thenReturn(new FactStreamHorizon(42L));
+
+      assertThat(underTest.lastSerialBefore(date.toLocalDate())).isEqualTo(42L);
+    }
+
+    @Test
+    void returnsZeroWhenDateQueryHasNoResult() {
+      java.sql.Date date = java.sql.Date.valueOf("2020-01-01");
+      when(jdbcTemplate.queryForObject(
+              eq(PgConstants.LAST_SERIAL_BEFORE_DATE), any(RowMapper.class), eq(date)))
+          .thenThrow(new EmptyResultDataAccessException(1));
+
+      assertThat(underTest.lastSerialBefore(date.toLocalDate())).isZero();
     }
   }
 
@@ -676,7 +721,36 @@ class PgFactStoreTest {
       when(jdbcTemplate.queryForObject(
               eq(PgConstants.FIRST_SERIAL_AFTER_DATE), any(RowMapper.class), eq(date)))
           .thenReturn(123L);
+      when(horizonProvider.get()).thenReturn(new FactStreamHorizon(200L));
       assertThat(underTest.firstSerialAfter(date.toLocalDate())).isEqualTo(123L);
+    }
+
+    @Test
+    void returnsLatestSerialWhenItIsTheFirstMatchingSerial() {
+      java.sql.Date date = java.sql.Date.valueOf("2020-01-01");
+      when(jdbcTemplate.queryForObject(
+              eq(PgConstants.FIRST_SERIAL_AFTER_DATE), any(RowMapper.class), eq(date)))
+          .thenReturn(123L);
+      when(horizonProvider.get()).thenReturn(new FactStreamHorizon(123L));
+
+      assertThat(underTest.firstSerialAfter(date.toLocalDate())).isEqualTo(123L);
+    }
+
+    @Test
+    void returnsNullWhenNoDateBoundaryExists() {
+      java.sql.Date date = java.sql.Date.valueOf("2020-01-01");
+
+      assertThat(underTest.firstSerialAfter(date.toLocalDate())).isNull();
+    }
+
+    @Test
+    void returnsNullWhenDateQueryHasNoResult() {
+      java.sql.Date date = java.sql.Date.valueOf("2020-01-01");
+      when(jdbcTemplate.queryForObject(
+              eq(PgConstants.FIRST_SERIAL_AFTER_DATE), any(RowMapper.class), eq(date)))
+          .thenThrow(new EmptyResultDataAccessException(1));
+
+      assertThat(underTest.firstSerialAfter(date.toLocalDate())).isNull();
     }
   }
 
@@ -762,6 +836,70 @@ class PgFactStoreTest {
     }
 
     @Test
+    void lockFailureAbortsInsertsAndIsRecordedForBothTimers() {
+      var failure = new IllegalStateException("lock unavailable");
+      when(tx.execute(any()))
+          .thenAnswer(
+              inv -> {
+                TransactionCallback<Void> callback = inv.getArgument(0);
+                return callback.doInTransaction(mock(TransactionStatus.class));
+              });
+      doThrow(failure).when(lock).acquireExclusiveTXLock();
+
+      assertThatThrownBy(() -> underTest.doPublish(List.of(mock(Fact.class)))).isSameAs(failure);
+
+      verifyNoInteractions(jdbcTemplate);
+      verify(metrics)
+          .recordDuration(eq(StoreMetrics.OP.PUBLICATION_LOCK), anyLong(), same(failure));
+      verify(metrics)
+          .recordDuration(eq(StoreMetrics.OP.PUBLICATION_TRANSACTION), anyLong(), same(failure));
+    }
+
+    @Test
+    void transactionFailurePreservesItsUnderlyingCauseAndRecordsFailure() {
+      var cause = new IllegalStateException("commit failed");
+      var failure =
+          new org.springframework.transaction.TransactionSystemException(
+              "transaction failed", cause);
+      when(tx.execute(any())).thenThrow(failure);
+
+      assertThatThrownBy(() -> underTest.doPublish(List.of(mock(Fact.class)))).isSameAs(cause);
+
+      verify(metrics)
+          .recordDuration(eq(StoreMetrics.OP.PUBLICATION_TRANSACTION), anyLong(), same(failure));
+    }
+
+    @Test
+    void bindsEveryFactsHeaderAndPayload() throws SQLException {
+      var fact = mock(Fact.class);
+      when(fact.jsonHeader()).thenReturn("{header}");
+      when(fact.jsonPayload()).thenReturn("{payload}");
+      when(tx.execute(any()))
+          .thenAnswer(
+              inv -> {
+                TransactionCallback<Void> callback = inv.getArgument(0);
+                return callback.doInTransaction(mock(TransactionStatus.class));
+              });
+      var statement = mock(PreparedStatement.class);
+      when(jdbcTemplate.batchUpdate(
+              anyString(),
+              anyCollection(),
+              anyInt(),
+              any(ParameterizedPreparedStatementSetter.class)))
+          .thenAnswer(
+              inv -> {
+                ParameterizedPreparedStatementSetter<Fact> setter = inv.getArgument(3);
+                setter.setValues(statement, fact);
+                return new int[][] {{1}};
+              });
+
+      underTest.doPublish(List.of(fact));
+
+      verify(statement).setString(1, "{header}");
+      verify(statement).setString(2, "{payload}");
+    }
+
+    @Test
     void publishes() {
       Fact fact = mock(Fact.class);
       List<Fact> facts = Lists.newArrayList(fact);
@@ -773,9 +911,9 @@ class PgFactStoreTest {
                 return callback.doInTransaction(mock(TransactionStatus.class));
               });
 
-      underTest.batchPublish(facts);
+      underTest.doPublish(facts);
 
-      verify(lock).acquireSharedTXLock();
+      verify(lock).acquireExclusiveTXLock();
       verify(jdbcTemplate).batchUpdate(eq(PgConstants.INSERT_FACT), any(), anyInt(), any());
     }
   }
@@ -783,14 +921,20 @@ class PgFactStoreTest {
   @Nested
   class WhenBatchPublishingInTransaction {
 
+    @BeforeEach
+    void setup() {
+      configureMetricTimeRunnable();
+    }
+
     @Test
     void publishes() {
+
       Fact fact = mock(Fact.class);
       List<Fact> facts = Lists.newArrayList(fact);
 
-      underTest.batchPublishInTransaction(facts);
+      underTest.publishUsingBatching(facts);
 
-      verify(lock).acquireSharedTXLock();
+      verify(lock).acquireExclusiveTXLock();
       verify(jdbcTemplate).batchUpdate(eq(PgConstants.INSERT_FACT), any(), anyInt(), any());
     }
 
@@ -801,7 +945,7 @@ class PgFactStoreTest {
       when(jdbcTemplate.batchUpdate(anyString(), any(), anyInt(), any()))
           .thenThrow(new DuplicateKeyException("duplicate"));
 
-      assertThatThrownBy(() -> underTest.batchPublishInTransaction(facts))
+      assertThatThrownBy(() -> underTest.publishUsingBatching(facts))
           .isInstanceOf(DuplicateFactException.class);
     }
   }
@@ -832,11 +976,11 @@ class PgFactStoreTest {
       List<Fact> facts = Lists.newArrayList(fact);
 
       PgFactStore spy = spy(underTest);
-      doNothing().when(spy).batchPublish(anyList());
+      doNothing().when(spy).doPublish(anyList());
 
-      spy.publishDirectly(facts);
+      spy.publishWithoutBatching(facts);
 
-      verify(spy).batchPublish(facts);
+      verify(spy).doPublish(facts);
     }
   }
 }

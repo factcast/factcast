@@ -23,7 +23,6 @@ import lombok.SneakyThrows;
 import org.factcast.core.subscription.FactStreamHorizon;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
-import org.factcast.core.subscription.observer.*;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.internal.catchup.PgCatchup;
 import org.factcast.store.internal.catchup.PgCatchupFactory;
@@ -68,7 +67,7 @@ class PgFactStreamTelemetryTest {
   @BeforeEach
   void setup() {
     lenient().doReturn(Collections.emptyList()).when(uut).catchupConnectionModifiers(any());
-    lenient().when(horizonProvider.advance()).thenReturn(FactStreamHorizon.empty());
+    lenient().when(horizonProvider.get()).thenReturn(FactStreamHorizon.empty());
   }
 
   @Test
