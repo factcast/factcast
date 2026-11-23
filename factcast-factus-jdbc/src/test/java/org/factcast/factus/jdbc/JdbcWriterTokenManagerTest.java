@@ -142,8 +142,7 @@ class JdbcWriterTokenManagerTest {
 
       assertThat(uut.acquireWriteToken(Duration.ofSeconds(2))).isNull();
 
-      assertThat(Duration.ofNanos(timing.nanoTime()))
-          .isGreaterThanOrEqualTo(Duration.ofSeconds(2));
+      assertThat(Duration.ofNanos(timing.nanoTime())).isGreaterThanOrEqualTo(Duration.ofSeconds(2));
     }
 
     @Test
