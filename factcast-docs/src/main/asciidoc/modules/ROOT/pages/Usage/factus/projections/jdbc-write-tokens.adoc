@@ -94,9 +94,8 @@ public WriterToken acquireWriteToken(@NonNull Duration maxWait) {
 
 == Required Schema
 
-The tables are *yours*, not Factus'. FactCast ships Liquibase changesets for the _store_ database
-only, and a projection database is a different database that FactCast never migrates. Create the
-tables with liquibase/flyway or whatever tooling you already use:
+These tables are *yours*, not Factus'. Create them with the tooling you already use, such as
+Liquibase or Flyway:
 
 [source,sql]
 ----
@@ -179,8 +178,7 @@ of ending the token right away, so a connection blip does not cost you the proje
 renewals keep failing, the token turns invalid anyway once the lease has run out.
 
 `JdbcWriterTokenManager` lets you pick another lease length, down to a second. Anything shorter is
-rejected: renewals run every third of the lease, so a lease of milliseconds would put the keepalive
-into a hot loop against your database.
+rejected. Renewals run every third of the lease.
 
 == Waiting for the Lock
 
@@ -193,13 +191,9 @@ How long that wait is depends on who asks:
 
 - `factus.subscribeAndBlock(projection)` waits 5 minutes per attempt by default and keeps trying
   until it gets a token, so a subscription starts as soon as the other instance is gone.
-- `factus.update(projection)` on a managed projection goes through `ManagedProjection.withLock`,
-  which asks for the token with `FactusConstants.FOREVER` (365 days). While another instance holds
-  the lock, `update` therefore *blocks* instead of failing. That is not limited to a holder that
-  died without releasing its token: an instance that is alive and keeps the lock blocks the others
-  for as long as it runs. The `update(projection, maxWaitTime)` overload does not change that, as
-  its timeout never reaches the token. If you need `update` to give up, acquire the token yourself,
-  for instance through `JdbcWriterTokenManager`.
+- `factus.update(projection)` on a managed projection waits for the token practically forever
+  (`FactusConstants.FOREVER`, 365 days). While another instance holds the lock, `update` *blocks*
+  for as long as that instance keeps it.
 
 == Knowing Whether You Hold the Lock
 
@@ -225,6 +219,5 @@ their token only for the duration of a single `factus.update(...)`.
 [WARNING]
 ====
 Acquiring, renewing and releasing the lease each run on their own connection, taken from the
-`DataSource` while your projection may be holding one of its own. A connection pool of size 1
-deadlocks.
+`DataSource` while your projection may be holding one of its own.
 ====

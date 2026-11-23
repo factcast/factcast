@@ -53,25 +53,26 @@ Please consult the Spring docs or your driver's documentation.
 ====
 Factus provides convenient abstract classes for managed and subscribed projections:
 
-- `AbstractSpringTxManagedProjection`
-- `AbstractSpringTxSubscribedProjection`
+- for a relational database: `AbstractSpringJdbcManagedProjection` and
+  `AbstractSpringJdbcSubscribedProjection`, which also keep the fact stream position and the write
+  token for you (see <<_coordinating_writers_over_jdbc,Coordinating Writers over JDBC>>)
+- for any other datastore: `AbstractSpringTxManagedProjection` and
+  `AbstractSpringTxSubscribedProjection`
 ====
 
 == Coordinating Writers over JDBC
 
 xref:ROOT:Usage/factus/projections/jdbc-write-tokens.adoc[Write Tokens over JDBC] keeps both the write token and the
 fact stream position in the very same relational database your projection already writes to, so
-that no Redis or MongoDB is needed just for the write token. That page carries the required schema,
+that no Redis is needed just for the write token. That page carries the required schema,
 the supported databases and the lease semantics; all of it applies here unchanged.
 
 What the Spring variant adds is *atomicity*: the position is written on the connection of the
-ongoing transaction, so it commits together with your projection's own updates. Extend one of
+ongoing transaction, so it commits together with your projection's own updates.
 
-- `AbstractSpringJdbcManagedProjection`
-- `AbstractSpringJdbcSubscribedProjection`
-
-instead of the `AbstractSpringTx*` classes above and pass a `JdbcTemplate` alongside the
-`PlatformTransactionManager`:
+To use it, extend `AbstractSpringJdbcManagedProjection` or `AbstractSpringJdbcSubscribedProjection`
+instead of the `AbstractSpringTx*` classes above. Their constructor takes a `JdbcTemplate` in
+addition to the `PlatformTransactionManager`:
 
 [source,java]
 ----
@@ -95,8 +96,8 @@ only your `@Handler` methods and your query methods are left to write.
 
 The lock itself deliberately does *not* join your transaction: it is taken on a connection of its
 own, so the lease is committed as it is taken and survives a rollback of the projection's
-transaction. That means a *second* connection is required in addition to the one held by your projection's transaction. This means, a
-connection pool of size 1 deadlocks.
+transaction. That means a *second* connection is required in addition to the one held by your
+projection's transaction.
 
 `AbstractSpringJdbcSubscribedProjection` offers `hasLock()` to your subclass, to gate work that is
 triggered from outside the fact stream:
