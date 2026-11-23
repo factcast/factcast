@@ -131,6 +131,22 @@ class JdbcWriterTokenManagerTest {
     }
 
     @Test
+    void waitsTheFullMaxWaitEvenWhenLessThanAMillisecondIsLeft() {
+      when(lockProvider.lock(any(LockConfiguration.class)))
+          .thenAnswer(
+              invocation -> {
+                timing.advance(Duration.ofNanos(500_000));
+                return Optional.empty();
+              })
+          .thenReturn(Optional.empty());
+
+      assertThat(uut.acquireWriteToken(Duration.ofSeconds(2))).isNull();
+
+      assertThat(Duration.ofNanos(timing.nanoTime()))
+          .isGreaterThanOrEqualTo(Duration.ofSeconds(2));
+    }
+
+    @Test
     void attemptsOnceWithoutSleepingWhenMaxWaitIsZero() {
       when(lockProvider.lock(any(LockConfiguration.class))).thenReturn(Optional.empty());
 

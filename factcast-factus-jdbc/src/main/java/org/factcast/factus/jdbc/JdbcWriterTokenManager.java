@@ -16,7 +16,9 @@
 package org.factcast.factus.jdbc;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.math.LongMath;
 import jakarta.annotation.Nullable;
+import java.math.RoundingMode;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.sql.SQLException;
@@ -213,11 +215,14 @@ public class JdbcWriterTokenManager {
               scheduler,
               timing::nanoTime);
         }
-        long remainingMillis = TimeUnit.NANOSECONDS.toMillis(deadline - timing.nanoTime());
-        if (remainingMillis <= 0) {
+        long remainingNanos = deadline - timing.nanoTime();
+        if (remainingNanos <= 0) {
           log.trace("Giving up on lock {} after {}", lockName, maxWait);
           return null;
         }
+        // rounded up, so the last attempt is not made before maxWait is over
+        long remainingMillis =
+            LongMath.divide(remainingNanos, TimeUnit.MILLISECONDS.toNanos(1), RoundingMode.CEILING);
         timing.sleep(Math.min(backoffMillis, remainingMillis));
         backoffMillis = Math.min(MAX_RETRY_INTERVAL_MILLIS, backoffMillis * 2);
       }
