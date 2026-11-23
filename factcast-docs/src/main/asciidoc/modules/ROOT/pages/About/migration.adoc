@@ -5,11 +5,12 @@
 
 === Mandatory migration path from 0.12.x to 0.13.0
 
-In 0.12.x we allowed lock-free publication, which was forbidden before. We observed poor performance under high load caused by the mitigation (locking on the read path, reading only to horizon).
+In 0.12.x we allowed lock-free publication, which was forbidden before.
+We observed poor performance under high load caused by the mitigation (locking on the read path, reading only to horizon).
 
 Therefore this change is reverted and we go back to full serialization of publications from 0.13.0 on.
 
-In order to guarantee a smooth and safe transition, there are two ways to go forward:
+In oder to guarantee a smooth and safe transition, there are two ways to go forward:
 
 1. Have a downtime, stop all FactCast Servers, start upgraded servers making sure no 0.12.x and 0.13.0+ run at the same time.
 2. Have a rolling update first to version "0.12.7-migration-to-0.13" (which will be slow in production under heavy load) followed by a rolling upgrade to 0.13.0.
@@ -19,8 +20,8 @@ Note that 0.12.7-migration-to-0.13 is not an official release, and you should no
 === New exclusion mechanism replaces former "Blacklist"
 
 Maintaining a separate table of factIds to be filtered out of every result turned out to be inefficient.
-Therefore, a new `exclusion_reason` column is introduced in the `fact` table, causing all facts with a non-NULL
-value to be ignored at query time. To migrate from the previous solution, follow the steps described below:
+Therefore, a new `exclusion_reason` column is introduced in the `fact` table, causing all facts with a non-NULL value to be ignored at query time.
+To migrate from the previous solution, follow the steps described below:
 
 If you use the postgres based blacklist table:
 
@@ -47,10 +48,10 @@ If you use the filesystem blacklist:
 
 === `@ProjectionMetaData(revision = …)` Is Deprecated in Favor of `revisionId`
 
-`@ProjectionMetaData` used to identify a projection's revision with a `long`. It now offers a `String` attribute
-`revisionId` instead, so that revisions no longer have to be numeric; a commit hash, a date, or a semantic version work
-just as well. The goal is to reduce the chance of conflicting revisions when working on projections on multiple
-branches.
+`@ProjectionMetaData` used to identify a projection's revision with a `long`.
+It now offers a `String` attribute
+`revisionId` instead, so that revisions no longer have to be numeric; a commit hash, a date, or a semantic version work just as well.
+The goal is to reduce the chance of conflicting revisions when working on projections on multiple branches.
 
 [source,java]
 ----
@@ -63,21 +64,22 @@ public class MyProjection extends AbstractManagedProjection { ... }
 public class MyProjection extends AbstractManagedProjection { ... }
 ----
 
-`revision` and `revisionId` are mutually exclusive. Setting both results in an `IllegalArgumentException` when the
-projection is first resolved.
+`revision` and `revisionId` are mutually exclusive.
+Setting both results in an `IllegalArgumentException` when the projection is first resolved.
 
 [WARNING]
 ====
 .Keep the value identical
-The revision is part of the key under which projection state and snapshots are persisted. `revisionId = "1"` produces
-exactly the same scoped name as `revision = 1` did, so migration is stable. If you change the name during migration,
-for instance from `"1"` to `"1.0"`, the key changes and the projection will be rebuilt from scratch on the next run.
+The revision is part of the key under which projection state and snapshots are persisted. `revisionId = "1"` produces exactly the same scoped name as `revision = 1` did, so migration is stable.
+If you change the name during migration, for instance from `"1"` to `"1.0"`, the key changes and the projection will be rebuilt from scratch on the next run.
 ====
 
 ==== Migrating with OpenRewrite
 
-FactCast ships a recipe that rewrites the attribute for you. Unlike the `postprocess` recipe below, run it **after**
-bumping your FactCast dependency. The guide for 0.11.0 below explains how to add the plugin.
+FactCast ships a recipe that rewrites the attribute for you.
+Unlike the `postprocess` recipe below, run it **after**
+bumping your FactCast dependency.
+The guide for 0.11.0 below explains how to add the plugin.
 
 [source,xml]
 ----
@@ -90,11 +92,10 @@ bumping your FactCast dependency. The guide for 0.11.0 below explains how to add
 
 ===== Migrate What the Recipe Left Alone
 
-The recipe only rewrites integer literals, because only for those it can guarantee an unchanged scoped name. It
-deliberately leaves these cases to you:
+The recipe only rewrites integer literals, because only for those it can guarantee an unchanged scoped name.
+It deliberately leaves these cases to you:
 
-- a constant reference or a computed expression (`revision = MY_REVISION`, `revision = 1 + 1`), because an annotation
-  attribute has to be a constant expression and there is no mechanical way to turn it into a string
+- a constant reference or a computed expression (`revision = MY_REVISION`, `revision = 1 + 1`), because an annotation attribute has to be a constant expression and there is no mechanical way to turn it into a string
 - an annotation that sets both `revision` and `revisionId`, which violates the contract
 
 Migrate those by hand and make the string equal to what `String.valueOf(oldValue)` would have produced.
@@ -106,7 +107,8 @@ Finally, remove the OpenRewrite plugin configuration (or just the `activeRecipes
 
 === `Projection.postprocess` Now Takes a `Collection` Instead of a `List`
 
-`Projection.postprocess` used to accept and return `List<FactSpec>`. It now uses `Collection<FactSpec>`.
+`Projection.postprocess` used to accept and return `List<FactSpec>`.
+It now uses `Collection<FactSpec>`.
 
 If you override it, update the signature:
 
@@ -129,14 +131,12 @@ public @NonNull Collection<FactSpec> postprocess(@NonNull Collection<FactSpec> s
 
 ==== Migrating with OpenRewrite
 
-FactCast ships a recipe that rewrites the signature for you. **Run it before upgrading your FactCast dependency.** Once
-you bump to 0.11.0, the old `List<FactSpec>` signature is gone and the project won't compile, the recipe needs the old
-code still in place to match against.
+FactCast ships a recipe that rewrites the signature for you. **Run it before upgrading your FactCast dependency.** Once you bump to 0.11.0, the old `List<FactSpec>` signature is gone and the project won't compile, the recipe needs the old code still in place to match against.
 
 ===== Step 1: Add the Plugin
 
-While still on your current FactCast version, add the OpenRewrite Maven plugin to your `pom.xml`. The plugin dependency
-points at `0.11.0` since that's where the recipe lives:
+While still on your current FactCast version, add the OpenRewrite Maven plugin to your `pom.xml`.
+The plugin dependency points at `0.11.0` since that's where the recipe lives:
 
 [source,xml]
 ----
@@ -170,7 +170,8 @@ points at `0.11.0` since that's where the recipe lives:
 mvn rewrite:dryRun
 ----
 
-Writes a patch to `target/rewrite/rewrite.patch` without touching your source. Check that it only affects `postprocess`
+Writes a patch to `target/rewrite/rewrite.patch` without touching your source.
+Check that it only affects `postprocess`
 overrides.
 
 ===== Step 3: Apply
@@ -184,8 +185,8 @@ Updates parameter and return types from `List<FactSpec>` to `Collection<FactSpec
 
 ===== Step 4: Check Method Bodies
 
-The recipe only touches the signature, not the body. `forEach`, `stream`, and `isEmpty` all work on `Collection`, so
-most implementations need nothing more. If your body calls `get(int)`, `set(int, E)`, `sort(Comparator)`, or
+The recipe only touches the signature, not the body. `forEach`, `stream`, and `isEmpty` all work on `Collection`, so most implementations need nothing more.
+If your body calls `get(int)`, `set(int, E)`, `sort(Comparator)`, or
 `subList(int, int)`, or assigns the parameter to a `List<FactSpec>` variable, fix those manually.
 
 ===== Step 5: Upgrade FactCast
@@ -209,7 +210,7 @@ Version 0.12.0 updated `spring-grpc` dependencies to `1.1.0` which makes them be
 
 The following properties (documented for factcast) should be renamed accordingly:
 
-[cols="1,1,1", options="header"]
+[cols="1,1,1",options="header"]
 |===
 |Old Property |New Property |Notes
 |`spring.grpc.client.channels.factstore.address` |`spring.grpc.client.channel.factstore.target` |
@@ -221,8 +222,7 @@ The following properties (documented for factcast) should be renamed accordingly
 |`spring.grpc.server.keep-alive.permit-time` |`spring.grpc.server.keepalive.permit.time` |
 |===
 
-Check
-the https://github.com/spring-projects/spring-grpc/wiki/Spring-gRPC-1.1-Migration-Guide[spring-grpc migration guide]
+Check the https://github.com/spring-projects/spring-grpc/wiki/Spring-gRPC-1.1-Migration-Guide[spring-grpc migration guide]
 for more details.
 
 == Upgrading to 0.10.0
@@ -232,7 +232,7 @@ Version 0.10.0 switched from `net.devh:grpc-client-spring-boot-starter` to
 
 The following properties (documented for factcast) should be renamed accordingly:
 
-[cols="1,1,1", options="header"]
+[cols="1,1,1",options="header"]
 |===
 |Old Property |New Property |Notes
 |`grpc.client.factstore.address` |`spring.grpc.client.channels.factstore.address` |
@@ -244,8 +244,7 @@ The following properties (documented for factcast) should be renamed accordingly
 |`grpc.server.permit-keep-alive-time` |`spring.grpc.server.keep-alive.permit-time` |
 |===
 
-For every other property previously made available by `net.devh:grpc-client-spring-boot-starter`, follow the rule of
-thumb:
+For every other property previously made available by `net.devh:grpc-client-spring-boot-starter`, follow the rule of thumb:
 
 - `grpc.client.factstore.*` becomes `spring.grpc.client.channels.factstore.*`
 - `grpc.server.*` becomes `spring.grpc.server.*`
@@ -254,24 +253,22 @@ Check the https://docs.spring.io/spring-grpc/reference/appendix.html[spring-grpc
 
 == Upgrading to 0.9.14
 
-Version 0.9.14 introduces changes to the way `factcast-snapshotcache-jdbc` stores the `last_accessed` timestamps of
-snapshots. In case you are using this module, please follow the migration steps below.
+Version 0.9.14 introduces changes to the way `factcast-snapshotcache-jdbc` stores the `last_accessed` timestamps of snapshots.
+In case you are using this module, please follow the migration steps below.
 
 === Migration of the last_accessed Timestamps
 
 _This only applies if you are already using `factcast-snapshotcache-jdbc` in your project._
 
-In previous versions, the `last_accessed` timestamp was stored together with the snapshot in the same table. As
-postgres copies the entire row on updates, updating the `last_accessed` field for every read of a snapshot causes the
-snapshot being copied frequently without any need. Therefore, the timestamp is now stored in a separate table.
+In previous versions, the `last_accessed` timestamp was stored together with the snapshot in the same table.
+As postgres copies the entire row on updates, updating the `last_accessed` field for every read of a snapshot causes the snapshot being copied frequently without any need.
+Therefore, the timestamp is now stored in a separate table.
 
-Analog to the initial creation of the snapshot table, please also create a new table for the `last_accessed` timestamps
-(as documented xref:ROOT:Usage/factus/projections/snapshots/snapshot-caching.adoc[here]).
+Analog to the initial creation of the snapshot table, please also create a new table for the `last_accessed` timestamps (as documented xref:ROOT:Usage/factus/projections/snapshots/snapshot-caching.adoc[here]).
 
 ==== Transfer Existing Timestamps
 
-To migrate the existing timestamps to the new table, please execute the following SQL command (take into account that
-usage of the default table names is assumed here):
+To migrate the existing timestamps to the new table, please execute the following SQL command (take into account that usage of the default table names is assumed here):
 
 [source,sql]
 ----
@@ -295,8 +292,7 @@ If your table name differs from the default one, please provide it via the new a
 
 ==== Cleanup
 
-At a later point in time, when the option to roll back to an older version of FactCast is no longer necessary, the
-deprecated field can be removed from the snapshot table by executing:
+At a later point in time, when the option to roll back to an older version of FactCast is no longer necessary, the deprecated field can be removed from the snapshot table by executing:
 
 [source,sql]
 ----
@@ -310,52 +306,54 @@ Version 0.8.0 introduces changes to snapshot serialization, impacting the manage
 
 == Postgres Version
 
-The FactCast server now requires at least Postgres 15. If you are using Postgres 14 or below, you have to upgrade your
-database before migrating to FactCast 0.8.0.
+The FactCast server now requires at least Postgres 15. If you are using Postgres 14 or below, you have to upgrade your database before migrating to FactCast 0.8.0.
 
 == Changes to Projections
 
 === Transactional
 
-Please note that, even though the max bulk size of a transaction in Factus can be configured per projection (by
-implementing maxBatchSizePerTransaction or by annotation), the maximum size of a transaction bulk is ultimately limited
-by the value of
+Please note that, even though the max bulk size of a transaction in Factus can be configured per projection (by implementing maxBatchSizePerTransaction or by annotation), the maximum size of a transaction bulk is ultimately limited by the value of
 `factcast.grpc.client.max-inbound-message-size`, which defaults to 3.5MB and can be configured up to 32MB max.
 
 === @RedisTransactional
 
-For transactional Redis projections Factus now provides abstract classes. Projections that are annotated with
+For transactional Redis projections Factus now provides abstract classes.
+Projections that are annotated with
 `@RedisTransactional` now must extend `AbstractRedisTxManagedProjection` or `AbstractRedisTxSubscribedProjection`
-respectively. The annotation itself is optional, if no default settings are overwritten.
+respectively.
+The annotation itself is optional, if no default settings are overwritten.
 
 Please note that the default bulk size has changed from 50 to 1000.
 
 === @RedisBatched
 
-The `@RedisBatched` annotation has been removed. Refactor your affected projections to extend the
-respective xref:ROOT:Usage/factus/projections/atomicity/redis-transactional-projections.adoc[RedisTx]
+The `@RedisBatched` annotation has been removed.
+Refactor your affected projections to extend the respective xref:ROOT:Usage/factus/projections/atomicity/redis-transactional-projections.adoc[RedisTx]
 class.
 
 - Further configuration of the batching behaviour is possible via the optional `@RedisTransactional` annotation.
-- Handlers with a `RBatch` parameter now receive an `RTransaction` object instead. If you've previously used
-  `batch.addAsync()`
-  you can now apply the changes directly on the transaction using e.g. `transactionalSet.add()`.
+- Handlers with a `RBatch` parameter now receive an `RTransaction` object instead.
+If you've previously used
+`batch.addAsync()`
+you can now apply the changes directly on the transaction using e.g. `transactionalSet.add()`.
 
-Be aware that Redisson transactions do not support all `RObjects` (e.g. Multimaps or AtomicLong). In these cases you
-have to decide if you can continue without transactionality, or adapt your projection's implementation.
+Be aware that Redisson transactions do not support all `RObjects` (e.g. Multimaps or AtomicLong).
+In these cases you have to decide if you can continue without transactionality, or adapt your projection's implementation.
 
 === @SpringTransactional
 
-For transactional Spring projections Factus now provides abstract classes. Projections that are annotated with
+For transactional Spring projections Factus now provides abstract classes.
+Projections that are annotated with
 `@SpringTransactional` now must extend `AbstractSpringTxManagedProjection` or `AbstractSpringTxSubscribedProjection`
-respectively. The annotation itself is optional, if no default settings are overwritten.
+respectively.
+The annotation itself is optional, if no default settings are overwritten.
 
 Please note that the default bulk size has changed from 50 to 1000.
 
 == Removal of Deprecated Field in ProjectionMetaData
 
-The deprecated field `serial` field was finally removed from `ProjectionMetaData`. Please use `revision` instead like in
-the following example:
+The deprecated field `serial` field was finally removed from `ProjectionMetaData`.
+Please use `revision` instead like in the following example:
 
 [source,java]
 ----
@@ -368,35 +366,32 @@ public class MyProjection extends AbstractManagedProjection { ...
 == Removal of Deprecated Dependencies for Compression
 
 `org.xerial.snappy` and `net.jpountz.lz4` have been removed with version 0.8.0.
-Please add the new `factcast-grpc-snappy` and `factcast-grpc-lz4` (preferred) dependencies in order to enable
-compression via snappy or lz4 respectively.
+Please add the new `factcast-grpc-snappy` and `factcast-grpc-lz4` (preferred) dependencies in order to enable compression via snappy or lz4 respectively.
 Further documentation can be found xref:ROOT:Setup/compression.adoc[here].
 
 === Redisson Snapshots
 
 If you use Factus for aggregates or snapshot projections you now have to configure where to store the SnapshotCache.
-Further documentation can be found xref:ROOT:Usage/factus/projections/snapshots/snapshot-caching.adoc[here]. Some properties were renamed and will be
-automatically migrated by Spring for a while.
+Further documentation can be found xref:ROOT:Usage/factus/projections/snapshots/snapshot-caching.adoc[here].
+Some properties were renamed and will be automatically migrated by Spring for a while.
 
-Ssnapshots are now stored under different keys in Redis using
-a simpler
+Ssnapshots are now stored under different keys in Redis using a simpler
 https://github.com/redisson/redisson/blob/main/redisson/src/main/java/org/redisson/client/codec/ByteArrayCodec.java[ByteArrayCodec]
 codec.
 
-The migration to new snapshots happens automatically. Old snapshots will remain in Redis for the duration specified by
-the `factcast.redis.delete-snapshot-stale-for-days` property (default: 90 days), even though they are no longer read. This
-has two implications:
+The migration to new snapshots happens automatically.
+Old snapshots will remain in Redis for the duration specified by the `factcast.redis.delete-snapshot-stale-for-days` property (default: 90 days), even though they are no longer read.
+This has two implications:
 
 1. You can roll back to the previous version of FactCast without losing any snapshots for a certain number of days.
-2. During this period, Redis will store both old and new snapshots, consuming more memory. You can manually delete the
-   old snapshots if you are certain they are no longer needed.
+2. During this period, Redis will store both old and new snapshots, consuming more memory.
+You can manually delete the old snapshots if you are certain they are no longer needed.
 
 == Upgrading to 0.4.1
 
 _This only applies if you used 0.4.0 on you data before._
 
-If you rely on the header meta-attributes '\_ser' or '\_ts', there was a bug in 0.4.0 that has the consequence, of some
-events missing the mentioned attributes.
+If you rely on the header meta-attributes '\_ser' or '\_ts', there was a bug in 0.4.0 that has the consequence, of some events missing the mentioned attributes.
 
 In order to add them where they are missing, you would want to execute the following SQL on your factstore database:
 
@@ -411,8 +406,8 @@ set header =
 WHERE (header ->> 'meta')::jsonb ->> '_ser' is null
 ----
 
-Obviously, the timestamp will not be correct here, but at least there is one. If you have a better indication of
-the publishing time in the payload of your events, you may want to use that one instead.
+Obviously, the timestamp will not be correct here, but at least there is one.
+If you have a better indication of the publishing time in the payload of your events, you may want to use that one instead.
 
 == Upgrading to 0.4.0
 
@@ -440,8 +435,8 @@ _Please make sure you followed the migration guide if your current version is <0
   the older namespace, it is deprecated and should be migrated asap. Note that new properties are only added to the
   new namespace, so please adjust your projects accordingly.
 
-- Note that the default catchup strategy was changed from PAGED or TMPPAGED to FETCHING. Make sure your postgres does
-  not timeout connections.
+- Note that the default catchup strategy was changed from PAGED or TMPPAGED to FETCHING.
+Make sure your postgres does not timeout connections.
 
 === Client
 
@@ -460,76 +455,66 @@ _Please make sure you followed the migration guide if your current version is <0
 
 == Upgrading to 0.3.10
 
-0.3.10 changes the namespaces of the metrics. Also some metric names have
-been changed for consistency reasons. If you created dashboards for example based on those
-names, please be prepared to update them accordingly.
+0.3.10 changes the namespaces of the metrics.
+Also some metric names have been changed for consistency reasons.
+If you created dashboards for example based on those names, please be prepared to update them accordingly.
 You can find the current metric names xref:ROOT:Ops/metrics.adoc[here].
 
 == Upgrading to 0.3.0
 
-There is a new module for use in projects that provide 'EventObjects' but do not want to depend on factcast-core, which
-is called "factcast-factus-event".
+There is a new module for use in projects that provide 'EventObjects' but do not want to depend on factcast-core, which is called "factcast-factus-event".
 @Specification and interface EventObject have been moved there - please update your imports accordingly if necessary.
 
-Another new module is factcast-test which is supposed to help with integration tests by adding a capability to
-dynamically alter namespaces in integration tests.
+Another new module is factcast-test which is supposed to help with integration tests by adding a capability to dynamically alter namespaces in integration tests.
 See xref:ROOT:Usage/factus/testing.adoc[testing section]
 
-`factcast.lockGlobally()` **has been removed**. By adding the new locking capabilities, that define the scope of the
-lock not
-just by aggregate-ids, but by FactSpecs, 'lockGlobally()' needed to be deleted, as there is no proper way to provide a
-compatible
-migration path.
-As most of the internals of FactCast rely on namespaces (for instance for authorization), you really need to enumerate
-all possible namespaces that are in scope for the lock. Please use `factcast.lock(List<FactSpec>)` instead. Sorry for
-the inconvenience.
+`factcast.lockGlobally()` **has been removed**.
+By adding the new locking capabilities, that define the scope of the lock not just by aggregate-ids, but by FactSpecs, 'lockGlobally()' needed to be deleted, as there is no proper way to provide a compatible migration path.
+As most of the internals of FactCast rely on namespaces (for instance for authorization), you really need to enumerate all possible namespaces that are in scope for the lock.
+Please use `factcast.lock(List<FactSpec>)` instead.
+Sorry for the inconvenience.
 
 == Upgrading to 0.2.1
 
 === Reconnection Behavior
 
-Reconnecting due to connection/unknown errors has changed from an infinite loop to just try five times (in a window of
-three seconds) and escalate if they failed.
+Reconnecting due to connection/unknown errors has changed from an infinite loop to just try five times (in a window of three seconds) and escalate if they failed.
 Details can be found https://github.com/factcast/factcast/issues/889[here].
 
 == Upgrading to 0.2.0 (Quite a Lot)
 
 === Header Field 'aggId' Replaced by 'aggIds'
 
-This change was actually two years ago, but it was not documented well, and if you used certain factory methods of
-DefaultFact, a field 'aggId' was created/read.
+This change was actually two years ago, but it was not documented well, and if you used certain factory methods of DefaultFact, a field 'aggId' was created/read.
 So, to make it perfectly clear, a fact can have an 'aggIds' header field, which is an array of uuids.
 
 A FactSpec, however has an optional 'aggId' (without the 's'), as it is not an array, but a single one.
-We encourage you to update any header in your postgres, that contains 'aggId', rather than 'aggIds' in the course of
-migration to 0.2.0
+We encourage you to update any header in your postgres, that contains 'aggId', rather than 'aggIds' in the course of migration to 0.2.0
 
 === Basic Auth Setup Has Changed
 
-If you used a 'factcast-security.json' before, you will be please to learn that FactCast was extended to support
-role/namespace based authorisation. Also the filename changed to 'factcast-access.json'.
+If you used a 'factcast-security.json' before, you will be please to learn that FactCast was extended to support role/namespace based authorisation.
+Also the filename changed to 'factcast-access.json'.
 
 See xref:ROOT:Setup/gRPC Client/grpc-config-basicauth.adoc[Basic Auth usage].
 
 === Basic Auth Setup Is Enforced
 
-By default, when executing without security enabled, you need to supply a property
-'factcast.security.enabled=false' via commandline or propertyfile to get away with just a warning. If you don't,
-FactCast will exit with errorcode 1.
+By default, when executing without security enabled, you need to supply a property 'factcast.security.enabled=false' via commandline or propertyfile to get away with just a warning.
+If you don't, FactCast will exit with errorcode 1.
 
 === Fetching Facts by ID Has Been Extended
 
-Next to fetchById(UUID) (asking for the event exactly the way it was published), there is a new fetchByIdAndVersion(
-UUID,int), that makes FactCast try to transform the event up/down to the requested version. Of course, the usage of a
-schema registry is a precondition, as it provides the code to do that transformation.
+Next to fetchById(UUID) (asking for the event exactly the way it was published), there is a new fetchByIdAndVersion( UUID,int), that makes FactCast try to transform the event up/down to the requested version.
+Of course, the usage of a schema registry is a precondition, as it provides the code to do that transformation.
 
 == Upgrading to 0.1.0
 
 === unique_identifier
 
-If you used the unique*identifier feature before, it was removed. It was only a rouge hack that was used to coordinate
-two instance in case of publishing. By now, coordination can be done via optimistic locking, so that the need for
-\_unique_identifier* is no longer there.
+If you used the unique*identifier feature before, it was removed.
+It was only a rouge hack that was used to coordinate two instance in case of publishing.
+By now, coordination can be done via optimistic locking, so that the need for \_unique_identifier* is no longer there.
 
 === Optimistic Locking
 
@@ -537,20 +522,18 @@ There is a xref:ROOT:Usage/factus/optimistic-locking.adoc[section on optimistic 
 
 === Postgres Module uuid-ossp
 
-The Postgres module _uuid-ossp_ is necessary for the new optimistic locking api feature. In order to install this
-extension, the user performing the Liquibase operations requires Postgres superuser permissions.
+The Postgres module _uuid-ossp_ is necessary for the new optimistic locking api feature.
+In order to install this extension, the user performing the Liquibase operations requires Postgres superuser permissions.
 
 === gRPC Protocol Version
 
-The gRPC Protocol Version shifted from 1.0.0 to 1.1.0. That means, in order to talk to a FactCast server with version
-0.1.0, you can use and client from 0.0.30 on, but in order to use a 0.1.0 client, you'd need to talk to a FactCast
-server with at least the same protocol version than your client.
+The gRPC Protocol Version shifted from 1.0.0 to 1.1.0. That means, in order to talk to a FactCast server with version 0.1.0, you can use and client from 0.0.30 on, but in order to use a 0.1.0 client, you'd need to talk to a FactCast server with at least the same protocol version than your client.
 So the idea is: first update your servers, then update the clients.
 
 === gRPC Addresses, Hosts, Ports
 
-We updated to yidongnan/grpc-spring-boot-starter. In order to direct your client to a particular target address of a
-FactCast server, you might have specified:
+We updated to yidongnan/grpc-spring-boot-starter.
+In order to direct your client to a particular target address of a FactCast server, you might have specified:
 
 ----
 grpc.client.factstore.port=9443
@@ -580,35 +563,29 @@ Support for Spring Boot 1.x was removed.
 
 === Plaintext vs TLS
 
-There was a dependency upgrade of https://github.com/yidongnan/grpc-spring-boot-starter[grpc-spring-boot-starter] in
-order to support TLS. Note that the default client configuration is now switched to TLS. That means, if you want to
-continue communicating in an unencrypted fashion, you need to set an application property of **'
-grpc.client.factstore.negotiation-type=PLAINTEXT'**.
+There was a dependency upgrade of https://github.com/yidongnan/grpc-spring-boot-starter[grpc-spring-boot-starter] in order to support TLS.
+Note that the default client configuration is now switched to TLS.
+That means, if you want to continue communicating in an unencrypted fashion, you need to set an application property of **' grpc.client.factstore.negotiation-type=PLAINTEXT'**.
 
 === Testcontainers / Building and Testing
 
-In order to run integration tests, that need a Postgres to run, FactCast now
-uses https://www.testcontainers.org/usage/database_containers.html[Testcontainers] in order to download and run an
-ephemeral Postgres.
-For this to work, the machine that runs test must have docker installed and the current user needs to be able to run and
-stop docker containers.
+In order to run integration tests, that need a Postgres to run, FactCast now uses https://www.testcontainers.org/usage/database_containers.html[Testcontainers] in order to download and run an ephemeral Postgres.
+For this to work, the machine that runs test must have docker installed and the current user needs to be able to run and stop docker containers.
 
-You can still override this behavior by supplying an Environment-Variable **'pg_url'** to use a particular postgres
-instead. This might be important for build agents that themselves run within docker and do not provide Docker-in-Docker.
+You can still override this behavior by supplying an Environment-Variable **'pg_url'** to use a particular postgres instead.
+This might be important for build agents that themselves run within docker and do not provide Docker-in-Docker.
 
 == Upgrading to 0.0.14
 
 - Incompatible change in gRPC API
 
-The gRPC API has changed to enable non-breaking changes later. (Version endpoint added)
-The result is, that you have to use > 0.0.14 on Client and Server consistently.
+The gRPC API has changed to enable non-breaking changes later.
+(Version endpoint added) The result is, that you have to use > 0.0.14 on Client and Server consistently.
 
 == Noteworthy 0.0.12
 
-- Note that the jersey impl of the REST interface has its
-  own https://github.com/Mercateo/factcast-rest-jersey[place on GitHub now] and got new coordinates:
-  `org.factcast:factcast-server-rest-jersey:0.0.12`. If you use the REST Server, you'll need to change your
-  dependencies accordingly
+- Note that the jersey impl of the REST interface has its own https://github.com/Mercateo/factcast-rest-jersey[place on GitHub now] and got new coordinates:
+`org.factcast:factcast-server-rest-jersey:0.0.12`.
+If you use the REST Server, you'll need to change your dependencies accordingly
 
-- There is a BOM within FactCast at org.factcast:factcast-bom:0.0.12 you can use to conveniently pin versions - remember
-  that factcast-server-rest-jersey might not be available for every milestone and is not part of the BOM
+- There is a BOM within FactCast at org.factcast:factcast-bom:0.0.12 you can use to conveniently pin versions - remember that factcast-server-rest-jersey might not be available for every milestone and is not part of the BOM
