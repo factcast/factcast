@@ -77,6 +77,7 @@
 ***** xref:Usage/factus/projections/example/example-redis-tx.adoc[Redis TX]
 ***** xref:Usage/factus/projections/example/example-mongodb.adoc[MongoDB]
 
+**** xref:Usage/factus/projections/jdbc-write-tokens.adoc[Write Tokens over JDBC]
 **** xref:Usage/factus/projections/callbacks.adoc[Callbacks]
 **** xref:Usage/factus/projections/filtering.adoc[Filtering]
 
