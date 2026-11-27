@@ -18,10 +18,13 @@ package org.factcast.store.registry;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import lombok.experimental.FieldDefaults;
@@ -31,8 +34,12 @@ import org.everit.json.schema.Schema;
 import org.factcast.store.StoreConfigurationProperties;
 import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.metrics.RegistryMetrics.EVENT;
+import org.factcast.store.registry.transformation.TransformationConflictException;
+import org.factcast.store.registry.transformation.TransformationSource;
 import org.factcast.store.registry.transformation.TransformationStore;
+import org.factcast.store.registry.validation.schema.SchemaConflictException;
 import org.factcast.store.registry.validation.schema.SchemaKey;
+import org.factcast.store.registry.validation.schema.SchemaSource;
 import org.factcast.store.registry.validation.schema.SchemaStore;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -99,6 +106,77 @@ class AbstractSchemaRegistryTest {
       assertThatThrownBy(underTest::fetchInitial).isInstanceOf(InitialRegistryFetchFailed.class);
 
       verify(registryMetrics).count(EVENT.SCHEMA_UPDATE_FAILURE);
+    }
+  }
+
+  @Nested
+  class WhenRefreshing {
+    final SchemaSource knownSchema = new SchemaSource("ns/t/1/schema.json", "h1", "ns", "t", 1);
+    final SchemaSource newSchema = new SchemaSource("ns/t/2/schema.json", "h2", "ns", "t", 2);
+    final TransformationSource knownTransformation =
+        new TransformationSource("ns/t/1-2/transform.js", "h3", "ns", "t", 1, 2);
+    final TransformationSource newTransformation =
+        new TransformationSource("ns/t/2-1/transform.js", "h4", "ns", "t", 2, 1);
+    final RegistryIndex index = new RegistryIndex();
+
+    @BeforeEach
+    void setup() {
+      index.schemes(List.of(knownSchema, newSchema));
+      index.transformations(List.of(knownTransformation, newTransformation));
+      when(indexFetcher.fetchIndex()).thenReturn(Optional.of(index));
+      doAnswer(
+              inv -> {
+                inv.getArgument(1, Runnable.class).run();
+                return null;
+              })
+          .when(registryMetrics)
+          .timed(any(RegistryMetrics.OP.class), any(Runnable.class));
+    }
+
+    @Test
+    void fetchesOnlyFilesMissingInStore() throws Exception {
+      when(schemaStore.contains(knownSchema)).thenReturn(true);
+      when(schemaStore.contains(newSchema)).thenReturn(false);
+      when(transformationStore.contains(knownTransformation)).thenReturn(true);
+      when(transformationStore.contains(newTransformation)).thenReturn(false);
+      when(registryFileFetcher.fetchSchema(newSchema)).thenReturn("{}");
+      when(registryFileFetcher.fetchTransformation(newTransformation)).thenReturn("code");
+
+      underTest.refresh();
+
+      verify(registryFileFetcher, never()).fetchSchema(knownSchema);
+      verify(registryFileFetcher, never()).fetchTransformation(knownTransformation);
+      verify(schemaStore, never()).register(knownSchema, "{}");
+      verify(schemaStore).register(newSchema, "{}");
+      verify(transformationStore).store(newTransformation, "code");
+    }
+
+    @Test
+    void refetchesConflictingFilesWhenReplaceIsAllowed() throws Exception {
+      when(storeConfigurationProperties.isAllowSchemaReplace()).thenReturn(true);
+      when(schemaStore.contains(knownSchema)).thenThrow(new SchemaConflictException("x"));
+      when(schemaStore.contains(newSchema)).thenReturn(true);
+      when(transformationStore.contains(knownTransformation))
+          .thenThrow(new TransformationConflictException("x"));
+      when(transformationStore.contains(newTransformation)).thenReturn(true);
+      when(registryFileFetcher.fetchSchema(knownSchema)).thenReturn("{}");
+      when(registryFileFetcher.fetchTransformation(knownTransformation)).thenReturn("code");
+
+      underTest.refresh();
+
+      verify(schemaStore).register(knownSchema, "{}");
+      verify(transformationStore).store(knownTransformation, "code");
+      verify(registryFileFetcher, never()).fetchSchema(newSchema);
+      verify(registryFileFetcher, never()).fetchTransformation(newTransformation);
+    }
+
+    @Test
+    void failsOnConflictWithoutFetchingWhenReplaceIsNotAllowed() throws Exception {
+      when(schemaStore.contains(knownSchema)).thenThrow(new SchemaConflictException("x"));
+
+      assertThatThrownBy(underTest::refresh).isInstanceOf(SchemaConflictException.class);
+
+      verifyNoInteractions(registryFileFetcher);
     }
   }
 

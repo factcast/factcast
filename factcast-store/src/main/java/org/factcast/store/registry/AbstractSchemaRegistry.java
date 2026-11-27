@@ -172,69 +172,75 @@ public abstract class AbstractSchemaRegistry implements SchemaRegistry {
   }
 
   private void updateSchemes(RegistryIndex index) {
-    List<SchemaSource> toFetch = index.schemes();
-    if (!toFetch.isEmpty()) {
-      int count = toFetch.size();
-      log.info(
-          "SchemaStore will be updated, {} {} to fetch.", count, count == 1 ? "schema" : "schemes");
-      toFetch.forEach(
-          source -> {
-            try {
-              String schema = registryFileFetcher.fetchSchema(source);
-              try {
-                if (!schemaStore.contains(source)) {
-                  schemaStore.register(source, schema);
-                  invalidateNearCache(source.toKey());
-                }
-              } catch (SchemaConflictException e) {
-                if (storeConfigurationProperties.isAllowSchemaReplace()) {
-                  schemaStore.register(source, schema);
-                  // In-memory stores do not emit the database notification that clears this
-                  // cache.
-                  invalidateNearCache(source.toKey());
-                } else {
-                  throw e;
-                }
-              }
-            } catch (IOException e) {
-              throw new SchemaRegistryUnavailableException(e);
-            }
-          });
+    List<SchemaSource> sources = index.schemes();
+    if (sources.isEmpty()) {
+      return;
+    }
+    // check against the store first, so that unchanged schemes are not fetched again
+    List<SchemaSource> toFetch = sources.stream().filter(this::needsUpdate).toList();
+    log.info(
+        "SchemaStore checked {} {}, {} to fetch.",
+        sources.size(),
+        sources.size() == 1 ? "schema" : "schemes",
+        toFetch.size());
+    toFetch.forEach(
+        source -> {
+          try {
+            String schema = registryFileFetcher.fetchSchema(source);
+            schemaStore.register(source, schema);
+            // In-memory stores do not emit the database notification that clears this cache.
+            invalidateNearCache(source.toKey());
+          } catch (IOException e) {
+            throw new SchemaRegistryUnavailableException(e);
+          }
+        });
+  }
+
+  private boolean needsUpdate(SchemaSource source) {
+    try {
+      return !schemaStore.contains(source);
+    } catch (SchemaConflictException e) {
+      if (storeConfigurationProperties.isAllowSchemaReplace()) {
+        return true;
+      }
+      throw e;
     }
   }
 
   private void updateTransformations(RegistryIndex index) {
-    List<TransformationSource> toFetch = index.transformations();
-
-    if (!toFetch.isEmpty()) {
-      int count = toFetch.size();
-      log.info(
-          "TransformationStore will be updated, {} {} to fetch.",
-          count,
-          count == 1 ? "transformation" : "transformations");
-      toFetch.forEach(
-          source -> {
-            try {
-              String transformationCode = null;
-              if (!source.isSynthetic()) {
-                transformationCode = registryFileFetcher.fetchTransformation(source);
-              }
-              try {
-                if (!transformationStore.contains(source)) {
-                  transformationStore.store(source, transformationCode);
-                }
-              } catch (TransformationConflictException conflict) {
-                if (storeConfigurationProperties.isAllowSchemaReplace()) {
-                  transformationStore.store(source, transformationCode);
-                } else {
-                  throw conflict;
-                }
-              }
-
-            } catch (IOException e) {
-              throw new SchemaRegistryUnavailableException(e);
+    List<TransformationSource> sources = index.transformations();
+    if (sources.isEmpty()) {
+      return;
+    }
+    // check against the store first, so that unchanged transformations are not fetched again
+    List<TransformationSource> toFetch = sources.stream().filter(this::needsUpdate).toList();
+    log.info(
+        "TransformationStore checked {} {}, {} to fetch.",
+        sources.size(),
+        sources.size() == 1 ? "transformation" : "transformations",
+        toFetch.size());
+    toFetch.forEach(
+        source -> {
+          try {
+            String transformationCode = null;
+            if (!source.isSynthetic()) {
+              transformationCode = registryFileFetcher.fetchTransformation(source);
             }
-          });
+            transformationStore.store(source, transformationCode);
+          } catch (IOException e) {
+            throw new SchemaRegistryUnavailableException(e);
+          }
+        });
+  }
+
+  private boolean needsUpdate(TransformationSource source) {
+    try {
+      return !transformationStore.contains(source);
+    } catch (TransformationConflictException e) {
+      if (storeConfigurationProperties.isAllowSchemaReplace()) {
+        return true;
+      }
+      throw e;
     }
   }
 

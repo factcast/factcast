@@ -87,7 +87,7 @@ public class HttpIndexFetcher implements IndexFetcher {
               req.addHeader(ValidationConstants.HTTPHEADER_IF_MODIFIED_SINCE, since);
             }
             if (etag != null) {
-              req.addHeader(ValidationConstants.HTTPHEADER_E_TAG, etag);
+              req.addHeader(ValidationConstants.HTTPHEADER_IF_NONE_MATCH, etag);
             }
 
             Request request = req.build();
