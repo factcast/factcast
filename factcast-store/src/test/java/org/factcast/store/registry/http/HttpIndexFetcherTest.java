@@ -49,7 +49,7 @@ public class HttpIndexFetcherTest {
                     "/registry/index.json",
                     ctx -> {
                       Map<String, String> headers = ctx.headerMap();
-                      String etagHeader = headers.get(ValidationConstants.HTTPHEADER_E_TAG);
+                      String etagHeader = headers.get(ValidationConstants.HTTPHEADER_IF_NONE_MATCH);
                       String sinceHeader =
                           headers.get(ValidationConstants.HTTPHEADER_IF_MODIFIED_SINCE);
 

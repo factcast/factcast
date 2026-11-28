@@ -53,6 +53,8 @@ import org.factcast.store.registry.metrics.RegistryMetrics;
 import org.factcast.store.registry.transformation.TransformationKey;
 import org.factcast.store.registry.transformation.store.InMemTransformationStoreImpl;
 import org.factcast.store.registry.validation.schema.SchemaKey;
+import org.factcast.store.registry.validation.schema.SchemaSource;
+import org.factcast.store.registry.validation.schema.SchemaStore;
 import org.factcast.store.registry.validation.schema.store.InMemSchemaStoreImpl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -94,7 +96,8 @@ class HttpStartupArchiveFetcherTest {
                         zip(Map.of("index.json", "{\"schemes\":[],\"transformations\":[]}"))))
                 .build());
     HttpStartupArchiveFetcher fetcher =
-        new HttpStartupArchiveFetcher(URI.create(base).toURL(), client, new NOPRegistryMetrics());
+        new HttpStartupArchiveFetcher(
+            URI.create(base).toURL(), client, new NOPRegistryMetrics(), () -> true);
 
     fetcher.beginInitialFetch();
     try {
@@ -109,7 +112,7 @@ class HttpStartupArchiveFetcherTest {
   }
 
   @Test
-  void loadsArchiveAtStartupAndUsesIndividualFilesOnRefresh() throws Exception {
+  void loadsArchiveAtStartupAndOnlyFetchesIndexOnRefresh() throws Exception {
     AtomicInteger archiveRequests = new AtomicInteger();
     AtomicInteger indexRequests = new AtomicInteger();
     AtomicInteger schemaRequests = new AtomicInteger();
@@ -124,7 +127,7 @@ class HttpStartupArchiveFetcherTest {
     try (TestHttpServer server =
         server(
             archive, 200, archiveRequests, indexRequests, schemaRequests, transformationRequests)) {
-      HttpSchemaRegistry registry = registry(server, true);
+      HttpSchemaRegistry registry = registry(server);
       registry.fetchInitial();
 
       assertEquals(1, archiveRequests.get());
@@ -137,8 +140,9 @@ class HttpStartupArchiveFetcherTest {
       registry.refresh();
       assertEquals(1, archiveRequests.get());
       assertEquals(1, indexRequests.get());
-      assertEquals(1, schemaRequests.get());
-      assertEquals(1, transformationRequests.get());
+      // unchanged files are already in the store and must not be fetched again
+      assertEquals(0, schemaRequests.get());
+      assertEquals(0, transformationRequests.get());
     }
   }
 
@@ -169,9 +173,7 @@ class HttpStartupArchiveFetcherTest {
               new InMemSchemaStoreImpl(metrics),
               new InMemTransformationStoreImpl(metrics),
               metrics,
-              new StoreConfigurationProperties()
-                  .setPersistentRegistry(true)
-                  .setSchemaRegistryZipEnabled(true),
+              new StoreConfigurationProperties().setPersistentRegistry(true),
               lockProvider);
 
       var initialFetch = executor.submit(registry::fetchInitial);
@@ -223,17 +225,32 @@ class HttpStartupArchiveFetcherTest {
   }
 
   @Test
-  void leavesDefaultHttpBehaviorUnchanged() throws Exception {
+  void skipsArchiveAndUnchangedFilesWhenStoreIsNotEmpty() throws Exception {
     AtomicInteger archiveRequests = new AtomicInteger();
     AtomicInteger indexRequests = new AtomicInteger();
     AtomicInteger schemaRequests = new AtomicInteger();
     AtomicInteger transformationRequests = new AtomicInteger();
+    byte[] archive =
+        zip(
+            Map.of(
+                "index.json", INDEX,
+                "ns/type/1/schema.json", SCHEMA,
+                "ns/type/1-2/transform.js", TRANSFORMATION));
     try (TestHttpServer server =
-        server(null, 404, archiveRequests, indexRequests, schemaRequests, transformationRequests)) {
-      registry(server, false).fetchInitial();
+        server(
+            archive, 200, archiveRequests, indexRequests, schemaRequests, transformationRequests)) {
+      RegistryMetrics metrics = new NOPRegistryMetrics();
+      InMemSchemaStoreImpl schemaStore = new InMemSchemaStoreImpl(metrics);
+      // same id and hash as in INDEX, so this schema is unchanged
+      schemaStore.register(
+          new SchemaSource("ns/type/1/schema.json", "abc", "ns", "type", 1), SCHEMA);
+
+      registry(server, schemaStore, metrics).fetchInitial();
+
       assertEquals(0, archiveRequests.get());
       assertEquals(1, indexRequests.get());
-      assertEquals(1, schemaRequests.get());
+      assertEquals(0, schemaRequests.get());
+      // the transformation is not in the store yet
       assertEquals(1, transformationRequests.get());
     }
   }
@@ -251,7 +268,7 @@ class HttpStartupArchiveFetcherTest {
             indexRequests,
             schemaRequests,
             transformationRequests)) {
-      HttpSchemaRegistry registry = registry(server, true);
+      HttpSchemaRegistry registry = registry(server);
       registry.fetchInitial();
       assertTrue(registry.get(SchemaKey.of("ns", "type", 1)).isPresent());
       assertEquals(1, archiveRequests.get());
@@ -261,16 +278,18 @@ class HttpStartupArchiveFetcherTest {
     }
   }
 
-  private static HttpSchemaRegistry registry(TestHttpServer server, boolean zipEnabled)
-      throws Exception {
+  private static HttpSchemaRegistry registry(TestHttpServer server) throws Exception {
     RegistryMetrics metrics = new NOPRegistryMetrics();
+    return registry(server, new InMemSchemaStoreImpl(metrics), metrics);
+  }
+
+  private static HttpSchemaRegistry registry(
+      TestHttpServer server, SchemaStore schemaStore, RegistryMetrics metrics) throws Exception {
     StoreConfigurationProperties properties =
-        new StoreConfigurationProperties()
-            .setPersistentRegistry(false)
-            .setSchemaRegistryZipEnabled(zipEnabled);
+        new StoreConfigurationProperties().setPersistentRegistry(false);
     return new HttpSchemaRegistry(
         URI.create("http://localhost:" + server.port() + "/registry/").toURL(),
-        new InMemSchemaStoreImpl(metrics),
+        schemaStore,
         new InMemTransformationStoreImpl(metrics),
         metrics,
         properties,

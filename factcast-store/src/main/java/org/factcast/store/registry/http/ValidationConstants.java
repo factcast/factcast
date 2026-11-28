@@ -34,6 +34,8 @@ public class ValidationConstants {
 
   public static final String HTTPHEADER_E_TAG = "ETag";
 
+  public static final String HTTPHEADER_IF_NONE_MATCH = "If-None-Match";
+
   public static final String HTTPHEADER_LAST_MODIFIED = "Last-Modified";
 
   public static final int HTTP_OK = 200;

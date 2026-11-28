@@ -24,6 +24,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.Optional;
+import java.util.function.BooleanSupplier;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -40,26 +41,38 @@ import org.factcast.store.registry.transformation.TransformationSource;
 import org.factcast.store.registry.validation.schema.SchemaSource;
 import org.springframework.core.io.FileSystemResource;
 
-/** Uses a downloaded registry archive only during the initial HTTP registry fetch. */
+/**
+ * Uses a downloaded registry archive during the initial HTTP registry fetch, if the local store is
+ * still empty. Otherwise (and for all later refreshes) the index and individual files are used, so
+ * that only changed files are transferred.
+ */
 @Slf4j
 final class HttpStartupArchiveFetcher implements IndexFetcher, RegistryFileFetcher {
   private final URL baseUrl;
   private final OkHttpClient client;
   private final HttpIndexFetcher httpIndexFetcher;
   private final HttpRegistryFileFetcher httpFileFetcher;
+  private final BooleanSupplier storeIsEmpty;
 
   private boolean initialFetch;
   private Path archiveRoot;
 
-  HttpStartupArchiveFetcher(@NonNull URL baseUrl, @NonNull RegistryMetrics metrics) {
-    this(baseUrl, ValidationConstants.OK_HTTP, metrics);
+  HttpStartupArchiveFetcher(
+      @NonNull URL baseUrl,
+      @NonNull RegistryMetrics metrics,
+      @NonNull BooleanSupplier storeIsEmpty) {
+    this(baseUrl, ValidationConstants.OK_HTTP, metrics, storeIsEmpty);
   }
 
   @VisibleForTesting
   @SuppressWarnings("java:S5803")
   HttpStartupArchiveFetcher(
-      @NonNull URL baseUrl, @NonNull OkHttpClient client, @NonNull RegistryMetrics metrics) {
+      @NonNull URL baseUrl,
+      @NonNull OkHttpClient client,
+      @NonNull RegistryMetrics metrics,
+      @NonNull BooleanSupplier storeIsEmpty) {
     this.baseUrl = baseUrl;
+    this.storeIsEmpty = storeIsEmpty;
     this.client = client;
     this.httpIndexFetcher = new HttpIndexFetcher(baseUrl, client, metrics);
     this.httpFileFetcher = new HttpRegistryFileFetcher(baseUrl, client, metrics);
@@ -76,7 +89,8 @@ final class HttpStartupArchiveFetcher implements IndexFetcher, RegistryFileFetch
 
   @Override
   public Optional<RegistryIndex> fetchIndex() {
-    if (initialFetch) {
+    // checked lazily, so that it is evaluated while holding the registry lock
+    if (initialFetch && storeIsEmpty.getAsBoolean()) {
       try {
         return Optional.of(downloadAndValidateArchive());
       } catch (Exception e) {

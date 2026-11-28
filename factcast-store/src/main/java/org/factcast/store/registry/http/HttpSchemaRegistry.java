@@ -41,30 +41,25 @@ public class HttpSchemaRegistry extends AbstractSchemaRegistry {
     this(
         schemaStore,
         transformationStore,
-        baseUrl,
         registryMetrics,
         storeConfigurationProperties,
         lockProvider,
-        storeConfigurationProperties.isSchemaRegistryZipEnabled()
-            ? new HttpStartupArchiveFetcher(baseUrl, registryMetrics)
-            : null);
+        // the archive only pays off if the store is empty (in-memory or wiped persistent store),
+        // otherwise fetching just the changed files is cheaper.
+        new HttpStartupArchiveFetcher(
+            baseUrl, registryMetrics, () -> schemaStore.getAllSchemaKeys().isEmpty()));
   }
 
   private HttpSchemaRegistry(
       SchemaStore schemaStore,
       TransformationStore transformationStore,
-      URL baseUrl,
       RegistryMetrics registryMetrics,
       StoreConfigurationProperties storeConfigurationProperties,
       LockProvider lockProvider,
       HttpStartupArchiveFetcher startupArchiveFetcher) {
     super(
-        startupArchiveFetcher == null
-            ? new HttpIndexFetcher(baseUrl, registryMetrics)
-            : startupArchiveFetcher,
-        startupArchiveFetcher == null
-            ? new HttpRegistryFileFetcher(baseUrl, registryMetrics)
-            : startupArchiveFetcher,
+        startupArchiveFetcher,
+        startupArchiveFetcher,
         schemaStore,
         transformationStore,
         registryMetrics,
